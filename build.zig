@@ -3,10 +3,14 @@ const Builder = @import("std").build.Builder;
 pub fn build(b: *Builder) void {
     const mode = b.standardReleaseOptions();
     const exe = b.addExecutable("sokol-zig", "src/main.zig");
-//    exe.addObjectFile("sokol/sokol.o");
-//    exe.addCSourceFile("sokol/sokol.m", [][]const u8{"-fobjc-arc"});
-//    exe.linkFramework("Metal");
-//    exe.linkFramework("Quartz");
+    exe.addObjectFile("src/sokol/sokol.o");
+    exe.addIncludeDir("src/sokol");
+    exe.linkSystemLibrary("c");
+    exe.linkSystemLibrary("GL");
+    exe.linkSystemLibrary("X11");
+    exe.linkSystemLibrary("m");
+    exe.linkSystemLibrary("dl");
+    exe.linkSystemLibrary("asound");
     exe.setBuildMode(mode);
 
     const run_cmd = exe.run();
