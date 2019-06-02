@@ -18,7 +18,7 @@ pub fn build(b: *Builder) void {
         "-c", "-o", "zig-cache/sokol.o"
     });
 
-    // linking doesn't work, zig does a segfault, instead
+    // linking with macOS frameworks doesn't appear to work, instead
     // need to run "zig build --verbose-link", and then copy the dumped 'lld'
     // command line and instead execute something like this:
     //
