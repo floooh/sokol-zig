@@ -5,7 +5,8 @@ const warn = std.debug.warn;
 pub fn build(b: *Builder) void {
 
     const mode = b.standardReleaseOptions();
-    // this doesn't work with "addCSourceFile"
+    // this doesn't work with "addCSourceFile" since this doesn't
+    // find macOS SDK framework headers (for Metal, Cocoa, etc...)
     const sokol = b.addSystemCommand([][]const u8{
         "clang",
         "src/sokol.c",
@@ -18,7 +19,8 @@ pub fn build(b: *Builder) void {
     });
 
     // linking doesn't work, zig does a segfault, instead
-    // need to run "zig build --verbose-link", and then clang for linking like:
+    // need to run "zig build --verbose-link", and then copy the dumped 'lld'
+    // command line and instead execute something like this:
     //
     // clang -o bla /Users/floh/scratch/zig-cache/sokol.o /Users/floh/scratch/bla/zig-cache/o/0NRn8fMmujQTpEoeqSKk0UzKAQ8UFg4-Nh3nFQ-0OxkXw4Wg44YnU1VGqKaKktuc/bla.o "/Users/floh/Library/Application Support/zig/stage1/o/WpKTcY2QXg4ksdKomoDb-vJNiQ7LdlAGR-60t8qtMcStE_YnusnviFKJ8StS6FB6/libcompiler_rt.a" -lSystem -framework MetalKit -framework Foundation -framework Cocoa -framework Metal -framework Quartz
     //
