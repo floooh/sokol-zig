@@ -1,18 +1,38 @@
-const Builder = @import("std").build.Builder;
+const std = @import("std");
+const Builder = std.build.Builder;
+const warn = std.debug.warn;
 
 pub fn build(b: *Builder) void {
-    const mode = b.standardReleaseOptions();
-    const exe = b.addExecutable("sokol-zig", "src/main.zig");
-    exe.addObjectFile("src/sokol/sokol.o");
-    exe.addIncludeDir("src/sokol");
-    exe.linkSystemLibrary("c");
-    exe.linkSystemLibrary("GL");
-    exe.linkSystemLibrary("X11");
-    exe.linkSystemLibrary("m");
-    exe.linkSystemLibrary("dl");
-    exe.linkSystemLibrary("asound");
-    exe.setBuildMode(mode);
 
+    const mode = b.standardReleaseOptions();
+    // this doesn't work with "addCSourceFile"
+    const sokol = b.addSystemCommand([][]const u8{
+        "clang",
+        "src/sokol.c",
+        "-march=native",
+        "-fstack-protector-strong",
+        "--param", "ssp-buffer-size=4",
+        "-fno-omit-frame-pointer", "-fPIC",
+        "-ObjC", "-fobjc-arc",
+        "-c", "-o", "zig-cache/sokol.o"
+    });
+
+    // linking doesn't work, zig does a segfault, instead
+    // need to run "zig build --verbose-link", and then clang for linking like:
+    //
+    // clang -o bla /Users/floh/scratch/zig-cache/sokol.o /Users/floh/scratch/bla/zig-cache/o/0NRn8fMmujQTpEoeqSKk0UzKAQ8UFg4-Nh3nFQ-0OxkXw4Wg44YnU1VGqKaKktuc/bla.o "/Users/floh/Library/Application Support/zig/stage1/o/WpKTcY2QXg4ksdKomoDb-vJNiQ7LdlAGR-60t8qtMcStE_YnusnviFKJ8StS6FB6/libcompiler_rt.a" -lSystem -framework MetalKit -framework Foundation -framework Cocoa -framework Metal -framework Quartz
+    //
+    const exe = b.addExecutable("bla", "src/main.zig");
+    exe.addObjectFile("zig-cache/sokol.o");
+    exe.setBuildMode(mode);
+    exe.addIncludeDir("src");
+    exe.linkFramework("Foundation");
+    exe.linkFramework("Cocoa");
+    exe.linkFramework("Quartz");
+    exe.linkFramework("Metal");
+    exe.linkFramework("MetalKit");
+    exe.step.dependOn(&sokol.step);
+    
     const run_cmd = exe.run();
 
     const run_step = b.step("run", "Run the app");
