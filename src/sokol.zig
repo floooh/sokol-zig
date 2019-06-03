@@ -8,22 +8,43 @@ const c = @cImport({
 
 pub const App = struct {
 
+const State = struct {
+    init_cb: ?fn() void,
+    frame_cb: ?fn() void,
+    cleanup_cb: ?fn() void,
+};
+var state: State = undefined;
+
+extern fn fwd_init() void {
+    if (state.init_cb) |init_cb| {
+        init_cb();
+    }
+}
+
+extern fn fwd_frame() void {
+    if (state.frame_cb) |frame_cb| {
+        frame_cb();
+    }
+}
+
+extern fn fwd_cleanup() void {
+    if (state.cleanup_cb) | cleanup_cb| {
+        cleanup_cb();
+    }
+}
+
+fn cstrdup(str: []const u8) ![]const u8 {
+    return std.cstr.addNullByte(state.allocator, str);
+}
+
 pub const Desc = struct {
-    init_cb: ?extern fn() void = null,
-    frame_cb: ?extern fn() void = null,
-    cleanup_cb: ?extern fn() void = null,
-    event_cb: ?extern fn([*c]const c.sapp_event) void = null,
-    fail_cb: ?extern fn([*c]const u8) void = null,
-    user_data: ?*c_void = null,
-    init_userdata_cb: ?extern fn(?*c_void) void = null,
-    frame_userdata_cb: ?extern fn(?*c_void) void = null,
-    cleanup_userdata_cb: ?extern fn(?*c_void) void = null,
-    event_userdata_cb: ?extern fn([*c]const c.sapp_event, ?*c_void) void = null,
-    fail_userdata_cb: ?extern fn([*c]const u8, ?*c_void) void = null,
-    width: c_int = 0,
-    height: c_int = 0,
-    sample_count: c_int = 0,
-    swap_interval: c_int = 0,
+    init_cb: ?fn() void = null,
+    frame_cb: ?fn() void = null,
+    cleanup_cb: ?fn() void = null,
+    width: i32 = 0,
+    height: i32 = 0,
+    sample_count: i32 = 0,
+    swap_interval: i32 = 0,
     high_dpi: bool = false,
     fullscreen: bool = false,
     alpha: bool = false,
@@ -37,19 +58,25 @@ pub const Desc = struct {
     gl_force_gles2: bool = false
 };
 
-pub fn run(desc: Desc) void {
-    const sapp_desc = c.sapp_desc{
+pub fn run(desc: Desc) anyerror!void {
+    state = State {
         .init_cb = desc.init_cb,
         .frame_cb = desc.frame_cb,
         .cleanup_cb = desc.cleanup_cb,
-        .event_cb = desc.event_cb,
-        .fail_cb = desc.fail_cb,
-        .user_data = desc.user_data,
-        .init_userdata_cb = desc.init_userdata_cb,
-        .frame_userdata_cb = desc.frame_userdata_cb,
-        .cleanup_userdata_cb = desc.cleanup_userdata_cb,
-        .event_userdata_cb = desc.event_userdata_cb,
-        .fail_userdata_cb = desc.fail_userdata_cb,
+    };
+
+    const sapp_desc = c.sapp_desc{
+        .init_cb = if (desc.init_cb != null) fwd_init else null,
+        .frame_cb = if (desc.frame_cb != null) fwd_frame else null,
+        .cleanup_cb = if (desc.cleanup_cb != null) fwd_cleanup else null,
+        .event_cb = null,
+        .fail_cb = null,
+        .user_data = null,
+        .init_userdata_cb = null,
+        .frame_userdata_cb = null,
+        .cleanup_userdata_cb = null,
+        .event_userdata_cb = null,
+        .fail_userdata_cb = null,
         .width = desc.width,
         .height = desc.height,
         .sample_count = desc.sample_count,

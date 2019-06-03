@@ -6,7 +6,7 @@ const sg = sokol.Gfx;
 
 var green: f32 = 0.0;
 
-extern fn init_cb() void {
+fn init_cb() void {
     sg.setup(sg.Desc{
         .mtl_device = sapp.metal_get_device(),
         .mtl_renderpass_descriptor_cb = sapp.metal_get_renderpass_descriptor,
@@ -28,7 +28,7 @@ fn make_pass_action(r: f32, g: f32, b: f32) sg.PassAction {
     };
 }
 
-extern fn frame_cb() void {
+fn frame_cb() void {
     green += 0.01;
     if (green > 1.0) {
         green = 0.0;
@@ -38,12 +38,12 @@ extern fn frame_cb() void {
     sg.commit();
 }
 
-extern fn cleanup_cb() void {
+fn cleanup_cb() void {
     sg.shutdown();
 }
 
 pub fn main() anyerror!void {
-    sapp.run(sapp.Desc {
+    try sapp.run(sapp.Desc {
         .init_cb = init_cb,
         .frame_cb = frame_cb,
         .cleanup_cb = cleanup_cb,
