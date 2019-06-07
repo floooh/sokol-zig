@@ -66,7 +66,7 @@ pub fn build_c_args(b: *Builder) anyerror![]const []const u8 {
     var c_args = std.ArrayList([]const u8).init(std.debug.global_allocator);
     defer c_args.deinit();
     try c_args.append("-ObjC");
-    try c_args.append("-fobj-arc");
+    try c_args.append("-fobjc-arc");
     const hdr_paths = try get_macos_header_search_paths(b);
     for (hdr_paths) |path| {
         warn("adding system header: {}\n", path);
