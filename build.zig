@@ -81,7 +81,7 @@ pub fn build(b: *Builder) void {
     const mode = b.standardReleaseOptions();
     // this doesn't work with "addCSourceFile" since this doesn't
     // find macOS SDK framework headers (for Metal, Cocoa, etc...)
-    const sokol = b.addSystemCommand([][]const u8{
+    const sokol = b.addSystemCommand([_][]const u8{
         "clang",
         "src/sokol.c",
         "-march=native",
@@ -109,6 +109,7 @@ pub fn build(b: *Builder) void {
     exe.linkFramework("Quartz");
     exe.linkFramework("Metal");
     exe.linkFramework("MetalKit");
+    exe.enableSystemLinkerHack();
     exe.step.dependOn(&sokol.step);
     
     const run_cmd = exe.run();
