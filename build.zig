@@ -99,6 +99,8 @@ pub fn build(b: *Builder) void {
     //
     // ld -demangle -dynamic -arch x86_64 -macosx_version_min 10.14.0 -sdk_version 10.14.0 -pie -o bla /Users/floh/projects/sokol-zig/zig-cache/sokol.o /Users/floh/projects/sokol-zig/zig-cache/o/7m3moWa90u-ryMknat2mGa2XM7lH5CznZ6Xd_ceJjz59yV0uTEHiRvl68jfLIK4d/bla.o "/Users/floh/Library/Application Support/zig/stage1/o/WpKTcY2QXg4ksdKomoDb-vJNiQ7LdlAGR-60t8qtMcStE_YnusnviFKJ8StS6FB6/libcompiler_rt.a" -lSystem -framework MetalKit -framework Foundation -framework Cocoa -framework Metal -framework Quartz
     //
+    // this is where the "enableSystemLinkerHack()" is needed
+    //
     const exe = b.addExecutable("bla", "src/main.zig");
     exe.addObjectFile("zig-cache/sokol.o");
     //exe.addCSourceFile("src/sokol.c", c_args);
