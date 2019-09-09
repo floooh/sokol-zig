@@ -53,6 +53,7 @@ pub const Desc = struct {
     html5_canvas_resize: bool = false,
     html5_preserve_drawing_buffer: bool = false,
     html5_premultiplied_alpha: bool = false,
+    html5_ask_leave_site: bool = false,
     ios_keyboard_resizes_canvas: bool = false,
     gl_force_gles2: bool = false
 };
@@ -89,6 +90,7 @@ pub fn run(desc: Desc) anyerror!void {
         .html5_canvas_resize = desc.html5_canvas_resize,
         .html5_preserve_drawing_buffer = desc.html5_preserve_drawing_buffer,
         .html5_premultiplied_alpha = desc.html5_premultiplied_alpha,
+        .html5_ask_leave_site = desc.html5_ask_leave_site,
         .ios_keyboard_resizes_canvas = desc.ios_keyboard_resizes_canvas,
         .gl_force_gles2 = desc.gl_force_gles2
     };
