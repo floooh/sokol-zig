@@ -1,8 +1,5 @@
-const std = @import("std");
-const warn = std.debug.warn;
-const sokol = @import("sokol.zig");
-const sapp = sokol.App;
-const sg = sokol.Gfx;
+const sapp = @import("sokol_app.zig").App;
+const sg = @import("sokol_gfx.zig").Gfx;
 
 var green: f32 = 0.0;
 
@@ -14,26 +11,17 @@ fn init_cb() void {
     });
 }
 
-fn make_pass_action(r: f32, g: f32, b: f32) sg.PassAction {
-    return sg.PassAction {
-        .colors = [4]sg.ColorAttachmentAction {
+fn frame_cb() void {
+    green = if (green >= 1.0) 0.0 else green + 0.01;
+    const pass_action = sg.PassAction {
+        .colors = [_]sg.ColorAttachmentAction {
             sg.ColorAttachmentAction {
-                .action = sg.Action.SG_ACTION_CLEAR,
-                .val = [4]f32{r, g, b, 1.0}
-            },
-            sg.ColorAttachmentAction { },
-            sg.ColorAttachmentAction { },
-            sg.ColorAttachmentAction { },
+                .action = .SG_ACTION_CLEAR,
+                .val = [_]f32 {1.0, green, 0.0}
+            }
         }
     };
-}
-
-fn frame_cb() void {
-    green += 0.01;
-    if (green > 1.0) {
-        green = 0.0;
-    }
-    sg.begin_default_pass(make_pass_action(1.0, green, 0.0), sapp.width(), sapp.height());
+    sg.begin_default_pass(pass_action, sapp.width(), sapp.height());
     sg.end_pass();
     sg.commit();
 }
@@ -42,8 +30,8 @@ fn cleanup_cb() void {
     sg.shutdown();
 }
 
-pub fn main() anyerror!void {
-    try sapp.run(sapp.Desc {
+pub fn main() !void {
+    return sapp.run(sapp.Desc {
         .init_cb = init_cb,
         .frame_cb = frame_cb,
         .cleanup_cb = cleanup_cb,
