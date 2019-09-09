@@ -29,7 +29,7 @@ fn cleanup_cb() void {
 }
 
 pub fn main() !void {
-    return sapp.run(sapp.Desc {
+    try sapp.run(sapp.Desc {
         .init_cb = init_cb,
         .frame_cb = frame_cb,
         .cleanup_cb = cleanup_cb,
