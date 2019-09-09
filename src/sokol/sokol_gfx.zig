@@ -5,7 +5,7 @@ const c = @cImport({
     @cInclude("sokol_gfx.h");
 });
 
-pub const Gfx = struct {
+pub const SokolGfx = struct {
 
 pub const Desc = struct {
     _start_canary: u32 = 0,

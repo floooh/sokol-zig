@@ -1,5 +1,5 @@
-const sapp = @import("sokol_app.zig").App;
-const sg = @import("sokol_gfx.zig").Gfx;
+const sapp = @import("sokol/sokol_app.zig").SokolApp;
+const sg = @import("sokol/sokol_gfx.zig").SokolGfx;
 
 var pass_action: sg.PassAction = undefined;
 

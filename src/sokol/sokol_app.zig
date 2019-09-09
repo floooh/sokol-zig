@@ -5,7 +5,7 @@ const c = @cImport({
     @cInclude("sokol_app.h");
 });
 
-pub const App = struct {
+pub const SokolApp = struct {
 
 const State = struct {
     init_cb: ?fn() void,

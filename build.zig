@@ -25,9 +25,9 @@ pub fn build(b: *Builder) !void {
     const exe = b.addExecutable("clear", "src/main.zig");
 
     exe.setBuildMode(mode);
-    exe.addIncludeDir("src");
+    exe.addIncludeDir("src/sokol");
     if (builtin.os == .macosx) {
-        exe.addCSourceFile("src/sokol.c", [_][]const u8{ "-ObjC", "-fobjc-arc"});
+        exe.addCSourceFile("src/sokol/sokol.c", [_][]const u8{ "-ObjC", "-fobjc-arc"});
         const frameworks_dir = try macos_frameworks_dir(b);
         exe.addFrameworkDir(frameworks_dir);
         exe.linkFramework("Foundation");
