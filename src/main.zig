@@ -1,7 +1,7 @@
 const sapp = @import("sokol_app.zig").App;
 const sg = @import("sokol_gfx.zig").Gfx;
 
-var green: f32 = 0.0;
+var pass_action: sg.PassAction = undefined;
 
 fn init_cb() void {
     sg.setup(sg.Desc{
@@ -9,18 +9,16 @@ fn init_cb() void {
         .mtl_renderpass_descriptor_cb = sapp.metal_get_renderpass_descriptor,
         .mtl_drawable_cb = sapp.metal_get_drawable,
     });
+    pass_action = sg.PassAction {
+        .colors = [_]sg.ColorAttachmentAction {
+            sg.ColorAttachmentAction { .action = .SG_ACTION_CLEAR, .val = [_]f32 {1.0, 0.0, 0.0} }
+        }
+    };
 }
 
 fn frame_cb() void {
-    green = if (green >= 1.0) 0.0 else green + 0.01;
-    const pass_action = sg.PassAction {
-        .colors = [_]sg.ColorAttachmentAction {
-            sg.ColorAttachmentAction {
-                .action = .SG_ACTION_CLEAR,
-                .val = [_]f32 {1.0, green, 0.0}
-            }
-        }
-    };
+    var g = pass_action.colors[0].val[1] + 0.01;
+    pass_action.colors[0].val[1] = if (g > 1.0) 0.0 else g;
     sg.begin_default_pass(pass_action, sapp.width(), sapp.height());
     sg.end_pass();
     sg.commit();
