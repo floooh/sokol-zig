@@ -28,7 +28,7 @@ extern fn fwd_frame() void {
 }
 
 extern fn fwd_cleanup() void {
-    if (state.cleanup_cb) | cleanup_cb| {
+    if (state.cleanup_cb) |cleanup_cb| {
         cleanup_cb();
     }
 }
@@ -66,9 +66,9 @@ pub fn run(desc: Desc) anyerror!void {
     };
 
     const sapp_desc = c.sapp_desc{
-        .init_cb = if (desc.init_cb != null) fwd_init else null,
-        .frame_cb = if (desc.frame_cb != null) fwd_frame else null,
-        .cleanup_cb = if (desc.cleanup_cb != null) fwd_cleanup else null,
+        .init_cb = fwd_init,
+        .frame_cb = fwd_frame,
+        .cleanup_cb = fwd_cleanup,
         .event_cb = null,
         .fail_cb = null,
         .user_data = null,
