@@ -5,30 +5,21 @@ const assert = std.debug.assert;
 
 pub fn build(b: *Builder) void {
     const mode = b.standardReleaseOptions();
-    // this doesn't work with "addCSourceFile" since this doesn't
-    // find macOS SDK framework headers (for Metal, Cocoa, etc...)
-    const sokol = b.addSystemCommand([_][]const u8{
-        "clang",
-        "src/sokol.c",
-        "-march=native",
-        "-fstack-protector-strong",
-        "--param", "ssp-buffer-size=4",
-        "-fno-omit-frame-pointer", "-fPIC",
-        "-ObjC", "-fobjc-arc",
-        "-c", "-o", "zig-cache/sokol.o"
-    });
-
     const exe = b.addExecutable("bla", "src/main.zig");
-    exe.addObjectFile("zig-cache/sokol.o");
     exe.setBuildMode(mode);
     exe.addIncludeDir("src");
+    exe.addFrameworkDir("/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks");
     exe.linkFramework("Foundation");
     exe.linkFramework("Cocoa");
     exe.linkFramework("Quartz");
     exe.linkFramework("Metal");
     exe.linkFramework("MetalKit");
     exe.enableSystemLinkerHack();
-    exe.step.dependOn(&sokol.step);
+    const c_args = [_][]const u8{
+        "-ObjC",
+        "-fobjc-arc",
+    };
+    exe.addCSourceFile("src/sokol.c", c_args);
     
     const run_cmd = exe.run();
 
