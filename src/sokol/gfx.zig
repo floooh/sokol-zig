@@ -18,6 +18,9 @@ fn init_with(target_ptr: anytype, opts: anytype) void {
         }
     }
 }
+pub fn sizeOf(comptime v: anytype) comptime_int {
+    return @sizeOf(@TypeOf(v));
+}
 //--- API declarations ---
 pub const Buffer = extern struct {
     pub fn init(options: anytype) Buffer { var item: Buffer = .{ }; init_with(&item, options); return item; }

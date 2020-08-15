@@ -6,10 +6,13 @@ Experimental auto-generated Zig bindings for the [sokol headers](https://github.
 
 Use the zig 0.6.0 HEAD version (needs to support ```anytype```)
 
+Currently hardwired to Windows and the sokol-gfx D3D11 backend.
+
 ```sh
 # just build:
 > zig build
 # build and run samples:
 > zig build run-clear
+> zig build run-triangle
 ```
 

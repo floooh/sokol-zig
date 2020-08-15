@@ -1,3 +1,8 @@
+//------------------------------------------------------------------------------
+//  clear.zig
+//
+//  Just clear the framebuffer with an animated color.
+//------------------------------------------------------------------------------
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const sapp = sokol.app;
