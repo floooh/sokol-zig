@@ -1,6 +1,5 @@
 const std = @import("std");
 const Builder = std.build.Builder;
-const builtin = @import("builtin");
 
 pub fn target(b: *Builder, comptime name: []const u8, source: []const u8) void {
     const mode = b.standardReleaseOptions();
