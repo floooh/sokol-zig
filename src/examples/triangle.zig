@@ -14,7 +14,7 @@ const State = struct {
 };
 var state: State = .{};
 
-fn init() callconv(.C) void {
+export fn init() void {
     sg.setup(.{
         .context = sgapp.context()
     });
@@ -73,7 +73,7 @@ fn init() callconv(.C) void {
     }));
 }
 
-fn frame() callconv(.C) void {
+export fn frame() void {
     // default pass-action clears to grey
     sg.beginDefaultPass(.{}, sapp.width(), sapp.height());
     sg.applyPipeline(state.pip);
@@ -83,7 +83,7 @@ fn frame() callconv(.C) void {
     sg.commit();
 }
 
-fn cleanup() callconv(.C) void {
+export fn cleanup() void {
     sg.shutdown();
 }
 

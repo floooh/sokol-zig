@@ -14,13 +14,13 @@ var pass_action = sg.PassAction.init(.{
     }
 });
 
-fn init() callconv(.C) void {
+export fn init() void {
     sg.setup(.{
         .context = sgapp.context()
     });
 }
 
-fn frame() callconv(.C) void {
+export fn frame() void {
     const g = pass_action.colors[0].val[1] + 0.01;
     pass_action.colors[0].val[1] = if (g > 1.0) 0.0 else g;
     sg.beginDefaultPass(pass_action, sapp.width(), sapp.height());
@@ -28,7 +28,7 @@ fn frame() callconv(.C) void {
     sg.commit();
 }
 
-fn cleanup() callconv(.C) void {
+export fn cleanup() void {
     sg.shutdown();
 }
 
