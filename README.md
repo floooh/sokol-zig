@@ -14,5 +14,6 @@ Currently hardwired to Windows and the sokol-gfx D3D11 backend.
 # build and run samples:
 > zig build run-clear
 > zig build run-triangle
+> zig build run-quad
 ```
 

@@ -1,49 +1,26 @@
 // machine generated, do not edit
 
 //--- helper functions ---
-fn init_with(target_ptr: anytype, opts: anytype) void {
-    switch (@typeInfo(@TypeOf(target_ptr.*))) {
-        .Array => {
-            inline for (opts) |item, i| {
-                init_with(&target_ptr.*[i], opts[i]);
-            }
-        },
-        .Struct => {
-            inline for (@typeInfo(@TypeOf(opts)).Struct.fields) |field| {
-                init_with(&@field(target_ptr.*, field.name), @field(opts, field.name));
-            }
-        },
-        else => {
-            target_ptr.* = opts;
-        }
-    }
-}
 pub fn sizeOf(comptime v: anytype) comptime_int {
     return @sizeOf(@TypeOf(v));
 }
 //--- API declarations ---
 pub const Buffer = extern struct {
-    pub fn init(options: anytype) Buffer { var item: Buffer = .{ }; init_with(&item, options); return item; }
     id: u32 = 0,
 };
 pub const Image = extern struct {
-    pub fn init(options: anytype) Image { var item: Image = .{ }; init_with(&item, options); return item; }
     id: u32 = 0,
 };
 pub const Shader = extern struct {
-    pub fn init(options: anytype) Shader { var item: Shader = .{ }; init_with(&item, options); return item; }
     id: u32 = 0,
 };
 pub const Pipeline = extern struct {
-    pub fn init(options: anytype) Pipeline { var item: Pipeline = .{ }; init_with(&item, options); return item; }
     id: u32 = 0,
 };
 pub const Pass = extern struct {
-    pub fn init(options: anytype) Pass { var item: Pass = .{ }; init_with(&item, options); return item; }
     id: u32 = 0,
 };
 pub const Context = extern struct {
-    pub fn init(options: anytype) Context { var item: Context = .{ }; init_with(&item, options); return item; }
     id: u32 = 0,
 };
 pub const invalid_id = 0;
@@ -134,7 +111,6 @@ pub const PixelFormat = extern enum(i32) {
     NUM,
 };
 pub const PixelformatInfo = extern struct {
-    pub fn init(options: anytype) PixelformatInfo { var item: PixelformatInfo = .{ }; init_with(&item, options); return item; }
     sample: bool = false,
     filter: bool = false,
     render: bool = false,
@@ -143,7 +119,6 @@ pub const PixelformatInfo = extern struct {
     depth: bool = false,
 };
 pub const Features = extern struct {
-    pub fn init(options: anytype) Features { var item: Features = .{ }; init_with(&item, options); return item; }
     instancing: bool = false,
     origin_top_left: bool = false,
     multiple_render_targets: bool = false,
@@ -153,7 +128,6 @@ pub const Features = extern struct {
     image_clamp_to_border: bool = false,
 };
 pub const Limits = extern struct {
-    pub fn init(options: anytype) Limits { var item: Limits = .{ }; init_with(&item, options); return item; }
     max_image_size_2d: u32 = 0,
     max_image_size_cube: u32 = 0,
     max_image_size_3d: u32 = 0,
@@ -364,41 +338,35 @@ pub const Action = extern enum(i32) {
     NUM,
 };
 pub const ColorAttachmentAction = extern struct {
-    pub fn init(options: anytype) ColorAttachmentAction { var item: ColorAttachmentAction = .{ }; init_with(&item, options); return item; }
     action: Action = .DEFAULT,
     val: [4]f32 = [_]f32{0.0} ** 4,
 };
 pub const DepthAttachmentAction = extern struct {
-    pub fn init(options: anytype) DepthAttachmentAction { var item: DepthAttachmentAction = .{ }; init_with(&item, options); return item; }
     action: Action = .DEFAULT,
     val: f32 = 0.0,
 };
 pub const StencilAttachmentAction = extern struct {
-    pub fn init(options: anytype) StencilAttachmentAction { var item: StencilAttachmentAction = .{ }; init_with(&item, options); return item; }
     action: Action = .DEFAULT,
     val: u8 = 0,
 };
 pub const PassAction = extern struct {
-    pub fn init(options: anytype) PassAction { var item: PassAction = .{ }; init_with(&item, options); return item; }
     _start_canary: u32 = 0,
-    colors: [4]ColorAttachmentAction = [_]ColorAttachmentAction{ .{ } } ** 4,
+    colors: [4]ColorAttachmentAction = [_]ColorAttachmentAction{.{}} ** 4,
     depth: DepthAttachmentAction = .{ },
     stencil: StencilAttachmentAction = .{ },
     _end_canary: u32 = 0,
 };
 pub const Bindings = extern struct {
-    pub fn init(options: anytype) Bindings { var item: Bindings = .{ }; init_with(&item, options); return item; }
     _start_canary: u32 = 0,
-    vertex_buffers: [8]Buffer = [_]Buffer{ .{ } } ** 8,
+    vertex_buffers: [8]Buffer = [_]Buffer{.{}} ** 8,
     vertex_buffer_offsets: [8]i32 = [_]i32{0} ** 8,
     index_buffer: Buffer = .{ },
     index_buffer_offset: i32 = 0,
-    vs_images: [12]Image = [_]Image{ .{ } } ** 12,
-    fs_images: [12]Image = [_]Image{ .{ } } ** 12,
+    vs_images: [12]Image = [_]Image{.{}} ** 12,
+    fs_images: [12]Image = [_]Image{.{}} ** 12,
     _end_canary: u32 = 0,
 };
 pub const BufferDesc = extern struct {
-    pub fn init(options: anytype) BufferDesc { var item: BufferDesc = .{ }; init_with(&item, options); return item; }
     _start_canary: u32 = 0,
     size: i32 = 0,
     type: BufferType = .DEFAULT,
@@ -412,16 +380,13 @@ pub const BufferDesc = extern struct {
     _end_canary: u32 = 0,
 };
 pub const SubimageContent = extern struct {
-    pub fn init(options: anytype) SubimageContent { var item: SubimageContent = .{ }; init_with(&item, options); return item; }
     ptr: ?*const c_void = null,
     size: i32 = 0,
 };
 pub const ImageContent = extern struct {
-    pub fn init(options: anytype) ImageContent { var item: ImageContent = .{ }; init_with(&item, options); return item; }
     subimage: [6][16]SubimageContent = [_][16]SubimageContent{[_]SubimageContent{ .{ } }**16}**6,
 };
 pub const ImageDesc = extern struct {
-    pub fn init(options: anytype) ImageDesc { var item: ImageDesc = .{ }; init_with(&item, options); return item; }
     _start_canary: u32 = 0,
     type: ImageType = .DEFAULT,
     render_target: bool = false,
@@ -451,73 +416,62 @@ pub const ImageDesc = extern struct {
     _end_canary: u32 = 0,
 };
 pub const ShaderAttrDesc = extern struct {
-    pub fn init(options: anytype) ShaderAttrDesc { var item: ShaderAttrDesc = .{ }; init_with(&item, options); return item; }
     name: [*c]const u8 = null,
     sem_name: [*c]const u8 = null,
     sem_index: i32 = 0,
 };
 pub const ShaderUniformDesc = extern struct {
-    pub fn init(options: anytype) ShaderUniformDesc { var item: ShaderUniformDesc = .{ }; init_with(&item, options); return item; }
     name: [*c]const u8 = null,
     type: UniformType = .INVALID,
     array_count: i32 = 0,
 };
 pub const ShaderUniformBlockDesc = extern struct {
-    pub fn init(options: anytype) ShaderUniformBlockDesc { var item: ShaderUniformBlockDesc = .{ }; init_with(&item, options); return item; }
     size: i32 = 0,
-    uniforms: [16]ShaderUniformDesc = [_]ShaderUniformDesc{ .{ } } ** 16,
+    uniforms: [16]ShaderUniformDesc = [_]ShaderUniformDesc{.{}} ** 16,
 };
 pub const ShaderImageDesc = extern struct {
-    pub fn init(options: anytype) ShaderImageDesc { var item: ShaderImageDesc = .{ }; init_with(&item, options); return item; }
     name: [*c]const u8 = null,
     type: ImageType = .DEFAULT,
     sampler_type: SamplerType = .DEFAULT,
 };
 pub const ShaderStageDesc = extern struct {
-    pub fn init(options: anytype) ShaderStageDesc { var item: ShaderStageDesc = .{ }; init_with(&item, options); return item; }
     source: [*c]const u8 = null,
     byte_code: ?[*]const u8 = null,
     byte_code_size: i32 = 0,
     entry: [*c]const u8 = null,
     d3d11_target: [*c]const u8 = null,
-    uniform_blocks: [4]ShaderUniformBlockDesc = [_]ShaderUniformBlockDesc{ .{ } } ** 4,
-    images: [12]ShaderImageDesc = [_]ShaderImageDesc{ .{ } } ** 12,
+    uniform_blocks: [4]ShaderUniformBlockDesc = [_]ShaderUniformBlockDesc{.{}} ** 4,
+    images: [12]ShaderImageDesc = [_]ShaderImageDesc{.{}} ** 12,
 };
 pub const ShaderDesc = extern struct {
-    pub fn init(options: anytype) ShaderDesc { var item: ShaderDesc = .{ }; init_with(&item, options); return item; }
     _start_canary: u32 = 0,
-    attrs: [16]ShaderAttrDesc = [_]ShaderAttrDesc{ .{ } } ** 16,
+    attrs: [16]ShaderAttrDesc = [_]ShaderAttrDesc{.{}} ** 16,
     vs: ShaderStageDesc = .{ },
     fs: ShaderStageDesc = .{ },
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
 };
 pub const BufferLayoutDesc = extern struct {
-    pub fn init(options: anytype) BufferLayoutDesc { var item: BufferLayoutDesc = .{ }; init_with(&item, options); return item; }
     stride: i32 = 0,
     step_func: VertexStep = .DEFAULT,
     step_rate: i32 = 0,
 };
 pub const VertexAttrDesc = extern struct {
-    pub fn init(options: anytype) VertexAttrDesc { var item: VertexAttrDesc = .{ }; init_with(&item, options); return item; }
     buffer_index: i32 = 0,
     offset: i32 = 0,
     format: VertexFormat = .INVALID,
 };
 pub const LayoutDesc = extern struct {
-    pub fn init(options: anytype) LayoutDesc { var item: LayoutDesc = .{ }; init_with(&item, options); return item; }
-    buffers: [8]BufferLayoutDesc = [_]BufferLayoutDesc{ .{ } } ** 8,
-    attrs: [16]VertexAttrDesc = [_]VertexAttrDesc{ .{ } } ** 16,
+    buffers: [8]BufferLayoutDesc = [_]BufferLayoutDesc{.{}} ** 8,
+    attrs: [16]VertexAttrDesc = [_]VertexAttrDesc{.{}} ** 16,
 };
 pub const StencilState = extern struct {
-    pub fn init(options: anytype) StencilState { var item: StencilState = .{ }; init_with(&item, options); return item; }
     fail_op: StencilOp = .DEFAULT,
     depth_fail_op: StencilOp = .DEFAULT,
     pass_op: StencilOp = .DEFAULT,
     compare_func: CompareFunc = .DEFAULT,
 };
 pub const DepthStencilState = extern struct {
-    pub fn init(options: anytype) DepthStencilState { var item: DepthStencilState = .{ }; init_with(&item, options); return item; }
     stencil_front: StencilState = .{ },
     stencil_back: StencilState = .{ },
     depth_compare_func: CompareFunc = .DEFAULT,
@@ -528,7 +482,6 @@ pub const DepthStencilState = extern struct {
     stencil_ref: u8 = 0,
 };
 pub const BlendState = extern struct {
-    pub fn init(options: anytype) BlendState { var item: BlendState = .{ }; init_with(&item, options); return item; }
     enabled: bool = false,
     src_factor_rgb: BlendFactor = .DEFAULT,
     dst_factor_rgb: BlendFactor = .DEFAULT,
@@ -543,7 +496,6 @@ pub const BlendState = extern struct {
     blend_color: [4]f32 = [_]f32{0.0} ** 4,
 };
 pub const RasterizerState = extern struct {
-    pub fn init(options: anytype) RasterizerState { var item: RasterizerState = .{ }; init_with(&item, options); return item; }
     alpha_to_coverage_enabled: bool = false,
     cull_mode: CullMode = .DEFAULT,
     face_winding: FaceWinding = .DEFAULT,
@@ -553,7 +505,6 @@ pub const RasterizerState = extern struct {
     depth_bias_clamp: f32 = 0.0,
 };
 pub const PipelineDesc = extern struct {
-    pub fn init(options: anytype) PipelineDesc { var item: PipelineDesc = .{ }; init_with(&item, options); return item; }
     _start_canary: u32 = 0,
     layout: LayoutDesc = .{ },
     shader: Shader = .{ },
@@ -566,21 +517,18 @@ pub const PipelineDesc = extern struct {
     _end_canary: u32 = 0,
 };
 pub const AttachmentDesc = extern struct {
-    pub fn init(options: anytype) AttachmentDesc { var item: AttachmentDesc = .{ }; init_with(&item, options); return item; }
     image: Image = .{ },
     mip_level: i32 = 0,
     face_layer_slice: i32 = 0,
 };
 pub const PassDesc = extern struct {
-    pub fn init(options: anytype) PassDesc { var item: PassDesc = .{ }; init_with(&item, options); return item; }
     _start_canary: u32 = 0,
-    color_attachments: [4]AttachmentDesc = [_]AttachmentDesc{ .{ } } ** 4,
+    color_attachments: [4]AttachmentDesc = [_]AttachmentDesc{.{}} ** 4,
     depth_stencil_attachment: AttachmentDesc = .{ },
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
 };
 pub const TraceHooks = extern struct {
-    pub fn init(options: anytype) TraceHooks { var item: TraceHooks = .{ }; init_with(&item, options); return item; }
     user_data: ?*c_void = null,
     reset_state_cache: ?fn(?*c_void) callconv(.C) void = null,
     make_buffer: ?fn([*c]const BufferDesc, Buffer, ?*c_void) callconv(.C) void = null,
@@ -634,13 +582,11 @@ pub const TraceHooks = extern struct {
     err_bindings_invalid: ?fn(?*c_void) callconv(.C) void = null,
 };
 pub const SlotInfo = extern struct {
-    pub fn init(options: anytype) SlotInfo { var item: SlotInfo = .{ }; init_with(&item, options); return item; }
     state: ResourceState = .INITIAL,
     res_id: u32 = 0,
     ctx_id: u32 = 0,
 };
 pub const BufferInfo = extern struct {
-    pub fn init(options: anytype) BufferInfo { var item: BufferInfo = .{ }; init_with(&item, options); return item; }
     slot: SlotInfo = .{ },
     update_frame_index: u32 = 0,
     append_frame_index: u32 = 0,
@@ -650,7 +596,6 @@ pub const BufferInfo = extern struct {
     active_slot: i32 = 0,
 };
 pub const ImageInfo = extern struct {
-    pub fn init(options: anytype) ImageInfo { var item: ImageInfo = .{ }; init_with(&item, options); return item; }
     slot: SlotInfo = .{ },
     upd_frame_index: u32 = 0,
     num_slots: i32 = 0,
@@ -659,43 +604,35 @@ pub const ImageInfo = extern struct {
     height: i32 = 0,
 };
 pub const ShaderInfo = extern struct {
-    pub fn init(options: anytype) ShaderInfo { var item: ShaderInfo = .{ }; init_with(&item, options); return item; }
     slot: SlotInfo = .{ },
 };
 pub const PipelineInfo = extern struct {
-    pub fn init(options: anytype) PipelineInfo { var item: PipelineInfo = .{ }; init_with(&item, options); return item; }
     slot: SlotInfo = .{ },
 };
 pub const PassInfo = extern struct {
-    pub fn init(options: anytype) PassInfo { var item: PassInfo = .{ }; init_with(&item, options); return item; }
     slot: SlotInfo = .{ },
 };
 pub const GlContextDesc = extern struct {
-    pub fn init(options: anytype) GlContextDesc { var item: GlContextDesc = .{ }; init_with(&item, options); return item; }
     force_gles2: bool = false,
 };
 pub const MetalContextDesc = extern struct {
-    pub fn init(options: anytype) MetalContextDesc { var item: MetalContextDesc = .{ }; init_with(&item, options); return item; }
     device: ?*const c_void = null,
     renderpass_descriptor_cb: ?fn() callconv(.C) ?*const c_void = null,
     drawable_cb: ?fn() callconv(.C) ?*const c_void = null,
 };
 pub const D3d11ContextDesc = extern struct {
-    pub fn init(options: anytype) D3d11ContextDesc { var item: D3d11ContextDesc = .{ }; init_with(&item, options); return item; }
     device: ?*const c_void = null,
     device_context: ?*const c_void = null,
     render_target_view_cb: ?fn() callconv(.C) ?*const c_void = null,
     depth_stencil_view_cb: ?fn() callconv(.C) ?*const c_void = null,
 };
 pub const WgpuContextDesc = extern struct {
-    pub fn init(options: anytype) WgpuContextDesc { var item: WgpuContextDesc = .{ }; init_with(&item, options); return item; }
     device: ?*const c_void = null,
     render_view_cb: ?fn() callconv(.C) ?*const c_void = null,
     resolve_view_cb: ?fn() callconv(.C) ?*const c_void = null,
     depth_stencil_view_cb: ?fn() callconv(.C) ?*const c_void = null,
 };
 pub const ContextDesc = extern struct {
-    pub fn init(options: anytype) ContextDesc { var item: ContextDesc = .{ }; init_with(&item, options); return item; }
     color_format: i32 = 0,
     depth_format: i32 = 0,
     sample_count: i32 = 0,
@@ -705,7 +642,6 @@ pub const ContextDesc = extern struct {
     wgpu: WgpuContextDesc = .{ },
 };
 pub const Desc = extern struct {
-    pub fn init(options: anytype) Desc { var item: Desc = .{ }; init_with(&item, options); return item; }
     _start_canary: u32 = 0,
     buffer_pool_size: i32 = 0,
     image_pool_size: i32 = 0,

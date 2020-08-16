@@ -1,8 +1,8 @@
 const Builder = @import("std").build.Builder;
 
-pub fn target(b: *Builder, comptime name: []const u8, source: []const u8) void {
+pub fn example(b: *Builder, comptime name: []const u8) void {
     const mode = b.standardReleaseOptions();
-    const e = b.addExecutable(name, source);
+    const e = b.addExecutable(name, "src/examples/" ++ name ++ ".zig");
     e.addPackagePath("sokol", "src/sokol/sokol.zig");
     e.linkSystemLibrary("c");
     e.setBuildMode(mode);
@@ -12,6 +12,7 @@ pub fn target(b: *Builder, comptime name: []const u8, source: []const u8) void {
 }
 
 pub fn build(b: *Builder) void {
-    target(b, "clear", "src/examples/clear.zig");
-    target(b, "triangle", "src/examples/triangle.zig");
+    example(b, "clear");
+    example(b, "triangle");
+    example(b, "quad");
 }

@@ -1,23 +1,6 @@
 // machine generated, do not edit
 
 //--- helper functions ---
-fn init_with(target_ptr: anytype, opts: anytype) void {
-    switch (@typeInfo(@TypeOf(target_ptr.*))) {
-        .Array => {
-            inline for (opts) |item, i| {
-                init_with(&target_ptr.*[i], opts[i]);
-            }
-        },
-        .Struct => {
-            inline for (@typeInfo(@TypeOf(opts)).Struct.fields) |field| {
-                init_with(&@field(target_ptr.*, field.name), @field(opts, field.name));
-            }
-        },
-        else => {
-            target_ptr.* = opts;
-        }
-    }
-}
 pub fn sizeOf(comptime v: anytype) comptime_int {
     return @sizeOf(@TypeOf(v));
 }
@@ -174,7 +157,6 @@ pub const Keycode = extern enum(i32) {
     MENU = 348,
 };
 pub const Touchpoint = extern struct {
-    pub fn init(options: anytype) Touchpoint { var item: Touchpoint = .{ }; init_with(&item, options); return item; }
 //  identifier: uintptr_t;
     pos_x: f32 = 0.0,
     pos_y: f32 = 0.0,
@@ -191,7 +173,6 @@ pub const modifier_ctrl = 2;
 pub const modifier_alt = 4;
 pub const modifier_super = 8;
 pub const Event = extern struct {
-    pub fn init(options: anytype) Event { var item: Event = .{ }; init_with(&item, options); return item; }
     frame_count: u64 = 0,
     type: EventType = .INVALID,
     key_code: Keycode = .INVALID,
@@ -206,14 +187,13 @@ pub const Event = extern struct {
     scroll_x: f32 = 0.0,
     scroll_y: f32 = 0.0,
     num_touches: i32 = 0,
-    touches: [8]Touchpoint = [_]Touchpoint{ .{ } } ** 8,
+    touches: [8]Touchpoint = [_]Touchpoint{.{}} ** 8,
     window_width: i32 = 0,
     window_height: i32 = 0,
     framebuffer_width: i32 = 0,
     framebuffer_height: i32 = 0,
 };
 pub const Desc = extern struct {
-    pub fn init(options: anytype) Desc { var item: Desc = .{ }; init_with(&item, options); return item; }
     init_cb: ?fn() callconv(.C) void = null,
     frame_cb: ?fn() callconv(.C) void = null,
     cleanup_cb: ?fn() callconv(.C) void = null,

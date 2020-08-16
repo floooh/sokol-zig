@@ -8,16 +8,13 @@ const sg = sokol.gfx;
 const sapp = sokol.app;
 const sgapp = sokol.app_gfx_glue;
 
-var pass_action = sg.PassAction.init(.{
-    .colors = .{
-        .{ .action = .CLEAR, .val = .{ 1.0, 1.0, 0.0, 1.0 } }
-    }
-});
+var pass_action: sg.PassAction = .{};
 
 export fn init() void {
     sg.setup(.{
         .context = sgapp.context()
     });
+    pass_action.colors[0] = .{ .action=.CLEAR, .val=.{ 1.0, 1.0, 0.0, 1.0 } };
 }
 
 export fn frame() void {
