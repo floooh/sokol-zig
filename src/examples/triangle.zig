@@ -39,8 +39,9 @@ export fn init() void {
     shd_desc.vs.source = vs_source();
     shd_desc.fs.source = fs_source();
 
-    var pip_desc: sg.PipelineDesc = .{};
-    pip_desc.shader = sg.makeShader(shd_desc);
+    var pip_desc: sg.PipelineDesc = .{
+        .shader = sg.makeShader(shd_desc)
+    };
     pip_desc.layout.attrs[0].format = .FLOAT3;
     pip_desc.layout.attrs[1].format = .FLOAT4;
     state.pip = sg.makePipeline(pip_desc);
