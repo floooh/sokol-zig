@@ -1,25 +1,27 @@
 //------------------------------------------------------------------------------
-//  clear.zig
+//  cube.zig
 //
-//  Just clear the framebuffer with an animated color.
+//  Shader with uniform data.
 //------------------------------------------------------------------------------
 const sg = @import("sokol").gfx;
 const sapp = @import("sokol").app;
 const sgapp = @import("sokol").app_gfx_glue;
+const vec3 = @import("math.zig").Vec3;
+const mat4 = @import("math.zig").Mat4;
 
-var pass_action: sg.PassAction = .{};
+const warn = @import("std").debug.warn;
 
 export fn init() void {
     sg.setup(.{
         .context = sgapp.context()
     });
-    pass_action.colors[0] = .{ .action=.CLEAR, .val=.{ 1.0, 1.0, 0.0, 1.0 } };
+
+    const m = mat4.persp(60.0, 1.33333337, 0.01, 10.0);
+    warn("{}", .{ m.m[0][0] });
 }
 
 export fn frame() void {
-    const g = pass_action.colors[0].val[1] + 0.01;
-    pass_action.colors[0].val[1] = if (g > 1.0) 0.0 else g;
-    sg.beginDefaultPass(pass_action, sapp.width(), sapp.height());
+    sg.beginDefaultPass(.{}, sapp.width(), sapp.height());
     sg.endPass();
     sg.commit();
 }
@@ -33,8 +35,8 @@ pub fn main() void {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .width = 640,
-        .height = 480,
-        .window_title = "clear.zig"
+        .width = 800,
+        .height = 600,
+        .window_title = "cube.zig"
     });
 }

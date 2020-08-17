@@ -16,4 +16,5 @@ pub fn build(b: *Builder) void {
     example(b, "triangle");
     example(b, "quad");
     example(b, "bufferoffsets");
+    example(b, "cube");
 }

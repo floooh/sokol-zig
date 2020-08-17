@@ -16,5 +16,6 @@ Currently hardwired to Windows and the sokol-gfx D3D11 backend.
 > zig build run-triangle
 > zig build run-quad
 > zig build run-bufferoffsets
+> zig build run-cube
 ```
 
