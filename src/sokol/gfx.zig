@@ -1,9 +1,5 @@
 // machine generated, do not edit
 
-//--- helper functions ---
-pub fn sizeOf(comptime v: anytype) comptime_int {
-    return @sizeOf(@TypeOf(v));
-}
 //--- API declarations ---
 pub const Buffer = extern struct {
     id: u32 = 0,

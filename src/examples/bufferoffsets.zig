@@ -49,12 +49,12 @@ export fn init() void {
     };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
         .content = &vertices,
-        .size = sg.sizeOf(vertices)
+        .size = @sizeOf(@TypeOf(vertices))
     });
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
         .content = &indices,
-        .size = sg.sizeOf(indices)
+        .size = @sizeOf(@TypeOf(indices))
     });
 
     // a shader and pipeline object

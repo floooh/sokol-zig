@@ -27,19 +27,13 @@ export fn init() void {
     };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
         .content = &vertices,
-        .size = sg.sizeOf(vertices)
+        .size = @sizeOf(@TypeOf(vertices))
     });
 
     // create a shader and pipeline object
-    // NOTE: eventually we'd like to use designated init also for complex nested structs!
-    var shd_desc: sg.ShaderDesc = .{};
-    shd_desc.attrs[0].sem_name = "POS";
-    shd_desc.attrs[1].sem_name = "COLOR";
-    shd_desc.vs.source = vs_source();
-    shd_desc.fs.source = fs_source();
-
+    const shd = sg.makeShader(shaderDesc());
     var pip_desc: sg.PipelineDesc = .{
-        .shader = sg.makeShader(shd_desc)
+        .shader = shd
     };
     pip_desc.layout.attrs[0].format = .FLOAT3;
     pip_desc.layout.attrs[1].format = .FLOAT4;
@@ -71,37 +65,37 @@ pub fn main() void {
     });
 }
 
-fn vs_source() [*c]const u8 {
-    return switch (sg.queryBackend()) {
-        .D3D11 =>
-            \\struct vs_in {
-            \\  float4 pos: POS;
-            \\  float4 color: COLOR;
-            \\};
-            \\struct vs_out {
-            \\  float4 color: COLOR0;
-            \\  float4 pos: SV_Position;
-            \\};
-            \\vs_out main(vs_in inp) {
-            \\  vs_out outp;
-            \\  outp.pos = inp.pos;
-            \\  outp.color = inp.color;
-            \\  return outp;
-            \\}
-            ,
-        else => "FIXME"
-    };
+// build a backend-specific ShaderDesc struct
+fn shaderDesc() sg.ShaderDesc {
+    var desc: sg.ShaderDesc = .{};
+    switch (sg.queryBackend()) {
+        .D3D11 => {
+            desc.attrs[0].sem_name = "POS";
+            desc.attrs[1].sem_name = "COLOR";
+            desc.vs.source =
+                \\struct vs_in {
+                \\  float4 pos: POS;
+                \\  float4 color: COLOR;
+                \\};
+                \\struct vs_out {
+                \\  float4 color: COLOR0;
+                \\  float4 pos: SV_Position;
+                \\};
+                \\vs_out main(vs_in inp) {
+                \\  vs_out outp;
+                \\  outp.pos = inp.pos;
+                \\  outp.color = inp.color;
+                \\  return outp;
+                \\}
+                ;
+            desc.fs.source =
+                \\float4 main(float4 color: COLOR0): SV_Target0 {
+                \\  return color;
+                \\}
+                ;
+        },
+        else => {}
+    }
+    return desc;
 }
-
-fn fs_source() [*c]const u8 {
-    return switch (sg.queryBackend()) {
-        .D3D11 =>
-            \\float4 main(float4 color: COLOR0): SV_Target0 {
-            \\  return color;
-            \\}
-            ,
-        else => "FIXME"
-    };
-}
-
 
