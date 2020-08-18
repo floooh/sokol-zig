@@ -724,7 +724,7 @@ pub fn destroyPass(pass: Pass) void {
     sg_destroy_pass(pass);
 }
 pub extern fn sg_update_buffer(Buffer, ?*const c_void, i32) void;
-pub fn updateBuffer(buf: Buffer, comptime T: type, data_ptr: []const T, data_size: i32) void {
+pub fn updateBuffer(buf: Buffer, data_ptr: ?*const c_void, data_size: i32) void {
     sg_update_buffer(buf, data_ptr, data_size);
 }
 pub extern fn sg_update_image(Image, [*c]const ImageContent) void;
@@ -732,7 +732,7 @@ pub fn updateImage(img: Image, data: ImageContent) void {
     sg_update_image(img, &data);
 }
 pub extern fn sg_append_buffer(Buffer, ?*const c_void, i32) i32;
-pub fn appendBuffer(buf: Buffer, comptime T: type, data_ptr: []const T, data_size: i32) i32 {
+pub fn appendBuffer(buf: Buffer, data_ptr: ?*const c_void, data_size: i32) i32 {
     return sg_append_buffer(buf, data_ptr, data_size);
 }
 pub extern fn sg_query_buffer_overflow(Buffer) bool;
@@ -764,7 +764,7 @@ pub fn applyBindings(bindings: Bindings) void {
     sg_apply_bindings(&bindings);
 }
 pub extern fn sg_apply_uniforms(ShaderStage, i32, ?*const c_void, i32) void;
-pub fn applyUniforms(stage: ShaderStage, ub_index: i32, comptime T: type, data: []const T, num_bytes: i32) void {
+pub fn applyUniforms(stage: ShaderStage, ub_index: i32, data: ?*const c_void, num_bytes: i32) void {
     sg_apply_uniforms(stage, ub_index, data, num_bytes);
 }
 pub extern fn sg_draw(i32, i32, i32) void;
