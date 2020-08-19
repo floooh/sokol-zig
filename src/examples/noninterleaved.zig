@@ -1,7 +1,11 @@
 //------------------------------------------------------------------------------
-//  cube.zig
+//  noninterleaved.zig
 //
-//  Shader with uniform data.
+//  How to use non-interleaved vertex data (vertex components in
+//  separate non-interleaved chunks in the same vertex buffers). Note
+//  that only 4 separate chunks are currently possible because there
+//  are 4 vertex buffer bind slots in sg_bindings, but you can keep
+//  several related vertex components interleaved in the same chunk.
 //------------------------------------------------------------------------------
 const sg = @import("sokol").gfx;
 const sapp = @import("sokol").app;
@@ -30,39 +34,25 @@ export fn init() void {
         .context = sgapp.context()
     });
 
-    // cube vertex buffer
+    // cube vertex buffer, NOTE how the vertex components are separate
     const vertices = [_]f32 {
-        -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-         1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-         1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-        -1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+        // positions
+        -1.0, -1.0, -1.0,   1.0, -1.0, -1.0,   1.0,  1.0, -1.0,  -1.0,  1.0, -1.0,
+        -1.0, -1.0,  1.0,   1.0, -1.0,  1.0,   1.0,  1.0,  1.0,  -1.0,  1.0,  1.0,
+        -1.0, -1.0, -1.0,  -1.0,  1.0, -1.0,  -1.0,  1.0,  1.0,  -1.0, -1.0,  1.0,
+         1.0, -1.0, -1.0,   1.0,  1.0, -1.0,   1.0,  1.0,  1.0,   1.0, -1.0,  1.0,
+        -1.0, -1.0, -1.0,  -1.0, -1.0,  1.0,   1.0, -1.0,  1.0,   1.0, -1.0, -1.0,
+        -1.0,  1.0, -1.0,  -1.0,  1.0,  1.0,   1.0,  1.0,  1.0,   1.0,  1.0, -1.0,
 
-        -1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-         1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-         1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-        -1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-
-        -1.0, -1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
-        -1.0,  1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
-        -1.0,  1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
-        -1.0, -1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
-
-        1.0, -1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
-        1.0,  1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
-        1.0,  1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
-        1.0, -1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
-
-        -1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
-        -1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
-         1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
-         1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
-
-        -1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
-        -1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
-         1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
-         1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
+        // colors
+        1.0, 0.5, 0.0, 1.0,  1.0, 0.5, 0.0, 1.0,  1.0, 0.5, 0.0, 1.0,  1.0, 0.5, 0.0, 1.0,
+        0.5, 1.0, 0.0, 1.0,  0.5, 1.0, 0.0, 1.0,  0.5, 1.0, 0.0, 1.0,  0.5, 1.0, 0.0, 1.0,
+        0.5, 0.0, 1.0, 1.0,  0.5, 0.0, 1.0, 1.0,  0.5, 0.0, 1.0, 1.0,  0.5, 0.0, 1.0, 1.0,
+        1.0, 0.5, 1.0, 1.0,  1.0, 0.5, 1.0, 1.0,  1.0, 0.5, 1.0, 1.0,  1.0, 0.5, 1.0, 1.0,
+        0.5, 1.0, 1.0, 1.0,  0.5, 1.0, 1.0, 1.0,  0.5, 1.0, 1.0, 1.0,  0.5, 1.0, 1.0, 1.0,
+        1.0, 1.0, 0.5, 1.0,  1.0, 1.0, 0.5, 1.0,  1.0, 1.0, 0.5, 1.0,  1.0, 1.0, 0.5, 1.0,
     };
-    state.bind.vertex_buffers[0] = sg.makeBuffer(.{
+    const vbuf = sg.makeBuffer(.{
         .content = &vertices,
         .size = @sizeOf(@TypeOf(vertices))
     });
@@ -76,7 +66,7 @@ export fn init() void {
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    state.bind.index_buffer = sg.makeBuffer(.{
+    const ibuf = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
         .content = &indices,
         .size = @sizeOf(@TypeOf(indices))
@@ -95,12 +85,21 @@ export fn init() void {
             .cull_mode = .BACK
         }
     };
-    pip_desc.layout.attrs[0].format = .FLOAT3;
-    pip_desc.layout.attrs[1].format = .FLOAT4;
+    // NOTE how the vertex components are pulled from different buffer bind slots
+    pip_desc.layout.attrs[0] = .{ .format = .FLOAT3, .buffer_index = 0 };
+    pip_desc.layout.attrs[1] = .{ .format = .FLOAT4, .buffer_index = 1 };
     state.pip = sg.makePipeline(pip_desc);
 
-    // framebuffer clear color
-    state.pass_action.colors[0] = .{ .action=.CLEAR, .val=.{ 0.25, 0.5, 0.75, 1.0 } };
+    // fill the resource bindings, note how the same vertex
+    // buffer is bound to the first two slots, and the vertex-buffer-offsets
+    // are used to point to the position- and color-components.
+    state.bind.vertex_buffers[0] = vbuf;
+    state.bind.vertex_buffers[1] = vbuf;
+    // position vertex components are at the start of the buffer
+    state.bind.vertex_buffer_offsets[0] = 0;
+    // color vertex components follow after the positions
+    state.bind.vertex_buffer_offsets[1] = 24 * 3 * @sizeOf(f32);
+    state.bind.index_buffer = ibuf;
 }
 
 export fn frame() void {
@@ -109,7 +108,7 @@ export fn frame() void {
     state.ry += 2.0;
     const vs_params = computeVsParams(state.rx, state.ry);
 
-    sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
+    sg.beginDefaultPass(.{}, sapp.width(), sapp.height());
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
     sg.applyUniforms(.VS, 0, &vs_params, @sizeOf(@TypeOf(vs_params)));
@@ -130,7 +129,7 @@ pub fn main() void {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .window_title = "cube.zig"
+        .window_title = "noninterleaved.zig"
     });
 }
 
@@ -150,10 +149,8 @@ fn shaderDesc() sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     switch (sg.queryBackend()) {
         .D3D11 => {
-            // NOTE: there's no particular reason why the sem_index of COLOR is 1,
-            // this is just testing whether semantic indices != 0 work as expected
-            desc.attrs[0] = .{ .sem_name="POSITION" };
-            desc.attrs[1] = .{ .sem_name="COLOR", .sem_index=1 };
+            desc.attrs[0].sem_name = "POSITION";
+            desc.attrs[1].sem_name = "COLOR";
             desc.vs.uniform_blocks[0].size = @sizeOf(VsParams);
             desc.vs.source =
                 \\ cbuffer params: register(b0) {
@@ -161,7 +158,7 @@ fn shaderDesc() sg.ShaderDesc {
                 \\ };
                 \\ struct vs_in {
                 \\   float4 pos: POSITION;
-                \\   float4 color: COLOR1;
+                \\   float4 color: COLOR;
                 \\ };
                 \\ struct vs_out {
                 \\   float4 color: COLOR0;
@@ -184,4 +181,5 @@ fn shaderDesc() sg.ShaderDesc {
     }
     return desc;
 }
+
 
