@@ -19,4 +19,5 @@ pub fn build(b: *Builder) void {
     example(b, "cube");
     example(b, "noninterleaved");
     example(b, "texcube");
+    example(b, "offscreen");
 }
