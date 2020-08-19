@@ -18,4 +18,5 @@ pub fn build(b: *Builder) void {
     example(b, "bufferoffsets");
     example(b, "cube");
     example(b, "noninterleaved");
+    example(b, "texcube");
 }

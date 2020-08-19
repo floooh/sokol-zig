@@ -18,5 +18,6 @@ Currently hardwired to Windows and the sokol-gfx D3D11 backend.
 > zig build run-bufferoffsets
 > zig build run-cube
 > zig build run-noninterleaved
+> zig build run-texcube
 ```
 
