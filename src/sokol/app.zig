@@ -1,6 +1,5 @@
 // machine generated, do not edit
 
-//--- API declarations ---
 pub const max_touchpoints = 8;
 pub const max_mousebuttons = 3;
 pub const max_keycodes = 512;
@@ -153,7 +152,7 @@ pub const Keycode = extern enum(i32) {
     MENU = 348,
 };
 pub const Touchpoint = extern struct {
-//  identifier: uintptr_t;
+    identifier: usize = 0,
     pos_x: f32 = 0.0,
     pos_y: f32 = 0.0,
     changed: bool = false,

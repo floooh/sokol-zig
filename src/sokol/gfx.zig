@@ -1,6 +1,5 @@
 // machine generated, do not edit
 
-//--- API declarations ---
 pub const Buffer = extern struct {
     id: u32 = 0,
 };

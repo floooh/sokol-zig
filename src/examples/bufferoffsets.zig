@@ -58,14 +58,8 @@ export fn init() void {
     });
 
     // a shader and pipeline object
-    var shd_desc: sg.ShaderDesc = .{};
-    shd_desc.attrs[0].sem_name = "POSITION";
-    shd_desc.attrs[1].sem_name = "COLOR";
-    shd_desc.vs.source = vs_source();
-    shd_desc.fs.source = fs_source();
-
     var pip_desc: sg.PipelineDesc = .{
-        .shader = sg.makeShader(shd_desc),
+        .shader = sg.makeShader(shaderDesc()),
         .index_type = .UINT16
     };
     pip_desc.layout.attrs[0].format = .FLOAT2;
@@ -108,35 +102,35 @@ pub fn main() void {
     });
 }
 
-fn vs_source() [*c]const u8 {
-    return switch (sg.queryBackend()) {
-        .D3D11 =>
-            \\struct vs_in {
-            \\  float2 pos: POSITION;
-            \\  float3 color: COLOR0;
-            \\};
-            \\struct vs_out {
-            \\  float4 color: COLOR0;
-            \\  float4 pos: SV_Position;
-            \\};
-            \\vs_out main(vs_in inp) {
-            \\  vs_out outp;
-            \\  outp.pos = float4(inp.pos, 0.5, 1.0);
-            \\  outp.color = float4(inp.color, 1.0);
-            \\  return outp;
-            \\}
-            ,
-        else => "FIXME"
-    };
-}
-
-fn fs_source() [*c]const u8 {
-    return switch (sg.queryBackend()) {
-        .D3D11 =>
-            \\float4 main(float4 color: COLOR0): SV_Target0 {
-            \\  return color;
-            \\}
-            ,
-        else => "FIXME"
-    };
+fn shaderDesc() sg.ShaderDesc {
+    var desc: sg.ShaderDesc = .{};
+    switch (sg.queryBackend()) {
+        .D3D11 => {
+            desc.attrs[0].sem_name = "POSITION";
+            desc.attrs[1].sem_name = "COLOR";
+            desc.vs.source =
+                \\struct vs_in {
+                \\  float2 pos: POSITION;
+                \\  float3 color: COLOR0;
+                \\};
+                \\struct vs_out {
+                \\  float4 color: COLOR0;
+                \\  float4 pos: SV_Position;
+                \\};
+                \\vs_out main(vs_in inp) {
+                \\  vs_out outp;
+                \\  outp.pos = float4(inp.pos, 0.5, 1.0);
+                \\  outp.color = float4(inp.color, 1.0);
+                \\  return outp;
+                \\}
+                ;
+            desc.fs.source =
+                \\float4 main(float4 color: COLOR0): SV_Target0 {
+                \\  return color;
+                \\}
+                ;
+        },
+        else => {}
+    }
+    return desc;
 }
