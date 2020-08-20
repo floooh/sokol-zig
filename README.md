@@ -4,7 +4,7 @@ Experimental auto-generated Zig bindings for the [sokol headers](https://github.
 
 ## BUILD
 
-Use the zig 0.6.0 HEAD version (needs to support ```anytype```)
+Use the zig 0.6.0 HEAD version (the 0.6.0 release is too old)
 
 Currently hardwired to Windows and the sokol-gfx D3D11 backend.
 
@@ -20,5 +20,6 @@ Currently hardwired to Windows and the sokol-gfx D3D11 backend.
 > zig build run-noninterleaved
 > zig build run-texcube
 > zig build run-offscreen
+> zig build run-instancing
 ```
 

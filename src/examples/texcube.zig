@@ -19,7 +19,7 @@ const State = struct {
 };
 var state: State = .{};
 
-// a uniform block struct with a model-view-project matrix
+// a uniform block struct with a model-view-projection matrix
 const VsParams = packed struct {
     mvp: mat4
 };
@@ -45,7 +45,7 @@ export fn init() void {
     // formats to floating point inputs (only to integer inputs),
     // and WebGL2 / GLES2 don't support integer vertex shader inputs.
     const vertices = [_]Vertex {
-        // pos                  color       uvs
+        // pos                         color              texcoords
         .{ .x=-1.0, .y=-1.0, .z=-1.0,  .color=0xFF0000FF, .u=    0, .v=    0 },
         .{ .x= 1.0, .y=-1.0, .z=-1.0,  .color=0xFF0000FF, .u=32767, .v=    0 },
         .{ .x= 1.0, .y= 1.0, .z=-1.0,  .color=0xFF0000FF, .u=32767, .v=32767 },

@@ -20,7 +20,7 @@ const State = struct {
 };
 var state: State = .{};
 
-// a uniform block struct with a model-view-project matrix
+// a uniform block struct with a model-view-projection matrix
 const VsParams = packed struct {
     mvp: mat4
 };
@@ -32,6 +32,7 @@ export fn init() void {
 
     // cube vertex buffer
     const vertices = [_]f32 {
+        // positions        colors
         -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
          1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
          1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,

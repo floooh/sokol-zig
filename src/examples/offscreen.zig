@@ -31,7 +31,7 @@ const State = struct {
 };
 var state: State = .{};
 
-// a uniform block struct with a model-view-project matrix
+// a uniform block struct with a model-view-projection matrix
 const VsParams = packed struct {
     mvp: mat4
 };

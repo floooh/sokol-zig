@@ -32,11 +32,27 @@ pub const Vec3 = packed struct {
         return math.sqrt(Vec3.dot(v, v));
     }
 
+    pub fn add(left: Vec3, right: Vec3) Vec3 {
+        return Vec3 {
+            .x = left.x + right.x,
+            .y = left.y + right.y,
+            .z = left.z + right.z
+        };
+    }
+
     pub fn sub(left: Vec3, right: Vec3) Vec3 {
         return Vec3 {
             .x = left.x - right.x,
             .y = left.y - right.y,
             .z = left.z - right.z
+        };
+    }
+
+    pub fn mul(v: Vec3, s: f32) Vec3 {
+        return Vec3 {
+            .x = v.x * s,
+            .y = v.y * s,
+            .z = v.z * s
         };
     }
 
