@@ -5,7 +5,6 @@ pub fn example(b: *Builder, comptime name: []const u8) void {
     const mode = b.standardReleaseOptions();
     const e = b.addExecutable(name, "src/examples/" ++ name ++ ".zig");
     if (builtin.os.tag == .linux) {
-        e.addSystemIncludeDir("/usr/include");
         e.linkSystemLibrary("X11");
         e.linkSystemLibrary("Xi");
         e.linkSystemLibrary("Xcursor");
