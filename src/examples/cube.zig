@@ -147,13 +147,13 @@ fn computeVsParams(rx: f32, ry: f32) VsParams {
 // build a backend-specific ShaderDesc struct
 fn shaderDesc() sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
+    desc.vs.uniform_blocks[0].size = @sizeOf(VsParams);
     switch (sg.queryBackend()) {
         .D3D11 => {
             // NOTE: there's no particular reason why the sem_index of COLOR is 1,
             // this is just testing whether semantic indices != 0 work as expected
             desc.attrs[0] = .{ .sem_name="POSITION" };
             desc.attrs[1] = .{ .sem_name="COLOR", .sem_index=1 };
-            desc.vs.uniform_blocks[0].size = @sizeOf(VsParams);
             desc.vs.source =
                 \\ cbuffer params: register(b0) {
                 \\   float4x4 mvp;
@@ -176,6 +176,32 @@ fn shaderDesc() sg.ShaderDesc {
             desc.fs.source =
                 \\ float4 main(float4 color: COLOR0): SV_Target0 {
                 \\   return color;
+                \\ }
+                ;
+        },
+        .GLCORE33 => {
+            // use explicit vertex attribute locations in the shader source,
+            // we don't need to provide attribute names in that case
+
+            // we need to describe the 'interiour' of uniform blocks though:
+            desc.vs.uniform_blocks[0].uniforms[0] = .{ .name="mvp", .type=.MAT4 };
+            desc.vs.source =
+                \\ #version 330
+                \\ uniform mat4 mvp;
+                \\ layout(location=0) in vec4 position;
+                \\ layout(location=1) in vec4 color0;
+                \\ out vec4 color;
+                \\ void main() {
+                \\   gl_Position = mvp * position;
+                \\   color = color0;
+                \\ }
+                ;
+            desc.fs.source =
+                \\ #version 330
+                \\ in vec4 color;
+                \\ out vec4 frag_color;
+                \\ void main() {
+                \\   frag_color = color;
                 \\ }
                 ;
         },

@@ -6,7 +6,9 @@ Experimental auto-generated Zig bindings for the [sokol headers](https://github.
 
 Use the zig 0.6.0 HEAD version (the 0.6.0 release is too old)
 
-Currently hardwired to Windows and the sokol-gfx D3D11 backend.
+Currently Windows and Linux is supported (not yet macOS).
+
+On Linux install the following packages: libglu1-mesa-dev, mesa-common-dev, xorg-dev, libasound-dev
 
 ```sh
 # just build:

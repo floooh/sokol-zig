@@ -294,11 +294,11 @@ fn createOffscreenPass(width: i32, height: i32) void {
 // helper functions to build backend-specific ShaderDesc structs
 fn offscreenShaderDesc() sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
+    desc.vs.uniform_blocks[0].size = @sizeOf(OffscreenVsParams);
     switch (sg.queryBackend()) {
         .D3D11 => {
             desc.attrs[0].sem_name = "POSITION";
             desc.attrs[1].sem_name = "BRIGHT";
-            desc.vs.uniform_blocks[0].size = @sizeOf(OffscreenVsParams);
             desc.vs.source =
                 \\ cbuffer params: register(b0) {
                 \\   float4x4 mvp;
@@ -333,6 +333,32 @@ fn offscreenShaderDesc() sg.ShaderDesc {
                 \\ }
             ;
         },
+        .GLCORE33 => {
+            desc.vs.uniform_blocks[0].uniforms[0] = .{ .name="mvp", .type=.MAT4 };
+            desc.vs.source =
+                \\ #version 330
+                \\ uniform mat4 mvp;
+                \\ layout(location=0) in vec4 position;
+                \\ layout(location=1) in float bright0;
+                \\ out float bright;
+                \\ void main() {
+                \\   gl_Position = mvp * position;
+                \\   bright = bright0;
+                \\ }
+                ;
+            desc.fs.source =
+                \\ #version 330
+                \\ in float bright;
+                \\ layout(location=0) out vec4 frag_color_0;
+                \\ layout(location=1) out vec4 frag_color_1;
+                \\ layout(location=2) out vec4 frag_color_2;
+                \\ void main() {
+                \\   frag_color_0 = vec4(bright, 0.0, 0.0, 1.0);
+                \\   frag_color_1 = vec4(0.0, bright, 0.0, 1.0);
+                \\   frag_color_2 = vec4(0.0, 0.0, bright, 1.0);
+                \\ }
+                ;
+        },
         else => { }
     }
     return desc;
@@ -340,10 +366,10 @@ fn offscreenShaderDesc() sg.ShaderDesc {
 
 fn fsqShaderDesc() sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
+    desc.vs.uniform_blocks[0].size = @sizeOf(FsqVsParams);
     switch (sg.queryBackend()) {
         .D3D11 => {
             desc.attrs[0].sem_name = "POSITION";
-            desc.vs.uniform_blocks[0].size = @sizeOf(FsqVsParams);
             inline for (.{ 0, 1, 2 }) |i| {
                 desc.fs.images[i].type = ._2D;
             }
@@ -390,6 +416,42 @@ fn fsqShaderDesc() sg.ShaderDesc {
                 \\ }
                 ;
         },
+        .GLCORE33 => {
+            desc.vs.uniform_blocks[0].uniforms[0] = .{ .name="offset", .type=.FLOAT2 };
+            desc.fs.images[0] = .{ .name="tex0", .type=._2D };
+            desc.fs.images[1] = .{ .name="tex1", .type=._2D };
+            desc.fs.images[2] = .{ .name="tex2", .type=._2D };
+            desc.vs.source =
+                \\ #version 330
+                \\ uniform vec2 offset;
+                \\ layout(location=0) in vec2 pos;
+                \\ out vec2 uv0;
+                \\ out vec2 uv1;
+                \\ out vec2 uv2;
+                \\ void main() {
+                \\   gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);
+                \\   uv0 = pos + vec2(offset.x, 0.0);
+                \\   uv1 = pos + vec2(0.0, offset.y);
+                \\   uv2 = pos;
+                \\ }
+                ;
+            desc.fs.source =
+                \\ #version 330
+                \\ uniform sampler2D tex0;
+                \\ uniform sampler2D tex1;
+                \\ uniform sampler2D tex2;
+                \\ in vec2 uv0;
+                \\ in vec2 uv1;
+                \\ in vec2 uv2;
+                \\ out vec4 frag_color;
+                \\ void main() {
+                \\   vec3 c0 = texture(tex0, uv0).xyz;
+                \\   vec3 c1 = texture(tex1, uv1).xyz;
+                \\   vec3 c2 = texture(tex2, uv2).xyz;
+                \\   frag_color = vec4(c0 + c1 + c2, 1.0);
+                \\ }
+                ;
+        },
         else => {}
     }
     return desc;
@@ -421,6 +483,27 @@ fn dbgShaderDesc() sg.ShaderDesc {
                 \\ sampler smp: register(s0);
                 \\ float4 main(float2 uv: TEXCOORD0): SV_Target0 {
                 \\   return float4(tex.Sample(smp, uv).xyz, 1.0);
+                \\ }
+                ;
+        },
+        .GLCORE33 => {
+            desc.fs.images[0] = .{ .name="tex", .type=._2D };
+            desc.vs.source =
+                \\ #version 330
+                \\ layout(location=0) in vec2 pos;
+                \\ out vec2 uv;
+                \\ void main() {
+                \\   gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);
+                \\   uv = pos;
+                \\ }
+                ;
+            desc.fs.source =
+                \\ #version 330
+                \\ uniform sampler2D tex;
+                \\ in vec2 uv;
+                \\ out vec4 frag_color;
+                \\ void main() {
+                \\   frag_color = vec4(texture(tex,uv).xyz, 1.0);
                 \\ }
                 ;
         },

@@ -106,6 +106,28 @@ fn shaderDesc() sg.ShaderDesc {
                 \\}
                 ;
         },
+        .GLCORE33 => {
+            desc.attrs[0].name = "position";
+            desc.attrs[1].name = "color0";
+            desc.vs.source = 
+                \\ #version 330
+                \\ in vec4 position;
+                \\ in vec4 color0;
+                \\ out vec4 color;
+                \\ void main() {
+                \\   gl_Position = position;
+                \\   color = color0;
+                \\ }
+                ;
+            desc.fs.source =
+                \\ #version 330
+                \\ in vec4 color;
+                \\ out vec4 frag_color;
+                \\ void main() {
+                \\   frag_color = color;
+                \\ }
+                ;
+        },
         else => {}
     }
     return desc;

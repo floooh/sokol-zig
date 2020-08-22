@@ -179,12 +179,12 @@ fn computeVsParams(rx: f32, ry: f32) VsParams {
 // build a backend-specific ShaderDesc struct
 fn shaderDesc() sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
+    desc.vs.uniform_blocks[0].size = @sizeOf(VsParams);
     switch (sg.queryBackend()) {
         .D3D11 => {
             desc.attrs[0].sem_name = "POSITION";
             desc.attrs[1].sem_name = "COLOR";
             desc.attrs[2].sem_name = "TEXCOORD";
-            desc.vs.uniform_blocks[0].size = @sizeOf(VsParams);
             desc.fs.images[0].type = ._2D;
             desc.vs.source =
                 \\cbuffer params: register(b0) {
@@ -214,6 +214,34 @@ fn shaderDesc() sg.ShaderDesc {
                 \\float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {
                 \\  return tex.Sample(smp, uv) * color;
                 \\}
+                ;
+        },
+        .GLCORE33 => {
+            desc.vs.uniform_blocks[0].uniforms[0] = .{ .name="mvp", .type=.MAT4 };
+            desc.fs.images[0] = .{ .name="tex", .type=._2D }; 
+            desc.vs.source =
+                \\ #version 330
+                \\ uniform mat4 mvp;
+                \\ layout(location = 0) in vec4 position;
+                \\ layout(location = 1) in vec4 color0;
+                \\ layout(location = 2) in vec2 texcoord0;
+                \\ out vec4 color;
+                \\ out vec2 uv;
+                \\ void main() {
+                \\   gl_Position = mvp * position;
+                \\   color = color0;
+                \\   uv = texcoord0 * 5.0;
+                \\ }
+                ;
+            desc.fs.source =
+                \\ #version 330
+                \\ uniform sampler2D tex;
+                \\ in vec4 color;
+                \\ in vec2 uv;
+                \\ out vec4 frag_color;
+                \\ void main() {
+                \\   frag_color = texture(tex, uv) * color;
+                \\ }
                 ;
         },
         else => {}
