@@ -12,24 +12,23 @@ const mat4 = @import("math.zig").Mat4;
 
 const offscreen_sample_count = 4;
 
-const State = struct {
-    offscreen: struct {
-        pass_action: sg.PassAction = .{},
-        pass: sg.Pass = .{},
-        pip: sg.Pipeline = .{},
-        bind: sg.Bindings = .{},
-    } = .{},
-    default: struct {
-        pass_action: sg.PassAction = .{},
-        pip: sg.Pipeline = .{},
-        bind: sg.Bindings = .{}
-    } = .{},
-    rx: f32 = 0.0,
-    ry: f32 = 0.0,
+const state = struct {
+    const offscreen = struct {
+        var pass_action: sg.PassAction = .{};
+        var pass: sg.Pass = .{};
+        var pip: sg.Pipeline = .{};
+        var bind: sg.Bindings = .{};
+    };
+    const default = struct {
+        var pass_action: sg.PassAction = .{};
+        var pip: sg.Pipeline = .{};
+        var bind: sg.Bindings = .{};
+    };
+    var rx: f32 = 0.0;
+    var ry: f32 = 0.0;
     // the view matrix doesn't change
-    view: mat4 = mat4.lookat(.{ .x=0.0, .y=1.5, .z=6.0 }, vec3.zero(), vec3.up())
+    const view: mat4 = mat4.lookat(.{ .x=0.0, .y=1.5, .z=6.0 }, vec3.zero(), vec3.up());
 };
-var state: State = .{};
 
 // a uniform block struct with a model-view-projection matrix
 const VsParams = packed struct {

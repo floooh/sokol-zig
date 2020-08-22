@@ -13,16 +13,15 @@ const sgapp = @import("sokol").app_gfx_glue;
 const vec3 = @import("math.zig").Vec3;
 const mat4 = @import("math.zig").Mat4;
 
-const State = struct {
-    rx: f32 = 0.0,
-    ry: f32 = 0.0,
-    pip: sg.Pipeline = .{},
-    bind: sg.Bindings = .{},
-    pass_action: sg.PassAction = .{},
+const state = struct {
+    var rx: f32 = 0.0;
+    var ry: f32 = 0.0;
+    var pip: sg.Pipeline = .{};
+    var bind: sg.Bindings = .{};
+    var pass_action: sg.PassAction = .{};
     // the view matrix doesn't change
-    view: mat4 = mat4.lookat(.{ .x=0.0, .y=1.5, .z=6.0 }, vec3.zero(), vec3.up())
+    const view: mat4 = mat4.lookat(.{ .x=0.0, .y=1.5, .z=6.0 }, vec3.zero(), vec3.up());
 };
-var state: State = .{};
 
 // a uniform block struct with a model-view-projection matrix
 const VsParams = packed struct {

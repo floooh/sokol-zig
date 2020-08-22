@@ -13,20 +13,18 @@ const mat4  = @import("math.zig").Mat4;
 const max_particles: usize = 512 * 1024;
 const num_particles_emitted_per_frame: usize = 10;
 
-const State = struct {
-    pass_action: sg.PassAction = .{},
-    pip: sg.Pipeline = .{},
-    bind: sg.Bindings = .{},
-    ry: f32 = 0.0,
-    cur_num_particles: u32 = 0,
+const state = struct {
+    var pass_action: sg.PassAction = .{};
+    var pip: sg.Pipeline = .{};
+    var bind: sg.Bindings = .{};
+    var ry: f32 = 0.0;
+    var cur_num_particles: u32 = 0;
     // view matrix doesn't change
-    view: mat4 = mat4.lookat(.{ .x=0.0, .y=1.5, .z=12.0 }, vec3.zero(), vec3.up()),
+    const view: mat4 = mat4.lookat(.{ .x=0.0, .y=1.5, .z=12.0 }, vec3.zero(), vec3.up());
+    // un-initialized particle buffer to not bloat the executable
+    var pos: [max_particles]vec3 = undefined;
+    var vel: [max_particles]vec3 = undefined;
 };
-var state: State = .{};
-
-// un-initialized particle buffer to not bloat the executable
-var pos: [max_particles]vec3 = undefined;
-var vel: [max_particles]vec3 = undefined;
 
 // uniform-block struct with the model-view-projection matrix
 const VsParams = packed struct {
@@ -103,8 +101,8 @@ export fn frame() void {
         var i: usize = 0;
         while (i < num_particles_emitted_per_frame): (i += 1) {
             if (state.cur_num_particles < max_particles) {
-                pos[state.cur_num_particles] = vec3.zero();
-                vel[state.cur_num_particles] = .{
+                state.pos[state.cur_num_particles] = vec3.zero();
+                state.vel[state.cur_num_particles] = .{
                     .x = rand(-0.5, 0.5),
                     .y = rand(2.0, 2.5),
                     .z = rand(-0.5, 0.5)
@@ -121,18 +119,18 @@ export fn frame() void {
     {
         var i: usize = 0;
         while (i < max_particles): (i += 1) {
-            vel[i].y -= 1.0 * frame_time;
-            pos[i] = vec3.add(pos[i], vec3.mul(vel[i], frame_time));
-            if (pos[i].y < -2.0) {
-                pos[i].y = -1.8;
-                vel[i].y = -vel[i].y;
-                vel[i] = vec3.mul(vel[i], 0.8);
+            state.vel[i].y -= 1.0 * frame_time;
+            state.pos[i] = vec3.add(state.pos[i], vec3.mul(state.vel[i], frame_time));
+            if (state.pos[i].y < -2.0) {
+                state.pos[i].y = -1.8;
+                state.vel[i].y = -state.vel[i].y;
+                state.vel[i] = vec3.mul(state.vel[i], 0.8);
             }
         }
     }
 
     // update instance data
-    sg.updateBuffer(state.bind.vertex_buffers[1], &pos, @intCast(i32, state.cur_num_particles * @sizeOf(vec3)));
+    sg.updateBuffer(state.bind.vertex_buffers[1], &state.pos, @intCast(i32, state.cur_num_particles * @sizeOf(vec3)));
 
     // compute vertex shader parameters (the mvp matrix)
     state.ry += 1.0;

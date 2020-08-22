@@ -7,12 +7,11 @@ const sg = @import("sokol").gfx;
 const sapp = @import("sokol").app;
 const sgapp = @import("sokol").app_gfx_glue;
 
-const State = struct {
-    bind: sg.Bindings = .{},
-    pip: sg.Pipeline = .{},
-    pass_action: sg.PassAction = .{}
+const state = struct {
+    var bind: sg.Bindings = .{};
+    var pip: sg.Pipeline = .{};
+    var pass_action: sg.PassAction = .{};
 };
-var state: State = .{};
 
 export fn init() void {
     sg.setup(.{
