@@ -21,4 +21,5 @@ pub fn build(b: *Builder) void {
     example(b, "texcube");
     example(b, "offscreen");
     example(b, "instancing");
+    example(b, "mrt");
 }

@@ -13,6 +13,18 @@ fn radians(deg: f32) f32 {
     return deg * (math.pi / 180.0);
 }
 
+pub const Vec2 = packed struct {
+    x: f32, y: f32,
+
+    pub fn zero() Vec2 {
+        return Vec2 { .x=0.0, .y=0.0 };
+    }
+
+    pub fn new(x: f32, y: f32) Vec2 {
+        return Vec2 { .x=x, .y=y };
+    }
+};
+
 pub const Vec3 = packed struct {
     x: f32, y: f32, z: f32,
 
