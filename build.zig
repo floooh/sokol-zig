@@ -12,7 +12,7 @@ pub fn example(b: *Builder, comptime name: []const u8) void {
     }
     e.setBuildMode(b.standardReleaseOptions());
     e.addPackagePath("sokol", "src/sokol/sokol.zig");
-    e.addCSourceFile("src/sokol/sokol.c", &[_][]const u8{"-std=c99"});
+    e.addCSourceFile("src/sokol/sokol.c", &[_][]const u8{});
     e.linkSystemLibrary("c");
     e.install();
     b.step("run-" ++ name, "Run " ++ name).dependOn(&e.run().step);
