@@ -26,6 +26,7 @@ pub const EventType = extern enum(i32) {
     UPDATE_CURSOR,
     QUIT_REQUESTED,
     CLIPBOARD_PASTED,
+    FILES_DROPPED,
     NUM,
 };
 pub const Keycode = extern enum(i32) {
@@ -211,6 +212,9 @@ pub const Desc = extern struct {
     user_cursor: bool = false,
     enable_clipboard: bool = false,
     clipboard_size: i32 = 0,
+    enable_dragndrop: bool = false,
+    max_dropped_files: i32 = 0,
+    max_dropped_file_path_length: i32 = 0,
     html5_canvas_name: [*c]const u8 = null,
     html5_canvas_resize: bool = false,
     html5_preserve_drawing_buffer: bool = false,
@@ -218,6 +222,27 @@ pub const Desc = extern struct {
     html5_ask_leave_site: bool = false,
     ios_keyboard_resizes_canvas: bool = false,
     gl_force_gles2: bool = false,
+};
+pub const Html5FetchError = extern enum(i32) {
+    FETCH_ERROR_NO_ERROR,
+    FETCH_ERROR_BUFFER_TOO_SMALL,
+    FETCH_ERROR_OTHER,
+};
+pub const Html5FetchResponse = extern struct {
+    succeeded: bool = false,
+    error_code: Html5FetchError = .FETCH_ERROR_NO_ERROR,
+    file_index: i32 = 0,
+    fetched_size: u32 = 0,
+    buffer_ptr: ?*c_void = null,
+    buffer_size: u32 = 0,
+    user_data: ?*c_void = null,
+};
+pub const Html5FetchRequest = extern struct {
+    dropped_file_index: i32 = 0,
+    callback: ?fn([*c]const Html5FetchResponse) callconv(.C) void = null,
+    buffer_ptr: ?*c_void = null,
+    buffer_size: u32 = 0,
+    user_data: ?*c_void = null,
 };
 pub extern fn sapp_isvalid() bool;
 pub fn isvalid() bool {
@@ -319,6 +344,18 @@ pub extern fn sapp_get_clipboard_string() [*c]const u8;
 pub fn getClipboardString() []const u8 {
     return sapp_get_clipboard_string();
 }
+pub extern fn sapp_set_window_title([*c]const u8) void;
+pub fn setWindowTitle(str: []const u8) void {
+    sapp_set_window_title(str);
+}
+pub extern fn sapp_get_num_dropped_files() i32;
+pub fn getNumDroppedFiles() i32 {
+    return sapp_get_num_dropped_files();
+}
+pub extern fn sapp_get_dropped_file_path(i32) [*c]const u8;
+pub fn getDroppedFilePath(index: i32) []const u8 {
+    return sapp_get_dropped_file_path(index);
+}
 pub extern fn sapp_run([*c]const Desc) void;
 pub fn run(desc: Desc) void {
     sapp_run(&desc);
@@ -330,6 +367,14 @@ pub fn gles2() bool {
 pub extern fn sapp_html5_ask_leave_site(bool) void;
 pub fn html5AskLeaveSite(ask: bool) void {
     sapp_html5_ask_leave_site(ask);
+}
+pub extern fn sapp_html5_get_dropped_file_size(i32) u32;
+pub fn html5GetDroppedFileSize(index: i32) u32 {
+    return sapp_html5_get_dropped_file_size(index);
+}
+pub extern fn sapp_html5_fetch_dropped_file([*c]const Html5FetchRequest) void;
+pub fn html5FetchDroppedFile(request: Html5FetchRequest) void {
+    sapp_html5_fetch_dropped_file(&request);
 }
 pub extern fn sapp_metal_get_device() ?*const c_void;
 pub fn metalGetDevice() ?*const c_void {

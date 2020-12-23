@@ -387,8 +387,7 @@ pub const ImageDesc = extern struct {
     render_target: bool = false,
     width: i32 = 0,
     height: i32 = 0,
-    depth: i32 = 0,
-    num_layers: i32 = 0,
+    num_slices: i32 = 0,
     num_mipmaps: i32 = 0,
     usage: Usage = .DEFAULT,
     pixel_format: PixelFormat = .DEFAULT,
@@ -405,8 +404,10 @@ pub const ImageDesc = extern struct {
     content: ImageContent = .{ },
     label: [*c]const u8 = null,
     gl_textures: [2]u32 = [_]u32{0} ** 2,
+    gl_texture_target: u32 = 0,
     mtl_textures: [2]?*const c_void = [_]?*const c_void { null } ** 2,
     d3d11_texture: ?*const c_void = null,
+    d3d11_shader_resource_view: ?*const c_void = null,
     wgpu_texture: ?*const c_void = null,
     _end_canary: u32 = 0,
 };
@@ -514,7 +515,7 @@ pub const PipelineDesc = extern struct {
 pub const AttachmentDesc = extern struct {
     image: Image = .{ },
     mip_level: i32 = 0,
-    face_layer_slice: i32 = 0,
+    slice: i32 = 0,
 };
 pub const PassDesc = extern struct {
     _start_canary: u32 = 0,
@@ -554,11 +555,21 @@ pub const TraceHooks = extern struct {
     alloc_shader: ?fn(Shader, ?*c_void) callconv(.C) void = null,
     alloc_pipeline: ?fn(Pipeline, ?*c_void) callconv(.C) void = null,
     alloc_pass: ?fn(Pass, ?*c_void) callconv(.C) void = null,
+    dealloc_buffer: ?fn(Buffer, ?*c_void) callconv(.C) void = null,
+    dealloc_image: ?fn(Image, ?*c_void) callconv(.C) void = null,
+    dealloc_shader: ?fn(Shader, ?*c_void) callconv(.C) void = null,
+    dealloc_pipeline: ?fn(Pipeline, ?*c_void) callconv(.C) void = null,
+    dealloc_pass: ?fn(Pass, ?*c_void) callconv(.C) void = null,
     init_buffer: ?fn(Buffer, [*c]const BufferDesc, ?*c_void) callconv(.C) void = null,
     init_image: ?fn(Image, [*c]const ImageDesc, ?*c_void) callconv(.C) void = null,
     init_shader: ?fn(Shader, [*c]const ShaderDesc, ?*c_void) callconv(.C) void = null,
     init_pipeline: ?fn(Pipeline, [*c]const PipelineDesc, ?*c_void) callconv(.C) void = null,
     init_pass: ?fn(Pass, [*c]const PassDesc, ?*c_void) callconv(.C) void = null,
+    uninit_buffer: ?fn(Buffer, ?*c_void) callconv(.C) void = null,
+    uninit_image: ?fn(Image, ?*c_void) callconv(.C) void = null,
+    uninit_shader: ?fn(Shader, ?*c_void) callconv(.C) void = null,
+    uninit_pipeline: ?fn(Pipeline, ?*c_void) callconv(.C) void = null,
+    uninit_pass: ?fn(Pass, ?*c_void) callconv(.C) void = null,
     fail_buffer: ?fn(Buffer, ?*c_void) callconv(.C) void = null,
     fail_image: ?fn(Image, ?*c_void) callconv(.C) void = null,
     fail_shader: ?fn(Shader, ?*c_void) callconv(.C) void = null,
@@ -613,19 +624,29 @@ pub const GlContextDesc = extern struct {
 pub const MetalContextDesc = extern struct {
     device: ?*const c_void = null,
     renderpass_descriptor_cb: ?fn() callconv(.C) ?*const c_void = null,
+    renderpass_descriptor_userdata_cb: ?fn(?*c_void) callconv(.C) ?*const c_void = null,
     drawable_cb: ?fn() callconv(.C) ?*const c_void = null,
+    drawable_userdata_cb: ?fn(?*c_void) callconv(.C) ?*const c_void = null,
+    user_data: ?*c_void = null,
 };
 pub const D3d11ContextDesc = extern struct {
     device: ?*const c_void = null,
     device_context: ?*const c_void = null,
     render_target_view_cb: ?fn() callconv(.C) ?*const c_void = null,
+    render_target_view_userdata_cb: ?fn(?*c_void) callconv(.C) ?*const c_void = null,
     depth_stencil_view_cb: ?fn() callconv(.C) ?*const c_void = null,
+    depth_stencil_view_userdata_cb: ?fn(?*c_void) callconv(.C) ?*const c_void = null,
+    user_data: ?*c_void = null,
 };
 pub const WgpuContextDesc = extern struct {
     device: ?*const c_void = null,
     render_view_cb: ?fn() callconv(.C) ?*const c_void = null,
+    render_view_userdata_cb: ?fn(?*c_void) callconv(.C) ?*const c_void = null,
     resolve_view_cb: ?fn() callconv(.C) ?*const c_void = null,
+    resolve_view_userdata_cb: ?fn(?*c_void) callconv(.C) ?*const c_void = null,
     depth_stencil_view_cb: ?fn() callconv(.C) ?*const c_void = null,
+    depth_stencil_view_userdata_cb: ?fn(?*c_void) callconv(.C) ?*const c_void = null,
+    user_data: ?*c_void = null,
 };
 pub const ContextDesc = extern struct {
     color_format: i32 = 0,
@@ -874,6 +895,26 @@ pub extern fn sg_alloc_pass() Pass;
 pub fn allocPass() Pass {
     return sg_alloc_pass();
 }
+pub extern fn sg_dealloc_buffer(Buffer) void;
+pub fn deallocBuffer(buf_id: Buffer) void {
+    sg_dealloc_buffer(buf_id);
+}
+pub extern fn sg_dealloc_image(Image) void;
+pub fn deallocImage(img_id: Image) void {
+    sg_dealloc_image(img_id);
+}
+pub extern fn sg_dealloc_shader(Shader) void;
+pub fn deallocShader(shd_id: Shader) void {
+    sg_dealloc_shader(shd_id);
+}
+pub extern fn sg_dealloc_pipeline(Pipeline) void;
+pub fn deallocPipeline(pip_id: Pipeline) void {
+    sg_dealloc_pipeline(pip_id);
+}
+pub extern fn sg_dealloc_pass(Pass) void;
+pub fn deallocPass(pass_id: Pass) void {
+    sg_dealloc_pass(pass_id);
+}
 pub extern fn sg_init_buffer(Buffer, [*c]const BufferDesc) void;
 pub fn initBuffer(buf_id: Buffer, desc: BufferDesc) void {
     sg_init_buffer(buf_id, &desc);
@@ -893,6 +934,26 @@ pub fn initPipeline(pip_id: Pipeline, desc: PipelineDesc) void {
 pub extern fn sg_init_pass(Pass, [*c]const PassDesc) void;
 pub fn initPass(pass_id: Pass, desc: PassDesc) void {
     sg_init_pass(pass_id, &desc);
+}
+pub extern fn sg_uninit_buffer(Buffer) bool;
+pub fn uninitBuffer(buf_id: Buffer) bool {
+    return sg_uninit_buffer(buf_id);
+}
+pub extern fn sg_uninit_image(Image) bool;
+pub fn uninitImage(img_id: Image) bool {
+    return sg_uninit_image(img_id);
+}
+pub extern fn sg_uninit_shader(Shader) bool;
+pub fn uninitShader(shd_id: Shader) bool {
+    return sg_uninit_shader(shd_id);
+}
+pub extern fn sg_uninit_pipeline(Pipeline) bool;
+pub fn uninitPipeline(pip_id: Pipeline) bool {
+    return sg_uninit_pipeline(pip_id);
+}
+pub extern fn sg_uninit_pass(Pass) bool;
+pub fn uninitPass(pass_id: Pass) bool {
+    return sg_uninit_pass(pass_id);
 }
 pub extern fn sg_fail_buffer(Buffer) void;
 pub fn failBuffer(buf_id: Buffer) void {
@@ -925,6 +986,14 @@ pub fn activateContext(ctx_id: Context) void {
 pub extern fn sg_discard_context(Context) void;
 pub fn discardContext(ctx_id: Context) void {
     sg_discard_context(ctx_id);
+}
+pub extern fn sg_d3d11_device() ?*const c_void;
+pub fn d3d11Device() ?*const c_void {
+    return sg_d3d11_device();
+}
+pub extern fn sg_mtl_device() ?*const c_void;
+pub fn mtlDevice() ?*const c_void {
+    return sg_mtl_device();
 }
 pub extern fn sg_mtl_render_command_encoder() ?*const c_void;
 pub fn mtlRenderCommandEncoder() ?*const c_void {
