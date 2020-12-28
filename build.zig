@@ -1,32 +1,42 @@
 const Builder = @import("std").build.Builder;
+const LibExeObjStep = @import("std").build.LibExeObjStep;
 const builtin = @import("std").builtin;
 
-pub fn example(b: *Builder, comptime name: []const u8) void {
-    const mode = b.standardReleaseOptions();
-    const e = b.addExecutable(name, "src/examples/" ++ name ++ ".zig");
+// build sokol into a static library
+fn buildSokol(b: *Builder) *LibExeObjStep {
+    const lib = b.addStaticLibrary("sokol", null);
+    lib.addCSourceFile("src/sokol/sokol.c", &[_][]const u8{});
+    lib.setBuildMode(b.standardReleaseOptions());
+    lib.linkSystemLibrary("c");
     if (builtin.os.tag == .linux) {
-        e.linkSystemLibrary("X11");
-        e.linkSystemLibrary("Xi");
-        e.linkSystemLibrary("Xcursor");
-        e.linkSystemLibrary("GL");
+        lib.linkSystemLibrary("X11");
+        lib.linkSystemLibrary("Xi");
+        lib.linkSystemLibrary("Xcursor");
+        lib.linkSystemLibrary("GL");
     }
+    return lib;
+}
+
+// build one of the example exes
+fn buildExample(b: *Builder, sokol: *LibExeObjStep, comptime name: []const u8) void {
+    const e = b.addExecutable(name, "src/examples/" ++ name ++ ".zig");
+    e.linkLibrary(sokol);
     e.setBuildMode(b.standardReleaseOptions());
     e.addPackagePath("sokol", "src/sokol/sokol.zig");
-    e.addCSourceFile("src/sokol/sokol.c", &[_][]const u8{});
-    e.linkSystemLibrary("c");
     e.install();
     b.step("run-" ++ name, "Run " ++ name).dependOn(&e.run().step);
 }
 
 pub fn build(b: *Builder) void {
-    example(b, "clear");
-    example(b, "triangle");
-    example(b, "quad");
-    example(b, "bufferoffsets");
-    example(b, "cube");
-    example(b, "noninterleaved");
-    example(b, "texcube");
-    example(b, "offscreen");
-    example(b, "instancing");
-    example(b, "mrt");
+    const sokol = buildSokol(b);
+    buildExample(b, sokol, "clear");
+    buildExample(b, sokol, "triangle");
+    buildExample(b, sokol, "quad");
+    buildExample(b, sokol, "bufferoffsets");
+    buildExample(b, sokol, "cube");
+    buildExample(b, sokol, "noninterleaved");
+    buildExample(b, sokol, "texcube");
+    buildExample(b, sokol, "offscreen");
+    buildExample(b, sokol, "instancing");
+    buildExample(b, sokol, "mrt");
 }
