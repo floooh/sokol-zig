@@ -32,7 +32,7 @@ export fn frame() void {
             state.sample_pos = 0;
             _ = saudio.push(&(state.samples[0]), NumSamples);
         }
-        state.samples[state.sample_pos] = if (0 != (state.even_odd & 0x20)) 0.1 else -0.2;
+        state.samples[state.sample_pos] = if (0 != (state.even_odd & 0x20)) 0.1 else -0.1;
     }
 
     sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
