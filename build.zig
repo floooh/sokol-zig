@@ -13,6 +13,7 @@ fn buildSokol(b: *Builder) *LibExeObjStep {
         lib.linkSystemLibrary("Xi");
         lib.linkSystemLibrary("Xcursor");
         lib.linkSystemLibrary("GL");
+        lib.linkSystemLibrary("asound");
     }
     return lib;
 }
@@ -39,4 +40,5 @@ pub fn build(b: *Builder) void {
     buildExample(b, sokol, "offscreen");
     buildExample(b, sokol, "instancing");
     buildExample(b, sokol, "mrt");
+    buildExample(b, sokol, "saudio");
 }
