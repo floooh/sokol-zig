@@ -1,10 +1,8 @@
-!!! WIP WIP WIP !!!
+Auto-generated Zig bindings for the [sokol headers](https://github.com/floooh/sokol).
 
-Experimental auto-generated Zig bindings for the [sokol headers](https://github.com/floooh/sokol).
+WIP, because not all sokol-headers have been added yet.
 
 ## BUILD
-
-Use the zig 0.6.0 HEAD version (the 0.6.0 release is too old)
 
 Currently Windows and Linux is supported (not yet macOS).
 
