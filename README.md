@@ -2,6 +2,10 @@ Auto-generated Zig bindings for the [sokol headers](https://github.com/floooh/so
 
 WIP, because not all sokol-headers have been added yet.
 
+Related projects:
+
+- [pacman.zig](https://github.com/floooh/pacman.zig)
+
 ## BUILD
 
 Currently Windows and Linux is supported (not yet macOS).
