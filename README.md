@@ -8,11 +8,11 @@ Related projects:
 
 ## BUILD
 
-Currently Windows and Linux is supported (not yet macOS).
-
 On Linux install the following packages: libglu1-mesa-dev, mesa-common-dev, xorg-dev, libasound-dev
 
 ```sh
+# on macOS only:
+> export ZIG_SYSTEM_LINKER_HACK=1
 # just build:
 > zig build
 # build and run samples:

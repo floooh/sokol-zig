@@ -96,7 +96,7 @@ fn shaderDesc() sg.ShaderDesc {
         .GLCORE33 => {
             desc.attrs[0].name = "position";
             desc.attrs[1].name = "color0";
-            desc.vs.source = 
+            desc.vs.source =
                 \\ #version 330
                 \\ in vec4 position;
                 \\ in vec4 color0;
@@ -113,6 +113,33 @@ fn shaderDesc() sg.ShaderDesc {
                 \\ void main() {
                 \\   frag_color = color;
                 \\ }
+                ;
+        },
+        .METAL_MACOS => {
+            desc.vs.source =
+                \\ #include <metal_stdlib>
+                \\ using namespace metal;
+                \\ struct vs_in {
+                \\   float4 position [[attribute(0)]];
+                \\   float4 color [[attribute(1)]];
+                \\ };
+                \\ struct vs_out {
+                \\   float4 position [[position]];
+                \\   float4 color;
+                \\ };
+                \\ vertex vs_out _main(vs_in inp [[stage_in]]) {
+                \\   vs_out outp;
+                \\   outp.position = inp.position;
+                \\   outp.color = inp.color;
+                \\   return outp;
+                \\ }
+                ;
+            desc.fs.source =
+                \\ #include <metal_stdlib>
+                \\ using namespace metal;
+                \\ fragment float4 _main(float4 color [[stage_in]]) {
+                \\   return color;
+                \\ };
                 ;
         },
         else => {}

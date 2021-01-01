@@ -5,15 +5,29 @@ const builtin = @import("std").builtin;
 // build sokol into a static library
 fn buildSokol(b: *Builder) *LibExeObjStep {
     const lib = b.addStaticLibrary("sokol", null);
-    lib.addCSourceFile("src/sokol/sokol.c", &[_][]const u8{});
     lib.setBuildMode(b.standardReleaseOptions());
-    lib.linkSystemLibrary("c");
-    if (builtin.os.tag == .linux) {
-        lib.linkSystemLibrary("X11");
-        lib.linkSystemLibrary("Xi");
-        lib.linkSystemLibrary("Xcursor");
-        lib.linkSystemLibrary("GL");
-        lib.linkSystemLibrary("asound");
+    if (builtin.os.tag == .macos) {
+        // need to use the system clang compiler on macOS because Zig's
+        // compiler doesn't support ObjC
+        const clangCmd = &[_][]const u8 { "clang", "-x", "objective-c", "-c", "src/sokol/sokol.c", "-Os", "-o", "zig-cache/sokol.o"};
+        lib.step.dependOn(&b.addSystemCommand(clangCmd).step);
+        lib.addObjectFile("zig-cache/sokol.o");
+        lib.linkFramework("MetalKit");
+        lib.linkFramework("Metal");
+        lib.linkFramework("Cocoa");
+        lib.linkFramework("QuartzCore");
+        lib.linkFramework("AudioToolbox");
+    }
+    else {
+        lib.addCSourceFile("src/sokol/sokol.c", &[_][]const u8{});
+        lib.linkSystemLibrary("c");
+        if (builtin.os.tag == .linux) {
+            lib.linkSystemLibrary("X11");
+            lib.linkSystemLibrary("Xi");
+            lib.linkSystemLibrary("Xcursor");
+            lib.linkSystemLibrary("GL");
+            lib.linkSystemLibrary("asound");
+        }
     }
     return lib;
 }

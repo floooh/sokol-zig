@@ -180,12 +180,12 @@ fn computeVsParams(rx: f32, ry: f32) VsParams {
 fn shaderDesc() sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     desc.vs.uniform_blocks[0].size = @sizeOf(VsParams);
+    desc.fs.images[0].type = ._2D;
     switch (sg.queryBackend()) {
         .D3D11 => {
             desc.attrs[0].sem_name = "POSITION";
             desc.attrs[1].sem_name = "COLOR";
             desc.attrs[2].sem_name = "TEXCOORD";
-            desc.fs.images[0].type = ._2D;
             desc.vs.source =
                 \\cbuffer params: register(b0) {
                 \\  float4x4 mvp;
@@ -218,7 +218,7 @@ fn shaderDesc() sg.ShaderDesc {
         },
         .GLCORE33 => {
             desc.vs.uniform_blocks[0].uniforms[0] = .{ .name="mvp", .type=.MAT4 };
-            desc.fs.images[0] = .{ .name="tex", .type=._2D }; 
+            desc.fs.images[0].name = "tex";
             desc.vs.source =
                 \\ #version 330
                 \\ uniform mat4 mvp;
@@ -242,6 +242,48 @@ fn shaderDesc() sg.ShaderDesc {
                 \\ void main() {
                 \\   frag_color = texture(tex, uv) * color;
                 \\ }
+                ;
+        },
+        .METAL_MACOS => {
+            desc.vs.entry = "vs_main";
+            desc.fs.entry = "fs_main";
+            desc.vs.source =
+                \\ #include <metal_stdlib>
+                \\ using namespace metal;
+                \\ struct params_t {
+                \\   float4x4 mvp;
+                \\ };
+                \\ struct vs_in {
+                \\   float4 position [[attribute(0)]];
+                \\   float4 color [[attribute(1)]];
+                \\   float2 uv [[attribute(2)]];
+                \\ };
+                \\ struct vs_out {
+                \\   float4 pos [[position]];
+                \\   float4 color;
+                \\   float2 uv;
+                \\ };
+                \\ vertex vs_out vs_main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {
+                \\   vs_out out;
+                \\   out.pos = params.mvp * in.position;
+                \\   out.color = in.color;
+                \\   out.uv = in.uv * 5.0;
+                \\   return out;
+                \\ }
+                ;
+            desc.fs.source =
+                \\ #include <metal_stdlib>
+                \\ using namespace metal;
+                \\ struct fs_in {
+                \\   float4 color;
+                \\   float2 uv;
+                \\ };
+                \\ fragment float4 fs_main(fs_in in [[stage_in]],
+                \\   texture2d<float> tex [[texture(0)]],
+                \\   sampler smp [[sampler(0)]])
+                \\ {
+                \\   return float4(tex.sample(smp, in.uv).xyz, 1.0) * in.color;
+                \\ };
                 ;
         },
         else => {}

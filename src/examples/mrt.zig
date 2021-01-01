@@ -359,6 +359,45 @@ fn offscreenShaderDesc() sg.ShaderDesc {
                 \\ }
                 ;
         },
+        .METAL_MACOS => {
+            desc.vs.source =
+                \\#include <metal_stdlib>
+                \\using namespace metal;
+                \\struct params_t {
+                \\  float4x4 mvp;
+                \\};
+                \\struct vs_in {
+                \\  float4 pos [[attribute(0)]];
+                \\  float bright [[attribute(1)]];
+                \\};
+                \\struct vs_out {
+                \\  float4 pos [[position]];
+                \\  float bright;
+                \\};
+                \\vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {
+                \\  vs_out out;
+                \\  out.pos = params.mvp * in.pos;
+                \\  out.bright = in.bright;
+                \\  return out;
+                \\}
+                ;
+            desc.fs.source =
+                \\ #include <metal_stdlib>
+                \\ using namespace metal;
+                \\ struct fs_out {
+                \\   float4 color0 [[color(0)]];
+                \\   float4 color1 [[color(1)]];
+                \\   float4 color2 [[color(2)]];
+                \\ };
+                \\ fragment fs_out _main(float bright [[stage_in]]) {
+                \\   fs_out out;
+                \\   out.color0 = float4(bright, 0.0, 0.0, 1.0);
+                \\   out.color1 = float4(0.0, bright, 0.0, 1.0);
+                \\   out.color2 = float4(0.0, 0.0, bright, 1.0);
+                \\   return out;
+                \\ }
+                ;
+        },
         else => { }
     }
     return desc;
@@ -452,6 +491,54 @@ fn fsqShaderDesc() sg.ShaderDesc {
                 \\ }
                 ;
         },
+        .METAL_MACOS => {
+            inline for (.{ 0, 1, 2 }) |i| {
+                desc.fs.images[i].type = ._2D;
+            }
+            desc.vs.source =
+                \\ #include <metal_stdlib>
+                \\ using namespace metal;
+                \\ struct params_t {
+                \\   float2 offset;
+                \\ };
+                \\ struct vs_in {
+                \\   float2 pos [[attribute(0)]];
+                \\ };
+                \\ struct vs_out {
+                \\   float4 pos [[position]];
+                \\   float2 uv0;
+                \\   float2 uv1;
+                \\   float2 uv2;
+                \\ };
+                \\ vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {
+                \\   vs_out out;
+                \\   out.pos = float4(in.pos*2.0-1.0, 0.5, 1.0);
+                \\   out.uv0 = in.pos + float2(params.offset.x, 0.0);
+                \\   out.uv1 = in.pos + float2(0.0, params.offset.y);
+                \\   out.uv2 = in.pos;
+                \\   return out;
+                \\ }
+                ;
+            desc.fs.source =
+                \\ #include <metal_stdlib>
+                \\ using namespace metal;
+                \\ struct fs_in {
+                \\   float2 uv0;
+                \\   float2 uv1;
+                \\   float2 uv2;
+                \\ };
+                \\ fragment float4 _main(fs_in in [[stage_in]],
+                \\   texture2d<float> tex0 [[texture(0)]], sampler smp0 [[sampler(0)]],
+                \\   texture2d<float> tex1 [[texture(1)]], sampler smp1 [[sampler(1)]],
+                \\   texture2d<float> tex2 [[texture(2)]], sampler smp2 [[sampler(2)]])
+                \\ {
+                \\   float3 c0 = tex0.sample(smp0, in.uv0).xyz;
+                \\   float3 c1 = tex1.sample(smp1, in.uv1).xyz;
+                \\   float3 c2 = tex2.sample(smp2, in.uv2).xyz;
+                \\   return float4(c0 + c1 + c2, 1.0);
+                \\ }
+                ;
+        },
         else => {}
     }
     return desc;
@@ -504,6 +591,33 @@ fn dbgShaderDesc() sg.ShaderDesc {
                 \\ out vec4 frag_color;
                 \\ void main() {
                 \\   frag_color = vec4(texture(tex,uv).xyz, 1.0);
+                \\ }
+                ;
+        },
+        .METAL_MACOS => {
+            desc.fs.images[0].type = ._2D;
+            desc.vs.source =
+                \\ #include <metal_stdlib>
+                \\ using namespace metal;
+                \\ struct vs_in {
+                \\   float2 pos [[attribute(0)]];
+                \\ };
+                \\ struct vs_out {
+                \\   float4 pos [[position]];
+                \\   float2 uv;
+                \\ };
+                \\ vertex vs_out _main(vs_in in [[stage_in]]) {
+                \\   vs_out out;
+                \\   out.pos = float4(in.pos*2.0-1.0, 0.5, 1.0);
+                \\   out.uv = in.pos;
+                \\   return out;
+                \\ }
+                ;
+            desc.fs.source =
+                \\ #include <metal_stdlib>
+                \\ using namespace metal;
+                \\ fragment float4 _main(float2 uv [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {
+                \\   return float4(tex.sample(smp, uv).xyz, 1.0);
                 \\ }
                 ;
         },
