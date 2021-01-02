@@ -1,17 +1,28 @@
 const Builder = @import("std").build.Builder;
 const LibExeObjStep = @import("std").build.LibExeObjStep;
 const builtin = @import("std").builtin;
+const mem = @import("std").mem;
+
+// macOS helper function to add SDK search paths
+fn macosAddSdkDirs(b: *Builder, step: *LibExeObjStep) !void {
+    var sdk_dir = try b.exec(&[_][]const u8 { "xcrun", "--show-sdk-path" });
+    const newline_index = mem.lastIndexOf(u8, sdk_dir, "\n");
+    if (newline_index) |idx| {
+        sdk_dir = sdk_dir[0..idx];
+    }
+    const framework_dir = try mem.concat(b.allocator, u8, &[_][]const u8 { sdk_dir, "/System/Library/Frameworks" });
+    const usrinclude_dir = try mem.concat(b.allocator, u8, &[_][]const u8 { sdk_dir, "/usr/include"});
+    step.addFrameworkDir(framework_dir);
+    step.addIncludeDir(usrinclude_dir);
+}
 
 // build sokol into a static library
 fn buildSokol(b: *Builder) *LibExeObjStep {
     const lib = b.addStaticLibrary("sokol", null);
     lib.setBuildMode(b.standardReleaseOptions());
     if (builtin.os.tag == .macos) {
-        // need to use the system clang compiler on macOS because Zig's
-        // compiler doesn't support ObjC
-        const clangCmd = &[_][]const u8 { "clang", "-x", "objective-c", "-c", "src/sokol/sokol.c", "-Os", "-o", "zig-cache/sokol.o"};
-        lib.step.dependOn(&b.addSystemCommand(clangCmd).step);
-        lib.addObjectFile("zig-cache/sokol.o");
+        macosAddSdkDirs(b, lib) catch unreachable;
+        lib.addCSourceFile("src/sokol/sokol.c", &[_][]const u8 { "-ObjC" });
         lib.linkFramework("MetalKit");
         lib.linkFramework("Metal");
         lib.linkFramework("Cocoa");
