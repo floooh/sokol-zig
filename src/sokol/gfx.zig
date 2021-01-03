@@ -112,6 +112,7 @@ pub const PixelformatInfo = extern struct {
     blend: bool = false,
     msaa: bool = false,
     depth: bool = false,
+    __pad: [3]u32 = [_]u32{0} ** 3,
 };
 pub const Features = extern struct {
     instancing: bool = false,
@@ -121,6 +122,7 @@ pub const Features = extern struct {
     imagetype_3d: bool = false,
     imagetype_array: bool = false,
     image_clamp_to_border: bool = false,
+    __pad: [3]u32 = [_]u32{0} ** 3,
 };
 pub const Limits = extern struct {
     max_image_size_2d: u32 = 0,
