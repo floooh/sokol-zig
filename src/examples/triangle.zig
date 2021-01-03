@@ -25,8 +25,10 @@ export fn init() void {
         -0.5, -0.5, 0.5,     0.0, 0.0, 1.0, 1.0
     };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .content = &vertices,
-        .size = @sizeOf(@TypeOf(vertices))
+        .data = .{
+            .ptr = &vertices,
+            .size = @sizeOf(@TypeOf(vertices))
+        }
     });
 
     // create a shader and pipeline object

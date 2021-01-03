@@ -52,8 +52,10 @@ export fn init() void {
         1.0, 1.0, 0.5, 1.0,  1.0, 1.0, 0.5, 1.0,  1.0, 1.0, 0.5, 1.0,  1.0, 1.0, 0.5, 1.0,
     };
     const vbuf = sg.makeBuffer(.{
-        .content = &vertices,
-        .size = @sizeOf(@TypeOf(vertices))
+        .data = .{
+            .ptr = &vertices,
+            .size = @sizeOf(@TypeOf(vertices))
+        }
     });
 
     // cube index buffer
@@ -67,8 +69,10 @@ export fn init() void {
     };
     const ibuf = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .content = &indices,
-        .size = @sizeOf(@TypeOf(indices))
+        .data = .{
+            .ptr = &indices,
+            .size = @sizeOf(@TypeOf(indices))
+        }
     });
 
     // shader and pipeline object

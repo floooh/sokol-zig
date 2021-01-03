@@ -18,6 +18,10 @@ pub const Pass = extern struct {
 pub const Context = extern struct {
     id: u32 = 0,
 };
+pub const Range = extern struct {
+    ptr: ?*const c_void = null,
+    size: usize = 0,
+};
 pub const invalid_id = 0;
 pub const num_shader_stages = 2;
 pub const num_inflight_frames = 2;
@@ -365,10 +369,10 @@ pub const Bindings = extern struct {
 };
 pub const BufferDesc = extern struct {
     _start_canary: u32 = 0,
-    size: i32 = 0,
+    size: usize = 0,
     type: BufferType = .DEFAULT,
     usage: Usage = .DEFAULT,
-    content: ?*const c_void = null,
+    data: Range = .{ },
     label: [*c]const u8 = null,
     gl_buffers: [2]u32 = [_]u32{0} ** 2,
     mtl_buffers: [2]?*const c_void = [_]?*const c_void { null } ** 2,
@@ -376,12 +380,8 @@ pub const BufferDesc = extern struct {
     wgpu_buffer: ?*const c_void = null,
     _end_canary: u32 = 0,
 };
-pub const SubimageContent = extern struct {
-    ptr: ?*const c_void = null,
-    size: i32 = 0,
-};
-pub const ImageContent = extern struct {
-    subimage: [6][16]SubimageContent = [_][16]SubimageContent{[_]SubimageContent{ .{ } }**16}**6,
+pub const ImageData = extern struct {
+    subimage: [6][16]Range = [_][16]Range{[_]Range{ .{ } }**16}**6,
 };
 pub const ImageDesc = extern struct {
     _start_canary: u32 = 0,
@@ -403,7 +403,7 @@ pub const ImageDesc = extern struct {
     max_anisotropy: u32 = 0,
     min_lod: f32 = 0.0,
     max_lod: f32 = 0.0,
-    content: ImageContent = .{ },
+    data: ImageData = .{ },
     label: [*c]const u8 = null,
     gl_textures: [2]u32 = [_]u32{0} ** 2,
     gl_texture_target: u32 = 0,
@@ -540,7 +540,7 @@ pub const TraceHooks = extern struct {
     destroy_pipeline: ?fn(Pipeline, ?*c_void) callconv(.C) void = null,
     destroy_pass: ?fn(Pass, ?*c_void) callconv(.C) void = null,
     update_buffer: ?fn(Buffer, ?*const c_void, i32, ?*c_void) callconv(.C) void = null,
-    update_image: ?fn(Image, [*c]const ImageContent, ?*c_void) callconv(.C) void = null,
+    update_image: ?fn(Image, [*c]const ImageData, ?*c_void) callconv(.C) void = null,
     append_buffer: ?fn(Buffer, ?*const c_void, i32, i32, ?*c_void) callconv(.C) void = null,
     begin_default_pass: ?fn([*c]const PassAction, i32, i32, ?*c_void) callconv(.C) void = null,
     begin_pass: ?fn(Pass, [*c]const PassAction, ?*c_void) callconv(.C) void = null,
@@ -745,8 +745,8 @@ pub extern fn sg_update_buffer(Buffer, ?*const c_void, i32) void;
 pub fn updateBuffer(buf: Buffer, data_ptr: ?*const c_void, data_size: i32) void {
     sg_update_buffer(buf, data_ptr, data_size);
 }
-pub extern fn sg_update_image(Image, [*c]const ImageContent) void;
-pub fn updateImage(img: Image, data: ImageContent) void {
+pub extern fn sg_update_image(Image, [*c]const ImageData) void;
+pub fn updateImage(img: Image, data: ImageData) void {
     sg_update_image(img, &data);
 }
 pub extern fn sg_append_buffer(Buffer, ?*const c_void, i32) i32;

@@ -100,8 +100,10 @@ export fn init() void {
     };
     const vbuf = sg.makeBuffer(.{
         .type = .VERTEXBUFFER,
-        .content = &vertices,
-        .size = @sizeOf(@TypeOf(vertices))
+        .data = .{
+            .ptr = &vertices,
+            .size = @sizeOf(@TypeOf(vertices))
+        }
     });
 
     // cube indices
@@ -115,8 +117,10 @@ export fn init() void {
     };
     const ibuf = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .content = &indices,
-        .size = @sizeOf(@TypeOf(indices))
+        .data = .{
+            .ptr = &indices,
+            .size = @sizeOf(@TypeOf(indices))
+        }
     });
 
     // shader and pipeline object for offscreen rendering

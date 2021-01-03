@@ -104,8 +104,10 @@ export fn init() void {
          1.0,  1.0, -1.0,   0.7
     };
     const cube_vbuf = sg.makeBuffer(.{
-        .content = &cube_vertices,
-        .size = @sizeOf(@TypeOf(cube_vertices))
+        .data = .{
+            .ptr = &cube_vertices,
+            .size = @sizeOf(@TypeOf(cube_vertices))
+        }
     });
 
     // index buffer for a cube
@@ -119,8 +121,10 @@ export fn init() void {
     };
     const cube_ibuf = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .content = &cube_indices,
-        .size = @sizeOf(@TypeOf(cube_indices))
+        .data = .{
+            .ptr = &cube_indices,
+            .size = @sizeOf(@TypeOf(cube_indices))
+        }
     });
 
     // resource bindings for offscreen rendering
@@ -151,8 +155,10 @@ export fn init() void {
     // a vertex buffer to render a fullscreen quad
     const quad_vertices = [_]f32 { 0.0, 0.0,  1.0, 0.0,  0.0, 1.0,  1.0, 1.0 };
     const quad_vbuf = sg.makeBuffer(.{
-        .content = &quad_vertices,
-        .size = @sizeOf(@TypeOf(quad_vertices))
+        .data = .{
+            .ptr = &quad_vertices,
+            .size = @sizeOf(@TypeOf(quad_vertices))
+        }
     });
 
     // shader and pipeline object to render a fullscreen quad which composes

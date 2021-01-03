@@ -76,8 +76,10 @@ export fn init() void {
         .{ .x= 1.0, .y= 1.0, .z=-1.0,  .color=0xFF007FFF, .u=    0, .v=32767 },
     };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .content = &vertices,
-        .size = @sizeOf(@TypeOf(vertices))
+        .data = .{
+            .ptr = &vertices,
+            .size = @sizeOf(@TypeOf(vertices))
+        }
     });
 
     // cube index buffer
@@ -91,8 +93,10 @@ export fn init() void {
     };
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .content = &indices,
-        .size = @sizeOf(@TypeOf(indices))
+        .data = .{
+            .ptr = &indices,
+            .size = @sizeOf(@TypeOf(indices))
+        }
     });
 
     // create a small checker-board texture
@@ -106,7 +110,7 @@ export fn init() void {
         .width = 4,
         .height = 4,
     };
-    img_desc.content.subimage[0][0] = .{
+    img_desc.data.subimage[0][0] = .{
         .ptr = &pixels,
         .size = @sizeOf(@TypeOf(pixels))
     };
