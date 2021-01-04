@@ -104,10 +104,7 @@ export fn init() void {
         .width = 4,
         .height = 4,
     };
-    img_desc.data.subimage[0][0] = .{
-        .ptr = &pixels,
-        .size = @sizeOf(@TypeOf(pixels))
-    };
+    img_desc.data.subimage[0][0] = sg.range(pixels);
     state.bind.fs_images[0] = sg.makeImage(img_desc);
 
     // shader and pipeline object
