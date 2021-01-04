@@ -1,5 +1,26 @@
 // machine generated, do not edit
 
+// helper function to convert "anything" to a Range struct
+pub fn range(val: anytype) Range {
+    const type_info = @typeInfo(@TypeOf(val));
+    switch (type_info) {
+        .Pointer => {
+            if (type_info.Pointer.size == .One) {
+                return .{ .ptr = val, .size = @sizeOf(type_info.Pointer.child) };
+            }
+            else {
+                @compileError("FIXME: pointer types!");
+            }
+        },
+        .Struct, .Array => {
+            return .{ .ptr = &val, .size = @sizeOf(@TypeOf(val)) };
+        },
+        else => {
+            @compileError("Cannot convert to range!");
+        }
+    }
+}
+
 pub const Buffer = extern struct {
     id: u32 = 0,
 };

@@ -62,10 +62,7 @@ export fn init() void {
          1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
     };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = .{
-            .ptr = &vertices,
-            .size = @sizeOf(@TypeOf(vertices))
-        }
+        .data = sg.range(vertices)
     });
 
     // cube index buffer
@@ -79,10 +76,7 @@ export fn init() void {
     };
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = .{
-            .ptr = &indices,
-            .size = @sizeOf(@TypeOf(indices))
-        }
+        .data = sg.range(indices)
     });
 
     // shader and pipeline object
