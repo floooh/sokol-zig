@@ -128,7 +128,7 @@ export fn frame() void {
     }
 
     // update instance data
-    sg.updateBuffer(state.bind.vertex_buffers[1], &state.pos, @intCast(i32, state.cur_num_particles * @sizeOf(vec3)));
+    sg.updateBuffer(state.bind.vertex_buffers[1], sg.range(state.pos[0..state.cur_num_particles]));
 
     // compute vertex shader parameters (the mvp matrix)
     state.ry += 1.0;

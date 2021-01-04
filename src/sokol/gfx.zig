@@ -5,11 +5,10 @@ pub fn range(val: anytype) Range {
     const type_info = @typeInfo(@TypeOf(val));
     switch (type_info) {
         .Pointer => {
-            if (type_info.Pointer.size == .One) {
-                return .{ .ptr = val, .size = @sizeOf(type_info.Pointer.child) };
-            }
-            else {
-                @compileError("FIXME: pointer types!");
+            switch (type_info.Pointer.size) {
+                .One => return .{ .ptr = val, .size = @sizeOf(type_info.Pointer.child) },
+                .Slice => return .{ .ptr = val.ptr, .size = @sizeOf(type_info.Pointer.child) * val.len },
+                else => @compileError("FIXME: Pointer type!"),
             }
         },
         .Struct, .Array => {
@@ -560,9 +559,9 @@ pub const TraceHooks = extern struct {
     destroy_shader: ?fn(Shader, ?*c_void) callconv(.C) void = null,
     destroy_pipeline: ?fn(Pipeline, ?*c_void) callconv(.C) void = null,
     destroy_pass: ?fn(Pass, ?*c_void) callconv(.C) void = null,
-    update_buffer: ?fn(Buffer, ?*const c_void, i32, ?*c_void) callconv(.C) void = null,
+    update_buffer: ?fn(Buffer, [*c]const Range, ?*c_void) callconv(.C) void = null,
     update_image: ?fn(Image, [*c]const ImageData, ?*c_void) callconv(.C) void = null,
-    append_buffer: ?fn(Buffer, ?*const c_void, i32, i32, ?*c_void) callconv(.C) void = null,
+    append_buffer: ?fn(Buffer, [*c]const Range, u32, ?*c_void) callconv(.C) void = null,
     begin_default_pass: ?fn([*c]const PassAction, i32, i32, ?*c_void) callconv(.C) void = null,
     begin_pass: ?fn(Pass, [*c]const PassAction, ?*c_void) callconv(.C) void = null,
     apply_viewport: ?fn(i32, i32, i32, i32, bool, ?*c_void) callconv(.C) void = null,
@@ -619,7 +618,7 @@ pub const BufferInfo = extern struct {
     slot: SlotInfo = .{ },
     update_frame_index: u32 = 0,
     append_frame_index: u32 = 0,
-    append_pos: i32 = 0,
+    append_pos: u32 = 0,
     append_overflow: bool = false,
     num_slots: i32 = 0,
     active_slot: i32 = 0,
@@ -762,17 +761,17 @@ pub extern fn sg_destroy_pass(Pass) void;
 pub fn destroyPass(pass: Pass) void {
     sg_destroy_pass(pass);
 }
-pub extern fn sg_update_buffer(Buffer, ?*const c_void, i32) void;
-pub fn updateBuffer(buf: Buffer, data_ptr: ?*const c_void, data_size: i32) void {
-    sg_update_buffer(buf, data_ptr, data_size);
+pub extern fn sg_update_buffer(Buffer, [*c]const Range) void;
+pub fn updateBuffer(buf: Buffer, data: Range) void {
+    sg_update_buffer(buf, &data);
 }
 pub extern fn sg_update_image(Image, [*c]const ImageData) void;
 pub fn updateImage(img: Image, data: ImageData) void {
     sg_update_image(img, &data);
 }
-pub extern fn sg_append_buffer(Buffer, ?*const c_void, i32) i32;
-pub fn appendBuffer(buf: Buffer, data_ptr: ?*const c_void, data_size: i32) i32 {
-    return sg_append_buffer(buf, data_ptr, data_size);
+pub extern fn sg_append_buffer(Buffer, [*c]const Range) u32;
+pub fn appendBuffer(buf: Buffer, data: Range) u32 {
+    return sg_append_buffer(buf, &data);
 }
 pub extern fn sg_query_buffer_overflow(Buffer) bool;
 pub fn queryBufferOverflow(buf: Buffer) bool {
