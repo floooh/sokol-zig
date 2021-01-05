@@ -50,7 +50,7 @@ export fn init() void {
         0.0,   r, 0.0,       1.0, 0.0, 1.0, 1.0
     };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.range(vertices)
+        .data = sg.asRange(vertices)
     });
 
     // an index buffer for the static geometry
@@ -60,7 +60,7 @@ export fn init() void {
     };
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.range(indices)
+        .data = sg.asRange(indices)
     });
 
     // an empty dynamic vertex buffer for the instancing data, goes in vertex buffer slot 1
@@ -128,7 +128,7 @@ export fn frame() void {
     }
 
     // update instance data
-    sg.updateBuffer(state.bind.vertex_buffers[1], sg.range(state.pos[0..state.cur_num_particles]));
+    sg.updateBuffer(state.bind.vertex_buffers[1], sg.asRange(state.pos[0..state.cur_num_particles]));
 
     // compute vertex shader parameters (the mvp matrix)
     state.ry += 1.0;
@@ -138,7 +138,7 @@ export fn frame() void {
     sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
-    sg.applyUniforms(.VS, 0, &vs_params, @sizeOf(VsParams));
+    sg.applyUniforms(.VS, 0, sg.asRange(vs_params));
     sg.draw(0, 24, @intCast(i32, state.cur_num_particles));
     sg.endPass();
     sg.commit();

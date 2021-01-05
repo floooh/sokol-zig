@@ -25,7 +25,7 @@ export fn init() void {
         -0.5, -0.5, 0.5,     0.0, 0.0, 1.0, 1.0
     };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.range(vertices)
+        .data = sg.asRange(vertices)
     });
 
     // create a shader and pipeline object

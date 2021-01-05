@@ -76,7 +76,7 @@ export fn init() void {
         .{ .x= 1.0, .y= 1.0, .z=-1.0,  .color=0xFF007FFF, .u=    0, .v=32767 },
     };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.range(vertices)
+        .data = sg.asRange(vertices)
     });
 
     // cube index buffer
@@ -90,7 +90,7 @@ export fn init() void {
     };
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.range(indices)
+        .data = sg.asRange(indices)
     });
 
     // create a small checker-board texture
@@ -104,7 +104,7 @@ export fn init() void {
         .width = 4,
         .height = 4,
     };
-    img_desc.data.subimage[0][0] = sg.range(pixels);
+    img_desc.data.subimage[0][0] = sg.asRange(pixels);
     state.bind.fs_images[0] = sg.makeImage(img_desc);
 
     // shader and pipeline object
@@ -138,7 +138,7 @@ export fn frame() void {
     sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
-    sg.applyUniforms(.VS, 0, &vs_params, @sizeOf(@TypeOf(vs_params)));
+    sg.applyUniforms(.VS, 0, sg.asRange(vs_params));
     sg.draw(0, 36, 1);
     sg.endPass();
     sg.commit();

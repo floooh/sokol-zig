@@ -100,7 +100,7 @@ export fn init() void {
     };
     const vbuf = sg.makeBuffer(.{
         .type = .VERTEXBUFFER,
-        .data = sg.range(vertices)
+        .data = sg.asRange(vertices)
     });
 
     // cube indices
@@ -114,7 +114,7 @@ export fn init() void {
     };
     const ibuf = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.range(indices)
+        .data = sg.asRange(indices)
     });
 
     // shader and pipeline object for offscreen rendering
@@ -176,7 +176,7 @@ export fn frame() void {
     sg.beginPass(state.offscreen.pass, state.offscreen.pass_action);
     sg.applyPipeline(state.offscreen.pip);
     sg.applyBindings(state.offscreen.bind);
-    sg.applyUniforms(.VS, 0, &vs_params, @sizeOf(@TypeOf(vs_params)));
+    sg.applyUniforms(.VS, 0, sg.asRange(vs_params));
     sg.draw(0, 36, 1);
     sg.endPass();
 
@@ -185,7 +185,7 @@ export fn frame() void {
     sg.beginDefaultPass(state.default.pass_action, sapp.width(), sapp.height());
     sg.applyPipeline(state.default.pip);
     sg.applyBindings(state.default.bind);
-    sg.applyUniforms(.VS, 0, &vs_params, @sizeOf(@TypeOf(vs_params)));
+    sg.applyUniforms(.VS, 0, sg.asRange(vs_params));
     sg.draw(0, 36, 1);
     sg.endPass();
 

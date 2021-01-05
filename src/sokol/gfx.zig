@@ -1,7 +1,7 @@
 // machine generated, do not edit
 
 // helper function to convert "anything" to a Range struct
-pub fn range(val: anytype) Range {
+pub fn asRange(val: anytype) Range {
     const type_info = @typeInfo(@TypeOf(val));
     switch (type_info) {
         .Pointer => {
@@ -444,7 +444,7 @@ pub const ShaderUniformDesc = extern struct {
     array_count: i32 = 0,
 };
 pub const ShaderUniformBlockDesc = extern struct {
-    size: i32 = 0,
+    size: usize = 0,
     uniforms: [16]ShaderUniformDesc = [_]ShaderUniformDesc{.{}} ** 16,
 };
 pub const ShaderImageDesc = extern struct {
@@ -568,7 +568,7 @@ pub const TraceHooks = extern struct {
     apply_scissor_rect: ?fn(i32, i32, i32, i32, bool, ?*c_void) callconv(.C) void = null,
     apply_pipeline: ?fn(Pipeline, ?*c_void) callconv(.C) void = null,
     apply_bindings: ?fn([*c]const Bindings, ?*c_void) callconv(.C) void = null,
-    apply_uniforms: ?fn(ShaderStage, i32, ?*const c_void, i32, ?*c_void) callconv(.C) void = null,
+    apply_uniforms: ?fn(ShaderStage, u32, [*c]const Range, ?*c_void) callconv(.C) void = null,
     draw: ?fn(i32, i32, i32, ?*c_void) callconv(.C) void = null,
     end_pass: ?fn(?*c_void) callconv(.C) void = null,
     commit: ?fn(?*c_void) callconv(.C) void = null,
@@ -801,9 +801,9 @@ pub extern fn sg_apply_bindings([*c]const Bindings) void;
 pub fn applyBindings(bindings: Bindings) void {
     sg_apply_bindings(&bindings);
 }
-pub extern fn sg_apply_uniforms(ShaderStage, i32, ?*const c_void, i32) void;
-pub fn applyUniforms(stage: ShaderStage, ub_index: i32, data: ?*const c_void, num_bytes: i32) void {
-    sg_apply_uniforms(stage, ub_index, data, num_bytes);
+pub extern fn sg_apply_uniforms(ShaderStage, u32, [*c]const Range) void;
+pub fn applyUniforms(stage: ShaderStage, ub_index: u32, data: Range) void {
+    sg_apply_uniforms(stage, ub_index, &data);
 }
 pub extern fn sg_draw(i32, i32, i32) void;
 pub fn draw(base_element: i32, num_elements: i32, num_instances: i32) void {

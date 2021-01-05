@@ -104,7 +104,7 @@ export fn init() void {
          1.0,  1.0, -1.0,   0.7
     };
     const cube_vbuf = sg.makeBuffer(.{
-        .data = sg.range(cube_vertices)
+        .data = sg.asRange(cube_vertices)
     });
 
     // index buffer for a cube
@@ -118,7 +118,7 @@ export fn init() void {
     };
     const cube_ibuf = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.range(cube_indices)
+        .data = sg.asRange(cube_indices)
     });
 
     // resource bindings for offscreen rendering
@@ -148,7 +148,7 @@ export fn init() void {
 
     // a vertex buffer to render a fullscreen quad
     const quad_vbuf = sg.makeBuffer(.{
-        .data = sg.range([_]f32 { 0.0, 0.0,  1.0, 0.0,  0.0, 1.0,  1.0, 1.0 })
+        .data = sg.asRange([_]f32 { 0.0, 0.0,  1.0, 0.0,  0.0, 1.0,  1.0, 1.0 })
     });
 
     // shader and pipeline object to render a fullscreen quad which composes
@@ -197,7 +197,7 @@ export fn frame() void {
     sg.beginPass(state.offscreen.pass, state.offscreen.pass_action);
     sg.applyPipeline(state.offscreen.pip);
     sg.applyBindings(state.offscreen.bind);
-    sg.applyUniforms(.VS, 0, &offscreen_params, @sizeOf(@TypeOf(offscreen_params)));
+    sg.applyUniforms(.VS, 0, sg.asRange(offscreen_params));
     sg.draw(0, 36, 1);
     sg.endPass();
 
@@ -206,7 +206,7 @@ export fn frame() void {
     sg.beginDefaultPass(state.default.pass_action, sapp.width(), sapp.height());
     sg.applyPipeline(state.fsq.pip);
     sg.applyBindings(state.fsq.bind);
-    sg.applyUniforms(.VS, 0, &fsq_params, @sizeOf(@TypeOf(fsq_params)));
+    sg.applyUniforms(.VS, 0, sg.asRange(fsq_params));
     sg.draw(0, 4, 1);
     sg.applyPipeline(state.dbg.pip);
     inline for (.{0, 1, 2 }) |i| {

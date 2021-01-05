@@ -52,7 +52,7 @@ export fn init() void {
         1.0, 1.0, 0.5, 1.0,  1.0, 1.0, 0.5, 1.0,  1.0, 1.0, 0.5, 1.0,  1.0, 1.0, 0.5, 1.0,
     };
     const vbuf = sg.makeBuffer(.{
-        .data = sg.range(vertices)
+        .data = sg.asRange(vertices)
     });
 
     // cube index buffer
@@ -66,7 +66,7 @@ export fn init() void {
     };
     const ibuf = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.range(indices)
+        .data = sg.asRange(indices)
     });
 
     // shader and pipeline object
@@ -108,7 +108,7 @@ export fn frame() void {
     sg.beginDefaultPass(.{}, sapp.width(), sapp.height());
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
-    sg.applyUniforms(.VS, 0, &vs_params, @sizeOf(@TypeOf(vs_params)));
+    sg.applyUniforms(.VS, 0, sg.asRange(vs_params));
     sg.draw(0, 36, 1);
     sg.endPass();
     sg.commit();

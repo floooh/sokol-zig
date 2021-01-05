@@ -48,11 +48,11 @@ export fn init() void {
         0, 1, 2, 0, 2, 3
     };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.range(vertices)
+        .data = sg.asRange(vertices)
     });
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.range(indices)
+        .data = sg.asRange(indices)
     });
 
     // a shader and pipeline object

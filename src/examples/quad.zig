@@ -27,14 +27,14 @@ export fn init() void {
         -0.5, -0.5, 0.5,     1.0, 1.0, 0.0, 1.0
     };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.range(vertices)
+        .data = sg.asRange(vertices)
     });
 
     // an index buffer
     const indices = [_] u16 { 0, 1, 2,  0, 2, 3 };
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.range(indices)
+        .data = sg.asRange(indices)
     });
 
     // a shader and pipeline state object
