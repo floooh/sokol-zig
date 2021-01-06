@@ -12,21 +12,21 @@ fn macosAddSdkDirs(b: *bld.Builder, step: *bld.LibExeObjStep) !void {
 }
 
 // build sokol into a static library
-fn buildSokol(b: *bld.Builder) *bld.LibExeObjStep {
+pub fn buildSokol(b: *bld.Builder, comptime prefix_path: []const u8) *bld.LibExeObjStep {
     const lib = b.addStaticLibrary("sokol", null);
     lib.linkLibC();
     lib.setBuildMode(b.standardReleaseOptions());
+    if (prefix_path.len > 0) lib.addIncludeDir(prefix_path ++ "src/sokol/");
     if (lib.target.isDarwin()) {
         macosAddSdkDirs(b, lib) catch unreachable;
-        lib.addCSourceFile("src/sokol/sokol.c", &[_][]const u8 { "-ObjC" });
+        lib.addCSourceFile(prefix_path ++ "src/sokol/sokol.c", &[_][]const u8{"-ObjC"});
         lib.linkFramework("MetalKit");
         lib.linkFramework("Metal");
         lib.linkFramework("Cocoa");
         lib.linkFramework("QuartzCore");
         lib.linkFramework("AudioToolbox");
-    }
-    else {
-        lib.addCSourceFile("src/sokol/sokol.c", &[_][]const u8{});
+    } else {
+        lib.addCSourceFile(prefix_path ++ "src/sokol/sokol.c", &[_][]const u8{});
         if (lib.target.isLinux()) {
             lib.linkSystemLibrary("X11");
             lib.linkSystemLibrary("Xi");
@@ -49,7 +49,7 @@ fn buildExample(b: *bld.Builder, sokol: *bld.LibExeObjStep, comptime name: []con
 }
 
 pub fn build(b: *bld.Builder) void {
-    const sokol = buildSokol(b);
+    const sokol = buildSokol(b, "");
     buildExample(b, sokol, "clear");
     buildExample(b, sokol, "triangle");
     buildExample(b, sokol, "quad");
