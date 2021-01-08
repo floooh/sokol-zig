@@ -58,7 +58,7 @@ export fn init() void {
     state.img = sg.makeImage(img_desc);
 
     // create a pipeline object for 3d rendering, with less-equal
-    // depth-test and cull-face enabled, not that we don't provide
+    // depth-test and cull-face enabled, note that we don't provide
     // a shader, vertex-layout, pixel formats and sample count here,
     // these are all filled in by sokol-gl
     state.pip3d = sgl.makePipeline(.{
