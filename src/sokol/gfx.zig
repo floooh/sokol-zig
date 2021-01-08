@@ -454,8 +454,7 @@ pub const ShaderImageDesc = extern struct {
 };
 pub const ShaderStageDesc = extern struct {
     source: [*c]const u8 = null,
-    byte_code: ?[*]const u8 = null,
-    byte_code_size: i32 = 0,
+    bytecode: Range = .{ },
     entry: [*c]const u8 = null,
     d3d11_target: [*c]const u8 = null,
     uniform_blocks: [4]ShaderUniformBlockDesc = [_]ShaderUniformBlockDesc{.{}} ** 4,

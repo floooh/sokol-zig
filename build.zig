@@ -16,17 +16,27 @@ pub fn buildSokol(b: *bld.Builder, comptime prefix_path: []const u8) *bld.LibExe
     const lib = b.addStaticLibrary("sokol", null);
     lib.linkLibC();
     lib.setBuildMode(b.standardReleaseOptions());
-    if (prefix_path.len > 0) lib.addIncludeDir(prefix_path ++ "src/sokol/");
+    const sokol_path = prefix_path ++ "src/sokol/c/";
+    const csources = [_][]const u8 {
+        "sokol_app.c",
+        "sokol_gfx.c",
+        "sokol_time.c",
+        "sokol_audio.c"
+    };
     if (lib.target.isDarwin()) {
         macosAddSdkDirs(b, lib) catch unreachable;
-        lib.addCSourceFile(prefix_path ++ "src/sokol/sokol.c", &[_][]const u8{"-ObjC"});
+        inline for (csources) |csrc| {
+            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-ObjC", "-DIMPL"});
+        }
         lib.linkFramework("MetalKit");
         lib.linkFramework("Metal");
         lib.linkFramework("Cocoa");
         lib.linkFramework("QuartzCore");
         lib.linkFramework("AudioToolbox");
     } else {
-        lib.addCSourceFile(prefix_path ++ "src/sokol/sokol.c", &[_][]const u8{});
+        inline for (csources) |csrc| {
+            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-DIMPL"});
+        }
         if (lib.target.isLinux()) {
             lib.linkSystemLibrary("X11");
             lib.linkSystemLibrary("Xi");
