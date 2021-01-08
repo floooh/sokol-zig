@@ -18,8 +18,7 @@ pub fn buildSokol(b: *bld.Builder, comptime prefix_path: []const u8) *bld.LibExe
     lib.setBuildMode(b.standardReleaseOptions());
     const sokol_path = prefix_path ++ "src/sokol/c/";
     const csources = [_][]const u8 {
-        "sokol_app.c",
-        "sokol_gfx.c",
+        "sokol_app_gfx.c",
         "sokol_time.c",
         "sokol_audio.c",
         "sokol_gl.c",
