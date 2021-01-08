@@ -1,5 +1,7 @@
 // machine generated, do not edit
 
+const sg = @import("gfx.zig");
+
 pub const Pipeline = extern struct {
     id: u32 = 0,
 };
@@ -29,7 +31,7 @@ pub fn shutdown() void {
     sgl_shutdown();
 }
 pub extern fn sgl_error() Error;
-pub fn error() Error {
+pub fn getError() Error {
     return sgl_error();
 }
 pub extern fn sgl_defaults() void;
@@ -37,11 +39,11 @@ pub fn defaults() void {
     sgl_defaults();
 }
 pub extern fn sgl_rad(f32) f32;
-pub fn rad(deg: f32) f32 {
+pub fn asRadians(deg: f32) f32 {
     return sgl_rad(deg);
 }
 pub extern fn sgl_deg(f32) f32;
-pub fn deg(rad: f32) f32 {
+pub fn asDegrees(rad: f32) f32 {
     return sgl_deg(rad);
 }
 pub extern fn sgl_make_pipeline([*c]const sg.PipelineDesc) Pipeline;

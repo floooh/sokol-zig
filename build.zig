@@ -21,7 +21,8 @@ pub fn buildSokol(b: *bld.Builder, comptime prefix_path: []const u8) *bld.LibExe
         "sokol_app.c",
         "sokol_gfx.c",
         "sokol_time.c",
-        "sokol_audio.c"
+        "sokol_audio.c",
+        "sokol_gl.c",
     };
     if (lib.target.isDarwin()) {
         macosAddSdkDirs(b, lib) catch unreachable;
@@ -71,4 +72,5 @@ pub fn build(b: *bld.Builder) void {
     buildExample(b, sokol, "instancing");
     buildExample(b, sokol, "mrt");
     buildExample(b, sokol, "saudio");
+    buildExample(b, sokol, "sgl");
 }

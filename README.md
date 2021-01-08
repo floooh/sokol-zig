@@ -27,5 +27,6 @@ On Linux install the following packages: libglu1-mesa-dev, mesa-common-dev, xorg
 > zig build run-instancing
 > zig build run-mrt
 > zig build run-saudio
+> zig build run-sgl
 ```
 
