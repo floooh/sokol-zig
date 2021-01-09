@@ -5,7 +5,7 @@
 //------------------------------------------------------------------------------
 const sg    = @import("sokol").gfx;
 const sapp  = @import("sokol").app;
-const sgl   = @import("sokol").sgl;
+const sgl   = @import("sokol").gl;
 const sgapp = @import("sokol").app_gfx_glue;
 const math  = @import("std").math;
 
