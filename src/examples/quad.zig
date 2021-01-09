@@ -3,8 +3,8 @@
 //
 //  Simple 2D rendering with vertex- and index-buffer.
 //------------------------------------------------------------------------------
-const sg = @import("sokol").gfx;
-const sapp = @import("sokol").app;
+const sg    = @import("sokol").gfx;
+const sapp  = @import("sokol").app;
 const sgapp = @import("sokol").app_gfx_glue;
 
 const state = struct {

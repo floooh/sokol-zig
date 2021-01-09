@@ -164,7 +164,7 @@ fn computeVsParams(rx: f32, ry: f32) VsParams {
     const rxm = mat4.rotate(rx, .{ .x=1.0, .y=0.0, .z=0.0 });
     const rym = mat4.rotate(ry, .{ .x=0.0, .y=1.0, .z=0.0 });
     const model = mat4.mul(rxm, rym);
-    const aspect = @intToFloat(f32, sapp.width()) / @intToFloat(f32, sapp.height());
+    const aspect = sapp.widthf() / sapp.heightf();
     const proj = mat4.persp(60.0, aspect, 0.01, 50.0);
     return VsParams {
         .mvp = mat4.mul(mat4.mul(proj, state.view), model)

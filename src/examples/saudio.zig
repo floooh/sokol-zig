@@ -2,12 +2,10 @@
 //  saudio.zig
 //  Test sokol-audio zig bindings
 //------------------------------------------------------------------------------
-const sg = @import("sokol").gfx;
-const sapp = @import("sokol").app;
+const sg     = @import("sokol").gfx;
+const sapp   = @import("sokol").app;
 const saudio = @import("sokol").audio;
-const sgapp = @import("sokol").app_gfx_glue;
-
-const warn = @import("std").debug.warn;
+const sgapp  = @import("sokol").app_gfx_glue;
 
 const NumSamples = 32;
 

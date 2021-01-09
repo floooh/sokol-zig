@@ -252,9 +252,17 @@ pub extern fn sapp_width() i32;
 pub fn width() i32 {
     return sapp_width();
 }
+pub extern fn sapp_widthf() f32;
+pub fn widthf() f32 {
+    return sapp_widthf();
+}
 pub extern fn sapp_height() i32;
 pub fn height() i32 {
     return sapp_height();
+}
+pub extern fn sapp_heightf() f32;
+pub fn heightf() f32 {
+    return sapp_heightf();
 }
 pub extern fn sapp_color_format() i32;
 pub fn colorFormat() i32 {

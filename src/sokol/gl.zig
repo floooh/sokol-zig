@@ -58,9 +58,17 @@ pub extern fn sgl_viewport(i32, i32, i32, i32, bool) void;
 pub fn viewport(x: i32, y: i32, w: i32, h: i32, origin_top_left: bool) void {
     sgl_viewport(x, y, w, h, origin_top_left);
 }
+pub extern fn sgl_viewportf(f32, f32, f32, f32, bool) void;
+pub fn viewportf(x: f32, y: f32, w: f32, h: f32, origin_top_left: bool) void {
+    sgl_viewportf(x, y, w, h, origin_top_left);
+}
 pub extern fn sgl_scissor_rect(i32, i32, i32, i32, bool) void;
 pub fn scissorRect(x: i32, y: i32, w: i32, h: i32, origin_top_left: bool) void {
     sgl_scissor_rect(x, y, w, h, origin_top_left);
+}
+pub extern fn sgl_scissor_rectf(f32, f32, f32, f32, bool) void;
+pub fn scissorRectf(x: f32, y: f32, w: f32, h: f32, origin_top_left: bool) void {
+    sgl_scissor_rectf(x, y, w, h, origin_top_left);
 }
 pub extern fn sgl_enable_texture() void;
 pub fn enableTexture() void {

@@ -3,8 +3,8 @@
 //
 //  Just clear the framebuffer with an animated color.
 //------------------------------------------------------------------------------
-const sg = @import("sokol").gfx;
-const sapp = @import("sokol").app;
+const sg    = @import("sokol").gfx;
+const sapp  = @import("sokol").app;
 const sgapp = @import("sokol").app_gfx_glue;
 
 var pass_action: sg.PassAction = .{};

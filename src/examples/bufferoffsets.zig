@@ -4,8 +4,8 @@
 //  Render separate geometries in vertex- and index-buffers with
 //  buffer offsets.
 //------------------------------------------------------------------------------
-const sg = @import("sokol").gfx;
-const sapp = @import("sokol").app;
+const sg    = @import("sokol").gfx;
+const sapp  = @import("sokol").app;
 const sgapp = @import("sokol").app_gfx_glue;
 
 const State = struct {

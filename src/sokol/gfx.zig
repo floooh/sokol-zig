@@ -780,6 +780,10 @@ pub extern fn sg_begin_default_pass([*c]const PassAction, i32, i32) void;
 pub fn beginDefaultPass(pass_action: PassAction, width: i32, height: i32) void {
     sg_begin_default_pass(&pass_action, width, height);
 }
+pub extern fn sg_begin_default_passf([*c]const PassAction, f32, f32) void;
+pub fn beginDefaultPassf(pass_action: PassAction, width: f32, height: f32) void {
+    sg_begin_default_passf(&pass_action, width, height);
+}
 pub extern fn sg_begin_pass(Pass, [*c]const PassAction) void;
 pub fn beginPass(pass: Pass, pass_action: PassAction) void {
     sg_begin_pass(pass, &pass_action);
@@ -788,9 +792,17 @@ pub extern fn sg_apply_viewport(i32, i32, i32, i32, bool) void;
 pub fn applyViewport(x: i32, y: i32, width: i32, height: i32, origin_top_left: bool) void {
     sg_apply_viewport(x, y, width, height, origin_top_left);
 }
+pub extern fn sg_apply_viewportf(f32, f32, f32, f32, bool) void;
+pub fn applyViewportf(x: f32, y: f32, width: f32, height: f32, origin_top_left: bool) void {
+    sg_apply_viewportf(x, y, width, height, origin_top_left);
+}
 pub extern fn sg_apply_scissor_rect(i32, i32, i32, i32, bool) void;
 pub fn applyScissorRect(x: i32, y: i32, width: i32, height: i32, origin_top_left: bool) void {
     sg_apply_scissor_rect(x, y, width, height, origin_top_left);
+}
+pub extern fn sg_apply_scissor_rectf(f32, f32, f32, f32, bool) void;
+pub fn applyScissorRectf(x: f32, y: f32, width: f32, height: f32, origin_top_left: bool) void {
+    sg_apply_scissor_rectf(x, y, width, height, origin_top_left);
 }
 pub extern fn sg_apply_pipeline(Pipeline) void;
 pub fn applyPipeline(pip: Pipeline) void {

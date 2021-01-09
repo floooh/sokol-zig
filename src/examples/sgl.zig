@@ -79,26 +79,24 @@ export fn frame() void {
 
     // compute viewport rectangles so that the views are horizontally
     // centered and keep a 1:1 aspect ratio
-    //
-    // FIXME: the @divTrunc() isn't great
-    const dw = sapp.width();
-    const dh = sapp.height();
-    const ww = @divTrunc(dh, 2);
-    const hh = @divTrunc(dh, 2);
-    const x0 = @divTrunc(dw, 2) - hh;
-    const x1 = @divTrunc(dw, 2);
-    const y0 = 0;
-    const y1 = @divTrunc(dh, 2);
+    const dw = sapp.widthf();
+    const dh = sapp.heightf();
+    const ww = dh * 0.5;
+    const hh = dh * 0.5;
+    const x0 = dw * 0.5 - hh;
+    const x1 = dw * 0.5;
+    const y0 = 0.0;
+    const y1 = dh * 0.5;
 
-    sgl.viewport(x0, y0, ww, hh, true);
+    sgl.viewportf(x0, y0, ww, hh, true);
     drawTriangle();
-    sgl.viewport(x1, y0, ww, hh, true);
+    sgl.viewportf(x1, y0, ww, hh, true);
     drawQuad();
-    sgl.viewport(x0, y1, ww, hh, true);
+    sgl.viewportf(x0, y1, ww, hh, true);
     drawCubes();
-    sgl.viewport(x1, y1, ww, hh, true);
+    sgl.viewportf(x1, y1, ww, hh, true);
     drawTexCube();
-    sgl.viewport(0, 0, dw, dh, true);
+    sgl.viewportf(0, 0, dw, dh, true);
 
     sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
     sgl.draw();
