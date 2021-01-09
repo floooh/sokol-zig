@@ -568,7 +568,7 @@ pub const TraceHooks = extern struct {
     apply_pipeline: ?fn(Pipeline, ?*c_void) callconv(.C) void = null,
     apply_bindings: ?fn([*c]const Bindings, ?*c_void) callconv(.C) void = null,
     apply_uniforms: ?fn(ShaderStage, u32, [*c]const Range, ?*c_void) callconv(.C) void = null,
-    draw: ?fn(i32, i32, i32, ?*c_void) callconv(.C) void = null,
+    draw: ?fn(u32, u32, u32, ?*c_void) callconv(.C) void = null,
     end_pass: ?fn(?*c_void) callconv(.C) void = null,
     commit: ?fn(?*c_void) callconv(.C) void = null,
     alloc_buffer: ?fn(Buffer, ?*c_void) callconv(.C) void = null,
@@ -816,8 +816,8 @@ pub extern fn sg_apply_uniforms(ShaderStage, u32, [*c]const Range) void;
 pub fn applyUniforms(stage: ShaderStage, ub_index: u32, data: Range) void {
     sg_apply_uniforms(stage, ub_index, &data);
 }
-pub extern fn sg_draw(i32, i32, i32) void;
-pub fn draw(base_element: i32, num_elements: i32, num_instances: i32) void {
+pub extern fn sg_draw(u32, u32, u32) void;
+pub fn draw(base_element: u32, num_elements: u32, num_instances: u32) void {
     sg_draw(base_element, num_elements, num_instances);
 }
 pub extern fn sg_end_pass() void;

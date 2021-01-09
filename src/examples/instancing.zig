@@ -139,7 +139,7 @@ export fn frame() void {
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
     sg.applyUniforms(.VS, 0, sg.asRange(vs_params));
-    sg.draw(0, 24, @intCast(i32, state.cur_num_particles));
+    sg.draw(0, 24, state.cur_num_particles);
     sg.endPass();
     sg.commit();
 }
