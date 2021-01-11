@@ -75,4 +75,5 @@ pub fn build(b: *bld.Builder) void {
     buildExample(b, sokol, "sgl");
     buildExample(b, sokol, "debugtext");
     buildExample(b, sokol, "debugtext-print");
+    buildExample(b, sokol, "debugtext-userfont");
 }
