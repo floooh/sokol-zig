@@ -2,6 +2,47 @@
 
 const sg = @import("gfx.zig");
 
+// helper function to convert "anything" to a Range struct
+pub fn asRange(val: anytype) Range {
+    const type_info = @typeInfo(@TypeOf(val));
+    switch (type_info) {
+        .Pointer => {
+            switch (type_info.Pointer.size) {
+                .One => return .{ .ptr = val, .size = @sizeOf(type_info.Pointer.child) },
+                .Slice => return .{ .ptr = val.ptr, .size = @sizeOf(type_info.Pointer.child) * val.len },
+                else => @compileError("FIXME: Pointer type!"),
+            }
+        },
+        .Struct, .Array => {
+            return .{ .ptr = &val, .size = @sizeOf(@TypeOf(val)) };
+        },
+        else => {
+            @compileError("Cannot convert to range!");
+        }
+    }
+}
+
+// std.fmt compatible Writer
+pub const Writer = struct {
+    pub const Error = error { };
+    pub fn writeAll(self: Writer, bytes: []const u8) Error!void {
+        for (bytes) |byte| {
+            putc(byte);
+        }
+    }
+    pub fn writeByteNTimes(self: Writer, byte: u8, n: u64) Error!void {
+        var i: u64 = 0;
+        while (i < n): (i += 1) {
+            putc(byte);
+        }
+    }
+};
+// std.fmt-style formatted print
+pub fn print(comptime fmt: anytype, args: anytype) void {
+    var writer: Writer = .{};
+    @import("std").fmt.format(writer, fmt, args) catch {};
+}
+
 pub const Context = extern struct {
     id: u32 = 0,
 };
