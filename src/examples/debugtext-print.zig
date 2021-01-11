@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  debugtext-printf.zig
+//  debugtext-print.zig
 //
 //  Demonstrates formatted printing with sokol.debugtext
 //------------------------------------------------------------------------------
@@ -9,7 +9,7 @@ const sgapp = @import("sokol").app_gfx_glue;
 const stm   = @import("sokol").time;
 const sdtx  = @import("sokol").debugtext;
 
-// only need when using std.fmt directly instead of sokol.debugtext.print()
+// only needed when using std.fmt directly instead of sokol.debugtext.print()
 const fmt = @import("std").fmt;
 
 // font slots
