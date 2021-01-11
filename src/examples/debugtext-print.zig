@@ -44,7 +44,7 @@ export fn init() void {
     sdtx_desc.fonts[ORIC] = sdtx.fontOric();
     sdtx.setup(sdtx_desc);
 
-    // pas-action for clearing to blue-ish
+    // pass-action for clearing to blue-ish
     state.pass_action.colors[0] = .{ .action = .CLEAR, .val = .{ 0.0, 0.125, 0.25, 10 }};
 }
 
