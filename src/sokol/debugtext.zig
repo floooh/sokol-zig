@@ -150,10 +150,10 @@ pub fn putc(c: u8) void {
     sdtx_putc(c);
 }
 pub extern fn sdtx_puts([*c]const u8) void;
-pub fn puts(str: []const u8) void {
+pub fn puts(str: [:0]const u8) void {
     sdtx_puts(@ptrCast([*c]const u8,str));
 }
 pub extern fn sdtx_putr([*c]const u8, i32) void;
-pub fn putr(str: []const u8, len: i32) void {
+pub fn putr(str: [:0]const u8, len: i32) void {
     sdtx_putr(@ptrCast([*c]const u8,str), len);
 }

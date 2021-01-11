@@ -345,15 +345,15 @@ pub fn frameCount() u64 {
     return sapp_frame_count();
 }
 pub extern fn sapp_set_clipboard_string([*c]const u8) void;
-pub fn setClipboardString(str: []const u8) void {
+pub fn setClipboardString(str: [:0]const u8) void {
     sapp_set_clipboard_string(@ptrCast([*c]const u8,str));
 }
 pub extern fn sapp_get_clipboard_string() [*c]const u8;
-pub fn getClipboardString() []const u8 {
+pub fn getClipboardString() [:0]const u8 {
     return sapp_get_clipboard_string();
 }
 pub extern fn sapp_set_window_title([*c]const u8) void;
-pub fn setWindowTitle(str: []const u8) void {
+pub fn setWindowTitle(str: [:0]const u8) void {
     sapp_set_window_title(@ptrCast([*c]const u8,str));
 }
 pub extern fn sapp_get_num_dropped_files() i32;
@@ -361,7 +361,7 @@ pub fn getNumDroppedFiles() i32 {
     return sapp_get_num_dropped_files();
 }
 pub extern fn sapp_get_dropped_file_path(i32) [*c]const u8;
-pub fn getDroppedFilePath(index: i32) []const u8 {
+pub fn getDroppedFilePath(index: i32) [:0]const u8 {
     return sapp_get_dropped_file_path(index);
 }
 pub extern fn sapp_run([*c]const Desc) void;

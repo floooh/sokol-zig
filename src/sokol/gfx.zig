@@ -713,7 +713,7 @@ pub fn installTraceHooks(trace_hooks: TraceHooks) TraceHooks {
     return sg_install_trace_hooks(&trace_hooks);
 }
 pub extern fn sg_push_debug_group([*c]const u8) void;
-pub fn pushDebugGroup(name: []const u8) void {
+pub fn pushDebugGroup(name: [:0]const u8) void {
     sg_push_debug_group(@ptrCast([*c]const u8,name));
 }
 pub extern fn sg_pop_debug_group() void;

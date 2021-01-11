@@ -35,7 +35,7 @@ export fn init() void {
 }
 
 // print all characters in a font
-fn printFont(font_index: u32, title: []const u8, r: u8, g: u8, b: u8) void {
+fn printFont(font_index: u32, title: [:0]const u8, r: u8, g: u8, b: u8) void {
     sdtx.font(font_index);
     sdtx.color3b(r, g, b);
     sdtx.puts(title);
