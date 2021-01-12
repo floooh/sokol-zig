@@ -286,6 +286,47 @@ fn shaderDesc() sg.ShaderDesc {
                 \\ }
                 ;
         },
+        .D3D11 => {
+            desc.attrs[0] = .{ .sem_name="POSITION" };
+            desc.attrs[1] = .{ .sem_name="NORMAL" };
+            desc.attrs[2] = .{ .sem_name="TEXCOORD" };
+            desc.attrs[3] = .{ .sem_name="COLOR" };
+            desc.vs.source =
+                \\ cbuffer params: register(b0) {
+                \\   float4x4 mvp;
+                \\   float draw_mode;
+                \\ };
+                \\ struct vs_in {
+                \\   float4 pos: POSITION;
+                \\   float3 normal: NORMAL;
+                \\   float2 texcoord: TEXCOORD;
+                \\   float4 color: COLOR;
+                \\ };
+                \\ struct vs_out {
+                \\   float4 color: COLOR0;
+                \\   float4 pos: SV_Position;
+                \\ };
+                \\ vs_out main(vs_in inp) {
+                \\   vs_out outp;
+                \\   outp.pos = mul(mvp, inp.pos);
+                \\   if (draw_mode == 0.0) {
+                \\     outp.color = float4((inp.normal + 1.0) * 0.5, 1.0);
+                \\   }
+                \\   else if (draw_mode == 1.0) {
+                \\     outp.color = float4(inp.texcoord, 0.0, 1.0);
+                \\   }
+                \\   else {
+                \\     outp.color = inp.color;
+                \\   }
+                \\   return outp;
+                \\ }
+                ;
+            desc.fs.source =
+                \\ float4 main(float4 color: COLOR0): SV_Target0 {
+                \\   return color;
+                \\ }
+                ;
+        },
         else => {}
     }
     return desc;
