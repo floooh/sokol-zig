@@ -43,11 +43,11 @@ const state = struct {
     const view: mat4 = mat4.lookat(.{ .x=0.0, .y=1.5, .z=6.0 }, vec3.zero(), vec3.up());
 };
 
-const OffscreenVsParams = packed struct {
+const OffscreenVsParams = extern struct {
     mvp: mat4,
 };
 
-const FsqVsParams = packed struct {
+const FsqVsParams = extern struct {
     offset: vec2,
 };
 

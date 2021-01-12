@@ -194,6 +194,14 @@ pub const Mat4 = packed struct {
 
         return res;
     }
+
+    pub fn translate(translation: Vec3) Mat4 {
+        var res = Mat4.identity();
+        res.m[3][0] = translation.x;
+        res.m[3][1] = translation.y;
+        res.m[3][2] = translation.z;
+        return res;
+    }
 };
 
 test "Vec3.zero" {

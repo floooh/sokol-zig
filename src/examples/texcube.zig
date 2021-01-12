@@ -19,7 +19,7 @@ const state = struct {
 };
 
 // a uniform block struct with a model-view-projection matrix
-const VsParams = packed struct {
+const VsParams = extern struct {
     mvp: mat4
 };
 

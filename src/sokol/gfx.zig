@@ -472,11 +472,13 @@ pub const BufferLayoutDesc = extern struct {
     stride: i32 = 0,
     step_func: VertexStep = .DEFAULT,
     step_rate: i32 = 0,
+    __pad: [2]u32 = [_]u32{0} ** 2,
 };
 pub const VertexAttrDesc = extern struct {
     buffer_index: i32 = 0,
     offset: i32 = 0,
     format: VertexFormat = .INVALID,
+    __pad: [2]u32 = [_]u32{0} ** 2,
 };
 pub const LayoutDesc = extern struct {
     buffers: [8]BufferLayoutDesc = [_]BufferLayoutDesc{.{}} ** 8,
