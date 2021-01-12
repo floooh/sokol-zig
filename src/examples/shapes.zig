@@ -78,7 +78,6 @@ export fn init() void {
     state.shapes[CYLINDER].pos  = .{ .x=2, .y=-1, .z=0 };
     state.shapes[TORUS].pos     = .{ .x=0, .y=-1, .z=0 };
 
-
     // generate shape geometries
     var vertices: [6*1024]sshape.Vertex = undefined;
     var indices:  [16*1024]u16 = undefined;
