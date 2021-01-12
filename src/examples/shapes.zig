@@ -172,7 +172,7 @@ export fn input(event: ?*const sapp.Event) void {
         state.vs_params.draw_mode = switch (ev.key_code) {
             ._1 => 0.0,
             ._2 => 1.0,
-            ._3 => 3.0,
+            ._3 => 2.0,
             else => state.vs_params.draw_mode
         };
     }
