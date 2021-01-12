@@ -31,5 +31,6 @@ On Linux install the following packages: libglu1-mesa-dev, mesa-common-dev, xorg
 > zig build run-debugtext
 > zig build run-debugtext-print
 > zig build run-debugtext-userfont
+> zig build run-shapes
 ```
 
