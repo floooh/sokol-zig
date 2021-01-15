@@ -64,6 +64,10 @@ pub fn main() void {
 }
 
 // build a backend-specific ShaderDesc struct
+// NOTE: the other samples are using shader-cross-compilation via the
+// sokol-shdc tool, but this sample uses a manual shader setup to
+// demonstrate how it works without a shader-cross-compilation tool
+//
 fn shaderDesc() sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     switch (sg.queryBackend()) {

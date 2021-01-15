@@ -7,6 +7,7 @@
 const sg    = @import("sokol").gfx;
 const sapp  = @import("sokol").app;
 const sgapp = @import("sokol").app_gfx_glue;
+const shd   = @import("shaders/bufferoffsets.glsl.zig");
 
 const State = struct {
     pass_action: sg.PassAction = .{},
@@ -57,11 +58,11 @@ export fn init() void {
 
     // a shader and pipeline object
     var pip_desc: sg.PipelineDesc = .{
-        .shader = sg.makeShader(shaderDesc()),
+        .shader = sg.makeShader(shd.bufferoffsetsShaderDesc(sg.queryBackend())),
         .index_type = .UINT16
     };
-    pip_desc.layout.attrs[0].format = .FLOAT2;
-    pip_desc.layout.attrs[1].format = .FLOAT3;
+    pip_desc.layout.attrs[shd.ATTR_vs_position].format = .FLOAT2;
+    pip_desc.layout.attrs[shd.ATTR_vs_color0].format = .FLOAT3;
     state.pip = sg.makePipeline(pip_desc);
 }
 
@@ -98,84 +99,4 @@ pub fn main() void {
         .height = 600,
         .window_title = "bufferoffsets.zig"
     });
-}
-
-fn shaderDesc() sg.ShaderDesc {
-    var desc: sg.ShaderDesc = .{};
-    switch (sg.queryBackend()) {
-        .D3D11 => {
-            desc.attrs[0].sem_name = "POSITION";
-            desc.attrs[1].sem_name = "COLOR";
-            desc.vs.source =
-                \\struct vs_in {
-                \\  float2 pos: POSITION;
-                \\  float3 color: COLOR0;
-                \\};
-                \\struct vs_out {
-                \\  float4 color: COLOR0;
-                \\  float4 pos: SV_Position;
-                \\};
-                \\vs_out main(vs_in inp) {
-                \\  vs_out outp;
-                \\  outp.pos = float4(inp.pos, 0.5, 1.0);
-                \\  outp.color = float4(inp.color, 1.0);
-                \\  return outp;
-                \\}
-                ;
-            desc.fs.source =
-                \\float4 main(float4 color: COLOR0): SV_Target0 {
-                \\  return color;
-                \\}
-                ;
-        },
-        .GLCORE33 => {
-            desc.vs.source =
-                \\ #version 330
-                \\ layout(location=0) in vec2 pos;
-                \\ layout(location=1) in vec3 color0;
-                \\ out vec4 color;
-                \\ void main() {
-                \\   gl_Position = vec4(pos, 0.5, 1.0);
-                \\   color = vec4(color0, 1.0);
-                \\ }
-                ;
-            desc.fs.source =
-                \\ #version 330
-                \\ in vec4 color;
-                \\ out vec4 frag_color;
-                \\ void main() {
-                \\   frag_color = color;
-                \\ }
-                ;
-        },
-        .METAL_MACOS => {
-            desc.vs.source =
-                \\ #include <metal_stdlib>
-                \\ using namespace metal;
-                \\ struct vs_in {
-                \\   float2 pos [[attribute(0)]];
-                \\   float3 color [[attribute(1)]];
-                \\ };
-                \\ struct vs_out {
-                \\   float4 pos [[position]];
-                \\   float4 color;
-                \\ };
-                \\ vertex vs_out _main(vs_in in [[stage_in]]) {
-                \\   vs_out out;
-                \\   out.pos = float4(in.pos, 0.5f, 1.0f);
-                \\   out.color = float4(in.color, 1.0);
-                \\   return out;
-                \\ }
-                ;
-            desc.fs.source =
-                \\ #include <metal_stdlib>
-                \\ using namespace metal;
-                \\ fragment float4 _main(float4 color [[stage_in]]) {
-                \\   return color;
-                \\ }
-                ;
-        },
-        else => {}
-    }
-    return desc;
 }

@@ -12,17 +12,18 @@ const sshape = sokol.shape;
 const vec3   = @import("math.zig").Vec3;
 const mat4   = @import("math.zig").Mat4;
 const assert = @import("std").debug.assert;
+const shd    = @import("shaders/shapes.glsl.zig");
 
 const Shape = struct {
     pos: vec3 = vec3.zero(),
     draw: sshape.ElementRange = .{},
 };
 
-const VSParams = extern struct {
-    mvp: mat4 = mat4.identity(),
-    draw_mode: f32 = 0.0,
-    pad: [12]u8 = undefined,
-};
+//const VSParams = extern struct {
+//    mvp: mat4 = mat4.identity(),
+//    draw_mode: f32 = 0.0,
+//    pad: [12]u8 = undefined,
+//};
 
 const BOX        = 0;
 const PLANE      = 1;
@@ -35,7 +36,7 @@ const state = struct {
     var pass_action: sg.PassAction = .{};
     var pip:         sg.Pipeline = .{};
     var bind:        sg.Bindings = .{};
-    var vs_params:   VSParams = .{};
+    var vs_params:   shd.VsParams = undefined;
     var shapes:      [NUM_SHAPES]Shape = undefined;
     var rx: f32 = 0.0;
     var ry: f32 = 0.0;
@@ -54,7 +55,7 @@ export fn init() void {
 
     // shader- and pipeline-object
     var pip_desc: sg.PipelineDesc = .{
-        .shader = sg.makeShader(shaderDesc()),
+        .shader = sg.makeShader(shd.shapesShaderDesc(sg.queryBackend())),
         .index_type = .UINT16,
         .depth_stencil = .{
             .depth_compare_func = .LESS_EQUAL,
@@ -65,10 +66,10 @@ export fn init() void {
         }
     };
     pip_desc.layout.buffers[0] = sshape.bufferLayoutDesc();
-    pip_desc.layout.attrs[0] = sshape.positionAttrDesc();
-    pip_desc.layout.attrs[1] = sshape.normalAttrDesc();
-    pip_desc.layout.attrs[2] = sshape.texcoordAttrDesc();
-    pip_desc.layout.attrs[3] = sshape.colorAttrDesc();
+    pip_desc.layout.attrs[shd.ATTR_vs_position] = sshape.positionAttrDesc();
+    pip_desc.layout.attrs[shd.ATTR_vs_normal]   = sshape.normalAttrDesc();
+    pip_desc.layout.attrs[shd.ATTR_vs_texcoord] = sshape.texcoordAttrDesc();
+    pip_desc.layout.attrs[shd.ATTR_vs_color0]   = sshape.colorAttrDesc();
     state.pip = sg.makePipeline(pip_desc);
 
     // shape positions
@@ -158,7 +159,7 @@ export fn frame() void {
         // per-shape model-view-projection matrix
         const model = mat4.mul(mat4.translate(shape.pos), rm);
         state.vs_params.mvp = mat4.mul(view_proj, model);
-        sg.applyUniforms(.VS, 0, sg.asRange(state.vs_params));
+        sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(state.vs_params));
         sg.draw(shape.draw.base_element, shape.draw.num_elements, 1);
     }
     sdtx.draw();
