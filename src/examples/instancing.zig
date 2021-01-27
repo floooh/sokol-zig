@@ -33,7 +33,7 @@ export fn init() void {
     });
 
     // pass action to clear frame buffer to black
-    state.pass_action.colors[0] = .{ .action = .CLEAR, .val = .{ 0.0, 0.0, 0.0, 1.0 } };
+    state.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r=0, .g=0, .b=0, .a=1 } };
 
     // a vertex buffer for the static particle geometry, goes into vertex buffer slot 0
     const r = 0.05;
@@ -69,13 +69,11 @@ export fn init() void {
     var pip_desc: sg.PipelineDesc = .{
         .shader = sg.makeShader(shd.instancingShaderDesc(sg.queryBackend())),
         .index_type = .UINT16,
-        .depth_stencil = .{
-            .depth_compare_func = .LESS_EQUAL,
-            .depth_write_enabled = true,
+        .cull_mode = .BACK,
+        .depth = .{
+            .compare = .LESS_EQUAL,
+            .write_enabled = true,
         },
-        .rasterizer = .{
-            .cull_mode = .BACK
-        }
     };
     // NOTE how the vertex layout is setup for instancing, with the instancing
     // data provided by buffer-slot 1:

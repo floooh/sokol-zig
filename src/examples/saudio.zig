@@ -19,7 +19,7 @@ const state = struct {
 export fn init() void {
     sg.setup(.{ .context = sgapp.context() });
     saudio.setup(.{});
-    state.pass_action.colors[0] = .{ .action=.CLEAR, .val=.{1.0, 0.5, 0.0, 1.0 }};
+    state.pass_action.colors[0] = .{ .action=.CLEAR, .value = .{ .r=1, .g=0.5, .b=0, .a=1 }};
 }
 
 export fn frame() void {

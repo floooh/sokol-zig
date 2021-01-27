@@ -53,6 +53,12 @@ pub const max_ub_members = 16;
 pub const max_vertex_attributes = 16;
 pub const max_mipmaps = 16;
 pub const max_texturearray_layers = 128;
+pub const Color = extern struct {
+    r: f32 = 0.0,
+    g: f32 = 0.0,
+    b: f32 = 0.0,
+    a: f32 = 0.0,
+};
 pub const Backend = extern enum(i32) {
     GLCORE33,
     GLES2,
@@ -146,6 +152,8 @@ pub const Features = extern struct {
     imagetype_3d: bool = false,
     imagetype_array: bool = false,
     image_clamp_to_border: bool = false,
+    mrt_independent_blend_state: bool = false,
+    mrt_independent_write_mask: bool = false,
     __pad: [3]u32 = [_]u32{0} ** 3,
 };
 pub const Limits = extern struct {
@@ -369,15 +377,15 @@ pub const Action = extern enum(i32) {
 };
 pub const ColorAttachmentAction = extern struct {
     action: Action = .DEFAULT,
-    val: [4]f32 = [_]f32{0.0} ** 4,
+    value: Color = .{ },
 };
 pub const DepthAttachmentAction = extern struct {
     action: Action = .DEFAULT,
-    val: f32 = 0.0,
+    value: f32 = 0.0,
 };
 pub const StencilAttachmentAction = extern struct {
     action: Action = .DEFAULT,
-    val: u8 = 0,
+    value: u8 = 0,
 };
 pub const PassAction = extern struct {
     _start_canary: u32 = 0,
@@ -493,21 +501,27 @@ pub const LayoutDesc = extern struct {
     buffers: [8]BufferLayoutDesc = [_]BufferLayoutDesc{.{}} ** 8,
     attrs: [16]VertexAttrDesc = [_]VertexAttrDesc{.{}} ** 16,
 };
-pub const StencilState = extern struct {
+pub const StencilFaceState = extern struct {
+    compare: CompareFunc = .DEFAULT,
     fail_op: StencilOp = .DEFAULT,
     depth_fail_op: StencilOp = .DEFAULT,
     pass_op: StencilOp = .DEFAULT,
-    compare_func: CompareFunc = .DEFAULT,
 };
-pub const DepthStencilState = extern struct {
-    stencil_front: StencilState = .{ },
-    stencil_back: StencilState = .{ },
-    depth_compare_func: CompareFunc = .DEFAULT,
-    depth_write_enabled: bool = false,
-    stencil_enabled: bool = false,
-    stencil_read_mask: u8 = 0,
-    stencil_write_mask: u8 = 0,
-    stencil_ref: u8 = 0,
+pub const StencilState = extern struct {
+    enabled: bool = false,
+    front: StencilFaceState = .{ },
+    back: StencilFaceState = .{ },
+    read_mask: u8 = 0,
+    write_mask: u8 = 0,
+    ref: u8 = 0,
+};
+pub const DepthState = extern struct {
+    pixel_format: PixelFormat = .DEFAULT,
+    compare: CompareFunc = .DEFAULT,
+    write_enabled: bool = false,
+    bias: f32 = 0.0,
+    bias_slope_scale: f32 = 0.0,
+    bias_clamp: f32 = 0.0,
 };
 pub const BlendState = extern struct {
     enabled: bool = false,
@@ -517,42 +531,39 @@ pub const BlendState = extern struct {
     src_factor_alpha: BlendFactor = .DEFAULT,
     dst_factor_alpha: BlendFactor = .DEFAULT,
     op_alpha: BlendOp = .DEFAULT,
-    color_write_mask: ColorMask = .DEFAULT,
-    color_attachment_count: i32 = 0,
-    color_format: PixelFormat = .DEFAULT,
-    depth_format: PixelFormat = .DEFAULT,
-    blend_color: [4]f32 = [_]f32{0.0} ** 4,
 };
-pub const RasterizerState = extern struct {
-    alpha_to_coverage_enabled: bool = false,
-    cull_mode: CullMode = .DEFAULT,
-    face_winding: FaceWinding = .DEFAULT,
-    sample_count: i32 = 0,
-    depth_bias: f32 = 0.0,
-    depth_bias_slope_scale: f32 = 0.0,
-    depth_bias_clamp: f32 = 0.0,
+pub const ColorState = extern struct {
+    pixel_format: PixelFormat = .DEFAULT,
+    write_mask: ColorMask = .DEFAULT,
+    blend: BlendState = .{ },
 };
 pub const PipelineDesc = extern struct {
     _start_canary: u32 = 0,
-    layout: LayoutDesc = .{ },
     shader: Shader = .{ },
+    layout: LayoutDesc = .{ },
+    depth: DepthState = .{ },
+    stencil: StencilState = .{ },
+    color_count: u32 = 0,
+    colors: [4]ColorState = [_]ColorState{.{}} ** 4,
     primitive_type: PrimitiveType = .DEFAULT,
     index_type: IndexType = .DEFAULT,
-    depth_stencil: DepthStencilState = .{ },
-    blend: BlendState = .{ },
-    rasterizer: RasterizerState = .{ },
+    cull_mode: CullMode = .DEFAULT,
+    face_winding: FaceWinding = .DEFAULT,
+    sample_count: i32 = 0,
+    blend_color: Color = .{ },
+    alpha_to_coverage_enabled: bool = false,
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
 };
-pub const AttachmentDesc = extern struct {
+pub const PassAttachmentDesc = extern struct {
     image: Image = .{ },
     mip_level: i32 = 0,
     slice: i32 = 0,
 };
 pub const PassDesc = extern struct {
     _start_canary: u32 = 0,
-    color_attachments: [4]AttachmentDesc = [_]AttachmentDesc{.{}} ** 4,
-    depth_stencil_attachment: AttachmentDesc = .{ },
+    color_attachments: [4]PassAttachmentDesc = [_]PassAttachmentDesc{.{}} ** 4,
+    depth_stencil_attachment: PassAttachmentDesc = .{ },
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
 };

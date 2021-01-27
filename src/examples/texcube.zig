@@ -107,13 +107,11 @@ export fn init() void {
     var pip_desc: sg.PipelineDesc = .{
         .shader = sg.makeShader(shd.texcubeShaderDesc(sg.queryBackend())),
         .index_type = .UINT16,
-        .depth_stencil = .{
-            .depth_compare_func = .LESS_EQUAL,
-            .depth_write_enabled = true,
+        .depth = .{
+            .compare = .LESS_EQUAL,
+            .write_enabled = true,
         },
-        .rasterizer = .{
-            .cull_mode = .BACK
-        }
+        .cull_mode = .BACK
     };
     pip_desc.layout.attrs[shd.ATTR_vs_pos].format = .FLOAT3;
     pip_desc.layout.attrs[shd.ATTR_vs_color0].format = .UBYTE4N;
@@ -121,7 +119,7 @@ export fn init() void {
     state.pip = sg.makePipeline(pip_desc);
 
     // pass action for clearing the frame buffer
-    state.pass_action.colors[0] = .{ .action = .CLEAR, .val = .{ 0.25, 0.5, 0.75, 1.0 } };
+    state.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r=0.25, .g=0.5, .b=0.75, .a=1 } };
 }
 
 export fn frame() void {

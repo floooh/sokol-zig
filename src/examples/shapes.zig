@@ -51,19 +51,17 @@ export fn init() void {
     sdtx.setup(sdtx_desc);
 
     // pass-action for clearing to black
-    state.pass_action.colors[0] = .{ .action = .CLEAR, .val = .{ 0, 0, 0, 1 }};
+    state.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r=0, .g=0, .b=0, .a=1 }};
 
     // shader- and pipeline-object
     var pip_desc: sg.PipelineDesc = .{
         .shader = sg.makeShader(shd.shapesShaderDesc(sg.queryBackend())),
         .index_type = .UINT16,
-        .depth_stencil = .{
-            .depth_compare_func = .LESS_EQUAL,
-            .depth_write_enabled = true,
+        .cull_mode = .NONE,
+        .depth = .{
+            .compare = .LESS_EQUAL,
+            .write_enabled = true,
         },
-        .rasterizer = .{
-            .cull_mode = .NONE,
-        }
     };
     pip_desc.layout.buffers[0] = sshape.bufferLayoutDesc();
     pip_desc.layout.attrs[shd.ATTR_vs_position] = sshape.positionAttrDesc();

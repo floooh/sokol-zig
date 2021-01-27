@@ -45,7 +45,7 @@ export fn init() void {
     sdtx.setup(sdtx_desc);
 
     // pass-action for clearing to blue-ish
-    state.pass_action.colors[0] = .{ .action = .CLEAR, .val = .{ 0.0, 0.125, 0.25, 10 }};
+    state.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r=0, .g=0.125, .b=0.25, .a=1 }};
 }
 
 export fn frame() void {

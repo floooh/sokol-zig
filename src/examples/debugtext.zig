@@ -31,7 +31,7 @@ export fn init() void {
     sdtx_desc.fonts[ORIC]  = sdtx.fontOric();
     sdtx.setup(sdtx_desc);
 
-    pass_action.colors[0] = .{ .action = .CLEAR, .val = .{ 0.0, 0.125, 0.25, 1.0 }};
+    pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r=0, .g=0.125, .b=0.25, .a=1 }};
 }
 
 // print all characters in a font

@@ -69,12 +69,10 @@ export fn init() void {
     var pip_desc: sg.PipelineDesc = .{
         .shader = sg.makeShader(shd.noninterleavedShaderDesc(sg.queryBackend())),
         .index_type = .UINT16,
-        .depth_stencil = .{
-            .depth_compare_func = .LESS_EQUAL,
-            .depth_write_enabled = true,
-        },
-        .rasterizer = .{
-            .cull_mode = .BACK
+        .cull_mode = .BACK,
+        .depth = .{
+            .compare = .LESS_EQUAL,
+            .write_enabled = true,
         }
     };
     // NOTE how the vertex components are pulled from different buffer bind slots

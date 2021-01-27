@@ -55,9 +55,9 @@ export fn init() void {
     state.default.pass_action.stencil   = .{ .action = .DONTCARE };
 
     // set pass action for offscreen render pass
-    state.offscreen.pass_action.colors[0] = .{ .action = .CLEAR, .val = .{ 0.25, 0.0, 0.0, 1.0 } };
-    state.offscreen.pass_action.colors[1] = .{ .action = .CLEAR, .val = .{ 0.0, 0.25, 0.0, 1.0 } };
-    state.offscreen.pass_action.colors[2] = .{ .action = .CLEAR, .val = .{ 0.0, 0.0, 0.25, 1.0 } };
+    state.offscreen.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r=0.25, .g=0, .b=0, .a=1 } };
+    state.offscreen.pass_action.colors[1] = .{ .action = .CLEAR, .value = .{ .r=0, .g=0.25, .b=0, .a=1 } };
+    state.offscreen.pass_action.colors[2] = .{ .action = .CLEAR, .value = .{ .r=0, .g=0, .b=0.25, .a=1 } };
 
     // setup the offscreen render pass and render target images,
     // this will also be called when the window resizes
@@ -122,18 +122,14 @@ export fn init() void {
     var offscreen_pip_desc: sg.PipelineDesc = .{
         .shader = sg.makeShader(shd.offscreenShaderDesc(sg.queryBackend())),
         .index_type = .UINT16,
-        .depth_stencil = .{
-            .depth_compare_func = .LESS_EQUAL,
-            .depth_write_enabled = true,
+        .cull_mode = .BACK,
+        .sample_count = offscreen_sample_count,
+        .depth = .{
+            .pixel_format = .DEPTH,
+            .compare = .LESS_EQUAL,
+            .write_enabled = true,
         },
-        .blend = .{
-            .color_attachment_count = 3,
-            .depth_format = .DEPTH,
-        },
-        .rasterizer = .{
-            .cull_mode = .BACK,
-            .sample_count = offscreen_sample_count
-        }
+        .color_count = 3,
     };
     offscreen_pip_desc.layout.attrs[shd.ATTR_vs_offscreen_pos].format = .FLOAT3;
     offscreen_pip_desc.layout.attrs[shd.ATTR_vs_offscreen_bright0].format = .FLOAT;

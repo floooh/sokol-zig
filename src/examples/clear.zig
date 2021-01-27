@@ -13,12 +13,12 @@ export fn init() void {
     sg.setup(.{
         .context = sgapp.context()
     });
-    pass_action.colors[0] = .{ .action=.CLEAR, .val=.{ 1.0, 1.0, 0.0, 1.0 } };
+    pass_action.colors[0] = .{ .action=.CLEAR, .value=.{ .r=1, .g=1, .b=0, .a=1 } };
 }
 
 export fn frame() void {
-    const g = pass_action.colors[0].val[1] + 0.01;
-    pass_action.colors[0].val[1] = if (g > 1.0) 0.0 else g;
+    const g = pass_action.colors[0].value.g + 0.01;
+    pass_action.colors[0].value.g = if (g > 1.0) 0.0 else g;
     sg.beginDefaultPass(pass_action, sapp.width(), sapp.height());
     sg.endPass();
     sg.commit();

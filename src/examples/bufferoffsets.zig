@@ -27,7 +27,7 @@ export fn init() void {
     });
 
     // clear to a blue-ish color
-    state.pass_action.colors[0] = .{ .action = .CLEAR, .val = .{ 0.5, 0.5, 1.0, 1.0 } };
+    state.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r=0.5, .g=0.5, .b=1, .a=1 } };
 
     // a 2D triangle and quad in 1 vertex buffer and 1 index buffer
     const vertices = [_]Vertex {

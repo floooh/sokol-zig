@@ -48,7 +48,7 @@ export fn init() void {
     state.pip = sg.makePipeline(pip_desc);
 
     // clear to black
-    state.pass_action.colors[0] = .{ .action=.CLEAR, .val=.{ 0.0, 0.0, 0.0, 0.0} };
+    state.pass_action.colors[0] = .{ .action=.CLEAR, .value=.{ .r=0, .g=0, .b=0, .a=1 } };
 }
 
 export fn frame() void {

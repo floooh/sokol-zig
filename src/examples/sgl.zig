@@ -62,17 +62,15 @@ export fn init() void {
     // a shader, vertex-layout, pixel formats and sample count here,
     // these are all filled in by sokol-gl
     state.pip3d = sgl.makePipeline(.{
-        .depth_stencil = .{
-            .depth_write_enabled = true,
-            .depth_compare_func = .LESS_EQUAL,
+        .depth = .{
+            .write_enabled = true,
+            .compare = .LESS_EQUAL,
         },
-        .rasterizer = .{
-            .cull_mode = .BACK,
-        },
+        .cull_mode = .BACK,
     });
 
     // pass-action to clear to black
-    state.pass_action.colors[0] = .{ .action = .CLEAR, .val = .{ 0.0, 0.0, 0.0, 1.0 }};
+    state.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r=0, .g=0, .b=0, .a=1 }};
 }
 
 export fn frame() void {
