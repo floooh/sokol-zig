@@ -206,6 +206,13 @@
             sgl_viewport(int x, int y, int w, int h, bool origin_top_left)
             sgl_scissor_rect(int x, int y, int w, int h, bool origin_top_left)
 
+        ...or call these alternatives which take float arguments (this might allow
+        to avoid casting between float and integer in more strongly typed languages
+        when floating point pixel coordinates are used):
+
+            sgl_viewportf(float x, float y, float w, float h, bool origin_top_left)
+            sgl_scissor_rectf(float x, float y, float w, float h, bool origin_top_left)
+
         ...these calls add a new command to the internal command queue, so
         that the viewport or scissor rect are set at the right time relative
         to other sokol-gl calls.
@@ -2705,7 +2712,7 @@ SOKOL_API_IMPL void sgl_setup(const sgl_desc_t* desc) {
     ub->uniforms[0].type = SG_UNIFORMTYPE_FLOAT4;
     ub->uniforms[0].array_count = 8;
     shd_desc.fs.images[0].name = "tex";
-    shd_desc.fs.images[0].type = SG_IMAGETYPE_2D;
+    shd_desc.fs.images[0].image_type = SG_IMAGETYPE_2D;
     shd_desc.fs.images[0].sampler_type = SG_SAMPLERTYPE_FLOAT;
     shd_desc.label = "sgl-shader";
     #if defined(SOKOL_GLCORE33)

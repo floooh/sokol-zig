@@ -461,7 +461,7 @@ pub fn texcubeShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.fs.source = &fs_source_glsl330;
             desc.fs.entry = "main";
             desc.fs.images[0].name = "tex";
-            desc.fs.images[0].type = ._2D;
+            desc.fs.images[0].image_type = ._2D;
             desc.fs.images[0].sampler_type = .FLOAT;
             desc.label = "texcube_shader";
         },
@@ -480,7 +480,7 @@ pub fn texcubeShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.fs.d3d11_target = "ps_4_0";
             desc.fs.entry = "main";
             desc.fs.images[0].name = "tex";
-            desc.fs.images[0].type = ._2D;
+            desc.fs.images[0].image_type = ._2D;
             desc.fs.images[0].sampler_type = .FLOAT;
             desc.label = "texcube_shader";
         },
@@ -491,7 +491,7 @@ pub fn texcubeShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.fs.source = &fs_source_metal_macos;
             desc.fs.entry = "main0";
             desc.fs.images[0].name = "tex";
-            desc.fs.images[0].type = ._2D;
+            desc.fs.images[0].image_type = ._2D;
             desc.fs.images[0].sampler_type = .FLOAT;
             desc.label = "texcube_shader";
         },

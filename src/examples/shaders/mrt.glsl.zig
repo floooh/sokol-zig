@@ -1267,7 +1267,7 @@ pub fn dbgShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.fs.source = &fs_dbg_source_glsl330;
             desc.fs.entry = "main";
             desc.fs.images[0].name = "tex";
-            desc.fs.images[0].type = ._2D;
+            desc.fs.images[0].image_type = ._2D;
             desc.fs.images[0].sampler_type = .FLOAT;
             desc.label = "dbg_shader";
         },
@@ -1281,7 +1281,7 @@ pub fn dbgShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.fs.d3d11_target = "ps_4_0";
             desc.fs.entry = "main";
             desc.fs.images[0].name = "tex";
-            desc.fs.images[0].type = ._2D;
+            desc.fs.images[0].image_type = ._2D;
             desc.fs.images[0].sampler_type = .FLOAT;
             desc.label = "dbg_shader";
         },
@@ -1291,7 +1291,7 @@ pub fn dbgShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.fs.source = &fs_dbg_source_metal_macos;
             desc.fs.entry = "main0";
             desc.fs.images[0].name = "tex";
-            desc.fs.images[0].type = ._2D;
+            desc.fs.images[0].image_type = ._2D;
             desc.fs.images[0].sampler_type = .FLOAT;
             desc.label = "dbg_shader";
         },
@@ -1313,13 +1313,13 @@ pub fn fsqShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.fs.source = &fs_fsq_source_glsl330;
             desc.fs.entry = "main";
             desc.fs.images[0].name = "tex0";
-            desc.fs.images[0].type = ._2D;
+            desc.fs.images[0].image_type = ._2D;
             desc.fs.images[0].sampler_type = .FLOAT;
             desc.fs.images[1].name = "tex1";
-            desc.fs.images[1].type = ._2D;
+            desc.fs.images[1].image_type = ._2D;
             desc.fs.images[1].sampler_type = .FLOAT;
             desc.fs.images[2].name = "tex2";
-            desc.fs.images[2].type = ._2D;
+            desc.fs.images[2].image_type = ._2D;
             desc.fs.images[2].sampler_type = .FLOAT;
             desc.label = "fsq_shader";
         },
@@ -1334,13 +1334,13 @@ pub fn fsqShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.fs.d3d11_target = "ps_4_0";
             desc.fs.entry = "main";
             desc.fs.images[0].name = "tex0";
-            desc.fs.images[0].type = ._2D;
+            desc.fs.images[0].image_type = ._2D;
             desc.fs.images[0].sampler_type = .FLOAT;
             desc.fs.images[1].name = "tex1";
-            desc.fs.images[1].type = ._2D;
+            desc.fs.images[1].image_type = ._2D;
             desc.fs.images[1].sampler_type = .FLOAT;
             desc.fs.images[2].name = "tex2";
-            desc.fs.images[2].type = ._2D;
+            desc.fs.images[2].image_type = ._2D;
             desc.fs.images[2].sampler_type = .FLOAT;
             desc.label = "fsq_shader";
         },
@@ -1351,13 +1351,13 @@ pub fn fsqShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.fs.source = &fs_fsq_source_metal_macos;
             desc.fs.entry = "main0";
             desc.fs.images[0].name = "tex0";
-            desc.fs.images[0].type = ._2D;
+            desc.fs.images[0].image_type = ._2D;
             desc.fs.images[0].sampler_type = .FLOAT;
             desc.fs.images[1].name = "tex1";
-            desc.fs.images[1].type = ._2D;
+            desc.fs.images[1].image_type = ._2D;
             desc.fs.images[1].sampler_type = .FLOAT;
             desc.fs.images[2].name = "tex2";
-            desc.fs.images[2].type = ._2D;
+            desc.fs.images[2].image_type = ._2D;
             desc.fs.images[2].sampler_type = .FLOAT;
             desc.label = "fsq_shader";
         },

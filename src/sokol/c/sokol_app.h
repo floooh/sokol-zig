@@ -250,6 +250,13 @@
             this may change from one frame to the next, and it may be different
             from the initial size provided in the sapp_desc struct.
 
+        float sapp_widthf(void)
+        float sapp_heightf(void)
+            These are alternatives to sapp_width() and sapp_height() which return
+            the default framebuffer size as float values instead of integer. This
+            may help to prevent casting back and forth between int and float
+            in more strongly typed languages than C and C++.
+
         int sapp_color_format(void)
         int sapp_depth_format(void)
             The color and depth-stencil pixelformats of the default framebuffer,
@@ -340,6 +347,7 @@
             - the application was suspended or restored (on mobile platforms)
             - the user or application code has asked to quit the application
             - a string was pasted to the system clipboard
+            - one or more files have been dropped onto the application window
 
         To explicitly 'consume' an event and prevent that the event is
         forwarded for further handling to the operating system, call
@@ -691,7 +699,7 @@
     from the application code, and a quit initiated by the application user can
     be intercepted (for instance to show a custom dialog box).
 
-    This 'programmatic quit protocol' is implemented trough 3 functions
+    This 'programmatic quit protocol' is implemented through 3 functions
     and 1 event:
 
         - sapp_quit(): This function simply quits the application without
@@ -5327,15 +5335,15 @@ _SOKOL_PRIVATE void _sapp_wgl_init(void) {
         _sapp_fail("Failed to load opengl32.dll\n");
     }
     SOKOL_ASSERT(_sapp.wgl.opengl32);
-    _sapp.wgl.CreateContext = (PFN_wglCreateContext) GetProcAddress(_sapp.wgl.opengl32, "wglCreateContext");
+    _sapp.wgl.CreateContext = (PFN_wglCreateContext)(void*) GetProcAddress(_sapp.wgl.opengl32, "wglCreateContext");
     SOKOL_ASSERT(_sapp.wgl.CreateContext);
-    _sapp.wgl.DeleteContext = (PFN_wglDeleteContext) GetProcAddress(_sapp.wgl.opengl32, "wglDeleteContext");
+    _sapp.wgl.DeleteContext = (PFN_wglDeleteContext)(void*) GetProcAddress(_sapp.wgl.opengl32, "wglDeleteContext");
     SOKOL_ASSERT(_sapp.wgl.DeleteContext);
-    _sapp.wgl.GetProcAddress = (PFN_wglGetProcAddress) GetProcAddress(_sapp.wgl.opengl32, "wglGetProcAddress");
+    _sapp.wgl.GetProcAddress = (PFN_wglGetProcAddress)(void*) GetProcAddress(_sapp.wgl.opengl32, "wglGetProcAddress");
     SOKOL_ASSERT(_sapp.wgl.GetProcAddress);
-    _sapp.wgl.GetCurrentDC = (PFN_wglGetCurrentDC) GetProcAddress(_sapp.wgl.opengl32, "wglGetCurrentDC");
+    _sapp.wgl.GetCurrentDC = (PFN_wglGetCurrentDC)(void*) GetProcAddress(_sapp.wgl.opengl32, "wglGetCurrentDC");
     SOKOL_ASSERT(_sapp.wgl.GetCurrentDC);
-    _sapp.wgl.MakeCurrent = (PFN_wglMakeCurrent) GetProcAddress(_sapp.wgl.opengl32, "wglMakeCurrent");
+    _sapp.wgl.MakeCurrent = (PFN_wglMakeCurrent)(void*) GetProcAddress(_sapp.wgl.opengl32, "wglMakeCurrent");
     SOKOL_ASSERT(_sapp.wgl.MakeCurrent);
 
     _sapp.wgl.msg_hwnd = CreateWindowExW(WS_EX_OVERLAPPEDWINDOW,
@@ -5426,11 +5434,11 @@ _SOKOL_PRIVATE void _sapp_wgl_load_extensions(void) {
     if (!_sapp.wgl.MakeCurrent(_sapp.wgl.msg_dc, rc)) {
         _sapp_fail("WGL: Failed to make context current\n");
     }
-    _sapp.wgl.GetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC) _sapp.wgl.GetProcAddress("wglGetExtensionsStringEXT");
-    _sapp.wgl.GetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC) _sapp.wgl.GetProcAddress("wglGetExtensionsStringARB");
-    _sapp.wgl.CreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC) _sapp.wgl.GetProcAddress("wglCreateContextAttribsARB");
-    _sapp.wgl.SwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC) _sapp.wgl.GetProcAddress("wglSwapIntervalEXT");
-    _sapp.wgl.GetPixelFormatAttribivARB = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC) _sapp.wgl.GetProcAddress("wglGetPixelFormatAttribivARB");
+    _sapp.wgl.GetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)(void*) _sapp.wgl.GetProcAddress("wglGetExtensionsStringEXT");
+    _sapp.wgl.GetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)(void*) _sapp.wgl.GetProcAddress("wglGetExtensionsStringARB");
+    _sapp.wgl.CreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)(void*) _sapp.wgl.GetProcAddress("wglCreateContextAttribsARB");
+    _sapp.wgl.SwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)(void*) _sapp.wgl.GetProcAddress("wglSwapIntervalEXT");
+    _sapp.wgl.GetPixelFormatAttribivARB = (PFNWGLGETPIXELFORMATATTRIBIVARBPROC)(void*) _sapp.wgl.GetProcAddress("wglGetPixelFormatAttribivARB");
     _sapp.wgl.arb_multisample = _sapp_wgl_ext_supported("WGL_ARB_multisample");
     _sapp.wgl.arb_create_context = _sapp_wgl_ext_supported("WGL_ARB_create_context");
     _sapp.wgl.arb_create_context_profile = _sapp_wgl_ext_supported("WGL_ARB_create_context_profile");
@@ -6090,12 +6098,12 @@ _SOKOL_PRIVATE void _sapp_win32_init_dpi(void) {
     GETDPIFORMONITOR_T fn_getdpiformonitor = 0;
     HINSTANCE user32 = LoadLibraryA("user32.dll");
     if (user32) {
-        fn_setprocessdpiaware = (SETPROCESSDPIAWARE_T) GetProcAddress(user32, "SetProcessDPIAware");
+        fn_setprocessdpiaware = (SETPROCESSDPIAWARE_T)(void*) GetProcAddress(user32, "SetProcessDPIAware");
     }
     HINSTANCE shcore = LoadLibraryA("shcore.dll");
     if (shcore) {
-        fn_setprocessdpiawareness = (SETPROCESSDPIAWARENESS_T) GetProcAddress(shcore, "SetProcessDpiAwareness");
-        fn_getdpiformonitor = (GETDPIFORMONITOR_T) GetProcAddress(shcore, "GetDpiForMonitor");
+        fn_setprocessdpiawareness = (SETPROCESSDPIAWARENESS_T)(void*) GetProcAddress(shcore, "SetProcessDpiAwareness");
+        fn_getdpiformonitor = (GETDPIFORMONITOR_T)(void*) GetProcAddress(shcore, "GetDpiForMonitor");
     }
     if (fn_setprocessdpiawareness) {
         /* if the app didn't request HighDPI rendering, let Windows do the upscaling */
@@ -6305,8 +6313,9 @@ _SOKOL_PRIVATE char** _sapp_win32_command_line_to_utf8_argv(LPWSTR w_command_lin
         _sapp_fail("Win32: failed to parse command line");
     } else {
         size_t size = wcslen(w_command_line) * 4;
-        argv = (char**) SOKOL_CALLOC(1, (argc + 1) * sizeof(char*) + size);
-        args = (char*)&argv[argc + 1];
+        argv = (char**) SOKOL_CALLOC(1, ((size_t)argc + 1) * sizeof(char*) + size);
+        SOKOL_ASSERT(argv);
+        args = (char*) &argv[argc + 1];
         int n;
         for (int i = 0; i < argc; ++i) {
             n = WideCharToMultiByte(CP_UTF8, 0, w_argv[i], -1, args, (int)size, NULL, NULL);

@@ -265,8 +265,8 @@
     uint16_t indices[16];
 
     sshape_buffer_t buf = {
-        .vertices = { .buffer_ptr = vertices, .buffer_size = sizeof(vertices) },
-        .indices  = { .buffer_ptr = indices,  .buffer_size = sizeof(indices) }
+        .vertices.buffer = SSHAPE_RANGE(vertices),
+        .indices.buffer  = SSHAPE_RANGE(indices)
     };
 
     // first cube at pos x=-2.0 (with default size of 1x1x1)
@@ -310,8 +310,8 @@
     sshape_vertex_t vertices[128];
     uint16_t indices[16];
     sshape_buffer_t buf = {
-        .vertices = { .buffer_ptr = vertices, .buffer_size = sizeof(vertices) },
-        .indices  = { .buffer_ptr = indices,  .buffer_size = sizeof(indices) }
+        .vertices.buffer = SSHAPE_RANGE(vertices),
+        .indices.buffer = SSHAPE_RANGE(indices)
     };
 
     // build a red cube...
@@ -360,7 +360,7 @@
         distribution.
 */
 #define SOKOL_SHAPE_INCLUDED
-#include <stddef.h>
+#include <stddef.h>     // size_t, offsetof
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -551,7 +551,6 @@ SOKOL_SHAPE_API_DECL sshape_mat4_t sshape_mat4_transpose(const float m[16]);
 #define SOKOL_SHAPE_IMPL_INCLUDED (1)
 
 #include <string.h> // memcpy
-#include <stddef.h> // offsetof
 #include <math.h>   // sinf, cosf
 
 #ifdef __clang__

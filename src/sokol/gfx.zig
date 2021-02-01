@@ -466,7 +466,7 @@ pub const ShaderUniformBlockDesc = extern struct {
 };
 pub const ShaderImageDesc = extern struct {
     name: [*c]const u8 = null,
-    type: ImageType = .DEFAULT,
+    image_type: ImageType = .DEFAULT,
     sampler_type: SamplerType = .DEFAULT,
 };
 pub const ShaderStageDesc = extern struct {
