@@ -36,7 +36,7 @@
     ================
     sokol_shape.h creates vertices and indices for simple shapes and
     builds structs which can be plugged into sokol-gfx resource
-    creation descriptor structs.
+    creation functions:
 
     The following shape types are supported:
 
@@ -154,7 +154,7 @@
     You can also provide additional creation parameters, like a common vertex
     color, a debug-helper to randomize colors, tell the shape builder function
     to merge the new shape with the previous shape into the same draw-element-range,
-    or a 4x4 transform matrix to move, rotate and scale the generated matrices:
+    or a 4x4 transform matrix to move, rotate and scale the generated vertices:
 
     ```c
     sshape_buffer_t buf = ...;
@@ -179,7 +179,7 @@
     assert(buf.valid);
     ```
 
-    The following helper functions are offered to build a packed
+    The following helper functions can be used to build a packed
     color value or to convert from external matrix types:
 
     ```c
@@ -419,8 +419,8 @@ typedef struct sshape_vertex_t {
 
 /* a range of draw-elements (sg_draw(int base_element, int num_element, ...)) */
 typedef struct sshape_element_range_t {
-    uint32_t base_element;
-    uint32_t num_elements;
+    int base_element;
+    int num_elements;
     #if defined(SOKOL_ZIG_BINDINGS)
     uint32_t __pad[3];
     #endif
@@ -1388,9 +1388,9 @@ SOKOL_SHAPE_API_DECL sshape_element_range_t sshape_element_range(const sshape_bu
     SOKOL_ASSERT(0 == (buf->indices.shape_offset & (sizeof(uint16_t) - 1)));
     SOKOL_ASSERT(0 == (buf->indices.data_size & (sizeof(uint16_t) - 1)));
     sshape_element_range_t range = { 0 };
-    range.base_element = (uint32_t) (buf->indices.shape_offset / sizeof(uint16_t));
+    range.base_element = (int) (buf->indices.shape_offset / sizeof(uint16_t));
     if (buf->valid) {
-        range.num_elements = (uint32_t) ((buf->indices.data_size - buf->indices.shape_offset) / sizeof(uint16_t));
+        range.num_elements = (int) ((buf->indices.data_size - buf->indices.shape_offset) / sizeof(uint16_t));
     }
     else {
         range.num_elements = 0;

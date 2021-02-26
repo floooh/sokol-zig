@@ -443,6 +443,7 @@ typedef struct sdtx_range {
 // disabling this for every includer isn't great, but the warning is also quite pointless
 #if defined(_MSC_VER)
 #pragma warning(disable:4221)   /* /W4 only: nonstandard extension used: 'x': cannot be initialized using address of automatic variable 'y' */
+#pragma warning(disable:4204)   /* VS2015: nonstandard extension used: non-constant aggregate initializer */
 #endif
 #if defined(__cplusplus)
 #define SDTX_RANGE(x) sdtx_range{ &x, sizeof(x) }
@@ -488,7 +489,7 @@ typedef struct sdtx_font_desc_t {
     of text.
 */
 typedef struct sdtx_context_desc_t {
-    uint32_t char_buf_size;                 // max number of characters rendered in one frame, default: 4096
+    int char_buf_size;                      // max number of characters rendered in one frame, default: 4096
     float canvas_width;                     // the initial virtual canvas width, default: 640
     float canvas_height;                    // the initial virtual canvas height, default: 400
     int tab_width;                          // tab width in number of characters, default: 4
@@ -514,8 +515,8 @@ typedef struct sdtx_context_desc_t {
         sdtx_font_oric()
 */
 typedef struct sdtx_desc_t {
-    uint32_t context_pool_size;             // max number of rendering contexts that can be created, default: 8
-    uint32_t printf_buf_size;               // size of internal buffer for snprintf(), default: 4096
+    int context_pool_size;                  // max number of rendering contexts that can be created, default: 8
+    int printf_buf_size;                    // size of internal buffer for snprintf(), default: 4096
     sdtx_font_desc_t fonts[SDTX_MAX_FONTS]; // up to 8 fonts descriptions
     sdtx_context_desc_t context;            // the default context creation parameters
 } sdtx_desc_t;
@@ -542,7 +543,7 @@ SOKOL_DEBUGTEXT_API_DECL sdtx_context sdtx_get_context(void);
 SOKOL_DEBUGTEXT_API_DECL void sdtx_draw(void);
 
 /* switch to a different font */
-SOKOL_DEBUGTEXT_API_DECL void sdtx_font(uint32_t font_index);
+SOKOL_DEBUGTEXT_API_DECL void sdtx_font(int font_index);
 
 /* set a new virtual canvas size in screen pixels */
 SOKOL_DEBUGTEXT_API_DECL void sdtx_canvas(float w, float h);
@@ -570,7 +571,7 @@ SOKOL_DEBUGTEXT_API_DECL void sdtx_color1i(uint32_t rgba);                      
 /* text rendering */
 SOKOL_DEBUGTEXT_API_DECL void sdtx_putc(char c);
 SOKOL_DEBUGTEXT_API_DECL void sdtx_puts(const char* str);             // does NOT append newline!
-SOKOL_DEBUGTEXT_API_DECL void sdtx_putr(const char* str, uint32_t len);    // 'put range', also stops at zero-char
+SOKOL_DEBUGTEXT_API_DECL void sdtx_putr(const char* str, int len);    // 'put range', also stops at zero-char
 SOKOL_DEBUGTEXT_API_DECL int sdtx_printf(const char* fmt, ...) SOKOL_DEBUGTEXT_PRINTF_ATTR;
 SOKOL_DEBUGTEXT_API_DECL int sdtx_vprintf(const char* fmt, va_list args);
 
@@ -3398,7 +3399,7 @@ typedef struct {
     _sdtx_vertex_t* vertices;
     sg_buffer vbuf;
     sg_pipeline pip;
-    uint32_t cur_font;
+    int cur_font;
     _sdtx_float2_t canvas_size;
     _sdtx_float2_t glyph_size;
     _sdtx_float2_t origin;
@@ -3434,12 +3435,12 @@ static void _sdtx_init_pool(_sdtx_pool_t* pool, int num) {
     pool->size = num + 1;
     pool->queue_top = 0;
     /* generation counters indexable by pool slot index, slot 0 is reserved */
-    size_t gen_ctrs_size = sizeof(uint32_t) * pool->size;
+    size_t gen_ctrs_size = sizeof(uint32_t) * (size_t)pool->size;
     pool->gen_ctrs = (uint32_t*) SOKOL_MALLOC(gen_ctrs_size);
     SOKOL_ASSERT(pool->gen_ctrs);
     memset(pool->gen_ctrs, 0, gen_ctrs_size);
     /* it's not a bug to only reserve 'num' here */
-    pool->free_queue = (int*) SOKOL_MALLOC(sizeof(int)*num);
+    pool->free_queue = (int*) SOKOL_MALLOC(sizeof(int) * (size_t)num);
     SOKOL_ASSERT(pool->free_queue);
     /* never allocate the zero-th pool item since the invalid id is 0 */
     for (int i = pool->size-1; i >= 1; i--) {
@@ -3493,7 +3494,7 @@ static void _sdtx_setup_context_pool(const sdtx_desc_t* desc) {
     /* note: the pool will have an additional item, since slot 0 is reserved */
     SOKOL_ASSERT((desc->context_pool_size > 0) && (desc->context_pool_size < _SDTX_MAX_POOL_SIZE));
     _sdtx_init_pool(&_sdtx.context_pool.pool, desc->context_pool_size);
-    size_t pool_byte_size = sizeof(_sdtx_context_t) * _sdtx.context_pool.pool.size;
+    size_t pool_byte_size = sizeof(_sdtx_context_t) * (size_t)_sdtx.context_pool.pool.size;
     _sdtx.context_pool.contexts = (_sdtx_context_t*) SOKOL_MALLOC(pool_byte_size);
     SOKOL_ASSERT(_sdtx.context_pool.contexts);
     memset(_sdtx.context_pool.contexts, 0, pool_byte_size);
@@ -3580,6 +3581,9 @@ static sdtx_context_desc_t _sdtx_context_desc_defaults(const sdtx_context_desc_t
     res.canvas_height = _sdtx_def(res.canvas_height, _SDTX_DEFAULT_CANVAS_HEIGHT);
     res.tab_width = _sdtx_def(res.tab_width, _SDTX_DEFAULT_TAB_WIDTH);
     /* keep pixel format attrs are passed as is into pipeline creation */
+    SOKOL_ASSERT(res.char_buf_size > 0);
+    SOKOL_ASSERT(res.canvas_width > 0.0f);
+    SOKOL_ASSERT(res.canvas_height > 0.0f);
     return res;
 }
 
@@ -3590,11 +3594,9 @@ static void _sdtx_init_context(sdtx_context ctx_id, const sdtx_context_desc_t* i
     _sdtx_context_t* ctx = _sdtx_lookup_context(ctx_id.id);
     SOKOL_ASSERT(ctx);
     ctx->desc = _sdtx_context_desc_defaults(in_desc);
-    SOKOL_ASSERT(ctx->desc.canvas_width > 0.0f);
-    SOKOL_ASSERT(ctx->desc.canvas_height > 0.0f);
 
-    const uint32_t max_vertices = 6 * ctx->desc.char_buf_size;
-    const uint32_t vbuf_size = max_vertices * sizeof(_sdtx_vertex_t);
+    const int max_vertices = 6 * ctx->desc.char_buf_size;
+    const size_t vbuf_size = (size_t)max_vertices * sizeof(_sdtx_vertex_t);
     ctx->vertices = (_sdtx_vertex_t*) SOKOL_MALLOC(vbuf_size);
     SOKOL_ASSERT(ctx->vertices);
     ctx->cur_vertex_ptr = ctx->vertices;
@@ -3681,7 +3683,7 @@ static void _sdtx_unpack_font(const sdtx_font_desc_t* font_desc, uint8_t* out_pi
 static void _sdtx_setup_common(void) {
 
     /* common printf formatting buffer */
-    _sdtx.fmt_buf_size = _sdtx.desc.printf_buf_size + 1;
+    _sdtx.fmt_buf_size = (uint32_t) _sdtx.desc.printf_buf_size + 1;
     _sdtx.fmt_buf = (char*) SOKOL_MALLOC(_sdtx.fmt_buf_size);
     SOKOL_ASSERT(_sdtx.fmt_buf);
 
@@ -3853,7 +3855,7 @@ static inline void _sdtx_draw_char(_sdtx_context_t* ctx, uint8_t c) {
 }
 
 static inline void _sdtx_put_char(_sdtx_context_t* ctx, char c) {
-    uint8_t c_u8 = c;
+    uint8_t c_u8 = (uint8_t)c;
     if (c_u8 <= 32) {
         _sdtx_ctrl_char(ctx, c_u8);
     }
@@ -3872,6 +3874,9 @@ static sdtx_desc_t _sdtx_desc_defaults(const sdtx_desc_t* in_desc) {
         }
     }
     desc.context = _sdtx_context_desc_defaults(&desc.context);
+    SOKOL_ASSERT(desc.context_pool_size > 0);
+    SOKOL_ASSERT(desc.printf_buf_size > 0);
+    SOKOL_ASSERT(desc.context.char_buf_size > 0);
     return desc;
 }
 
@@ -3971,9 +3976,9 @@ SOKOL_API_IMPL sdtx_context sdtx_get_context(void) {
     return _sdtx.cur_ctx_id;
 }
 
-SOKOL_API_IMPL void sdtx_font(uint32_t font_index) {
+SOKOL_API_IMPL void sdtx_font(int font_index) {
     SOKOL_ASSERT(_SDTX_INIT_COOKIE == _sdtx.init_cookie);
-    SOKOL_ASSERT(font_index < SDTX_MAX_FONTS);
+    SOKOL_ASSERT((font_index >= 0) && (font_index < SDTX_MAX_FONTS));
     _sdtx_context_t* ctx = _sdtx.cur_ctx;
     if (ctx) {
         ctx->cur_font = font_index;
@@ -4132,11 +4137,11 @@ SOKOL_DEBUGTEXT_API_DECL void sdtx_puts(const char* str) {
     }
 }
 
-SOKOL_DEBUGTEXT_API_DECL void sdtx_putr(const char* str, uint32_t len) {
+SOKOL_DEBUGTEXT_API_DECL void sdtx_putr(const char* str, int len) {
     SOKOL_ASSERT(_SDTX_INIT_COOKIE == _sdtx.init_cookie);
     _sdtx_context_t* ctx = _sdtx.cur_ctx;
     if (ctx) {
-        for (uint32_t i = 0; i < len; i++) {
+        for (int i = 0; i < len; i++) {
             char chr = str[i];
             if (0 == chr) {
                 break;
@@ -4177,8 +4182,8 @@ SOKOL_API_IMPL void sdtx_draw(void) {
         if (num_verts > 0) {
             SOKOL_ASSERT((num_verts % 6) == 0);
             sg_push_debug_group("sokol-debugtext");
-            const sg_range range = { ctx->vertices, num_verts * sizeof(_sdtx_vertex_t) };
-            uint32_t vbuf_offset = sg_append_buffer(ctx->vbuf, &range);
+            const sg_range range = { ctx->vertices, (size_t)num_verts * sizeof(_sdtx_vertex_t) };
+            int vbuf_offset = sg_append_buffer(ctx->vbuf, &range);
             sg_apply_pipeline(ctx->pip);
             sg_bindings bindings;
             memset(&bindings, 0, sizeof(bindings));

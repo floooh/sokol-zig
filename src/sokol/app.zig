@@ -215,13 +215,16 @@ pub const Desc = extern struct {
     enable_dragndrop: bool = false,
     max_dropped_files: i32 = 0,
     max_dropped_file_path_length: i32 = 0,
+    gl_force_gles2: bool = false,
+    win32_console_utf8: bool = false,
+    win32_console_create: bool = false,
+    win32_console_attach: bool = false,
     html5_canvas_name: [*c]const u8 = null,
     html5_canvas_resize: bool = false,
     html5_preserve_drawing_buffer: bool = false,
     html5_premultiplied_alpha: bool = false,
     html5_ask_leave_site: bool = false,
     ios_keyboard_resizes_canvas: bool = false,
-    gl_force_gles2: bool = false,
 };
 pub const Html5FetchError = extern enum(i32) {
     FETCH_ERROR_NO_ERROR,
@@ -245,202 +248,202 @@ pub const Html5FetchRequest = extern struct {
     user_data: ?*c_void = null,
 };
 pub extern fn sapp_isvalid() bool;
-pub inline fn isvalid() bool {
+pub fn isvalid() bool {
     return sapp_isvalid();
 }
 pub extern fn sapp_width() i32;
-pub inline fn width() i32 {
+pub fn width() i32 {
     return sapp_width();
 }
 pub extern fn sapp_widthf() f32;
-pub inline fn widthf() f32 {
+pub fn widthf() f32 {
     return sapp_widthf();
 }
 pub extern fn sapp_height() i32;
-pub inline fn height() i32 {
+pub fn height() i32 {
     return sapp_height();
 }
 pub extern fn sapp_heightf() f32;
-pub inline fn heightf() f32 {
+pub fn heightf() f32 {
     return sapp_heightf();
 }
 pub extern fn sapp_color_format() i32;
-pub inline fn colorFormat() i32 {
+pub fn colorFormat() i32 {
     return sapp_color_format();
 }
 pub extern fn sapp_depth_format() i32;
-pub inline fn depthFormat() i32 {
+pub fn depthFormat() i32 {
     return sapp_depth_format();
 }
 pub extern fn sapp_sample_count() i32;
-pub inline fn sampleCount() i32 {
+pub fn sampleCount() i32 {
     return sapp_sample_count();
 }
 pub extern fn sapp_high_dpi() bool;
-pub inline fn highDpi() bool {
+pub fn highDpi() bool {
     return sapp_high_dpi();
 }
 pub extern fn sapp_dpi_scale() f32;
-pub inline fn dpiScale() f32 {
+pub fn dpiScale() f32 {
     return sapp_dpi_scale();
 }
 pub extern fn sapp_show_keyboard(bool) void;
-pub inline fn showKeyboard(show: bool) void {
+pub fn showKeyboard(show: bool) void {
     sapp_show_keyboard(show);
 }
 pub extern fn sapp_keyboard_shown() bool;
-pub inline fn keyboardShown() bool {
+pub fn keyboardShown() bool {
     return sapp_keyboard_shown();
 }
 pub extern fn sapp_is_fullscreen() bool;
-pub inline fn isFullscreen() bool {
+pub fn isFullscreen() bool {
     return sapp_is_fullscreen();
 }
 pub extern fn sapp_toggle_fullscreen() void;
-pub inline fn toggleFullscreen() void {
+pub fn toggleFullscreen() void {
     sapp_toggle_fullscreen();
 }
 pub extern fn sapp_show_mouse(bool) void;
-pub inline fn showMouse(show: bool) void {
+pub fn showMouse(show: bool) void {
     sapp_show_mouse(show);
 }
 pub extern fn sapp_mouse_shown() bool;
-pub inline fn mouseShown() bool {
+pub fn mouseShown() bool {
     return sapp_mouse_shown();
 }
 pub extern fn sapp_lock_mouse(bool) void;
-pub inline fn lockMouse(lock: bool) void {
+pub fn lockMouse(lock: bool) void {
     sapp_lock_mouse(lock);
 }
 pub extern fn sapp_mouse_locked() bool;
-pub inline fn mouseLocked() bool {
+pub fn mouseLocked() bool {
     return sapp_mouse_locked();
 }
 pub extern fn sapp_userdata() ?*c_void;
-pub inline fn userdata() ?*c_void {
+pub fn userdata() ?*c_void {
     return sapp_userdata();
 }
 pub extern fn sapp_query_desc() Desc;
-pub inline fn queryDesc() Desc {
+pub fn queryDesc() Desc {
     return sapp_query_desc();
 }
 pub extern fn sapp_request_quit() void;
-pub inline fn requestQuit() void {
+pub fn requestQuit() void {
     sapp_request_quit();
 }
 pub extern fn sapp_cancel_quit() void;
-pub inline fn cancelQuit() void {
+pub fn cancelQuit() void {
     sapp_cancel_quit();
 }
 pub extern fn sapp_quit() void;
-pub inline fn quit() void {
+pub fn quit() void {
     sapp_quit();
 }
 pub extern fn sapp_consume_event() void;
-pub inline fn consumeEvent() void {
+pub fn consumeEvent() void {
     sapp_consume_event();
 }
 pub extern fn sapp_frame_count() u64;
-pub inline fn frameCount() u64 {
+pub fn frameCount() u64 {
     return sapp_frame_count();
 }
 pub extern fn sapp_set_clipboard_string([*c]const u8) void;
-pub inline fn setClipboardString(str: [:0]const u8) void {
+pub fn setClipboardString(str: [:0]const u8) void {
     sapp_set_clipboard_string(@ptrCast([*c]const u8,str));
 }
 pub extern fn sapp_get_clipboard_string() [*c]const u8;
-pub inline fn getClipboardString() [:0]const u8 {
+pub fn getClipboardString() [:0]const u8 {
     return sapp_get_clipboard_string();
 }
 pub extern fn sapp_set_window_title([*c]const u8) void;
-pub inline fn setWindowTitle(str: [:0]const u8) void {
+pub fn setWindowTitle(str: [:0]const u8) void {
     sapp_set_window_title(@ptrCast([*c]const u8,str));
 }
 pub extern fn sapp_get_num_dropped_files() i32;
-pub inline fn getNumDroppedFiles() i32 {
+pub fn getNumDroppedFiles() i32 {
     return sapp_get_num_dropped_files();
 }
 pub extern fn sapp_get_dropped_file_path(i32) [*c]const u8;
-pub inline fn getDroppedFilePath(index: i32) [:0]const u8 {
+pub fn getDroppedFilePath(index: i32) [:0]const u8 {
     return sapp_get_dropped_file_path(index);
 }
 pub extern fn sapp_run([*c]const Desc) void;
-pub inline fn run(desc: Desc) void {
+pub fn run(desc: Desc) void {
     sapp_run(&desc);
 }
 pub extern fn sapp_gles2() bool;
-pub inline fn gles2() bool {
+pub fn gles2() bool {
     return sapp_gles2();
 }
 pub extern fn sapp_html5_ask_leave_site(bool) void;
-pub inline fn html5AskLeaveSite(ask: bool) void {
+pub fn html5AskLeaveSite(ask: bool) void {
     sapp_html5_ask_leave_site(ask);
 }
 pub extern fn sapp_html5_get_dropped_file_size(i32) u32;
-pub inline fn html5GetDroppedFileSize(index: i32) u32 {
+pub fn html5GetDroppedFileSize(index: i32) u32 {
     return sapp_html5_get_dropped_file_size(index);
 }
 pub extern fn sapp_html5_fetch_dropped_file([*c]const Html5FetchRequest) void;
-pub inline fn html5FetchDroppedFile(request: Html5FetchRequest) void {
+pub fn html5FetchDroppedFile(request: Html5FetchRequest) void {
     sapp_html5_fetch_dropped_file(&request);
 }
 pub extern fn sapp_metal_get_device() ?*const c_void;
-pub inline fn metalGetDevice() ?*const c_void {
+pub fn metalGetDevice() ?*const c_void {
     return sapp_metal_get_device();
 }
 pub extern fn sapp_metal_get_renderpass_descriptor() ?*const c_void;
-pub inline fn metalGetRenderpassDescriptor() ?*const c_void {
+pub fn metalGetRenderpassDescriptor() ?*const c_void {
     return sapp_metal_get_renderpass_descriptor();
 }
 pub extern fn sapp_metal_get_drawable() ?*const c_void;
-pub inline fn metalGetDrawable() ?*const c_void {
+pub fn metalGetDrawable() ?*const c_void {
     return sapp_metal_get_drawable();
 }
 pub extern fn sapp_macos_get_window() ?*const c_void;
-pub inline fn macosGetWindow() ?*const c_void {
+pub fn macosGetWindow() ?*const c_void {
     return sapp_macos_get_window();
 }
 pub extern fn sapp_ios_get_window() ?*const c_void;
-pub inline fn iosGetWindow() ?*const c_void {
+pub fn iosGetWindow() ?*const c_void {
     return sapp_ios_get_window();
 }
 pub extern fn sapp_d3d11_get_device() ?*const c_void;
-pub inline fn d3d11GetDevice() ?*const c_void {
+pub fn d3d11GetDevice() ?*const c_void {
     return sapp_d3d11_get_device();
 }
 pub extern fn sapp_d3d11_get_device_context() ?*const c_void;
-pub inline fn d3d11GetDeviceContext() ?*const c_void {
+pub fn d3d11GetDeviceContext() ?*const c_void {
     return sapp_d3d11_get_device_context();
 }
 pub extern fn sapp_d3d11_get_render_target_view() ?*const c_void;
-pub inline fn d3d11GetRenderTargetView() ?*const c_void {
+pub fn d3d11GetRenderTargetView() ?*const c_void {
     return sapp_d3d11_get_render_target_view();
 }
 pub extern fn sapp_d3d11_get_depth_stencil_view() ?*const c_void;
-pub inline fn d3d11GetDepthStencilView() ?*const c_void {
+pub fn d3d11GetDepthStencilView() ?*const c_void {
     return sapp_d3d11_get_depth_stencil_view();
 }
 pub extern fn sapp_win32_get_hwnd() ?*const c_void;
-pub inline fn win32GetHwnd() ?*const c_void {
+pub fn win32GetHwnd() ?*const c_void {
     return sapp_win32_get_hwnd();
 }
 pub extern fn sapp_wgpu_get_device() ?*const c_void;
-pub inline fn wgpuGetDevice() ?*const c_void {
+pub fn wgpuGetDevice() ?*const c_void {
     return sapp_wgpu_get_device();
 }
 pub extern fn sapp_wgpu_get_render_view() ?*const c_void;
-pub inline fn wgpuGetRenderView() ?*const c_void {
+pub fn wgpuGetRenderView() ?*const c_void {
     return sapp_wgpu_get_render_view();
 }
 pub extern fn sapp_wgpu_get_resolve_view() ?*const c_void;
-pub inline fn wgpuGetResolveView() ?*const c_void {
+pub fn wgpuGetResolveView() ?*const c_void {
     return sapp_wgpu_get_resolve_view();
 }
 pub extern fn sapp_wgpu_get_depth_stencil_view() ?*const c_void;
-pub inline fn wgpuGetDepthStencilView() ?*const c_void {
+pub fn wgpuGetDepthStencilView() ?*const c_void {
     return sapp_wgpu_get_depth_stencil_view();
 }
 pub extern fn sapp_android_get_native_activity() ?*const c_void;
-pub inline fn androidGetNativeActivity() ?*const c_void {
+pub fn androidGetNativeActivity() ?*const c_void {
     return sapp_android_get_native_activity();
 }
