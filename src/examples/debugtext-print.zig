@@ -60,7 +60,7 @@ export fn frame() void {
         sdtx.font(font);
         sdtx.color3b(color.r, color.g, color.b);
         const world_str = if (0 == (state.frame_count & (1<<7))) "Welt" else "World";
-        sdtx.print("Hello '{}'!\n", .{ world_str });
+        sdtx.print("Hello '{s}'!\n", .{ world_str });
         sdtx.print("\tFrame Time:\t\t{d:.3}ms\n", .{ frame_time });
         sdtx.print("\tFrame Count:\t{}\t0x{X:0>4}\n", .{ state.frame_count, state.frame_count });
         sdtx.moveY(2);
