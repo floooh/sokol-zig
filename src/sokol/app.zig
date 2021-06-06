@@ -3,6 +3,7 @@
 pub const max_touchpoints = 8;
 pub const max_mousebuttons = 3;
 pub const max_keycodes = 512;
+pub const max_iconimages = 8;
 pub const EventType = extern enum(i32) {
     INVALID,
     KEY_DOWN,
@@ -168,6 +169,9 @@ pub const modifier_shift = 1;
 pub const modifier_ctrl = 2;
 pub const modifier_alt = 4;
 pub const modifier_super = 8;
+pub const modifier_lmb = 256;
+pub const modifier_rmb = 512;
+pub const modifier_mmb = 1024;
 pub const Event = extern struct {
     frame_count: u64 = 0,
     type: EventType = .INVALID,
@@ -188,6 +192,19 @@ pub const Event = extern struct {
     window_height: i32 = 0,
     framebuffer_width: i32 = 0,
     framebuffer_height: i32 = 0,
+};
+pub const Range = extern struct {
+    ptr: ?*const c_void = null,
+    size: usize = 0,
+};
+pub const ImageDesc = extern struct {
+    width: i32 = 0,
+    height: i32 = 0,
+    pixels: Range = .{ },
+};
+pub const IconDesc = extern struct {
+    sokol_default: bool = false,
+    images: [8]ImageDesc = [_]ImageDesc{.{}} ** 8,
 };
 pub const Desc = extern struct {
     init_cb: ?fn() callconv(.C) void = null,
@@ -215,6 +232,7 @@ pub const Desc = extern struct {
     enable_dragndrop: bool = false,
     max_dropped_files: i32 = 0,
     max_dropped_file_path_length: i32 = 0,
+    icon: IconDesc = .{ },
     gl_force_gles2: bool = false,
     win32_console_utf8: bool = false,
     win32_console_create: bool = false,
@@ -359,6 +377,10 @@ pub extern fn sapp_set_window_title([*c]const u8) void;
 pub fn setWindowTitle(str: [:0]const u8) void {
     sapp_set_window_title(@ptrCast([*c]const u8,str));
 }
+pub extern fn sapp_set_icon([*c]const IconDesc) void;
+pub fn setIcon(icon_desc: IconDesc) void {
+    sapp_set_icon(&icon_desc);
+}
 pub extern fn sapp_get_num_dropped_files() i32;
 pub fn getNumDroppedFiles() i32 {
     return sapp_get_num_dropped_files();
@@ -414,6 +436,10 @@ pub fn d3d11GetDevice() ?*const c_void {
 pub extern fn sapp_d3d11_get_device_context() ?*const c_void;
 pub fn d3d11GetDeviceContext() ?*const c_void {
     return sapp_d3d11_get_device_context();
+}
+pub extern fn sapp_d3d11_get_swap_chain() ?*const c_void;
+pub fn d3d11GetSwapChain() ?*const c_void {
+    return sapp_d3d11_get_swap_chain();
 }
 pub extern fn sapp_d3d11_get_render_target_view() ?*const c_void;
 pub fn d3d11GetRenderTargetView() ?*const c_void {

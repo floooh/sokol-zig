@@ -871,7 +871,8 @@ typedef struct sg_limits {
     int max_image_size_3d;          // max width/height/depth of SG_IMAGETYPE_3D images
     int max_image_size_array;       // max width/height of SG_IMAGETYPE_ARRAY images
     int max_image_array_layers;     // max number of layers in SG_IMAGETYPE_ARRAY images
-    int max_vertex_attrs;           // <= SG_MAX_VERTEX_ATTRIBUTES (only on some GLES2 impls)
+    int max_vertex_attrs;           // <= SG_MAX_VERTEX_ATTRIBUTES or less (on some GLES2 impls)
+    int gl_max_vertex_uniform_vectors;  // <= GL_MAX_VERTEX_UNIFORM_VECTORS (only on GL backends)
 } sg_limits;
 
 /*
@@ -2529,7 +2530,6 @@ inline int sg_append_buffer(sg_buffer buf_id, const sg_range& data) { return sg_
         #pragma comment (lib, "user32")
         #pragma comment (lib, "dxgi")
         #pragma comment (lib, "d3d11")
-        #pragma comment (lib, "dxguid")
     #endif
     #endif
 #elif defined(SOKOL_METAL)
@@ -2831,6 +2831,7 @@ inline int sg_append_buffer(sg_buffer buf_id, const sg_range& data) { return sg_
         #define GL_CLAMP_TO_BORDER 0x812D
         #define GL_TEXTURE_BORDER_COLOR 0x1004
         #define GL_CURRENT_PROGRAM 0x8B8D
+        #define GL_MAX_VERTEX_UNIFORM_VECTORS 0x8DFB
     #endif
 
     #ifndef GL_UNSIGNED_INT_2_10_10_10_REV
@@ -3336,7 +3337,7 @@ typedef _sg_gl_image_t _sg_image_t;
 typedef struct {
     GLint gl_loc;
     sg_uniform_type type;
-    uint8_t count;
+    uint16_t count;
     uint16_t offset;
 } _sg_gl_uniform_t;
 
@@ -5517,6 +5518,9 @@ _SOKOL_PRIVATE void _sg_gl_init_limits(void) {
         gl_int = SG_MAX_VERTEX_ATTRIBUTES;
     }
     _sg.limits.max_vertex_attrs = gl_int;
+    glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &gl_int);
+    _SG_GL_CHECK_ERROR();
+    _sg.limits.gl_max_vertex_uniform_vectors = gl_int;
     #if !defined(SOKOL_GLES2)
     if (!_sg.gl.gles2) {
         glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &gl_int);
@@ -6475,7 +6479,7 @@ _SOKOL_PRIVATE sg_resource_state _sg_gl_create_shader(_sg_shader_t* shd, const s
                 }
                 _sg_gl_uniform_t* u = &ub->uniforms[u_index];
                 u->type = u_desc->type;
-                u->count = (uint8_t) u_desc->array_count;
+                u->count = (uint16_t) u_desc->array_count;
                 u->offset = (uint16_t) cur_uniform_offset;
                 cur_uniform_offset += _sg_uniform_size(u->type, u->count);
                 if (u_desc->name) {
@@ -10578,6 +10582,11 @@ _SOKOL_PRIVATE void _sg_mtl_begin_pass(_sg_pass_t* pass, const sg_pass_action* a
         /* block until the oldest frame in flight has finished */
         dispatch_semaphore_wait(_sg.mtl.sem, DISPATCH_TIME_FOREVER);
         _sg.mtl.cmd_buffer = [_sg.mtl.cmd_queue commandBufferWithUnretainedReferences];
+        [_sg.mtl.cmd_buffer addCompletedHandler:^(id<MTLCommandBuffer> cmd_buffer) {
+            // NOTE: this code is called on a different thread!
+            _SOKOL_UNUSED(cmd_buffer);
+            dispatch_semaphore_signal(_sg.mtl.sem);
+        }];
     }
 
     /* if this is first pass in frame, get uniform buffer base pointer */
@@ -10724,11 +10733,9 @@ _SOKOL_PRIVATE void _sg_mtl_commit(void) {
     else {
         cur_drawable = (__bridge id<MTLDrawable>) _sg.mtl.drawable_userdata_cb(_sg.mtl.user_data);
     }
-    [_sg.mtl.cmd_buffer presentDrawable:cur_drawable];
-    [_sg.mtl.cmd_buffer addCompletedHandler:^(id<MTLCommandBuffer> cmd_buffer) {
-        _SOKOL_UNUSED(cmd_buffer);
-        dispatch_semaphore_signal(_sg.mtl.sem);
-    }];
+    if (nil != cur_drawable) {
+        [_sg.mtl.cmd_buffer presentDrawable:cur_drawable];
+    }
     [_sg.mtl.cmd_buffer commit];
 
     /* garbage-collect resources pending for release */
