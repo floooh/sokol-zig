@@ -171,6 +171,9 @@ pub fn main() void {
         .sample_count = 4,
         .width = 800,
         .height = 600,
+        .icon = .{
+            .sokol_default = true
+        },
         .window_title = "offscreen.zig"
     });
 }
