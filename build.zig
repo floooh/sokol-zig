@@ -1,5 +1,4 @@
 const bld = @import("std").build;
-const mem = @import("std").mem;
 
 // build sokol into a static library
 pub fn buildSokol(b: *bld.Builder, comptime prefix_path: []const u8) *bld.LibExeObjStep {
