@@ -37,6 +37,14 @@ pub fn buildSokol(b: *bld.Builder, comptime prefix_path: []const u8) *bld.LibExe
             lib.linkSystemLibrary("GL");
             lib.linkSystemLibrary("asound");
         }
+        else if (lib.target.isWindows()) {
+            lib.linkSystemLibrary("kernel32");
+            lib.linkSystemLibrary("user32");
+            lib.linkSystemLibrary("ole32");
+            lib.linkSystemLibrary("d3d11");
+            lib.linkSystemLibrary("dxguid");
+            lib.linkSystemLibrary("dxgi");
+        }
     }
     return lib;
 }
