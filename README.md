@@ -1,6 +1,11 @@
 Auto-generated Zig bindings for the [sokol headers](https://github.com/floooh/sokol).
 
-Tested with zig version 0.8.0
+For Zig version 0.8.0
+
+If you're on a different Zig version, check the following branches:
+
+- zig-0.7.1
+- ...(to be continued)
 
 WIP, because not all sokol-headers have been added yet.
 
