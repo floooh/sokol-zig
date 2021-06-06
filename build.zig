@@ -2,15 +2,6 @@ const bld = @import("std").build;
 const mem = @import("std").mem;
 const zig = @import("std").zig;
 
-// macOS helper function to add SDK search paths
-fn macosAddSdkDirs(b: *bld.Builder, step: *bld.LibExeObjStep) !void {
-    const sdk_dir = try zig.system.getSDKPath(b.allocator);
-    const framework_dir = try mem.concat(b.allocator, u8, &[_][]const u8 { sdk_dir, "/System/Library/Frameworks" });
-    const usrinclude_dir = try mem.concat(b.allocator, u8, &[_][]const u8 { sdk_dir, "/usr/include"});
-    step.addFrameworkDir(framework_dir);
-    step.addIncludeDir(usrinclude_dir);
-}
-
 // build sokol into a static library
 pub fn buildSokol(b: *bld.Builder, comptime prefix_path: []const u8) *bld.LibExeObjStep {
     const lib = b.addStaticLibrary("sokol", null);
@@ -27,7 +18,7 @@ pub fn buildSokol(b: *bld.Builder, comptime prefix_path: []const u8) *bld.LibExe
         "sokol_shape.c",
     };
     if (lib.target.isDarwin()) {
-        macosAddSdkDirs(b, lib) catch unreachable;
+        b.env_map.put("ZIG_SYSTEM_LINKER_HACK", "1") catch unreachable;
         inline for (csources) |csrc| {
             lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-ObjC", "-DIMPL"});
         }

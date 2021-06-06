@@ -60,9 +60,9 @@ export fn frame() void {
         sdtx.font(font);
         sdtx.color3b(color.r, color.g, color.b);
         const world_str = if (0 == (state.frame_count & (1<<7))) "Welt" else "World";
-        sdtx.print("Hello '{}'!\n", .{ world_str });
+        sdtx.print("Hello '{s}'!\n", .{ world_str });
         sdtx.print("\tFrame Time:\t\t{d:.3}ms\n", .{ frame_time });
-        sdtx.print("\tFrame Count:\t{}\t0x{X:0>4}\n", .{ state.frame_count, state.frame_count });
+        sdtx.print("\tFrame Count:\t{d}\t0x{X:0>4}\n", .{ state.frame_count, state.frame_count });
         sdtx.moveY(2);
     }
     sdtx.font(KC854);
@@ -70,7 +70,7 @@ export fn frame() void {
 
     // can also use sdtx.Writer with std.fmt directly:
     var writer: sdtx.Writer = .{};
-    fmt.format(writer, "using std.fmt directly ({})\n", .{ state.frame_count }) catch unreachable;
+    fmt.format(writer, "using std.fmt directly ({d})\n", .{ state.frame_count }) catch unreachable;
 
     // render the frame via sokol.gfx
     sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
