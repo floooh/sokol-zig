@@ -149,9 +149,6 @@ pub fn main() void {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .icon = .{
-            .sokol_default = true
-        },
         .window_title = "texcube.zig"
     });
 }

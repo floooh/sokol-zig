@@ -234,9 +234,6 @@ pub fn main() void {
         .width = 512,
         .height = 512,
         .sample_count = 4,
-        .icon = .{
-            .sokol_default = true
-        },
         .window_title = "sgl.zig"
     });
 }
