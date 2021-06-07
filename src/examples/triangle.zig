@@ -59,6 +59,9 @@ pub fn main() void {
         .cleanup_cb = cleanup,
         .width = 640,
         .height = 480,
+        .icon = .{
+            .sokol_default = true,
+        },
         .window_title = "triangle.zig"
     });
 }
