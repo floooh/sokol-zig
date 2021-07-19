@@ -1,10 +1,15 @@
-const bld = @import("std").build;
+const std = @import("std");
+const Builder = std.build.Builder;
+const LibExeObjStep = std.build.LibExeObjStep;
+const CrossTarget = @import("std").zig.CrossTarget;
+const Mode = std.builtin.Mode;
 
 // build sokol into a static library
-pub fn buildSokol(b: *bld.Builder, comptime prefix_path: []const u8) *bld.LibExeObjStep {
+pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, comptime prefix_path: []const u8) *LibExeObjStep {
     const lib = b.addStaticLibrary("sokol", null);
+    lib.setBuildMode(mode);
+    lib.setTarget(target);
     lib.linkLibC();
-    lib.setBuildMode(b.standardReleaseOptions());
     const sokol_path = prefix_path ++ "src/sokol/c/";
     const csources = [_][]const u8 {
         "sokol_app.c",
@@ -49,31 +54,34 @@ pub fn buildSokol(b: *bld.Builder, comptime prefix_path: []const u8) *bld.LibExe
 }
 
 // build one of the example exes
-fn buildExample(b: *bld.Builder, sokol: *bld.LibExeObjStep, comptime name: []const u8) void {
+fn buildExample(b: *Builder, target: CrossTarget, mode: Mode, sokol: *LibExeObjStep, comptime name: []const u8) void {
     const e = b.addExecutable(name, "src/examples/" ++ name ++ ".zig");
+    e.setBuildMode(mode);
+    e.setTarget(target);
     e.linkLibrary(sokol);
-    e.setBuildMode(b.standardReleaseOptions());
     e.addPackagePath("sokol", "src/sokol/sokol.zig");
     e.install();
     b.step("run-" ++ name, "Run " ++ name).dependOn(&e.run().step);
 }
 
-pub fn build(b: *bld.Builder) void {
-    const sokol = buildSokol(b, "");
-    buildExample(b, sokol, "clear");
-    buildExample(b, sokol, "triangle");
-    buildExample(b, sokol, "quad");
-    buildExample(b, sokol, "bufferoffsets");
-    buildExample(b, sokol, "cube");
-    buildExample(b, sokol, "noninterleaved");
-    buildExample(b, sokol, "texcube");
-    buildExample(b, sokol, "offscreen");
-    buildExample(b, sokol, "instancing");
-    buildExample(b, sokol, "mrt");
-    buildExample(b, sokol, "saudio");
-    buildExample(b, sokol, "sgl");
-    buildExample(b, sokol, "debugtext");
-    buildExample(b, sokol, "debugtext-print");
-    buildExample(b, sokol, "debugtext-userfont");
-    buildExample(b, sokol, "shapes");
+pub fn build(b: *Builder) void {
+    const target = b.standardTargetOptions(.{});
+    const mode = b.standardReleaseOptions();
+    const sokol = buildSokol(b, target, mode, "");
+    buildExample(b, target, mode, sokol, "clear");
+    buildExample(b, target, mode, sokol, "triangle");
+    buildExample(b, target, mode, sokol, "quad");
+    buildExample(b, target, mode, sokol, "bufferoffsets");
+    buildExample(b, target, mode, sokol, "cube");
+    buildExample(b, target, mode, sokol, "noninterleaved");
+    buildExample(b, target, mode, sokol, "texcube");
+    buildExample(b, target, mode, sokol, "offscreen");
+    buildExample(b, target, mode, sokol, "instancing");
+    buildExample(b, target, mode, sokol, "mrt");
+    buildExample(b, target, mode, sokol, "saudio");
+    buildExample(b, target, mode, sokol, "sgl");
+    buildExample(b, target, mode, sokol, "debugtext");
+    buildExample(b, target, mode, sokol, "debugtext-print");
+    buildExample(b, target, mode, sokol, "debugtext-userfont");
+    buildExample(b, target, mode, sokol, "shapes");
 }
