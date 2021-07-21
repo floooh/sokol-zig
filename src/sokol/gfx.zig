@@ -59,7 +59,7 @@ pub const Color = extern struct {
     b: f32 = 0.0,
     a: f32 = 0.0,
 };
-pub const Backend = extern enum(i32) {
+pub const Backend = enum(i32) {
     GLCORE33,
     GLES2,
     GLES3,
@@ -70,7 +70,7 @@ pub const Backend = extern enum(i32) {
     WGPU,
     DUMMY,
 };
-pub const PixelFormat = extern enum(i32) {
+pub const PixelFormat = enum(i32) {
     DEFAULT,
     NONE,
     R8,
@@ -165,34 +165,34 @@ pub const Limits = extern struct {
     max_vertex_attrs: i32 = 0,
     gl_max_vertex_uniform_vectors: i32 = 0,
 };
-pub const ResourceState = extern enum(i32) {
+pub const ResourceState = enum(i32) {
     INITIAL,
     ALLOC,
     VALID,
     FAILED,
     INVALID,
 };
-pub const Usage = extern enum(i32) {
+pub const Usage = enum(i32) {
     DEFAULT,
     IMMUTABLE,
     DYNAMIC,
     STREAM,
     NUM,
 };
-pub const BufferType = extern enum(i32) {
+pub const BufferType = enum(i32) {
     DEFAULT,
     VERTEXBUFFER,
     INDEXBUFFER,
     NUM,
 };
-pub const IndexType = extern enum(i32) {
+pub const IndexType = enum(i32) {
     DEFAULT,
     NONE,
     UINT16,
     UINT32,
     NUM,
 };
-pub const ImageType = extern enum(i32) {
+pub const ImageType = enum(i32) {
     DEFAULT,
     _2D,
     CUBE,
@@ -200,13 +200,13 @@ pub const ImageType = extern enum(i32) {
     ARRAY,
     NUM,
 };
-pub const SamplerType = extern enum(i32) {
+pub const SamplerType = enum(i32) {
     DEFAULT,
     FLOAT,
     SINT,
     UINT,
 };
-pub const CubeFace = extern enum(i32) {
+pub const CubeFace = enum(i32) {
     POS_X,
     NEG_X,
     POS_Y,
@@ -215,11 +215,11 @@ pub const CubeFace = extern enum(i32) {
     NEG_Z,
     NUM,
 };
-pub const ShaderStage = extern enum(i32) {
+pub const ShaderStage = enum(i32) {
     VS,
     FS,
 };
-pub const PrimitiveType = extern enum(i32) {
+pub const PrimitiveType = enum(i32) {
     DEFAULT,
     POINTS,
     LINES,
@@ -228,7 +228,7 @@ pub const PrimitiveType = extern enum(i32) {
     TRIANGLE_STRIP,
     NUM,
 };
-pub const Filter = extern enum(i32) {
+pub const Filter = enum(i32) {
     DEFAULT,
     NEAREST,
     LINEAR,
@@ -238,7 +238,7 @@ pub const Filter = extern enum(i32) {
     LINEAR_MIPMAP_LINEAR,
     NUM,
 };
-pub const Wrap = extern enum(i32) {
+pub const Wrap = enum(i32) {
     DEFAULT,
     REPEAT,
     CLAMP_TO_EDGE,
@@ -246,14 +246,14 @@ pub const Wrap = extern enum(i32) {
     MIRRORED_REPEAT,
     NUM,
 };
-pub const BorderColor = extern enum(i32) {
+pub const BorderColor = enum(i32) {
     DEFAULT,
     TRANSPARENT_BLACK,
     OPAQUE_BLACK,
     OPAQUE_WHITE,
     NUM,
 };
-pub const VertexFormat = extern enum(i32) {
+pub const VertexFormat = enum(i32) {
     INVALID,
     FLOAT,
     FLOAT2,
@@ -272,13 +272,13 @@ pub const VertexFormat = extern enum(i32) {
     UINT10_N2,
     NUM,
 };
-pub const VertexStep = extern enum(i32) {
+pub const VertexStep = enum(i32) {
     DEFAULT,
     PER_VERTEX,
     PER_INSTANCE,
     NUM,
 };
-pub const UniformType = extern enum(i32) {
+pub const UniformType = enum(i32) {
     INVALID,
     FLOAT,
     FLOAT2,
@@ -287,20 +287,20 @@ pub const UniformType = extern enum(i32) {
     MAT4,
     NUM,
 };
-pub const CullMode = extern enum(i32) {
+pub const CullMode = enum(i32) {
     DEFAULT,
     NONE,
     FRONT,
     BACK,
     NUM,
 };
-pub const FaceWinding = extern enum(i32) {
+pub const FaceWinding = enum(i32) {
     DEFAULT,
     CCW,
     CW,
     NUM,
 };
-pub const CompareFunc = extern enum(i32) {
+pub const CompareFunc = enum(i32) {
     DEFAULT,
     NEVER,
     LESS,
@@ -312,7 +312,7 @@ pub const CompareFunc = extern enum(i32) {
     ALWAYS,
     NUM,
 };
-pub const StencilOp = extern enum(i32) {
+pub const StencilOp = enum(i32) {
     DEFAULT,
     KEEP,
     ZERO,
@@ -324,7 +324,7 @@ pub const StencilOp = extern enum(i32) {
     DECR_WRAP,
     NUM,
 };
-pub const BlendFactor = extern enum(i32) {
+pub const BlendFactor = enum(i32) {
     DEFAULT,
     ZERO,
     ONE,
@@ -343,14 +343,14 @@ pub const BlendFactor = extern enum(i32) {
     ONE_MINUS_BLEND_ALPHA,
     NUM,
 };
-pub const BlendOp = extern enum(i32) {
+pub const BlendOp = enum(i32) {
     DEFAULT,
     ADD,
     SUBTRACT,
     REVERSE_SUBTRACT,
     NUM,
 };
-pub const ColorMask = extern enum(i32) {
+pub const ColorMask = enum(i32) {
     DEFAULT = 0,
     NONE = 16,
     R = 1,
@@ -369,7 +369,7 @@ pub const ColorMask = extern enum(i32) {
     GBA = 14,
     RGBA = 15,
 };
-pub const Action = extern enum(i32) {
+pub const Action = enum(i32) {
     DEFAULT,
     CLEAR,
     LOAD,

@@ -5,7 +5,7 @@ const sg = @import("gfx.zig");
 pub const Pipeline = extern struct {
     id: u32 = 0,
 };
-pub const Error = extern enum(i32) {
+pub const Error = enum(i32) {
     ERROR = 0,
     VERTICES_FULL,
     UNIFORMS_FULL,

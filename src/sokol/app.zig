@@ -4,7 +4,7 @@ pub const max_touchpoints = 8;
 pub const max_mousebuttons = 3;
 pub const max_keycodes = 512;
 pub const max_iconimages = 8;
-pub const EventType = extern enum(i32) {
+pub const EventType = enum(i32) {
     INVALID,
     KEY_DOWN,
     KEY_UP,
@@ -30,7 +30,7 @@ pub const EventType = extern enum(i32) {
     FILES_DROPPED,
     NUM,
 };
-pub const Keycode = extern enum(i32) {
+pub const Keycode = enum(i32) {
     INVALID = 0,
     SPACE = 32,
     APOSTROPHE = 39,
@@ -159,7 +159,7 @@ pub const Touchpoint = extern struct {
     pos_y: f32 = 0.0,
     changed: bool = false,
 };
-pub const Mousebutton = extern enum(i32) {
+pub const Mousebutton = enum(i32) {
     LEFT = 0,
     RIGHT = 1,
     MIDDLE = 2,
@@ -244,7 +244,7 @@ pub const Desc = extern struct {
     html5_ask_leave_site: bool = false,
     ios_keyboard_resizes_canvas: bool = false,
 };
-pub const Html5FetchError = extern enum(i32) {
+pub const Html5FetchError = enum(i32) {
     FETCH_ERROR_NO_ERROR,
     FETCH_ERROR_BUFFER_TOO_SMALL,
     FETCH_ERROR_OTHER,

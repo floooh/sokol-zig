@@ -26,11 +26,13 @@ pub fn asRange(val: anytype) Range {
 pub const Writer = struct {
     pub const Error = error { };
     pub fn writeAll(self: Writer, bytes: []const u8) Error!void {
+        _ = self;
         for (bytes) |byte| {
             putc(byte);
         }
     }
     pub fn writeByteNTimes(self: Writer, byte: u8, n: u64) Error!void {
+        _ = self;
         var i: u64 = 0;
         while (i < n): (i += 1) {
             putc(byte);
