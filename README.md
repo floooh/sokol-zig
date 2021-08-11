@@ -1,6 +1,6 @@
 Auto-generated Zig bindings for the [sokol headers](https://github.com/floooh/sokol).
 
-For Zig version 0.8.0
+For Zig version 0.8.0 (current 0.9.0 dev version should also work)
 
 If you're on a different Zig version, check the following branches:
 
@@ -12,12 +12,14 @@ WIP, because not all sokol-headers have been added yet.
 Related projects:
 
 - [pacman.zig](https://github.com/floooh/pacman.zig)
+- [kc85.zig](https://github.com/floooh/kc85.zig)
 
 ## BUILD
 
 Supported platforms are: Windows, macOS, Linux (with X11)
 
 On Linux install the following packages: libglu1-mesa-dev, mesa-common-dev, xorg-dev, libasound-dev
+(or generally: the dev packages required for X11, GL and ALSA development)
 
 ```sh
 # just build:
