@@ -37,9 +37,11 @@ On Linux install the following packages: libglu1-mesa-dev, mesa-common-dev, xorg
 > zig build run-mrt
 > zig build run-saudio
 > zig build run-sgl
+> zig build run-sgl-context
 > zig build run-debugtext
 > zig build run-debugtext-print
 > zig build run-debugtext-userfont
 > zig build run-shapes
 ```
 
+(also run ```zig build --help``` to inspect the build targets)
