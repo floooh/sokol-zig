@@ -5,6 +5,9 @@ const sg = @import("gfx.zig");
 pub const Pipeline = extern struct {
     id: u32 = 0,
 };
+pub const Context = extern struct {
+    id: u32 = 0,
+};
 pub const Error = enum(i32) {
     ERROR = 0,
     VERTICES_FULL,
@@ -12,10 +15,19 @@ pub const Error = enum(i32) {
     COMMANDS_FULL,
     STACK_OVERFLOW,
     STACK_UNDERFLOW,
+    NO_CONTEXT,
+};
+pub const ContextDesc = extern struct {
+    max_vertices: i32 = 0,
+    max_commands: i32 = 0,
+    color_format: sg.PixelFormat = .DEFAULT,
+    depth_format: sg.PixelFormat = .DEFAULT,
+    sample_count: i32 = 0,
 };
 pub const Desc = extern struct {
     max_vertices: i32 = 0,
     max_commands: i32 = 0,
+    context_pool_size: i32 = 0,
     pipeline_pool_size: i32 = 0,
     color_format: sg.PixelFormat = .DEFAULT,
     depth_format: sg.PixelFormat = .DEFAULT,
@@ -30,14 +42,6 @@ pub extern fn sgl_shutdown() void;
 pub fn shutdown() void {
     sgl_shutdown();
 }
-pub extern fn sgl_error() Error;
-pub fn getError() Error {
-    return sgl_error();
-}
-pub extern fn sgl_defaults() void;
-pub fn defaults() void {
-    sgl_defaults();
-}
 pub extern fn sgl_rad(f32) f32;
 pub fn asRadians(deg: f32) f32 {
     return sgl_rad(deg);
@@ -46,13 +50,49 @@ pub extern fn sgl_deg(f32) f32;
 pub fn asDegrees(rad: f32) f32 {
     return sgl_deg(rad);
 }
+pub extern fn sgl_error() Error;
+pub fn getError() Error {
+    return sgl_error();
+}
+pub extern fn sgl_context_error(Context) Error;
+pub fn contextError(ctx: Context) Error {
+    return sgl_context_error(ctx);
+}
+pub extern fn sgl_make_context([*c]const ContextDesc) Context;
+pub fn makeContext(desc: ContextDesc) Context {
+    return sgl_make_context(&desc);
+}
+pub extern fn sgl_destroy_context(Context) void;
+pub fn destroyContext(ctx: Context) void {
+    sgl_destroy_context(ctx);
+}
+pub extern fn sgl_set_context(Context) void;
+pub fn setContext(ctx: Context) void {
+    sgl_set_context(ctx);
+}
+pub extern fn sgl_get_context() Context;
+pub fn getContext() Context {
+    return sgl_get_context();
+}
+pub extern fn sgl_default_context() Context;
+pub fn defaultContext() Context {
+    return sgl_default_context();
+}
 pub extern fn sgl_make_pipeline([*c]const sg.PipelineDesc) Pipeline;
 pub fn makePipeline(desc: sg.PipelineDesc) Pipeline {
     return sgl_make_pipeline(&desc);
 }
+pub extern fn sgl_context_make_pipeline(Context, [*c]const sg.PipelineDesc) Pipeline;
+pub fn contextMakePipeline(ctx: Context, desc: sg.PipelineDesc) Pipeline {
+    return sgl_context_make_pipeline(ctx, &desc);
+}
 pub extern fn sgl_destroy_pipeline(Pipeline) void;
 pub fn destroyPipeline(pip: Pipeline) void {
     sgl_destroy_pipeline(pip);
+}
+pub extern fn sgl_defaults() void;
+pub fn defaults() void {
+    sgl_defaults();
 }
 pub extern fn sgl_viewport(i32, i32, i32, i32, bool) void;
 pub fn viewport(x: i32, y: i32, w: i32, h: i32, origin_top_left: bool) void {
@@ -82,9 +122,9 @@ pub extern fn sgl_texture(sg.Image) void;
 pub fn texture(img: sg.Image) void {
     sgl_texture(img);
 }
-pub extern fn sgl_default_pipeline() void;
-pub fn defaultPipeline() void {
-    sgl_default_pipeline();
+pub extern fn sgl_load_default_pipeline() void;
+pub fn loadDefaultPipeline() void {
+    sgl_load_default_pipeline();
 }
 pub extern fn sgl_load_pipeline(Pipeline) void;
 pub fn loadPipeline(pip: Pipeline) void {
@@ -317,4 +357,8 @@ pub fn end() void {
 pub extern fn sgl_draw() void;
 pub fn draw() void {
     sgl_draw();
+}
+pub extern fn sgl_context_draw(Context) void;
+pub fn contextDraw(ctx: Context) void {
+    sgl_context_draw(ctx);
 }

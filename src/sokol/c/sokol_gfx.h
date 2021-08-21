@@ -5972,6 +5972,14 @@ _SOKOL_PRIVATE void _sg_gl_cache_invalidate_program(GLuint prog) {
     }
 }
 
+/* called from _sg_gl_destroy_pipeline() */
+_SOKOL_PRIVATE void _sg_gl_cache_invalidate_pipeline(_sg_pipeline_t* pip) {
+    if (pip == _sg.gl.cache.cur_pipeline) {
+        _sg.gl.cache.cur_pipeline = 0;
+        _sg.gl.cache.cur_pipeline_id.id = SG_INVALID_ID;
+    }
+}
+
 _SOKOL_PRIVATE void _sg_gl_reset_state_cache(void) {
     if (_sg.gl.cur_context) {
         _SG_GL_CHECK_ERROR();
@@ -6147,6 +6155,7 @@ _SOKOL_PRIVATE sg_resource_state _sg_gl_create_buffer(_sg_buffer_t* buf, const s
         }
         else {
             glGenBuffers(1, &gl_buf);
+            SOKOL_ASSERT(gl_buf);
             _sg_gl_cache_store_buffer_binding(gl_target);
             _sg_gl_cache_bind_buffer(gl_target, gl_buf);
             glBufferData(gl_target, buf->cmn.size, 0, gl_usage);
@@ -6594,8 +6603,7 @@ _SOKOL_PRIVATE sg_resource_state _sg_gl_create_pipeline(_sg_pipeline_t* pip, _sg
 
 _SOKOL_PRIVATE void _sg_gl_destroy_pipeline(_sg_pipeline_t* pip) {
     SOKOL_ASSERT(pip);
-    _SOKOL_UNUSED(pip);
-    /* empty */
+    _sg_gl_cache_invalidate_pipeline(pip);
 }
 
 /*
@@ -6761,6 +6769,7 @@ _SOKOL_PRIVATE sg_resource_state _sg_gl_create_pass(_sg_pass_t* pass, _sg_image_
 
 _SOKOL_PRIVATE void _sg_gl_destroy_pass(_sg_pass_t* pass) {
     SOKOL_ASSERT(pass);
+    SOKOL_ASSERT(pass != _sg.gl.cur_pass);
     _SG_GL_CHECK_ERROR();
     if (0 != pass->gl.fb) {
         glDeleteFramebuffers(1, &pass->gl.fb);
@@ -8829,6 +8838,10 @@ _SOKOL_PRIVATE sg_resource_state _sg_d3d11_create_pipeline(_sg_pipeline_t* pip, 
 
 _SOKOL_PRIVATE void _sg_d3d11_destroy_pipeline(_sg_pipeline_t* pip) {
     SOKOL_ASSERT(pip);
+    if (pip == _sg.d3d11.cur_pipeline) {
+        _sg.d3d11.cur_pipeline = 0;
+        _sg.d3d11.cur_pipeline_id.id = SG_INVALID_ID;
+    }
     if (pip->d3d11.il) {
         _sg_d3d11_Release(pip->d3d11.il);
     }
@@ -8935,6 +8948,7 @@ _SOKOL_PRIVATE sg_resource_state _sg_d3d11_create_pass(_sg_pass_t* pass, _sg_ima
 
 _SOKOL_PRIVATE void _sg_d3d11_destroy_pass(_sg_pass_t* pass) {
     SOKOL_ASSERT(pass);
+    SOKOL_ASSERT(pass != _sg.d3d11.cur_pass);
     for (int i = 0; i < SG_MAX_COLOR_ATTACHMENTS; i++) {
         if (pass->d3d11.color_atts[i].rtv) {
             _sg_d3d11_Release(pass->d3d11.color_atts[i].rtv);
@@ -12281,6 +12295,10 @@ _SOKOL_PRIVATE sg_resource_state _sg_wgpu_create_pipeline(_sg_pipeline_t* pip, _
 
 _SOKOL_PRIVATE void _sg_wgpu_destroy_pipeline(_sg_pipeline_t* pip) {
     SOKOL_ASSERT(pip);
+    if (pip == _sg.wgpu.cur_pipeline) {
+        _sg.wgpu.cur_pipeline = 0;
+        _Sg.wgpu.cur_pipeline_id.id = SG_INVALID_ID;
+    }
     if (pip->wgpu.pip) {
         wgpuRenderPipelineRelease(pip->wgpu.pip);
         pip->wgpu.pip = 0;

@@ -120,6 +120,10 @@ pub extern fn sdtx_get_context() Context;
 pub fn getContext() Context {
     return sdtx_get_context();
 }
+pub extern fn sdtx_default_context() Context;
+pub fn defaultContext() Context {
+    return sdtx_default_context();
+}
 pub extern fn sdtx_draw() void;
 pub fn draw() void {
     sdtx_draw();

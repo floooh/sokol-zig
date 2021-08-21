@@ -68,20 +68,26 @@ pub fn build(b: *Builder) void {
     const target = b.standardTargetOptions(.{});
     const mode = b.standardReleaseOptions();
     const sokol = buildSokol(b, target, mode, "");
-    buildExample(b, target, mode, sokol, "clear");
-    buildExample(b, target, mode, sokol, "triangle");
-    buildExample(b, target, mode, sokol, "quad");
-    buildExample(b, target, mode, sokol, "bufferoffsets");
-    buildExample(b, target, mode, sokol, "cube");
-    buildExample(b, target, mode, sokol, "noninterleaved");
-    buildExample(b, target, mode, sokol, "texcube");
-    buildExample(b, target, mode, sokol, "offscreen");
-    buildExample(b, target, mode, sokol, "instancing");
-    buildExample(b, target, mode, sokol, "mrt");
-    buildExample(b, target, mode, sokol, "saudio");
-    buildExample(b, target, mode, sokol, "sgl");
-    buildExample(b, target, mode, sokol, "debugtext");
-    buildExample(b, target, mode, sokol, "debugtext-print");
-    buildExample(b, target, mode, sokol, "debugtext-userfont");
-    buildExample(b, target, mode, sokol, "shapes");
+    const examples = .{
+        "clear",
+        "triangle",
+        "quad",
+        "bufferoffsets",
+        "cube",
+        "noninterleaved",
+        "texcube",
+        "offscreen",
+        "instancing",
+        "mrt",
+        "saudio",
+        "sgl",
+        "sgl-context",
+        "debugtext",
+        "debugtext-print",
+        "debugtext-userfont",
+        "shapes"
+    };
+    inline for (examples) |example| {
+        buildExample(b, target, mode, sokol, example);
+    }
 }
