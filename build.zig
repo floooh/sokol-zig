@@ -82,6 +82,7 @@ pub fn build(b: *Builder) void {
         "saudio",
         "sgl",
         "sgl-context",
+        "sgl-points",
         "debugtext",
         "debugtext-print",
         "debugtext-userfont",
