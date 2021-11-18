@@ -22,6 +22,8 @@ pub const EventType = enum(i32) {
     RESIZED,
     ICONIFIED,
     RESTORED,
+    FOCUSED,
+    UNFOCUSED,
     SUSPENDED,
     RESUMED,
     UPDATE_CURSOR,

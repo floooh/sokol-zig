@@ -230,6 +230,10 @@ pub extern fn sgl_c1i(u32) void;
 pub fn c1i(rgba: u32) void {
     sgl_c1i(rgba);
 }
+pub extern fn sgl_point_size(f32) void;
+pub fn pointSize(s: f32) void {
+    sgl_point_size(s);
+}
 pub extern fn sgl_begin_points() void;
 pub fn beginPoints() void {
     sgl_begin_points();
