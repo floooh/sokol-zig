@@ -31,9 +31,7 @@ export fn init() void {
         .context = sgapp.context()
     });
     // setup sokol-gl
-    sgl.setup(.{
-        .sample_count = sapp.sampleCount()
-    });
+    sgl.setup(.{});
 
     // a checkerboard texture
     const img_width = 8;
