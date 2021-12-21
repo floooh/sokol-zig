@@ -23,7 +23,7 @@ pub fn asRange(val: anytype) Range {
 }
 
 pub const Range = extern struct {
-    ptr: ?*const c_void = null,
+    ptr: ?*const anyopaque = null,
     size: usize = 0,
 };
 pub const Mat4 = extern struct {

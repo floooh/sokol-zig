@@ -39,7 +39,7 @@ pub const Context = extern struct {
     id: u32 = 0,
 };
 pub const Range = extern struct {
-    ptr: ?*const c_void = null,
+    ptr: ?*const anyopaque = null,
     size: usize = 0,
 };
 pub const invalid_id = 0;
@@ -413,9 +413,9 @@ pub const BufferDesc = extern struct {
     data: Range = .{ },
     label: [*c]const u8 = null,
     gl_buffers: [2]u32 = [_]u32{0} ** 2,
-    mtl_buffers: [2]?*const c_void = [_]?*const c_void { null } ** 2,
-    d3d11_buffer: ?*const c_void = null,
-    wgpu_buffer: ?*const c_void = null,
+    mtl_buffers: [2]?*const anyopaque = [_]?*const anyopaque { null } ** 2,
+    d3d11_buffer: ?*const anyopaque = null,
+    wgpu_buffer: ?*const anyopaque = null,
     _end_canary: u32 = 0,
 };
 pub const ImageData = extern struct {
@@ -445,10 +445,10 @@ pub const ImageDesc = extern struct {
     label: [*c]const u8 = null,
     gl_textures: [2]u32 = [_]u32{0} ** 2,
     gl_texture_target: u32 = 0,
-    mtl_textures: [2]?*const c_void = [_]?*const c_void { null } ** 2,
-    d3d11_texture: ?*const c_void = null,
-    d3d11_shader_resource_view: ?*const c_void = null,
-    wgpu_texture: ?*const c_void = null,
+    mtl_textures: [2]?*const anyopaque = [_]?*const anyopaque { null } ** 2,
+    d3d11_texture: ?*const anyopaque = null,
+    d3d11_shader_resource_view: ?*const anyopaque = null,
+    wgpu_texture: ?*const anyopaque = null,
     _end_canary: u32 = 0,
 };
 pub const ShaderAttrDesc = extern struct {
@@ -603,31 +603,31 @@ pub const GlContextDesc = extern struct {
     force_gles2: bool = false,
 };
 pub const MetalContextDesc = extern struct {
-    device: ?*const c_void = null,
-    renderpass_descriptor_cb: ?fn() callconv(.C) ?*const c_void = null,
-    renderpass_descriptor_userdata_cb: ?fn(?*c_void) callconv(.C) ?*const c_void = null,
-    drawable_cb: ?fn() callconv(.C) ?*const c_void = null,
-    drawable_userdata_cb: ?fn(?*c_void) callconv(.C) ?*const c_void = null,
-    user_data: ?*c_void = null,
+    device: ?*const anyopaque = null,
+    renderpass_descriptor_cb: ?fn() callconv(.C) ?*const anyopaque = null,
+    renderpass_descriptor_userdata_cb: ?fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    drawable_cb: ?fn() callconv(.C) ?*const anyopaque = null,
+    drawable_userdata_cb: ?fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    user_data: ?*anyopaque = null,
 };
 pub const D3d11ContextDesc = extern struct {
-    device: ?*const c_void = null,
-    device_context: ?*const c_void = null,
-    render_target_view_cb: ?fn() callconv(.C) ?*const c_void = null,
-    render_target_view_userdata_cb: ?fn(?*c_void) callconv(.C) ?*const c_void = null,
-    depth_stencil_view_cb: ?fn() callconv(.C) ?*const c_void = null,
-    depth_stencil_view_userdata_cb: ?fn(?*c_void) callconv(.C) ?*const c_void = null,
-    user_data: ?*c_void = null,
+    device: ?*const anyopaque = null,
+    device_context: ?*const anyopaque = null,
+    render_target_view_cb: ?fn() callconv(.C) ?*const anyopaque = null,
+    render_target_view_userdata_cb: ?fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    depth_stencil_view_cb: ?fn() callconv(.C) ?*const anyopaque = null,
+    depth_stencil_view_userdata_cb: ?fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    user_data: ?*anyopaque = null,
 };
 pub const WgpuContextDesc = extern struct {
-    device: ?*const c_void = null,
-    render_view_cb: ?fn() callconv(.C) ?*const c_void = null,
-    render_view_userdata_cb: ?fn(?*c_void) callconv(.C) ?*const c_void = null,
-    resolve_view_cb: ?fn() callconv(.C) ?*const c_void = null,
-    resolve_view_userdata_cb: ?fn(?*c_void) callconv(.C) ?*const c_void = null,
-    depth_stencil_view_cb: ?fn() callconv(.C) ?*const c_void = null,
-    depth_stencil_view_userdata_cb: ?fn(?*c_void) callconv(.C) ?*const c_void = null,
-    user_data: ?*c_void = null,
+    device: ?*const anyopaque = null,
+    render_view_cb: ?fn() callconv(.C) ?*const anyopaque = null,
+    render_view_userdata_cb: ?fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    resolve_view_cb: ?fn() callconv(.C) ?*const anyopaque = null,
+    resolve_view_userdata_cb: ?fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    depth_stencil_view_cb: ?fn() callconv(.C) ?*const anyopaque = null,
+    depth_stencil_view_userdata_cb: ?fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    user_data: ?*anyopaque = null,
 };
 pub const ContextDesc = extern struct {
     color_format: i32 = 0,
@@ -976,15 +976,15 @@ pub extern fn sg_discard_context(Context) void;
 pub fn discardContext(ctx_id: Context) void {
     sg_discard_context(ctx_id);
 }
-pub extern fn sg_d3d11_device() ?*const c_void;
-pub fn d3d11Device() ?*const c_void {
+pub extern fn sg_d3d11_device() ?*const anyopaque;
+pub fn d3d11Device() ?*const anyopaque {
     return sg_d3d11_device();
 }
-pub extern fn sg_mtl_device() ?*const c_void;
-pub fn mtlDevice() ?*const c_void {
+pub extern fn sg_mtl_device() ?*const anyopaque;
+pub fn mtlDevice() ?*const anyopaque {
     return sg_mtl_device();
 }
-pub extern fn sg_mtl_render_command_encoder() ?*const c_void;
-pub fn mtlRenderCommandEncoder() ?*const c_void {
+pub extern fn sg_mtl_render_command_encoder() ?*const anyopaque;
+pub fn mtlRenderCommandEncoder() ?*const anyopaque {
     return sg_mtl_render_command_encoder();
 }

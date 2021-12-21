@@ -49,7 +49,7 @@ pub const Context = extern struct {
     id: u32 = 0,
 };
 pub const Range = extern struct {
-    ptr: ?*const c_void = null,
+    ptr: ?*const anyopaque = null,
     size: usize = 0,
 };
 pub const FontDesc = extern struct {

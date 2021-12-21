@@ -196,7 +196,7 @@ pub const Event = extern struct {
     framebuffer_height: i32 = 0,
 };
 pub const Range = extern struct {
-    ptr: ?*const c_void = null,
+    ptr: ?*const anyopaque = null,
     size: usize = 0,
 };
 pub const ImageDesc = extern struct {
@@ -214,12 +214,12 @@ pub const Desc = extern struct {
     cleanup_cb: ?fn() callconv(.C) void = null,
     event_cb: ?fn([*c]const Event) callconv(.C) void = null,
     fail_cb: ?fn([*c]const u8) callconv(.C) void = null,
-    user_data: ?*c_void = null,
-    init_userdata_cb: ?fn(?*c_void) callconv(.C) void = null,
-    frame_userdata_cb: ?fn(?*c_void) callconv(.C) void = null,
-    cleanup_userdata_cb: ?fn(?*c_void) callconv(.C) void = null,
-    event_userdata_cb: ?fn([*c]const Event, ?*c_void) callconv(.C) void = null,
-    fail_userdata_cb: ?fn([*c]const u8, ?*c_void) callconv(.C) void = null,
+    user_data: ?*anyopaque = null,
+    init_userdata_cb: ?fn(?*anyopaque) callconv(.C) void = null,
+    frame_userdata_cb: ?fn(?*anyopaque) callconv(.C) void = null,
+    cleanup_userdata_cb: ?fn(?*anyopaque) callconv(.C) void = null,
+    event_userdata_cb: ?fn([*c]const Event, ?*anyopaque) callconv(.C) void = null,
+    fail_userdata_cb: ?fn([*c]const u8, ?*anyopaque) callconv(.C) void = null,
     width: i32 = 0,
     height: i32 = 0,
     sample_count: i32 = 0,
@@ -256,16 +256,16 @@ pub const Html5FetchResponse = extern struct {
     error_code: Html5FetchError = .FETCH_ERROR_NO_ERROR,
     file_index: i32 = 0,
     fetched_size: u32 = 0,
-    buffer_ptr: ?*c_void = null,
+    buffer_ptr: ?*anyopaque = null,
     buffer_size: u32 = 0,
-    user_data: ?*c_void = null,
+    user_data: ?*anyopaque = null,
 };
 pub const Html5FetchRequest = extern struct {
     dropped_file_index: i32 = 0,
     callback: ?fn([*c]const Html5FetchResponse) callconv(.C) void = null,
-    buffer_ptr: ?*c_void = null,
+    buffer_ptr: ?*anyopaque = null,
     buffer_size: u32 = 0,
-    user_data: ?*c_void = null,
+    user_data: ?*anyopaque = null,
 };
 pub extern fn sapp_isvalid() bool;
 pub fn isvalid() bool {
@@ -339,8 +339,8 @@ pub extern fn sapp_mouse_locked() bool;
 pub fn mouseLocked() bool {
     return sapp_mouse_locked();
 }
-pub extern fn sapp_userdata() ?*c_void;
-pub fn userdata() ?*c_void {
+pub extern fn sapp_userdata() ?*anyopaque;
+pub fn userdata() ?*anyopaque {
     return sapp_userdata();
 }
 pub extern fn sapp_query_desc() Desc;
@@ -411,67 +411,67 @@ pub extern fn sapp_html5_fetch_dropped_file([*c]const Html5FetchRequest) void;
 pub fn html5FetchDroppedFile(request: Html5FetchRequest) void {
     sapp_html5_fetch_dropped_file(&request);
 }
-pub extern fn sapp_metal_get_device() ?*const c_void;
-pub fn metalGetDevice() ?*const c_void {
+pub extern fn sapp_metal_get_device() ?*const anyopaque;
+pub fn metalGetDevice() ?*const anyopaque {
     return sapp_metal_get_device();
 }
-pub extern fn sapp_metal_get_renderpass_descriptor() ?*const c_void;
-pub fn metalGetRenderpassDescriptor() ?*const c_void {
+pub extern fn sapp_metal_get_renderpass_descriptor() ?*const anyopaque;
+pub fn metalGetRenderpassDescriptor() ?*const anyopaque {
     return sapp_metal_get_renderpass_descriptor();
 }
-pub extern fn sapp_metal_get_drawable() ?*const c_void;
-pub fn metalGetDrawable() ?*const c_void {
+pub extern fn sapp_metal_get_drawable() ?*const anyopaque;
+pub fn metalGetDrawable() ?*const anyopaque {
     return sapp_metal_get_drawable();
 }
-pub extern fn sapp_macos_get_window() ?*const c_void;
-pub fn macosGetWindow() ?*const c_void {
+pub extern fn sapp_macos_get_window() ?*const anyopaque;
+pub fn macosGetWindow() ?*const anyopaque {
     return sapp_macos_get_window();
 }
-pub extern fn sapp_ios_get_window() ?*const c_void;
-pub fn iosGetWindow() ?*const c_void {
+pub extern fn sapp_ios_get_window() ?*const anyopaque;
+pub fn iosGetWindow() ?*const anyopaque {
     return sapp_ios_get_window();
 }
-pub extern fn sapp_d3d11_get_device() ?*const c_void;
-pub fn d3d11GetDevice() ?*const c_void {
+pub extern fn sapp_d3d11_get_device() ?*const anyopaque;
+pub fn d3d11GetDevice() ?*const anyopaque {
     return sapp_d3d11_get_device();
 }
-pub extern fn sapp_d3d11_get_device_context() ?*const c_void;
-pub fn d3d11GetDeviceContext() ?*const c_void {
+pub extern fn sapp_d3d11_get_device_context() ?*const anyopaque;
+pub fn d3d11GetDeviceContext() ?*const anyopaque {
     return sapp_d3d11_get_device_context();
 }
-pub extern fn sapp_d3d11_get_swap_chain() ?*const c_void;
-pub fn d3d11GetSwapChain() ?*const c_void {
+pub extern fn sapp_d3d11_get_swap_chain() ?*const anyopaque;
+pub fn d3d11GetSwapChain() ?*const anyopaque {
     return sapp_d3d11_get_swap_chain();
 }
-pub extern fn sapp_d3d11_get_render_target_view() ?*const c_void;
-pub fn d3d11GetRenderTargetView() ?*const c_void {
+pub extern fn sapp_d3d11_get_render_target_view() ?*const anyopaque;
+pub fn d3d11GetRenderTargetView() ?*const anyopaque {
     return sapp_d3d11_get_render_target_view();
 }
-pub extern fn sapp_d3d11_get_depth_stencil_view() ?*const c_void;
-pub fn d3d11GetDepthStencilView() ?*const c_void {
+pub extern fn sapp_d3d11_get_depth_stencil_view() ?*const anyopaque;
+pub fn d3d11GetDepthStencilView() ?*const anyopaque {
     return sapp_d3d11_get_depth_stencil_view();
 }
-pub extern fn sapp_win32_get_hwnd() ?*const c_void;
-pub fn win32GetHwnd() ?*const c_void {
+pub extern fn sapp_win32_get_hwnd() ?*const anyopaque;
+pub fn win32GetHwnd() ?*const anyopaque {
     return sapp_win32_get_hwnd();
 }
-pub extern fn sapp_wgpu_get_device() ?*const c_void;
-pub fn wgpuGetDevice() ?*const c_void {
+pub extern fn sapp_wgpu_get_device() ?*const anyopaque;
+pub fn wgpuGetDevice() ?*const anyopaque {
     return sapp_wgpu_get_device();
 }
-pub extern fn sapp_wgpu_get_render_view() ?*const c_void;
-pub fn wgpuGetRenderView() ?*const c_void {
+pub extern fn sapp_wgpu_get_render_view() ?*const anyopaque;
+pub fn wgpuGetRenderView() ?*const anyopaque {
     return sapp_wgpu_get_render_view();
 }
-pub extern fn sapp_wgpu_get_resolve_view() ?*const c_void;
-pub fn wgpuGetResolveView() ?*const c_void {
+pub extern fn sapp_wgpu_get_resolve_view() ?*const anyopaque;
+pub fn wgpuGetResolveView() ?*const anyopaque {
     return sapp_wgpu_get_resolve_view();
 }
-pub extern fn sapp_wgpu_get_depth_stencil_view() ?*const c_void;
-pub fn wgpuGetDepthStencilView() ?*const c_void {
+pub extern fn sapp_wgpu_get_depth_stencil_view() ?*const anyopaque;
+pub fn wgpuGetDepthStencilView() ?*const anyopaque {
     return sapp_wgpu_get_depth_stencil_view();
 }
-pub extern fn sapp_android_get_native_activity() ?*const c_void;
-pub fn androidGetNativeActivity() ?*const c_void {
+pub extern fn sapp_android_get_native_activity() ?*const anyopaque;
+pub fn androidGetNativeActivity() ?*const anyopaque {
     return sapp_android_get_native_activity();
 }

@@ -7,8 +7,8 @@ pub const Desc = extern struct {
     packet_frames: i32 = 0,
     num_packets: i32 = 0,
     stream_cb: ?fn([*c] f32, i32, i32) callconv(.C) void = null,
-    stream_userdata_cb: ?fn([*c] f32, i32, i32, ?*c_void) callconv(.C) void = null,
-    user_data: ?*c_void = null,
+    stream_userdata_cb: ?fn([*c] f32, i32, i32, ?*anyopaque) callconv(.C) void = null,
+    user_data: ?*anyopaque = null,
 };
 pub extern fn saudio_setup([*c]const Desc) void;
 pub fn setup(desc: Desc) void {
@@ -22,8 +22,8 @@ pub extern fn saudio_isvalid() bool;
 pub fn isvalid() bool {
     return saudio_isvalid();
 }
-pub extern fn saudio_userdata() ?*c_void;
-pub fn userdata() ?*c_void {
+pub extern fn saudio_userdata() ?*anyopaque;
+pub fn userdata() ?*anyopaque {
     return saudio_userdata();
 }
 pub extern fn saudio_query_desc() Desc;
@@ -41,6 +41,10 @@ pub fn bufferFrames() i32 {
 pub extern fn saudio_channels() i32;
 pub fn channels() i32 {
     return saudio_channels();
+}
+pub extern fn saudio_suspended() bool;
+pub fn suspended() bool {
+    return saudio_suspended();
 }
 pub extern fn saudio_expect() i32;
 pub fn expect() i32 {
