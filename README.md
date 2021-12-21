@@ -1,3 +1,5 @@
+[![build](https://github.com/floooh/sokol-zig/actions/workflows/main.yml/badge.svg)](https://github.com/floooh/sokol-zig/actions/workflows/main.yml)
+
 Auto-generated Zig bindings for the [sokol headers](https://github.com/floooh/sokol).
 
 For Zig version 0.9.0 (current 0.10.0 dev version should also work)
