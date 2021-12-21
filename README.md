@@ -1,13 +1,14 @@
 Auto-generated Zig bindings for the [sokol headers](https://github.com/floooh/sokol).
 
-For Zig version 0.8.0 (current 0.9.0 dev version should also work)
+For Zig version 0.9.0 (current 0.10.0 dev version should also work)
 
-If you're on a different Zig version, check the following branches:
+If you're on an older Zig version, check the following branches (note that these
+also contain older versions of the Sokol C headers):
 
+- zig-0.8.1
+- zig-0.8.0
 - zig-0.7.1
 - ...(to be continued)
-
-WIP, because not all sokol-headers have been added yet.
 
 Related projects:
 
@@ -38,6 +39,7 @@ On Linux install the following packages: libglu1-mesa-dev, mesa-common-dev, xorg
 > zig build run-saudio
 > zig build run-sgl
 > zig build run-sgl-context
+> zig build run-sgl-points
 > zig build run-debugtext
 > zig build run-debugtext-print
 > zig build run-debugtext-userfont
