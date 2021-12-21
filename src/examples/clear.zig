@@ -7,8 +7,6 @@ const sg    = @import("sokol").gfx;
 const sapp  = @import("sokol").app;
 const sgapp = @import("sokol").app_gfx_glue;
 
-xxx
-
 var pass_action: sg.PassAction = .{};
 
 export fn init() void {
