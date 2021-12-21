@@ -8,7 +8,6 @@ also contain older versions of the Sokol C headers):
 - zig-0.8.1
 - zig-0.8.0
 - zig-0.7.1
-- ...(to be continued)
 
 Related projects:
 
