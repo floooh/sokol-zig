@@ -21,7 +21,6 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, comptime prefix_
         "sokol_shape.c",
     };
     if (lib.target.isDarwin()) {
-        b.env_map.put("ZIG_SYSTEM_LINKER_HACK", "1") catch unreachable;
         inline for (csources) |csrc| {
             lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-ObjC", "-DIMPL"});
         }
