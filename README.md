@@ -48,3 +48,26 @@ On Linux install the following packages: libglu1-mesa-dev, mesa-common-dev, xorg
 ```
 
 (also run ```zig build --help``` to inspect the build targets)
+
+## Use as Library
+
+Clone this repo into your project via ``git submodule add https://github.com/floooh/sokol-zig.git`` (for this example into a folder called ``lib`` within your project).
+
+Add to your ``build.zig``:
+```zig
+const sokol = @import("lib/sokol-zig/build.zig");
+
+// ...
+// pub fn build(b: *std.build.Builder) void {
+// ...
+
+const sokol_build = sokol.buildSokol(b, target, mode, "lib/sokol-zig/");
+
+// ...
+// const exe = b.addExecutable("demo", "src/main.zig");
+// ...
+
+exe.addPackagePath("sokol", "lib/sokol-zig/src/sokol/sokol.zig");
+exe.linkLibrary(sokol);
+```
+
