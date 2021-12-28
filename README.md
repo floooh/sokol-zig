@@ -68,6 +68,6 @@ const sokol_build = sokol.buildSokol(b, target, mode, "lib/sokol-zig/");
 // ...
 
 exe.addPackagePath("sokol", "lib/sokol-zig/src/sokol/sokol.zig");
-exe.linkLibrary(sokol);
+exe.linkLibrary(sokol_build);
 ```
 
