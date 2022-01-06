@@ -455,6 +455,7 @@ pub fn texcubeShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.vs.source = &vs_source_glsl330;
             desc.vs.entry = "main";
             desc.vs.uniform_blocks[0].size = 64;
+            desc.vs.uniform_blocks[0].layout = .STD140;
             desc.vs.uniform_blocks[0].uniforms[0].name = "vs_params";
             desc.vs.uniform_blocks[0].uniforms[0].type = .FLOAT4;
             desc.vs.uniform_blocks[0].uniforms[0].array_count = 4;
@@ -476,6 +477,7 @@ pub fn texcubeShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.vs.d3d11_target = "vs_4_0";
             desc.vs.entry = "main";
             desc.vs.uniform_blocks[0].size = 64;
+            desc.vs.uniform_blocks[0].layout = .STD140;
             desc.fs.source = &fs_source_hlsl4;
             desc.fs.d3d11_target = "ps_4_0";
             desc.fs.entry = "main";
@@ -488,6 +490,7 @@ pub fn texcubeShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.vs.source = &vs_source_metal_macos;
             desc.vs.entry = "main0";
             desc.vs.uniform_blocks[0].size = 64;
+            desc.vs.uniform_blocks[0].layout = .STD140;
             desc.fs.source = &fs_source_metal_macos;
             desc.fs.entry = "main0";
             desc.fs.images[0].name = "tex";

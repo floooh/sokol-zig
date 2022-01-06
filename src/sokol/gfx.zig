@@ -284,7 +284,17 @@ pub const UniformType = enum(i32) {
     FLOAT2,
     FLOAT3,
     FLOAT4,
+    INT,
+    INT2,
+    INT3,
+    INT4,
     MAT4,
+    NUM,
+};
+pub const UniformLayout = enum(i32) {
+    DEFAULT,
+    NATIVE,
+    STD140,
     NUM,
 };
 pub const CullMode = enum(i32) {
@@ -463,6 +473,7 @@ pub const ShaderUniformDesc = extern struct {
 };
 pub const ShaderUniformBlockDesc = extern struct {
     size: usize = 0,
+    layout: UniformLayout = .DEFAULT,
     uniforms: [16]ShaderUniformDesc = [_]ShaderUniformDesc{.{}} ** 16,
 };
 pub const ShaderImageDesc = extern struct {

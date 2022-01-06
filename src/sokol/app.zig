@@ -367,6 +367,10 @@ pub extern fn sapp_frame_count() u64;
 pub fn frameCount() u64 {
     return sapp_frame_count();
 }
+pub extern fn sapp_frame_duration() f64;
+pub fn frameDuration() f64 {
+    return sapp_frame_duration();
+}
 pub extern fn sapp_set_clipboard_string([*c]const u8) void;
 pub fn setClipboardString(str: [:0]const u8) void {
     sapp_set_clipboard_string(@ptrCast([*c]const u8,str));
