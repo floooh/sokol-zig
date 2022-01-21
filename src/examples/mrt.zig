@@ -171,8 +171,9 @@ export fn init() void {
 
 export fn frame() void {
 
-    state.rx += 1.0;
-    state.ry += 2.0;
+    const dt = @floatCast(f32, sapp.frameDuration()) * 60.0;
+    state.rx += 1.0 * dt;
+    state.ry += 2.0 * dt;
 
     // compute shader uniform data
     const offscreen_params: shd.OffscreenParams = .{

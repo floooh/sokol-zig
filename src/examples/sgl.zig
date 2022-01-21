@@ -21,7 +21,7 @@ const state = struct {
         var rot_y: f32 = 0.0;
     };
     const texcube = struct {
-        var frame_count: f32 = 0.0;
+        var time_accum: f32 = 0.0;
     };
 };
 
@@ -72,6 +72,8 @@ export fn init() void {
 }
 
 export fn frame() void {
+    // frame time 'normalized' to 60fps
+    const dt = @floatCast(f32, sapp.frameDuration()) * 60.0;
 
     // compute viewport rectangles so that the views are horizontally
     // centered and keep a 1:1 aspect ratio
@@ -87,11 +89,11 @@ export fn frame() void {
     sgl.viewportf(x0, y0, ww, hh, true);
     drawTriangle();
     sgl.viewportf(x1, y0, ww, hh, true);
-    drawQuad();
+    drawQuad(dt);
     sgl.viewportf(x0, y1, ww, hh, true);
-    drawCubes();
+    drawCubes(dt);
     sgl.viewportf(x1, y1, ww, hh, true);
-    drawTexCube();
+    drawTexCube(dt);
     sgl.viewportf(0, 0, dw, dh, true);
 
     sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
@@ -114,8 +116,8 @@ fn drawTriangle() void {
     sgl.end();
 }
 
-fn drawQuad() void {
-    state.quad.rot += 1.0;
+fn drawQuad(dt: f32) void {
+    state.quad.rot += 1.0 * dt;
     const scale: f32 = 1.0 + math.sin(sgl.asRadians(state.quad.rot)) * 0.5;
     sgl.defaults();
     sgl.rotate(sgl.asRadians(state.quad.rot), 0.0, 0.0, 1.0);
@@ -164,9 +166,9 @@ fn drawCube() void {
     sgl.end();
 }
 
-fn drawCubes() void {
-    state.cube.rot_x += 1.0;
-    state.cube.rot_y += 2.0;
+fn drawCubes(dt: f32) void {
+    state.cube.rot_x += 1.0 * dt;
+    state.cube.rot_y += 2.0 * dt;
 
     sgl.defaults();
     sgl.loadPipeline(state.pip3d);
@@ -195,9 +197,9 @@ fn drawCubes() void {
     sgl.popMatrix();
 }
 
-fn drawTexCube() void {
-    state.texcube.frame_count += 1.0;
-    const a = sgl.asRadians(state.texcube.frame_count);
+fn drawTexCube(dt: f32) void {
+    state.texcube.time_accum += dt;
+    const a = sgl.asRadians(state.texcube.time_accum);
 
     // texture matrix rotation and scale
     const tex_rot = a * 0.5;

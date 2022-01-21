@@ -123,9 +123,10 @@ export fn init() void {
 }
 
 export fn frame() void {
+    const dt = @floatCast(f32, sapp.frameDuration()) * 60.0;
 
-    state.rx += 1.0;
-    state.ry += 2.0;
+    state.rx += 1.0 * dt;
+    state.ry += 2.0 * dt;
     const vs_params = computeVsParams(state.rx, state.ry);
 
     sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());

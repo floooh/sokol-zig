@@ -135,8 +135,9 @@ export fn init() void {
 
 export fn frame() void {
 
-    state.rx += 1;
-    state.ry += 2;
+    const dt = @floatCast(f32, sapp.frameDuration()) * 60.0;
+    state.rx += 1 * dt;
+    state.ry += 2 * dt;
     const aspect = sapp.widthf() / sapp.heightf();
 
     // the offscreen pass, rendering a rotating untextured donut into a render target image

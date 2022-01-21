@@ -86,7 +86,7 @@ export fn init() void {
 }
 
 export fn frame() void {
-    const frame_time = 1.0 / 60.0;
+    const frame_time = @floatCast(f32, sapp.frameDuration());
 
     // emit new particles
     {
