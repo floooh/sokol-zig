@@ -37,26 +37,24 @@ export fn init() void {
 
     // a vertex buffer for the static particle geometry, goes into vertex buffer slot 0
     const r = 0.05;
-    const vertices = [_]f32 {
-        0.0,  -r, 0.0,       1.0, 0.0, 0.0, 1.0,
-          r, 0.0, r,         0.0, 1.0, 0.0, 1.0,
-          r, 0.0, -r,        0.0, 0.0, 1.0, 1.0,
-         -r, 0.0, -r,        1.0, 1.0, 0.0, 1.0,
-         -r, 0.0, r,         0.0, 1.0, 1.0, 1.0,
-        0.0,   r, 0.0,       1.0, 0.0, 1.0, 1.0
-    };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.asRange(vertices)
+        .data = sg.asRange([_]f32{
+            0.0,  -r, 0.0,   1.0, 0.0, 0.0, 1.0,
+              r, 0.0, r,     0.0, 1.0, 0.0, 1.0,
+              r, 0.0, -r,    0.0, 0.0, 1.0, 1.0,
+             -r, 0.0, -r,    1.0, 1.0, 0.0, 1.0,
+             -r, 0.0, r,     0.0, 1.0, 1.0, 1.0,
+            0.0,   r, 0.0,   1.0, 0.0, 1.0, 1.0
+        })
     });
 
     // an index buffer for the static geometry
-    const indices = [_]u16 {
-        2, 1, 0,    3, 2, 0,    4, 3, 0,    1, 4, 0,
-        5, 1, 2,    5, 2, 3,    5, 3, 4,    5, 4, 1
-    };
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.asRange(indices)
+        .data = sg.asRange([_]u16{
+            2, 1, 0,  3, 2, 0,  4, 3, 0,  1, 4, 0,
+            5, 1, 2,  5, 2, 3,  5, 3, 4,  5, 4, 1
+        })
     });
 
     // an empty dynamic vertex buffer for the instancing data, goes in vertex buffer slot 1

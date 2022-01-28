@@ -20,22 +20,20 @@ export fn init() void {
     });
 
     // a vertex buffer
-    const vertices = [_]f32 {
-        // positions         colors
-        -0.5,  0.5, 0.5,     1.0, 0.0, 0.0, 1.0,
-         0.5,  0.5, 0.5,     0.0, 1.0, 0.0, 1.0,
-         0.5, -0.5, 0.5,     0.0, 0.0, 1.0, 1.0,
-        -0.5, -0.5, 0.5,     1.0, 1.0, 0.0, 1.0
-    };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.asRange(vertices)
+        .data = sg.asRange([_]f32{
+            // positions      colors
+            -0.5,  0.5, 0.5,  1.0, 0.0, 0.0, 1.0,
+             0.5,  0.5, 0.5,  0.0, 1.0, 0.0, 1.0,
+             0.5, -0.5, 0.5,  0.0, 0.0, 1.0, 1.0,
+            -0.5, -0.5, 0.5,  1.0, 1.0, 0.0, 1.0
+        })
     });
 
     // an index buffer
-    const indices = [_] u16 { 0, 1, 2,  0, 2, 3 };
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.asRange(indices)
+        .data = sg.asRange([_]u16{ 0, 1, 2, 0, 2, 3 })
     });
 
     // a shader and pipeline state object

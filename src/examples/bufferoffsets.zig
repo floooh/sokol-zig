@@ -30,30 +30,28 @@ export fn init() void {
     state.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r=0.5, .g=0.5, .b=1, .a=1 } };
 
     // a 2D triangle and quad in 1 vertex buffer and 1 index buffer
-    const vertices = [_]Vertex {
-        // triangle vertices
-        .{ .x= 0.0,  .y= 0.55,  .r=1.0, .g=0.0, .b=0.0 },
-        .{ .x= 0.25, .y= 0.05,  .r=0.0, .g=1.0, .b=0.0 },
-        .{ .x=-0.25, .y= 0.05,  .r=0.0, .g=0.0, .b=1.0 },
-
-        // quad vertices
-        .{ .x=-0.25, .y=-0.05,  .r=0.0, .g=0.0, .b=1.0 },
-        .{ .x= 0.25, .y=-0.05,  .r=0.0, .g=1.0, .b=0.0 },
-        .{ .x= 0.25, .y=-0.55,  .r=1.0, .g=0.0, .b=0.0 },
-        .{ .x=-0.25, .y=-0.55,  .r=1.0, .g=1.0, .b=0.0 }
-    };
-    const indices = [_]u16 {
-        // triangle indices
-        0, 1, 2,
-        // quad indices
-        0, 1, 2, 0, 2, 3
-    };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.asRange(vertices)
+        .data = sg.asRange([_]Vertex{
+            // triangle vertices
+            .{ .x= 0.0,  .y= 0.55,  .r=1.0, .g=0.0, .b=0.0 },
+            .{ .x= 0.25, .y= 0.05,  .r=0.0, .g=1.0, .b=0.0 },
+            .{ .x=-0.25, .y= 0.05,  .r=0.0, .g=0.0, .b=1.0 },
+
+            // quad vertices
+            .{ .x=-0.25, .y=-0.05,  .r=0.0, .g=0.0, .b=1.0 },
+            .{ .x= 0.25, .y=-0.05,  .r=0.0, .g=1.0, .b=0.0 },
+            .{ .x= 0.25, .y=-0.55,  .r=1.0, .g=0.0, .b=0.0 },
+            .{ .x=-0.25, .y=-0.55,  .r=1.0, .g=1.0, .b=0.0 }
+        })
     });
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.asRange(indices)
+        .data = sg.asRange([_]u16{
+            // triangle indices
+            0, 1, 2,
+            // quad indices
+            0, 1, 2, 0, 2, 3
+        })
     });
 
     // a shader and pipeline object
