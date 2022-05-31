@@ -2,6 +2,10 @@
 
 const sg = @import("gfx.zig");
 
+// helper function to convert a C string to a Zig string slice
+fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
+  return @import("std").mem.span(c_str);
+}
 // helper function to convert "anything" to a Range struct
 pub fn asRange(val: anytype) Range {
     const type_info = @typeInfo(@TypeOf(val));
@@ -66,11 +70,17 @@ pub const ContextDesc = extern struct {
     depth_format: sg.PixelFormat = .DEFAULT,
     sample_count: i32 = 0,
 };
+pub const Allocator = extern struct {
+    alloc: ?fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
+    free: ?fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    user_data: ?*anyopaque = null,
+};
 pub const Desc = extern struct {
     context_pool_size: i32 = 0,
     printf_buf_size: i32 = 0,
     fonts: [8]FontDesc = [_]FontDesc{.{}} ** 8,
     context: ContextDesc = .{ },
+    allocator: Allocator = .{ },
 };
 pub extern fn sdtx_setup([*c]const Desc) void;
 pub fn setup(desc: Desc) void {

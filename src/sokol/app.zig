@@ -1,5 +1,9 @@
 // machine generated, do not edit
 
+// helper function to convert a C string to a Zig string slice
+fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
+  return @import("std").mem.span(c_str);
+}
 pub const max_touchpoints = 8;
 pub const max_mousebuttons = 3;
 pub const max_keycodes = 512;
@@ -208,6 +212,11 @@ pub const IconDesc = extern struct {
     sokol_default: bool = false,
     images: [8]ImageDesc = [_]ImageDesc{.{}} ** 8,
 };
+pub const Allocator = extern struct {
+    alloc: ?fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
+    free: ?fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    user_data: ?*anyopaque = null,
+};
 pub const Desc = extern struct {
     init_cb: ?fn() callconv(.C) void = null,
     frame_cb: ?fn() callconv(.C) void = null,
@@ -235,7 +244,10 @@ pub const Desc = extern struct {
     max_dropped_files: i32 = 0,
     max_dropped_file_path_length: i32 = 0,
     icon: IconDesc = .{ },
+    allocator: Allocator = .{ },
     gl_force_gles2: bool = false,
+    gl_major_version: i32 = 0,
+    gl_minor_version: i32 = 0,
     win32_console_utf8: bool = false,
     win32_console_create: bool = false,
     win32_console_attach: bool = false,
@@ -377,7 +389,7 @@ pub fn setClipboardString(str: [:0]const u8) void {
 }
 pub extern fn sapp_get_clipboard_string() [*c]const u8;
 pub fn getClipboardString() [:0]const u8 {
-    return sapp_get_clipboard_string();
+    return cStrToZig(sapp_get_clipboard_string());
 }
 pub extern fn sapp_set_window_title([*c]const u8) void;
 pub fn setWindowTitle(str: [:0]const u8) void {
@@ -393,7 +405,7 @@ pub fn getNumDroppedFiles() i32 {
 }
 pub extern fn sapp_get_dropped_file_path(i32) [*c]const u8;
 pub fn getDroppedFilePath(index: i32) [:0]const u8 {
-    return sapp_get_dropped_file_path(index);
+    return cStrToZig(sapp_get_dropped_file_path(index));
 }
 pub extern fn sapp_run([*c]const Desc) void;
 pub fn run(desc: Desc) void {

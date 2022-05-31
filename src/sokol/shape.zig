@@ -2,6 +2,10 @@
 
 const sg = @import("gfx.zig");
 
+// helper function to convert a C string to a Zig string slice
+fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
+  return @import("std").mem.span(c_str);
+}
 // helper function to convert "anything" to a Range struct
 pub fn asRange(val: anytype) Range {
     const type_info = @typeInfo(@TypeOf(val));

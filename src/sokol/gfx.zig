@@ -1,5 +1,9 @@
 // machine generated, do not edit
 
+// helper function to convert a C string to a Zig string slice
+fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
+  return @import("std").mem.span(c_str);
+}
 // helper function to convert "anything" to a Range struct
 pub fn asRange(val: anytype) Range {
     const type_info = @typeInfo(@TypeOf(val));
@@ -649,6 +653,11 @@ pub const ContextDesc = extern struct {
     d3d11: D3d11ContextDesc = .{ },
     wgpu: WgpuContextDesc = .{ },
 };
+pub const Allocator = extern struct {
+    alloc: ?fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
+    free: ?fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    user_data: ?*anyopaque = null,
+};
 pub const Desc = extern struct {
     _start_canary: u32 = 0,
     buffer_pool_size: i32 = 0,
@@ -660,6 +669,7 @@ pub const Desc = extern struct {
     uniform_buffer_size: i32 = 0,
     staging_buffer_size: i32 = 0,
     sampler_cache_size: i32 = 0,
+    allocator: Allocator = .{ },
     context: ContextDesc = .{ },
     _end_canary: u32 = 0,
 };

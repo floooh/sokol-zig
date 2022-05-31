@@ -1,5 +1,9 @@
 // machine generated, do not edit
 
+// helper function to convert a C string to a Zig string slice
+fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
+  return @import("std").mem.span(c_str);
+}
 pub extern fn stm_setup() void;
 pub fn setup() void {
     stm_setup();

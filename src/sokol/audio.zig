@@ -1,5 +1,14 @@
 // machine generated, do not edit
 
+// helper function to convert a C string to a Zig string slice
+fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
+  return @import("std").mem.span(c_str);
+}
+pub const Allocator = extern struct {
+    alloc: ?fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
+    free: ?fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    user_data: ?*anyopaque = null,
+};
 pub const Desc = extern struct {
     sample_rate: i32 = 0,
     num_channels: i32 = 0,
@@ -9,6 +18,7 @@ pub const Desc = extern struct {
     stream_cb: ?fn([*c] f32, i32, i32) callconv(.C) void = null,
     stream_userdata_cb: ?fn([*c] f32, i32, i32, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
+    allocator: Allocator = .{ },
 };
 pub extern fn saudio_setup([*c]const Desc) void;
 pub fn setup(desc: Desc) void {
