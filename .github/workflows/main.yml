@@ -1,4 +1,4 @@
-name: Zig Build
+name: Zig
 
 on: [push, pull_request]
 
