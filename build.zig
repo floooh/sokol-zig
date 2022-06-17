@@ -116,7 +116,7 @@ fn buildShaders(b: *Builder) void {
         else => null,
     };
     if (optional_shdc == null) {
-        std.log.warn("unsupport host platform, skipping shader compiler step", .{});
+        std.log.warn("unsupported host platform, skipping shader compiler step", .{});
         return;
     }
     const shdc_path = sokol_tools_bin_dir ++ optional_shdc.?;
