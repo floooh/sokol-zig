@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const Builder = std.build.Builder;
 const LibExeObjStep = std.build.LibExeObjStep;
 const CrossTarget = @import("std").zig.CrossTarget;
@@ -89,5 +90,45 @@ pub fn build(b: *Builder) void {
     };
     inline for (examples) |example| {
         buildExample(b, target, mode, sokol, example);
+    }
+    buildShaders(b);
+}
+
+// a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
+fn buildShaders(b: *Builder) void {
+    const sokol_tools_bin_dir = "../sokol-tools-bin/bin/";
+    const shaders_dir = "src/examples/shaders/";
+    const shaders = .{
+        "bufferoffsets.glsl",
+        "cube.glsl",
+        "instancing.glsl",
+        "mrt.glsl",
+        "noninterleaved.glsl",
+        "offscreen.glsl",
+        "quad.glsl",
+        "shapes.glsl",
+        "texcube.glsl"
+    };
+    const optional_shdc: ?[:0]const u8 = comptime switch (builtin.os.tag) {
+        .windows => "win32/sokol-shdc.exe",
+        .linux => "linux/sokol-shdc",
+        .macos => if (builtin.cpu.arch.isX86()) "osx/sokol-shdc" else "osx_arm64/sokol-shdc",
+        else => null,
+    };
+    if (optional_shdc == null) {
+        std.log.warn("unsupport host platform, skipping shader compiler step", .{});
+        return;
+    }
+    const shdc_path = sokol_tools_bin_dir ++ optional_shdc.?;
+    const shdc_step = b.step("shaders", "Compile shaders (needs ../sokol-tools-bin)");
+    inline for (shaders) |shader| {
+        const cmd = b.addSystemCommand(&.{
+            shdc_path,
+            "-i", shaders_dir ++ shader,
+            "-o", shaders_dir ++ shader ++ ".zig",
+            "-l", "glsl330:metal_macos:hlsl4",
+            "-f", "sokol_zig"
+        });
+        shdc_step.dependOn(&cmd.step);
     }
 }
