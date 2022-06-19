@@ -95,8 +95,8 @@ export fn frame() void {
         var dst: usize = 0; while (dst < NUM_BLEND_FACTORS): (dst += 1) {
             // compute model-view-proj matrix
             const t: vec3 = .{
-                .x = (@intToFloat(f32, src) - NUM_BLEND_FACTORS/2) * 3.0,
-                .y = (@intToFloat(f32, dst) - NUM_BLEND_FACTORS/2) * 2.2,
+                .x = (@intToFloat(f32, dst) - NUM_BLEND_FACTORS/2) * 3.0,
+                .y = (@intToFloat(f32, src) - NUM_BLEND_FACTORS/2) * 2.2,
                 .z = 0.0
             };
             const model = mat4.mul(mat4.translate(t), mat4.rotate(r0, vec3.up()));
