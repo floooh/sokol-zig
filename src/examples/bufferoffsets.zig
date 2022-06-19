@@ -9,12 +9,11 @@ const sapp  = @import("sokol").app;
 const sgapp = @import("sokol").app_gfx_glue;
 const shd   = @import("shaders/bufferoffsets.glsl.zig");
 
-const State = struct {
-    pass_action: sg.PassAction = .{},
-    pip: sg.Pipeline = .{},
-    bind: sg.Bindings = .{},
+const state = struct {
+    var pass_action: sg.PassAction = .{};
+    var pip: sg.Pipeline = .{};
+    var bind: sg.Bindings = .{};
 };
-var state: State = .{};
 
 const Vertex = packed struct {
     x: f32, y: f32,
