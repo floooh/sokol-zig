@@ -107,6 +107,7 @@ export fn frame() void {
             sg.applyBindings(state.bind);
             sg.applyUniforms(.VS, shd.SLOT_quad_vs_params, sg.asRange(quad_vs_params));
             sg.draw(0, 4, 1);
+            r0 += 0.6;
         }
     }
     sg.endPass();
