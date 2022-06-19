@@ -25,13 +25,14 @@ const sg = @import("sokol").gfx;
 //                  Bind slot: SLOT_tex = 0
 //
 //
+const m = @import("../math.zig");
 pub const ATTR_vs_pos = 0;
 pub const ATTR_vs_color0 = 1;
 pub const ATTR_vs_texcoord0 = 2;
 pub const SLOT_tex = 0;
 pub const SLOT_vs_params = 0;
 pub const VsParams = extern struct {
-    mvp: @import("../math.zig").Mat4 align(16),
+    mvp: m.Mat4 align(16),
 };
 //
 // #version 330

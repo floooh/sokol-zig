@@ -53,6 +53,7 @@ const sg = @import("sokol").gfx;
 //          Fragment shader: fs_offscreen
 //
 //
+const m = @import("../math.zig");
 pub const ATTR_vs_offscreen_pos = 0;
 pub const ATTR_vs_offscreen_bright0 = 1;
 pub const ATTR_vs_fsq_pos = 0;
@@ -63,11 +64,11 @@ pub const SLOT_tex2 = 2;
 pub const SLOT_tex = 0;
 pub const SLOT_offscreen_params = 0;
 pub const OffscreenParams = extern struct {
-    mvp: @import("../math.zig").Mat4 align(16),
+    mvp: m.Mat4 align(16),
 };
 pub const SLOT_fsq_params = 0;
 pub const FsqParams = extern struct {
-    offset: @import("../math.zig").Vec2 align(16),
+    offset: m.Vec2 align(16),
     _pad_8: [8]u8 = undefined,
 };
 //

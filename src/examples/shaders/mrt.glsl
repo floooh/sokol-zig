@@ -1,8 +1,9 @@
 //------------------------------------------------------------------------------
 //  shaders for mrt-sapp sample
 //------------------------------------------------------------------------------
-@ctype mat4 @import("../math.zig").Mat4
-@ctype vec2 @import("../math.zig").Vec2
+@cimport const m = @import("../math.zig")
+@ctype mat4 m.Mat4
+@ctype vec2 m.Vec2
 
 // shaders for offscreen-pass rendering
 @vs vs_offscreen

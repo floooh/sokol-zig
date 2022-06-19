@@ -36,6 +36,7 @@ const sg = @import("sokol").gfx;
 //          Fragment shader: fs_offscreen
 //
 //
+const m = @import("../math.zig");
 pub const ATTR_vs_offscreen_position = 0;
 pub const ATTR_vs_offscreen_normal = 1;
 pub const ATTR_vs_default_position = 0;
@@ -44,7 +45,7 @@ pub const ATTR_vs_default_texcoord0 = 2;
 pub const SLOT_tex = 0;
 pub const SLOT_vs_params = 0;
 pub const VsParams = extern struct {
-    mvp: @import("../math.zig").Mat4 align(16),
+    mvp: m.Mat4 align(16),
 };
 //
 // #version 330

@@ -21,12 +21,13 @@ const sg = @import("sokol").gfx;
 //          Fragment shader: fs
 //
 //
+const m = @import("../math.zig");
 pub const ATTR_vs_pos = 0;
 pub const ATTR_vs_color0 = 1;
 pub const ATTR_vs_inst_pos = 2;
 pub const SLOT_vs_params = 0;
 pub const VsParams = extern struct {
-    mvp: @import("../math.zig").Mat4 align(16),
+    mvp: m.Mat4 align(16),
 };
 //
 // #version 330

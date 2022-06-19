@@ -22,6 +22,7 @@ const sg = @import("sokol").gfx;
 //          Fragment shader: fs
 //
 //
+const m = @import("../math.zig");
 pub const ATTR_vs_position = 0;
 pub const ATTR_vs_normal = 1;
 pub const ATTR_vs_texcoord = 2;
@@ -30,7 +31,7 @@ pub const SLOT_vs_params = 0;
 pub const VsParams = extern struct {
     draw_mode: f32 align(16),
     _pad_4: [12]u8 = undefined,
-    mvp: @import("../math.zig").Mat4,
+    mvp: m.Mat4,
 };
 //
 // #version 330

@@ -1,7 +1,8 @@
 //------------------------------------------------------------------------------
 //  shaders for instancing-sapp sample
 //------------------------------------------------------------------------------
-@ctype mat4 @import("../math.zig").Mat4
+@cimport const m = @import("../math.zig")
+@ctype mat4 m.Mat4
 
 @vs vs
 uniform vs_params {
