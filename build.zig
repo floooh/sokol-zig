@@ -76,6 +76,7 @@ pub fn build(b: *Builder) void {
         "cube",
         "noninterleaved",
         "texcube",
+        "blend",
         "offscreen",
         "instancing",
         "mrt",
@@ -107,7 +108,8 @@ fn buildShaders(b: *Builder) void {
         "offscreen.glsl",
         "quad.glsl",
         "shapes.glsl",
-        "texcube.glsl"
+        "texcube.glsl",
+        "blend.glsl",
     };
     const optional_shdc: ?[:0]const u8 = comptime switch (builtin.os.tag) {
         .windows => "win32/sokol-shdc.exe",
