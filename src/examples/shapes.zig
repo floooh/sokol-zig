@@ -19,17 +19,6 @@ const Shape = struct {
     draw: sshape.ElementRange = .{},
 };
 
-//const VSParams = extern struct {
-//    mvp: mat4 = mat4.identity(),
-//    draw_mode: f32 = 0.0,
-//    pad: [12]u8 = undefined,
-//};
-
-const BOX        = 0;
-const PLANE      = 1;
-const SPHERE     = 2;
-const CYLINDER   = 3;
-const TORUS      = 4;
 const NUM_SHAPES = 5;
 
 const state = struct {
@@ -37,7 +26,13 @@ const state = struct {
     var pip:         sg.Pipeline = .{};
     var bind:        sg.Bindings = .{};
     var vs_params:   shd.VsParams = undefined;
-    var shapes:      [NUM_SHAPES]Shape = undefined;
+    var shapes:      [NUM_SHAPES]Shape = .{
+        .{ .pos = .{ .x=-1, .y=1,  .z=0 } },
+        .{ .pos = .{ .x=1,  .y=1,  .z=0 } },
+        .{ .pos = .{ .x=-2, .y=-1, .z=0 } },
+        .{ .pos = .{ .x=2,  .y=-1, .z=0 } },
+        .{ .pos = .{ .x=0,  .y=-1, .z=0 } },
+    };
     var rx: f32 = 0.0;
     var ry: f32 = 0.0;
     const view = mat4.lookat(.{.x=0.0, .y=1.5, .z=6.0}, vec3.zero(), vec3.up());
@@ -70,13 +65,6 @@ export fn init() void {
     pip_desc.layout.attrs[shd.ATTR_vs_color0]   = sshape.colorAttrDesc();
     state.pip = sg.makePipeline(pip_desc);
 
-    // shape positions
-    state.shapes[BOX].pos       = .{ .x=-1, .y=1, .z=0 };
-    state.shapes[PLANE].pos     = .{ .x=1, .y=1, .z=0 };
-    state.shapes[SPHERE].pos    = .{ .x=-2, .y=-1, .z=0 };
-    state.shapes[CYLINDER].pos  = .{ .x=2, .y=-1, .z=0 };
-    state.shapes[TORUS].pos     = .{ .x=0, .y=-1, .z=0 };
-
     // generate shape geometries
     var vertices: [6*1024]sshape.Vertex = undefined;
     var indices:  [16*1024]u16 = undefined;
@@ -84,44 +72,16 @@ export fn init() void {
         .vertices = .{ .buffer = sshape.asRange(vertices) },
         .indices  = .{ .buffer = sshape.asRange(indices) },
     };
-    buf = sshape.buildBox(buf, .{
-        .width = 1.0,
-        .height = 1.0,
-        .depth = 1.0,
-        .tiles = 10,
-        .random_colors = true,
-    });
-    state.shapes[BOX].draw = sshape.elementRange(buf);
-    buf = sshape.buildPlane(buf, .{
-        .width = 1.0,
-        .depth = 1.0,
-        .tiles = 10,
-        .random_colors = true,
-    });
-    state.shapes[PLANE].draw = sshape.elementRange(buf);
-    buf = sshape.buildSphere(buf, .{
-        .radius = 0.75,
-        .slices = 36,
-        .stacks = 20,
-        .random_colors = true,
-    });
-    state.shapes[SPHERE].draw = sshape.elementRange(buf);
-    buf = sshape.buildCylinder(buf, .{
-        .radius = 0.5,
-        .height = 1.5,
-        .slices = 36,
-        .stacks = 10,
-        .random_colors = true,
-    });
-    state.shapes[CYLINDER].draw = sshape.elementRange(buf);
-    buf = sshape.buildTorus(buf, .{
-        .radius = 0.5,
-        .ring_radius = 0.3,
-        .rings = 36,
-        .sides = 18,
-        .random_colors = true,
-    });
-    state.shapes[TORUS].draw = sshape.elementRange(buf);
+    buf = sshape.buildBox(buf, .{ .width=1.0, .height=1.0, .depth=1.0, .tiles=10, .random_colors=true });
+    state.shapes[0].draw = sshape.elementRange(buf);
+    buf = sshape.buildPlane(buf, .{ .width=1.0, .depth=1.0, .tiles=10, .random_colors=true });
+    state.shapes[1].draw = sshape.elementRange(buf);
+    buf = sshape.buildSphere(buf, .{ .radius=0.75, .slices=36, .stacks=20, .random_colors=true });
+    state.shapes[2].draw = sshape.elementRange(buf);
+    buf = sshape.buildCylinder(buf, .{ .radius=0.5, .height=1.5, .slices=36, .stacks=10, .random_colors=true });
+    state.shapes[3].draw = sshape.elementRange(buf);
+    buf = sshape.buildTorus(buf, .{ .radius=0.5, .ring_radius=0.3, .rings=36, .sides=18, .random_colors=true });
+    state.shapes[4].draw = sshape.elementRange(buf);
     assert(buf.valid);
 
     // one vertex- and index-buffer for all shapes
