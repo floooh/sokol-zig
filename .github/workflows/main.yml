@@ -17,6 +17,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
             sudo apt-get update
-            sudo apt-get install libglu1-mesa-dev mesa-common-dev xorg-dev libasound-dev
+            sudo apt-get install libglu1-mesa-dev mesa-common-dev xorg-dev libasound-dev \
+                                 libegl-dev libwayland-dev libxkbcommon-dev
       - name: build
         run: zig build
