@@ -753,6 +753,10 @@ pub extern fn sg_query_buffer_overflow(Buffer) bool;
 pub fn queryBufferOverflow(buf: Buffer) bool {
     return sg_query_buffer_overflow(buf);
 }
+pub extern fn sg_query_buffer_will_overflow(Buffer, usize) bool;
+pub fn queryBufferWillOverflow(buf: Buffer, size: usize) bool {
+    return sg_query_buffer_will_overflow(buf, size);
+}
 pub extern fn sg_begin_default_pass([*c]const PassAction, i32, i32) void;
 pub fn beginDefaultPass(pass_action: PassAction, width: i32, height: i32) void {
     sg_begin_default_pass(&pass_action, width, height);
