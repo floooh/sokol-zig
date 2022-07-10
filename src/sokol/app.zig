@@ -30,7 +30,6 @@ pub const EventType = enum(i32) {
     UNFOCUSED,
     SUSPENDED,
     RESUMED,
-    UPDATE_CURSOR,
     QUIT_REQUESTED,
     CLIPBOARD_PASTED,
     FILES_DROPPED,
@@ -237,7 +236,6 @@ pub const Desc = extern struct {
     fullscreen: bool = false,
     alpha: bool = false,
     window_title: [*c]const u8 = null,
-    user_cursor: bool = false,
     enable_clipboard: bool = false,
     clipboard_size: i32 = 0,
     enable_dragndrop: bool = false,
@@ -278,6 +276,20 @@ pub const Html5FetchRequest = extern struct {
     buffer_ptr: ?*anyopaque = null,
     buffer_size: u32 = 0,
     user_data: ?*anyopaque = null,
+};
+pub const MouseCursor = enum(i32) {
+    DEFAULT = 0,
+    ARROW,
+    IBEAM,
+    CROSSHAIR,
+    POINTING_HAND,
+    RESIZE_EW,
+    RESIZE_NS,
+    RESIZE_NWSE,
+    RESIZE_NESW,
+    RESIZE_ALL,
+    NOT_ALLOWED,
+    NUM,
 };
 pub extern fn sapp_isvalid() bool;
 pub fn isvalid() bool {
@@ -350,6 +362,14 @@ pub fn lockMouse(lock: bool) void {
 pub extern fn sapp_mouse_locked() bool;
 pub fn mouseLocked() bool {
     return sapp_mouse_locked();
+}
+pub extern fn sapp_set_mouse_cursor(MouseCursor) void;
+pub fn setMouseCursor(cursor: MouseCursor) void {
+    sapp_set_mouse_cursor(cursor);
+}
+pub extern fn sapp_get_mouse_cursor() MouseCursor;
+pub fn getMouseCursor() MouseCursor {
+    return sapp_get_mouse_cursor();
 }
 pub extern fn sapp_userdata() ?*anyopaque;
 pub fn userdata() ?*anyopaque {
