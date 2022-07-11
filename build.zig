@@ -62,7 +62,7 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend
         }
     } else {
         inline for (csources) |csrc| {
-            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-DIMPL"});
+            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-DIMPL", backend_option});
         }
         if (lib.target.isLinux()) {
             lib.linkSystemLibrary("X11");
