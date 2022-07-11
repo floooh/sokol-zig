@@ -49,6 +49,25 @@ On Linux install the following packages: libglu1-mesa-dev, mesa-common-dev, xorg
 
 (also run ```zig build --help``` to inspect the build targets)
 
+By default, the backend 3D API will be selected based on the target platform:
+
+- macOS: Metal
+- Windows: D3D11
+- Linux: GL
+
+To force the GL backend on macOS or Windows, build with ```-Dgl=true```:
+
+```
+> zig build -Dgl=true run-clear
+```
+
+The ```clear``` sample prints the selected backend to the terminal:
+
+```
+sokol-zig ➤ zig build -Dgl=true run-clear
+Backend: .sokol.gfx.Backend.GLCORE33
+```
+
 ## Use as Library
 
 Clone this repo into your project via ``git submodule add https://github.com/floooh/sokol-zig.git`` (for this example into a folder called ``lib`` within your project).
@@ -61,7 +80,7 @@ const sokol = @import("lib/sokol-zig/build.zig");
 // pub fn build(b: *std.build.Builder) void {
 // ...
 
-const sokol_build = sokol.buildSokol(b, target, mode, "lib/sokol-zig/");
+const sokol_build = sokol.buildSokol(b, target, mode, Backend.auto, "lib/sokol-zig/");
 
 // ...
 // const exe = b.addExecutable("demo", "src/main.zig");
