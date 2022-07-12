@@ -5,7 +5,7 @@ const LibExeObjStep = std.build.LibExeObjStep;
 const CrossTarget = @import("std").zig.CrossTarget;
 const Mode = std.builtin.Mode;
 
-const Backend = enum {
+pub const Backend = enum {
     auto,   // Windows: D3D11, macOS/iOS: Metal, otherwise: GL
     d3d11,
     metal,
