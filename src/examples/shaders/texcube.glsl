@@ -4,7 +4,7 @@
 //  NOTE: This source file also uses the '#pragma sokol' form of the
 //  custom tags.
 //------------------------------------------------------------------------------
-#pragma sokol @cimport const m = @import("../math.zig")
+#pragma sokol @header const m = @import("../math.zig")
 #pragma sokol @ctype mat4 m.Mat4
 
 #pragma sokol @vs vs

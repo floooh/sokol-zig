@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //  shaders for blend-sapp sample
 //------------------------------------------------------------------------------
-@cimport const m = @import("../math.zig")
+@header const m = @import("../math.zig")
 @ctype mat4 m.Mat4
 
 @vs vs_bg
