@@ -13,7 +13,7 @@ pub const Context = extern struct {
     id: u32 = 0,
 };
 pub const Error = enum(i32) {
-    ERROR = 0,
+    NO_ERROR = 0,
     VERTICES_FULL,
     UNIFORMS_FULL,
     COMMANDS_FULL,
