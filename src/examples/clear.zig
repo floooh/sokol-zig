@@ -7,6 +7,7 @@ const sg    = @import("sokol").gfx;
 const sapp  = @import("sokol").app;
 const sgapp = @import("sokol").app_gfx_glue;
 const print = @import("std").debug.print;
+const builtin = @import("builtin");
 
 var pass_action: sg.PassAction = .{};
 
@@ -15,7 +16,9 @@ export fn init() void {
         .context = sgapp.context()
     });
     pass_action.colors[0] = .{ .action=.CLEAR, .value=.{ .r=1, .g=1, .b=0, .a=1 } };
-    print("Backend: {s}\n", .{ sg.queryBackend()});
+
+    const specifier = if (builtin.zig_backend == .stage1) "s" else "";
+    print("Backend: {" ++ specifier ++ "}\n", .{ sg.queryBackend()});
 }
 
 export fn frame() void {

@@ -95,7 +95,7 @@ pub const Vec3 = packed struct {
     }
 };
 
-pub const Mat4 = packed struct {
+pub const Mat4 = extern struct {
     m: [4][4]f32,
 
     pub fn identity() Mat4 {

@@ -69,8 +69,8 @@ export fn init() void {
     var vertices: [6*1024]sshape.Vertex = undefined;
     var indices:  [16*1024]u16 = undefined;
     var buf: sshape.Buffer = .{
-        .vertices = .{ .buffer = sshape.asRange(vertices) },
-        .indices  = .{ .buffer = sshape.asRange(indices) },
+        .vertices = .{ .buffer = sshape.asRange(&vertices) },
+        .indices  = .{ .buffer = sshape.asRange(&indices) },
     };
     buf = sshape.buildBox(buf, .{ .width=1.0, .height=1.0, .depth=1.0, .tiles=10, .random_colors=true });
     state.shapes[0].draw = sshape.elementRange(buf);
@@ -118,7 +118,7 @@ export fn frame() void {
         // per-shape model-view-projection matrix
         const model = mat4.mul(mat4.translate(shape.pos), rm);
         state.vs_params.mvp = mat4.mul(view_proj, model);
-        sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(state.vs_params));
+        sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(&state.vs_params));
         sg.draw(shape.draw.base_element, shape.draw.num_elements, 1);
     }
     sdtx.draw();

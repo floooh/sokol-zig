@@ -30,7 +30,7 @@ export fn init() void {
 
     // a 2D triangle and quad in 1 vertex buffer and 1 index buffer
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.asRange([_]Vertex{
+        .data = sg.asRange(&[_]Vertex{
             // triangle vertices
             .{ .x= 0.0,  .y= 0.55,  .r=1.0, .g=0.0, .b=0.0 },
             .{ .x= 0.25, .y= 0.05,  .r=0.0, .g=1.0, .b=0.0 },
@@ -45,7 +45,7 @@ export fn init() void {
     });
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.asRange([_]u16{
+        .data = sg.asRange(&[_]u16{
             // triangle indices
             0, 1, 2,
             // quad indices

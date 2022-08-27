@@ -40,7 +40,7 @@ export fn init() void {
     // formats to floating point inputs (only to integer inputs),
     // and WebGL2 / GLES2 don't support integer vertex shader inputs.
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.asRange([_]Vertex{
+        .data = sg.asRange(&[_]Vertex{
             // pos                         color              texcoords
             .{ .x=-1.0, .y=-1.0, .z=-1.0,  .color=0xFF0000FF, .u=    0, .v=    0 },
             .{ .x= 1.0, .y=-1.0, .z=-1.0,  .color=0xFF0000FF, .u=32767, .v=    0 },
@@ -77,7 +77,7 @@ export fn init() void {
     // cube index buffer
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.asRange([_]u16{
+        .data = sg.asRange(&[_]u16{
             0, 1, 2,  0, 2, 3,
             6, 5, 4,  7, 6, 4,
             8, 9, 10,  8, 10, 11,
@@ -92,7 +92,7 @@ export fn init() void {
         .width = 4,
         .height = 4,
     };
-    img_desc.data.subimage[0][0] = sg.asRange([4*4]u32{
+    img_desc.data.subimage[0][0] = sg.asRange(&[4*4]u32{
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
@@ -129,7 +129,7 @@ export fn frame() void {
     sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
-    sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(vs_params));
+    sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(&vs_params));
     sg.draw(0, 36, 1);
     sg.endPass();
     sg.commit();
