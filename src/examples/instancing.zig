@@ -109,12 +109,15 @@ export fn frame() void {
     {
         var i: usize = 0;
         while (i < max_particles): (i += 1) {
-            state.vel[i].y -= 1.0 * frame_time;
-            state.pos[i] = vec3.add(state.pos[i], vec3.mul(state.vel[i], frame_time));
-            if (state.pos[i].y < -2.0) {
-                state.pos[i].y = -1.8;
-                state.vel[i].y = -state.vel[i].y;
-                state.vel[i] = vec3.mul(state.vel[i], 0.8);
+            const vel = &state.vel[i];
+            const pos = &state.pos[i];
+
+            vel.y -= 1.0 * frame_time;
+            pos.* = vec3.add(pos.*, vec3.mul(vel.*, frame_time));
+            if (pos.y < -2.0) {
+                pos.y = -1.8;
+                vel.y = -vel.y;
+                vel.* = vec3.mul(vel.*, 0.8);
             }
         }
     }
