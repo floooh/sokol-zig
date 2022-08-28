@@ -20,7 +20,7 @@ const state = struct {
 };
 
 // a vertex struct with position, color and uv-coords
-const Vertex = packed struct {
+const Vertex = extern struct {
     x: f32, y: f32, z: f32,
     color: u32,
     u: i16, v: i16

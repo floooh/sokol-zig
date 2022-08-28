@@ -15,7 +15,7 @@ const state = struct {
     var bind: sg.Bindings = .{};
 };
 
-const Vertex = packed struct {
+const Vertex = extern struct {
     x: f32, y: f32,
     r: f32, g: f32, b: f32
 };
