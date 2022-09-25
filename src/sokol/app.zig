@@ -432,6 +432,14 @@ pub extern fn sapp_run([*c]const Desc) void;
 pub fn run(desc: Desc) void {
     sapp_run(&desc);
 }
+pub extern fn sapp_egl_get_display() ?*const anyopaque;
+pub fn eglGetDisplay() ?*const anyopaque {
+    return sapp_egl_get_display();
+}
+pub extern fn sapp_egl_get_context() ?*const anyopaque;
+pub fn eglGetContext() ?*const anyopaque {
+    return sapp_egl_get_context();
+}
 pub extern fn sapp_gles2() bool;
 pub fn gles2() bool {
     return sapp_gles2();
