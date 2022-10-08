@@ -159,10 +159,17 @@ pub const Keycode = enum(i32) {
     RIGHT_SUPER = 347,
     MENU = 348,
 };
+pub const AndroidTooltype = enum(i32) {
+    UNKNOWN = 0,
+    FINGER = 1,
+    STYLUS = 2,
+    MOUSE = 3,
+};
 pub const Touchpoint = extern struct {
     identifier: usize = 0,
     pos_x: f32 = 0.0,
     pos_y: f32 = 0.0,
+    android_tooltype: AndroidTooltype = .UNKNOWN,
     changed: bool = false,
 };
 pub const Mousebutton = enum(i32) {
