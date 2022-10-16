@@ -38,7 +38,7 @@ export fn init() void {
     // a vertex buffer for the static particle geometry, goes into vertex buffer slot 0
     const r = 0.05;
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.asRange([_]f32{
+        .data = sg.asRange(&[_]f32{
             0.0,  -r, 0.0,   1.0, 0.0, 0.0, 1.0,
               r, 0.0, r,     0.0, 1.0, 0.0, 1.0,
               r, 0.0, -r,    0.0, 0.0, 1.0, 1.0,
@@ -51,7 +51,7 @@ export fn init() void {
     // an index buffer for the static geometry
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.asRange([_]u16{
+        .data = sg.asRange(&[_]u16{
             2, 1, 0,  3, 2, 0,  4, 3, 0,  1, 4, 0,
             5, 1, 2,  5, 2, 3,  5, 3, 4,  5, 4, 1
         })
@@ -109,12 +109,15 @@ export fn frame() void {
     {
         var i: usize = 0;
         while (i < max_particles): (i += 1) {
-            state.vel[i].y -= 1.0 * frame_time;
-            state.pos[i] = vec3.add(state.pos[i], vec3.mul(state.vel[i], frame_time));
-            if (state.pos[i].y < -2.0) {
-                state.pos[i].y = -1.8;
-                state.vel[i].y = -state.vel[i].y;
-                state.vel[i] = vec3.mul(state.vel[i], 0.8);
+            const vel = &state.vel[i];
+            const pos = &state.pos[i];
+
+            vel.y -= 1.0 * frame_time;
+            pos.* = vec3.add(pos.*, vec3.mul(vel.*, frame_time));
+            if (pos.y < -2.0) {
+                pos.y = -1.8;
+                vel.y = -vel.y;
+                vel.* = vec3.mul(vel.*, 0.8);
             }
         }
     }
@@ -130,7 +133,7 @@ export fn frame() void {
     sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
-    sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(vs_params));
+    sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(&vs_params));
     sg.draw(0, 24, state.cur_num_particles);
     sg.endPass();
     sg.commit();

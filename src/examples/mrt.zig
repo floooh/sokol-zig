@@ -65,7 +65,7 @@ export fn init() void {
 
     // create vertex buffer for a cube
     const cube_vbuf = sg.makeBuffer(.{
-        .data = sg.asRange([_]f32{
+        .data = sg.asRange(&[_]f32{
             // positions        brightness
             -1.0, -1.0, -1.0,   1.0,
              1.0, -1.0, -1.0,   1.0,
@@ -102,7 +102,7 @@ export fn init() void {
     // index buffer for a cube
     const cube_ibuf = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.asRange([_]u16{
+        .data = sg.asRange(&[_]u16{
             0, 1, 2,  0, 2, 3,
             6, 5, 4,  7, 6, 4,
             8, 9, 10,  8, 10, 11,
@@ -135,7 +135,7 @@ export fn init() void {
 
     // a vertex buffer to render a fullscreen quad
     const quad_vbuf = sg.makeBuffer(.{
-        .data = sg.asRange([_]f32 { 0.0, 0.0,  1.0, 0.0,  0.0, 1.0,  1.0, 1.0 })
+        .data = sg.asRange(&[_]f32 { 0.0, 0.0,  1.0, 0.0,  0.0, 1.0,  1.0, 1.0 })
     });
 
     // shader and pipeline object to render a fullscreen quad which composes
@@ -185,7 +185,7 @@ export fn frame() void {
     sg.beginPass(state.offscreen.pass, state.offscreen.pass_action);
     sg.applyPipeline(state.offscreen.pip);
     sg.applyBindings(state.offscreen.bind);
-    sg.applyUniforms(.VS, shd.SLOT_offscreen_params, sg.asRange(offscreen_params));
+    sg.applyUniforms(.VS, shd.SLOT_offscreen_params, sg.asRange(&offscreen_params));
     sg.draw(0, 36, 1);
     sg.endPass();
 
@@ -194,7 +194,7 @@ export fn frame() void {
     sg.beginDefaultPass(state.default.pass_action, sapp.width(), sapp.height());
     sg.applyPipeline(state.fsq.pip);
     sg.applyBindings(state.fsq.bind);
-    sg.applyUniforms(.VS, shd.SLOT_fsq_params, sg.asRange(fsq_params));
+    sg.applyUniforms(.VS, shd.SLOT_fsq_params, sg.asRange(&fsq_params));
     sg.draw(0, 4, 1);
     sg.applyPipeline(state.dbg.pip);
     inline for (.{0, 1, 2 }) |i| {

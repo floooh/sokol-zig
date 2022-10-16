@@ -26,7 +26,7 @@ export fn init() void {
 
     // cube vertex buffer
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.asRange([_]f32 {
+        .data = sg.asRange(&[_]f32 {
             // positions        colors
             -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
              1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
@@ -63,7 +63,7 @@ export fn init() void {
     // cube index buffer
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.asRange([_]u16{
+        .data = sg.asRange(&[_]u16{
             0, 1, 2,  0, 2, 3,
             6, 5, 4,  7, 6, 4,
             8, 9, 10,  8, 10, 11,
@@ -100,7 +100,7 @@ export fn frame() void {
     sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
-    sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(vs_params));
+    sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(&vs_params));
     sg.draw(0, 36, 1);
     sg.endPass();
     sg.commit();

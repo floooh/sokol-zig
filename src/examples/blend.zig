@@ -31,7 +31,7 @@ export fn init() void {
     state.pass_action.stencil.action = .DONTCARE;
 
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.asRange([_]f32 {
+        .data = sg.asRange(&[_]f32 {
              // pos               color
             -1.0, -1.0, 0.0,  1.0, 0.0, 0.0, 0.5,
              1.0, -1.0, 0.0,  0.0, 1.0, 0.0, 0.5,
@@ -81,7 +81,7 @@ export fn frame() void {
     const bg_fs_params: shd.BgFsParams = .{ .tick = state.tick };
     sg.applyPipeline(state.bg_pip);
     sg.applyBindings(state.bind);
-    sg.applyUniforms(.FS, shd.SLOT_bg_fs_params, sg.asRange(bg_fs_params));
+    sg.applyUniforms(.FS, shd.SLOT_bg_fs_params, sg.asRange(&bg_fs_params));
     sg.draw(0, 4, 1);
 
     // draw the blended quads
@@ -106,7 +106,7 @@ export fn frame() void {
             };
             sg.applyPipeline(state.pip[src][dst]);
             sg.applyBindings(state.bind);
-            sg.applyUniforms(.VS, shd.SLOT_quad_vs_params, sg.asRange(quad_vs_params));
+            sg.applyUniforms(.VS, shd.SLOT_quad_vs_params, sg.asRange(&quad_vs_params));
             sg.draw(0, 4, 1);
             r0 += 0.6;
         }

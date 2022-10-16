@@ -21,7 +21,7 @@ export fn init() void {
 
     // a vertex buffer
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.asRange([_]f32{
+        .data = sg.asRange(&[_]f32{
             // positions      colors
             -0.5,  0.5, 0.5,  1.0, 0.0, 0.0, 1.0,
              0.5,  0.5, 0.5,  0.0, 1.0, 0.0, 1.0,
@@ -33,7 +33,7 @@ export fn init() void {
     // an index buffer
     state.bind.index_buffer = sg.makeBuffer(.{
         .type = .INDEXBUFFER,
-        .data = sg.asRange([_]u16{ 0, 1, 2, 0, 2, 3 })
+        .data = sg.asRange(&[_]u16{ 0, 1, 2, 0, 2, 3 })
     });
 
     // a shader and pipeline state object
