@@ -1,5 +1,7 @@
 // machine generated, do not edit
 
+const builtin = @import("builtin");
+const meta = @import("std").meta;
 
 // helper function to convert a C string to a Zig string slice
 fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
@@ -17,7 +19,10 @@ pub fn asRange(val: anytype) Range {
             }
         },
         .Struct, .Array => {
-            return .{ .ptr = &val, .size = @sizeOf(@TypeOf(val)) };
+            switch (builtin.zig_backend) {
+                .stage1 => return .{ .ptr = &val, .size = @sizeOf(@TypeOf(val)) },
+                else => @compileError("Structs and arrays must be passed as pointers to asRange"),
+            }
         },
         else => {
             @compileError("Cannot convert to range!");
@@ -620,29 +625,29 @@ pub const GlContextDesc = extern struct {
 };
 pub const MetalContextDesc = extern struct {
     device: ?*const anyopaque = null,
-    renderpass_descriptor_cb: ?fn() callconv(.C) ?*const anyopaque = null,
-    renderpass_descriptor_userdata_cb: ?fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    drawable_cb: ?fn() callconv(.C) ?*const anyopaque = null,
-    drawable_userdata_cb: ?fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    renderpass_descriptor_cb: ?meta.FnPtr(fn() callconv(.C) ?*const anyopaque) = null,
+    renderpass_descriptor_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) ?*const anyopaque) = null,
+    drawable_cb: ?meta.FnPtr(fn() callconv(.C) ?*const anyopaque) = null,
+    drawable_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) ?*const anyopaque) = null,
     user_data: ?*anyopaque = null,
 };
 pub const D3d11ContextDesc = extern struct {
     device: ?*const anyopaque = null,
     device_context: ?*const anyopaque = null,
-    render_target_view_cb: ?fn() callconv(.C) ?*const anyopaque = null,
-    render_target_view_userdata_cb: ?fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    depth_stencil_view_cb: ?fn() callconv(.C) ?*const anyopaque = null,
-    depth_stencil_view_userdata_cb: ?fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    render_target_view_cb: ?meta.FnPtr(fn() callconv(.C) ?*const anyopaque) = null,
+    render_target_view_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) ?*const anyopaque) = null,
+    depth_stencil_view_cb: ?meta.FnPtr(fn() callconv(.C) ?*const anyopaque) = null,
+    depth_stencil_view_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) ?*const anyopaque) = null,
     user_data: ?*anyopaque = null,
 };
 pub const WgpuContextDesc = extern struct {
     device: ?*const anyopaque = null,
-    render_view_cb: ?fn() callconv(.C) ?*const anyopaque = null,
-    render_view_userdata_cb: ?fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    resolve_view_cb: ?fn() callconv(.C) ?*const anyopaque = null,
-    resolve_view_userdata_cb: ?fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    depth_stencil_view_cb: ?fn() callconv(.C) ?*const anyopaque = null,
-    depth_stencil_view_userdata_cb: ?fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    render_view_cb: ?meta.FnPtr(fn() callconv(.C) ?*const anyopaque) = null,
+    render_view_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) ?*const anyopaque) = null,
+    resolve_view_cb: ?meta.FnPtr(fn() callconv(.C) ?*const anyopaque) = null,
+    resolve_view_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) ?*const anyopaque) = null,
+    depth_stencil_view_cb: ?meta.FnPtr(fn() callconv(.C) ?*const anyopaque) = null,
+    depth_stencil_view_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) ?*const anyopaque) = null,
     user_data: ?*anyopaque = null,
 };
 pub const ContextDesc = extern struct {
@@ -655,8 +660,8 @@ pub const ContextDesc = extern struct {
     wgpu: WgpuContextDesc = .{ },
 };
 pub const Allocator = extern struct {
-    alloc: ?fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free: ?fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc: ?meta.FnPtr(fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque) = null,
+    free: ?meta.FnPtr(fn(?*anyopaque, ?*anyopaque) callconv(.C) void) = null,
     user_data: ?*anyopaque = null,
 };
 pub const Desc = extern struct {

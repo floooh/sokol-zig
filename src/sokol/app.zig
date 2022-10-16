@@ -1,5 +1,7 @@
 // machine generated, do not edit
 
+const builtin = @import("builtin");
+const meta = @import("std").meta;
 
 // helper function to convert a C string to a Zig string slice
 fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
@@ -220,22 +222,22 @@ pub const IconDesc = extern struct {
     images: [8]ImageDesc = [_]ImageDesc{.{}} ** 8,
 };
 pub const Allocator = extern struct {
-    alloc: ?fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free: ?fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc: ?meta.FnPtr(fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque) = null,
+    free: ?meta.FnPtr(fn(?*anyopaque, ?*anyopaque) callconv(.C) void) = null,
     user_data: ?*anyopaque = null,
 };
 pub const Desc = extern struct {
-    init_cb: ?fn() callconv(.C) void = null,
-    frame_cb: ?fn() callconv(.C) void = null,
-    cleanup_cb: ?fn() callconv(.C) void = null,
-    event_cb: ?fn([*c]const Event) callconv(.C) void = null,
-    fail_cb: ?fn([*c]const u8) callconv(.C) void = null,
+    init_cb: ?meta.FnPtr(fn() callconv(.C) void) = null,
+    frame_cb: ?meta.FnPtr(fn() callconv(.C) void) = null,
+    cleanup_cb: ?meta.FnPtr(fn() callconv(.C) void) = null,
+    event_cb: ?meta.FnPtr(fn([*c]const Event) callconv(.C) void) = null,
+    fail_cb: ?meta.FnPtr(fn([*c]const u8) callconv(.C) void) = null,
     user_data: ?*anyopaque = null,
-    init_userdata_cb: ?fn(?*anyopaque) callconv(.C) void = null,
-    frame_userdata_cb: ?fn(?*anyopaque) callconv(.C) void = null,
-    cleanup_userdata_cb: ?fn(?*anyopaque) callconv(.C) void = null,
-    event_userdata_cb: ?fn([*c]const Event, ?*anyopaque) callconv(.C) void = null,
-    fail_userdata_cb: ?fn([*c]const u8, ?*anyopaque) callconv(.C) void = null,
+    init_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) void) = null,
+    frame_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) void) = null,
+    cleanup_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) void) = null,
+    event_userdata_cb: ?meta.FnPtr(fn([*c]const Event, ?*anyopaque) callconv(.C) void) = null,
+    fail_userdata_cb: ?meta.FnPtr(fn([*c]const u8, ?*anyopaque) callconv(.C) void) = null,
     width: i32 = 0,
     height: i32 = 0,
     sample_count: i32 = 0,
@@ -280,7 +282,7 @@ pub const Html5FetchResponse = extern struct {
 };
 pub const Html5FetchRequest = extern struct {
     dropped_file_index: i32 = 0,
-    callback: ?fn([*c]const Html5FetchResponse) callconv(.C) void = null,
+    callback: ?meta.FnPtr(fn([*c]const Html5FetchResponse) callconv(.C) void) = null,
     buffer_ptr: ?*anyopaque = null,
     buffer_size: u32 = 0,
     user_data: ?*anyopaque = null,

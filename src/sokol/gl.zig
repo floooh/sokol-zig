@@ -1,5 +1,7 @@
 // machine generated, do not edit
 
+const builtin = @import("builtin");
+const meta = @import("std").meta;
 const sg = @import("gfx.zig");
 
 // helper function to convert a C string to a Zig string slice
@@ -29,8 +31,8 @@ pub const ContextDesc = extern struct {
     sample_count: i32 = 0,
 };
 pub const Allocator = extern struct {
-    alloc: ?fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free: ?fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc: ?meta.FnPtr(fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque) = null,
+    free: ?meta.FnPtr(fn(?*anyopaque, ?*anyopaque) callconv(.C) void) = null,
     user_data: ?*anyopaque = null,
 };
 pub const Desc = extern struct {
