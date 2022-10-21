@@ -138,6 +138,7 @@ pub const PixelFormat = enum(i32) {
     ETC2_RGBA8,
     ETC2_RG11,
     ETC2_RG11SN,
+    RGB9E5,
     NUM,
 };
 pub const PixelformatInfo = extern struct {
