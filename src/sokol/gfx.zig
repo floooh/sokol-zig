@@ -660,6 +660,10 @@ pub const Allocator = extern struct {
     free: ?fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
+pub const Logger = extern struct {
+    log_cb: ?fn([*c]const u8, ?*anyopaque) callconv(.C) void = null,
+    user_data: ?*anyopaque = null,
+};
 pub const Desc = extern struct {
     _start_canary: u32 = 0,
     buffer_pool_size: i32 = 0,
@@ -672,6 +676,7 @@ pub const Desc = extern struct {
     staging_buffer_size: i32 = 0,
     sampler_cache_size: i32 = 0,
     allocator: Allocator = .{ },
+    logger: Logger = .{ },
     context: ContextDesc = .{ },
     _end_canary: u32 = 0,
 };

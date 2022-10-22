@@ -224,6 +224,10 @@ pub const Allocator = extern struct {
     free: ?fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
+pub const Logger = extern struct {
+    log_cb: ?fn([*c]const u8, ?*anyopaque) callconv(.C) void = null,
+    user_data: ?*anyopaque = null,
+};
 pub const Desc = extern struct {
     init_cb: ?fn() callconv(.C) void = null,
     frame_cb: ?fn() callconv(.C) void = null,
@@ -251,6 +255,7 @@ pub const Desc = extern struct {
     max_dropped_file_path_length: i32 = 0,
     icon: IconDesc = .{ },
     allocator: Allocator = .{ },
+    logger: Logger = .{ },
     gl_force_gles2: bool = false,
     gl_major_version: i32 = 0,
     gl_minor_version: i32 = 0,
