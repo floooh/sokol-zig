@@ -35,6 +35,10 @@ pub const Allocator = extern struct {
     free: ?meta.FnPtr(fn(?*anyopaque, ?*anyopaque) callconv(.C) void) = null,
     user_data: ?*anyopaque = null,
 };
+pub const Logger = extern struct {
+    log_cb: ?meta.FnPtr(fn([*c]const u8, ?*anyopaque) callconv(.C) void) = null,
+    user_data: ?*anyopaque = null,
+};
 pub const Desc = extern struct {
     max_vertices: i32 = 0,
     max_commands: i32 = 0,
@@ -45,6 +49,7 @@ pub const Desc = extern struct {
     sample_count: i32 = 0,
     face_winding: sg.FaceWinding = .DEFAULT,
     allocator: Allocator = .{ },
+    logger: Logger = .{ },
 };
 pub extern fn sgl_setup([*c]const Desc) void;
 pub fn setup(desc: Desc) void {

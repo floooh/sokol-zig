@@ -12,6 +12,10 @@ pub const Allocator = extern struct {
     free: ?meta.FnPtr(fn(?*anyopaque, ?*anyopaque) callconv(.C) void) = null,
     user_data: ?*anyopaque = null,
 };
+pub const Logger = extern struct {
+    log_cb: ?meta.FnPtr(fn([*c]const u8, ?*anyopaque) callconv(.C) void) = null,
+    user_data: ?*anyopaque = null,
+};
 pub const Desc = extern struct {
     sample_rate: i32 = 0,
     num_channels: i32 = 0,
@@ -22,6 +26,7 @@ pub const Desc = extern struct {
     stream_userdata_cb: ?meta.FnPtr(fn([*c] f32, i32, i32, ?*anyopaque) callconv(.C) void) = null,
     user_data: ?*anyopaque = null,
     allocator: Allocator = .{ },
+    logger: Logger = .{ },
 };
 pub extern fn saudio_setup([*c]const Desc) void;
 pub fn setup(desc: Desc) void {
