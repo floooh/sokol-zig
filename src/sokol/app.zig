@@ -230,10 +230,6 @@ pub const Logger = extern struct {
     log_cb: ?meta.FnPtr(fn([*c]const u8, ?*anyopaque) callconv(.C) void) = null,
     user_data: ?*anyopaque = null,
 };
-pub const Logger = extern struct {
-    log_cb: ?fn([*c]const u8, ?*anyopaque) callconv(.C) void = null,
-    user_data: ?*anyopaque = null,
-};
 pub const Desc = extern struct {
     init_cb: ?meta.FnPtr(fn() callconv(.C) void) = null,
     frame_cb: ?meta.FnPtr(fn() callconv(.C) void) = null,

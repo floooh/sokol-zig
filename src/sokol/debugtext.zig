@@ -84,10 +84,6 @@ pub const Logger = extern struct {
     log_cb: ?meta.FnPtr(fn([*c]const u8, ?*anyopaque) callconv(.C) void) = null,
     user_data: ?*anyopaque = null,
 };
-pub const Logger = extern struct {
-    log_cb: ?fn([*c]const u8, ?*anyopaque) callconv(.C) void = null,
-    user_data: ?*anyopaque = null,
-};
 pub const Desc = extern struct {
     context_pool_size: i32 = 0,
     printf_buf_size: i32 = 0,

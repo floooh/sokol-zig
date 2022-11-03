@@ -39,10 +39,6 @@ pub const Logger = extern struct {
     log_cb: ?meta.FnPtr(fn([*c]const u8, ?*anyopaque) callconv(.C) void) = null,
     user_data: ?*anyopaque = null,
 };
-pub const Logger = extern struct {
-    log_cb: ?fn([*c]const u8, ?*anyopaque) callconv(.C) void = null,
-    user_data: ?*anyopaque = null,
-};
 pub const Desc = extern struct {
     max_vertices: i32 = 0,
     max_commands: i32 = 0,

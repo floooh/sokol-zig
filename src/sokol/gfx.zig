@@ -669,10 +669,6 @@ pub const Logger = extern struct {
     log_cb: ?meta.FnPtr(fn([*c]const u8, ?*anyopaque) callconv(.C) void) = null,
     user_data: ?*anyopaque = null,
 };
-pub const Logger = extern struct {
-    log_cb: ?fn([*c]const u8, ?*anyopaque) callconv(.C) void = null,
-    user_data: ?*anyopaque = null,
-};
 pub const Desc = extern struct {
     _start_canary: u32 = 0,
     buffer_pool_size: i32 = 0,
