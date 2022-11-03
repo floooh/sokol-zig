@@ -15,7 +15,7 @@ export fn init() void {
         .context = sgapp.context()
     });
     pass_action.colors[0] = .{ .action=.CLEAR, .value=.{ .r=1, .g=1, .b=0, .a=1 } };
-    print("Backend: {s}\n", .{ sg.queryBackend()});
+    print("Backend: {}\n", .{ sg.queryBackend()});
 }
 
 export fn frame() void {

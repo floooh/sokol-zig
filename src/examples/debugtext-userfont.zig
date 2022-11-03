@@ -47,7 +47,7 @@ export fn init() void {
     // characters 0x20 to 0x9F (inclusive)
     var sdtx_desc: sdtx.Desc = .{};
     sdtx_desc.fonts[UserFont] = .{
-        .data = sdtx.asRange(user_font),
+        .data = sdtx.asRange(&user_font),
         .first_char = 0x20,
         .last_char = 0x9F
     };

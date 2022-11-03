@@ -13,7 +13,7 @@ fn radians(deg: f32) f32 {
     return deg * (math.pi / 180.0);
 }
 
-pub const Vec2 = packed struct {
+pub const Vec2 = extern struct {
     x: f32, y: f32,
 
     pub fn zero() Vec2 {
@@ -25,7 +25,7 @@ pub const Vec2 = packed struct {
     }
 };
 
-pub const Vec3 = packed struct {
+pub const Vec3 = extern struct {
     x: f32, y: f32, z: f32,
 
     pub fn zero() Vec3 {
@@ -95,7 +95,7 @@ pub const Vec3 = packed struct {
     }
 };
 
-pub const Mat4 = packed struct {
+pub const Mat4 = extern struct {
     m: [4][4]f32,
 
     pub fn identity() Mat4 {

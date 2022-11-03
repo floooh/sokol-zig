@@ -69,8 +69,8 @@ export fn init() void {
     var vertices: [4000]sshape.Vertex = undefined;
     var indices: [24000]u16 = undefined;
     var buf: sshape.Buffer = .{
-        .vertices = .{ .buffer = sshape.asRange(vertices) },
-        .indices  = .{ .buffer = sshape.asRange(indices) },
+        .vertices = .{ .buffer = sshape.asRange(&vertices) },
+        .indices  = .{ .buffer = sshape.asRange(&indices) },
     };
     buf = sshape.buildTorus(buf, .{
         .radius = 0.5,
@@ -144,7 +144,7 @@ export fn frame() void {
     sg.beginPass(state.offscreen.pass, state.offscreen.pass_action);
     sg.applyPipeline(state.offscreen.pip);
     sg.applyBindings(state.offscreen.bind);
-    sg.applyUniforms(.VS, 0, sg.asRange(computeVsParams(state.rx, state.ry, 1.0, 2.5)));
+    sg.applyUniforms(.VS, 0, sg.asRange(&computeVsParams(state.rx, state.ry, 1.0, 2.5)));
     sg.draw(state.donut.base_element, state.donut.num_elements, 1);
     sg.endPass();
 
@@ -153,7 +153,7 @@ export fn frame() void {
     sg.beginDefaultPass(state.default.pass_action, sapp.width(), sapp.height());
     sg.applyPipeline(state.default.pip);
     sg.applyBindings(state.default.bind);
-    sg.applyUniforms(.VS, 0, sg.asRange(computeVsParams(-state.rx*0.25, state.ry*0.25, aspect, 2)));
+    sg.applyUniforms(.VS, 0, sg.asRange(&computeVsParams(-state.rx*0.25, state.ry*0.25, aspect, 2)));
     sg.draw(state.sphere.base_element, state.sphere.num_elements, 1);
     sg.endPass();
 

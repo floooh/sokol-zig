@@ -52,7 +52,7 @@ export fn init() void {
         .height = img_height,
     };
     // FIXME: https://github.com/ziglang/zig/issues/6068
-    img_desc.data.subimage[0][0] = sg.asRange(pixels);
+    img_desc.data.subimage[0][0] = sg.asRange(&pixels);
     state.img = sg.makeImage(img_desc);
 
     // create a pipeline object for 3d rendering, with less-equal
