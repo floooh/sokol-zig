@@ -2,15 +2,12 @@
 
 Auto-generated Zig bindings for the [sokol headers](https://github.com/floooh/sokol).
 
-For Zig version 0.9.x.
-
-For the current Zig dev version, try the ```zig-0.10.0``` branch. This should work
-both with the self-hosted and 'traditional' compiler, but note that this branch
-is not automatically updated, so the included sokol headers may be a bit behind.
+For Zig version 0.10.0
 
 If you're on an older Zig version, check the following branches (note that these
 also contain older versions of the Sokol C headers):
 
+- zig-0.9.1
 - zig-0.8.1
 - zig-0.8.0
 - zig-0.7.1
