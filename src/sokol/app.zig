@@ -280,16 +280,14 @@ pub const Html5FetchResponse = extern struct {
     succeeded: bool = false,
     error_code: Html5FetchError = .FETCH_ERROR_NO_ERROR,
     file_index: i32 = 0,
-    fetched_size: u32 = 0,
-    buffer_ptr: ?*anyopaque = null,
-    buffer_size: u32 = 0,
+    data: Range = .{ },
+    buffer: Range = .{ },
     user_data: ?*anyopaque = null,
 };
 pub const Html5FetchRequest = extern struct {
     dropped_file_index: i32 = 0,
     callback: ?meta.FnPtr(fn([*c]const Html5FetchResponse) callconv(.C) void) = null,
-    buffer_ptr: ?*anyopaque = null,
-    buffer_size: u32 = 0,
+    buffer: Range = .{ },
     user_data: ?*anyopaque = null,
 };
 pub const MouseCursor = enum(i32) {
