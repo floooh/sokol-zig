@@ -660,6 +660,10 @@ pub const ContextDesc = extern struct {
     d3d11: D3d11ContextDesc = .{ },
     wgpu: WgpuContextDesc = .{ },
 };
+pub const CommitListener = extern struct {
+    func: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) void) = null,
+    user_data: ?*anyopaque = null,
+};
 pub const Allocator = extern struct {
     alloc: ?meta.FnPtr(fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque) = null,
     free: ?meta.FnPtr(fn(?*anyopaque, ?*anyopaque) callconv(.C) void) = null,
@@ -680,6 +684,7 @@ pub const Desc = extern struct {
     uniform_buffer_size: i32 = 0,
     staging_buffer_size: i32 = 0,
     sampler_cache_size: i32 = 0,
+    max_commit_listeners: i32 = 0,
     allocator: Allocator = .{ },
     logger: Logger = .{ },
     context: ContextDesc = .{ },
@@ -708,6 +713,14 @@ pub fn pushDebugGroup(name: [:0]const u8) void {
 pub extern fn sg_pop_debug_group() void;
 pub fn popDebugGroup() void {
     sg_pop_debug_group();
+}
+pub extern fn sg_add_commit_listener(CommitListener) bool;
+pub fn addCommitListener(listener: CommitListener) bool {
+    return sg_add_commit_listener(listener);
+}
+pub extern fn sg_remove_commit_listener(CommitListener) bool;
+pub fn removeCommitListener(listener: CommitListener) bool {
+    return sg_remove_commit_listener(listener);
 }
 pub extern fn sg_make_buffer([*c]const BufferDesc) Buffer;
 pub fn makeBuffer(desc: BufferDesc) Buffer {
