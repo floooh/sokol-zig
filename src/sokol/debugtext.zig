@@ -67,6 +67,7 @@ pub const FontDesc = extern struct {
     last_char: u8 = 0,
 };
 pub const ContextDesc = extern struct {
+    max_commands: i32 = 0,
     char_buf_size: i32 = 0,
     canvas_width: f32 = 0.0,
     canvas_height: f32 = 0.0,
@@ -147,6 +148,22 @@ pub fn defaultContext() Context {
 pub extern fn sdtx_draw() void;
 pub fn draw() void {
     sdtx_draw();
+}
+pub extern fn sdtx_context_draw(Context) void;
+pub fn contextDraw(ctx: Context) void {
+    sdtx_context_draw(ctx);
+}
+pub extern fn sdtx_draw_layer(i32) void;
+pub fn drawLayer(layer_id: i32) void {
+    sdtx_draw_layer(layer_id);
+}
+pub extern fn sdtx_context_draw_layer(Context, i32) void;
+pub fn contextDrawLayer(ctx: Context, layer_id: i32) void {
+    sdtx_context_draw_layer(ctx, layer_id);
+}
+pub extern fn sdtx_layer(i32) void;
+pub fn layer(layer_id: i32) void {
+    sdtx_layer(layer_id);
 }
 pub extern fn sdtx_font(u32) void;
 pub fn font(font_index: u32) void {
