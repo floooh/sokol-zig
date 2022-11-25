@@ -685,6 +685,7 @@ pub const Desc = extern struct {
     staging_buffer_size: i32 = 0,
     sampler_cache_size: i32 = 0,
     max_commit_listeners: i32 = 0,
+    disable_validation: bool = false,
     allocator: Allocator = .{ },
     logger: Logger = .{ },
     context: ContextDesc = .{ },
@@ -935,84 +936,84 @@ pub fn allocPass() Pass {
     return sg_alloc_pass();
 }
 pub extern fn sg_dealloc_buffer(Buffer) void;
-pub fn deallocBuffer(buf_id: Buffer) void {
-    sg_dealloc_buffer(buf_id);
+pub fn deallocBuffer(buf: Buffer) void {
+    sg_dealloc_buffer(buf);
 }
 pub extern fn sg_dealloc_image(Image) void;
-pub fn deallocImage(img_id: Image) void {
-    sg_dealloc_image(img_id);
+pub fn deallocImage(img: Image) void {
+    sg_dealloc_image(img);
 }
 pub extern fn sg_dealloc_shader(Shader) void;
-pub fn deallocShader(shd_id: Shader) void {
-    sg_dealloc_shader(shd_id);
+pub fn deallocShader(shd: Shader) void {
+    sg_dealloc_shader(shd);
 }
 pub extern fn sg_dealloc_pipeline(Pipeline) void;
-pub fn deallocPipeline(pip_id: Pipeline) void {
-    sg_dealloc_pipeline(pip_id);
+pub fn deallocPipeline(pip: Pipeline) void {
+    sg_dealloc_pipeline(pip);
 }
 pub extern fn sg_dealloc_pass(Pass) void;
-pub fn deallocPass(pass_id: Pass) void {
-    sg_dealloc_pass(pass_id);
+pub fn deallocPass(pass: Pass) void {
+    sg_dealloc_pass(pass);
 }
 pub extern fn sg_init_buffer(Buffer, [*c]const BufferDesc) void;
-pub fn initBuffer(buf_id: Buffer, desc: BufferDesc) void {
-    sg_init_buffer(buf_id, &desc);
+pub fn initBuffer(buf: Buffer, desc: BufferDesc) void {
+    sg_init_buffer(buf, &desc);
 }
 pub extern fn sg_init_image(Image, [*c]const ImageDesc) void;
-pub fn initImage(img_id: Image, desc: ImageDesc) void {
-    sg_init_image(img_id, &desc);
+pub fn initImage(img: Image, desc: ImageDesc) void {
+    sg_init_image(img, &desc);
 }
 pub extern fn sg_init_shader(Shader, [*c]const ShaderDesc) void;
-pub fn initShader(shd_id: Shader, desc: ShaderDesc) void {
-    sg_init_shader(shd_id, &desc);
+pub fn initShader(shd: Shader, desc: ShaderDesc) void {
+    sg_init_shader(shd, &desc);
 }
 pub extern fn sg_init_pipeline(Pipeline, [*c]const PipelineDesc) void;
-pub fn initPipeline(pip_id: Pipeline, desc: PipelineDesc) void {
-    sg_init_pipeline(pip_id, &desc);
+pub fn initPipeline(pip: Pipeline, desc: PipelineDesc) void {
+    sg_init_pipeline(pip, &desc);
 }
 pub extern fn sg_init_pass(Pass, [*c]const PassDesc) void;
-pub fn initPass(pass_id: Pass, desc: PassDesc) void {
-    sg_init_pass(pass_id, &desc);
+pub fn initPass(pass: Pass, desc: PassDesc) void {
+    sg_init_pass(pass, &desc);
 }
-pub extern fn sg_uninit_buffer(Buffer) bool;
-pub fn uninitBuffer(buf_id: Buffer) bool {
-    return sg_uninit_buffer(buf_id);
+pub extern fn sg_uninit_buffer(Buffer) void;
+pub fn uninitBuffer(buf: Buffer) void {
+    sg_uninit_buffer(buf);
 }
-pub extern fn sg_uninit_image(Image) bool;
-pub fn uninitImage(img_id: Image) bool {
-    return sg_uninit_image(img_id);
+pub extern fn sg_uninit_image(Image) void;
+pub fn uninitImage(img: Image) void {
+    sg_uninit_image(img);
 }
-pub extern fn sg_uninit_shader(Shader) bool;
-pub fn uninitShader(shd_id: Shader) bool {
-    return sg_uninit_shader(shd_id);
+pub extern fn sg_uninit_shader(Shader) void;
+pub fn uninitShader(shd: Shader) void {
+    sg_uninit_shader(shd);
 }
-pub extern fn sg_uninit_pipeline(Pipeline) bool;
-pub fn uninitPipeline(pip_id: Pipeline) bool {
-    return sg_uninit_pipeline(pip_id);
+pub extern fn sg_uninit_pipeline(Pipeline) void;
+pub fn uninitPipeline(pip: Pipeline) void {
+    sg_uninit_pipeline(pip);
 }
-pub extern fn sg_uninit_pass(Pass) bool;
-pub fn uninitPass(pass_id: Pass) bool {
-    return sg_uninit_pass(pass_id);
+pub extern fn sg_uninit_pass(Pass) void;
+pub fn uninitPass(pass: Pass) void {
+    sg_uninit_pass(pass);
 }
 pub extern fn sg_fail_buffer(Buffer) void;
-pub fn failBuffer(buf_id: Buffer) void {
-    sg_fail_buffer(buf_id);
+pub fn failBuffer(buf: Buffer) void {
+    sg_fail_buffer(buf);
 }
 pub extern fn sg_fail_image(Image) void;
-pub fn failImage(img_id: Image) void {
-    sg_fail_image(img_id);
+pub fn failImage(img: Image) void {
+    sg_fail_image(img);
 }
 pub extern fn sg_fail_shader(Shader) void;
-pub fn failShader(shd_id: Shader) void {
-    sg_fail_shader(shd_id);
+pub fn failShader(shd: Shader) void {
+    sg_fail_shader(shd);
 }
 pub extern fn sg_fail_pipeline(Pipeline) void;
-pub fn failPipeline(pip_id: Pipeline) void {
-    sg_fail_pipeline(pip_id);
+pub fn failPipeline(pip: Pipeline) void {
+    sg_fail_pipeline(pip);
 }
 pub extern fn sg_fail_pass(Pass) void;
-pub fn failPass(pass_id: Pass) void {
-    sg_fail_pass(pass_id);
+pub fn failPass(pass: Pass) void {
+    sg_fail_pass(pass);
 }
 pub extern fn sg_setup_context() Context;
 pub fn setupContext() Context {
