@@ -15,8 +15,13 @@ pub const Backend = enum {
     wgpu,
 };
 
+pub const Config = struct {
+    backend: Backend = .auto,
+    use_egl: bool = false
+};
+
 // build sokol into a static library
-pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend, force_egl: bool, comptime prefix_path: []const u8) *LibExeObjStep {
+pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, config: Config, comptime prefix_path: []const u8) *LibExeObjStep {
     const lib = b.addStaticLibrary("sokol", null);
     lib.setBuildMode(mode);
     lib.setTarget(target);
@@ -31,7 +36,7 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend
         "sokol_debugtext.c",
         "sokol_shape.c",
     };
-    var _backend = backend;
+    var _backend = config.backend;
     if (_backend == .auto) {
         if (lib.target.isDarwin()) { _backend = .metal; }
         else if (lib.target.isWindows()) { _backend = .d3d11; }
@@ -62,10 +67,10 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend
             lib.linkFramework("OpenGL");
         }
     } else {
-        var force_egl_flag = if (force_egl) "-DSOKOL_FORCE_EGL" else "";
+        var use_egl = if (config.use_egl) "-DSOKOL_FORCE_EGL" else "";
 
         inline for (csources) |csrc| {
-            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-DIMPL", backend_option, force_egl_flag});
+            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-DIMPL", backend_option, use_egl});
         }
 
         if (lib.target.isLinux()) {
@@ -74,12 +79,12 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend
             lib.linkSystemLibrary("Xcursor");
             lib.linkSystemLibrary("asound");
 
-            if (force_egl) {
+            if (config.use_egl) {
                 lib.linkSystemLibrary("egl");
                 lib.linkSystemLibrary("glesv2");
             } else {
                 lib.linkSystemLibrary("GL");
-                if (backend == .gles2) {
+                if (config.backend == .gles2) {
                     @panic("GLES2 in Linux only available with force_egl");
                 }
             }
@@ -110,12 +115,14 @@ fn buildExample(b: *Builder, target: CrossTarget, mode: Mode, sokol: *LibExeObjS
 }
 
 pub fn build(b: *Builder) void {
+    var config: Config = .{};
+
     const force_gl = b.option(bool, "gl", "Force GL backend") orelse false;
-    const backend: Backend = if (force_gl) .gl else .auto;
+    config.backend = if (force_gl) .gl else .auto;
 
     const target = b.standardTargetOptions(.{});
     const mode = b.standardReleaseOptions();
-    const sokol = buildSokol(b, target, mode, backend, false, "");
+    const sokol = buildSokol(b, target, mode, config, "");
     const examples = .{
         "clear",
         "triangle",
