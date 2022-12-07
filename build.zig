@@ -85,7 +85,7 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, config: Config, 
             } else {
                 lib.linkSystemLibrary("GL");
                 if (config.backend == .gles2) {
-                    @panic("GLES2 in Linux only available with force_egl");
+                    @panic("GLES2 in Linux only available with Config.use_egl");
                 }
             }
         }
