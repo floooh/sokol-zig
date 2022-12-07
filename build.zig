@@ -2,7 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const Builder = std.build.Builder;
 const LibExeObjStep = std.build.LibExeObjStep;
-const CrossTarget = @import("std").zig.CrossTarget;
+const CrossTarget = std.zig.CrossTarget;
 const Mode = std.builtin.Mode;
 
 pub const Backend = enum {
@@ -16,7 +16,7 @@ pub const Backend = enum {
 };
 
 // build sokol into a static library
-pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend, comptime prefix_path: []const u8) *LibExeObjStep {
+pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend, force_egl: bool, comptime prefix_path: []const u8) *LibExeObjStep {
     const lib = b.addStaticLibrary("sokol", null);
     lib.setBuildMode(mode);
     lib.setTarget(target);
@@ -46,6 +46,7 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend
         .wgpu => "-DSOKOL_WGPU",
         else => unreachable,
     };
+
     if (lib.target.isDarwin()) {
         inline for (csources) |csrc| {
             lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-ObjC", "-DIMPL", backend_option});
@@ -61,15 +62,27 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend
             lib.linkFramework("OpenGL");
         }
     } else {
+        var force_egl_flag = if (force_egl) "-DSOKOL_FORCE_EGL" else "";
+
         inline for (csources) |csrc| {
-            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-DIMPL", backend_option});
+            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-DIMPL", backend_option, force_egl_flag});
         }
+
         if (lib.target.isLinux()) {
             lib.linkSystemLibrary("X11");
             lib.linkSystemLibrary("Xi");
             lib.linkSystemLibrary("Xcursor");
-            lib.linkSystemLibrary("GL");
             lib.linkSystemLibrary("asound");
+
+            if (force_egl) {
+                lib.linkSystemLibrary("egl");
+                lib.linkSystemLibrary("glesv2");
+            } else {
+                lib.linkSystemLibrary("GL");
+                if (backend == .gles2) {
+                    @panic("GLES2 in Linux only available with force_egl");
+                }
+            }
         }
         else if (lib.target.isWindows()) {
             lib.linkSystemLibrary("kernel32");
@@ -102,7 +115,7 @@ pub fn build(b: *Builder) void {
 
     const target = b.standardTargetOptions(.{});
     const mode = b.standardReleaseOptions();
-    const sokol = buildSokol(b, target, mode, backend, "");
+    const sokol = buildSokol(b, target, mode, backend, false, "");
     const examples = .{
         "clear",
         "triangle",
