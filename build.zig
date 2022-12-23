@@ -17,7 +17,10 @@ pub const Backend = enum {
 
 pub const Config = struct {
     backend: Backend = .auto,
-    use_egl: bool = false
+    force_egl: bool = false,
+
+    enable_x11: bool = true, 
+    enable_wayland: bool = false
 };
 
 // build sokol into a static library
@@ -25,6 +28,7 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, config: Config, 
     const lib = b.addStaticLibrary("sokol", null);
     lib.setBuildMode(mode);
     lib.setTarget(target);
+    
     lib.linkLibC();
     const sokol_path = prefix_path ++ "src/sokol/c/";
     const csources = [_][]const u8 {
@@ -67,27 +71,42 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, config: Config, 
             lib.linkFramework("OpenGL");
         }
     } else {
-        var use_egl = if (config.use_egl) "-DSOKOL_FORCE_EGL" else "";
+        var egl_flag = if (config.force_egl) "-DSOKOL_FORCE_EGL " else "";
+        var x11_flag = if (!config.enable_x11) "-DSOKOL_DISABLE_X11 " else "";
+        var wayland_flag = if (!config.enable_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
 
         inline for (csources) |csrc| {
-            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-DIMPL", backend_option, use_egl});
+            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-DIMPL", backend_option, egl_flag, x11_flag, wayland_flag});
         }
 
         if (lib.target.isLinux()) {
-            lib.linkSystemLibrary("X11");
-            lib.linkSystemLibrary("Xi");
-            lib.linkSystemLibrary("Xcursor");
+            var link_egl = config.force_egl or config.enable_wayland;
+            var egl_ensured = (config.force_egl and config.enable_x11) or config.enable_wayland;
+
             lib.linkSystemLibrary("asound");
 
-            if (config.use_egl) {
-                lib.linkSystemLibrary("egl");
+            if (.gles2 == _backend) {
                 lib.linkSystemLibrary("glesv2");
+                if (!egl_ensured) {
+                    @panic("GLES2 in Linux only available with Config.force_egl and/or Wayland");
+                }
             } else {
                 lib.linkSystemLibrary("GL");
-                if (config.backend == .gles2) {
-                    @panic("GLES2 in Linux only available with Config.use_egl");
-                }
             }
+            if (config.enable_x11) {
+                lib.linkSystemLibrary("X11");
+                lib.linkSystemLibrary("Xi");
+                lib.linkSystemLibrary("Xcursor");
+            }
+            if (config.enable_wayland) {
+                lib.linkSystemLibrary("wayland-client");
+                lib.linkSystemLibrary("wayland-cursor");
+                lib.linkSystemLibrary("wayland-egl");
+                lib.linkSystemLibrary("xkbcommon");
+            }
+            if (link_egl) {
+                lib.linkSystemLibrary("egl");  
+            } 
         }
         else if (lib.target.isWindows()) {
             lib.linkSystemLibrary("kernel32");
@@ -119,6 +138,9 @@ pub fn build(b: *Builder) void {
 
     const force_gl = b.option(bool, "gl", "Force GL backend") orelse false;
     config.backend = if (force_gl) .gl else .auto;
+
+    config.enable_wayland = b.option(bool, "wayland", "Compile with wayland-support (default: false)") orelse false;
+    config.enable_x11 = b.option(bool, "x11", "Compile with x11-support (default: true)") orelse true;
 
     const target = b.standardTargetOptions(.{});
     const mode = b.standardReleaseOptions();
