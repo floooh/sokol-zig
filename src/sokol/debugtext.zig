@@ -1,7 +1,6 @@
 // machine generated, do not edit
 
 const builtin = @import("builtin");
-const meta = @import("std").meta;
 const sg = @import("gfx.zig");
 
 // helper function to convert a C string to a Zig string slice
