@@ -626,29 +626,29 @@ pub const GlContextDesc = extern struct {
 };
 pub const MetalContextDesc = extern struct {
     device: ?*const anyopaque = null,
-    renderpass_descriptor_cb: ?meta.FnPtr(fn() callconv(.C) ?*const anyopaque) = null,
-    renderpass_descriptor_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) ?*const anyopaque) = null,
-    drawable_cb: ?meta.FnPtr(fn() callconv(.C) ?*const anyopaque) = null,
-    drawable_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) ?*const anyopaque) = null,
+    renderpass_descriptor_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
+    renderpass_descriptor_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    drawable_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
+    drawable_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
     user_data: ?*anyopaque = null,
 };
 pub const D3d11ContextDesc = extern struct {
     device: ?*const anyopaque = null,
     device_context: ?*const anyopaque = null,
-    render_target_view_cb: ?meta.FnPtr(fn() callconv(.C) ?*const anyopaque) = null,
-    render_target_view_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) ?*const anyopaque) = null,
-    depth_stencil_view_cb: ?meta.FnPtr(fn() callconv(.C) ?*const anyopaque) = null,
-    depth_stencil_view_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) ?*const anyopaque) = null,
+    render_target_view_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
+    render_target_view_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    depth_stencil_view_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
+    depth_stencil_view_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
     user_data: ?*anyopaque = null,
 };
 pub const WgpuContextDesc = extern struct {
     device: ?*const anyopaque = null,
-    render_view_cb: ?meta.FnPtr(fn() callconv(.C) ?*const anyopaque) = null,
-    render_view_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) ?*const anyopaque) = null,
-    resolve_view_cb: ?meta.FnPtr(fn() callconv(.C) ?*const anyopaque) = null,
-    resolve_view_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) ?*const anyopaque) = null,
-    depth_stencil_view_cb: ?meta.FnPtr(fn() callconv(.C) ?*const anyopaque) = null,
-    depth_stencil_view_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) ?*const anyopaque) = null,
+    render_view_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
+    render_view_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    resolve_view_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
+    resolve_view_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    depth_stencil_view_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
+    depth_stencil_view_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
     user_data: ?*anyopaque = null,
 };
 pub const ContextDesc = extern struct {
@@ -661,16 +661,16 @@ pub const ContextDesc = extern struct {
     wgpu: WgpuContextDesc = .{ },
 };
 pub const CommitListener = extern struct {
-    func: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) void) = null,
+    func: ?*const fn(?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Allocator = extern struct {
-    alloc: ?meta.FnPtr(fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque) = null,
-    free: ?meta.FnPtr(fn(?*anyopaque, ?*anyopaque) callconv(.C) void) = null,
+    alloc: ?*const fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
+    free: ?*const fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Logger = extern struct {
-    log_cb: ?meta.FnPtr(fn([*c]const u8, ?*anyopaque) callconv(.C) void) = null,
+    log_cb: ?*const fn([*c]const u8, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Desc = extern struct {

@@ -222,26 +222,26 @@ pub const IconDesc = extern struct {
     images: [8]ImageDesc = [_]ImageDesc{.{}} ** 8,
 };
 pub const Allocator = extern struct {
-    alloc: ?meta.FnPtr(fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque) = null,
-    free: ?meta.FnPtr(fn(?*anyopaque, ?*anyopaque) callconv(.C) void) = null,
+    alloc: ?*const fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
+    free: ?*const fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Logger = extern struct {
-    log_cb: ?meta.FnPtr(fn([*c]const u8, ?*anyopaque) callconv(.C) void) = null,
+    log_cb: ?*const fn([*c]const u8, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Desc = extern struct {
-    init_cb: ?meta.FnPtr(fn() callconv(.C) void) = null,
-    frame_cb: ?meta.FnPtr(fn() callconv(.C) void) = null,
-    cleanup_cb: ?meta.FnPtr(fn() callconv(.C) void) = null,
-    event_cb: ?meta.FnPtr(fn([*c]const Event) callconv(.C) void) = null,
-    fail_cb: ?meta.FnPtr(fn([*c]const u8) callconv(.C) void) = null,
+    init_cb: ?*const fn() callconv(.C) void = null,
+    frame_cb: ?*const fn() callconv(.C) void = null,
+    cleanup_cb: ?*const fn() callconv(.C) void = null,
+    event_cb: ?*const fn([*c]const Event) callconv(.C) void = null,
+    fail_cb: ?*const fn([*c]const u8) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
-    init_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) void) = null,
-    frame_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) void) = null,
-    cleanup_userdata_cb: ?meta.FnPtr(fn(?*anyopaque) callconv(.C) void) = null,
-    event_userdata_cb: ?meta.FnPtr(fn([*c]const Event, ?*anyopaque) callconv(.C) void) = null,
-    fail_userdata_cb: ?meta.FnPtr(fn([*c]const u8, ?*anyopaque) callconv(.C) void) = null,
+    init_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) void = null,
+    frame_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) void = null,
+    cleanup_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) void = null,
+    event_userdata_cb: ?*const fn([*c]const Event, ?*anyopaque) callconv(.C) void = null,
+    fail_userdata_cb: ?*const fn([*c]const u8, ?*anyopaque) callconv(.C) void = null,
     width: i32 = 0,
     height: i32 = 0,
     sample_count: i32 = 0,
@@ -286,7 +286,7 @@ pub const Html5FetchResponse = extern struct {
 };
 pub const Html5FetchRequest = extern struct {
     dropped_file_index: i32 = 0,
-    callback: ?meta.FnPtr(fn([*c]const Html5FetchResponse) callconv(.C) void) = null,
+    callback: ?*const fn([*c]const Html5FetchResponse) callconv(.C) void = null,
     buffer: Range = .{ },
     user_data: ?*anyopaque = null,
 };
