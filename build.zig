@@ -15,9 +15,21 @@ pub const Backend = enum {
     wgpu,
 };
 
+pub const SokolBuildOpts = struct {
+    zig_assert_hook: bool = false,
+    zig_log_hook: bool = false,
+    backend: Backend,
+};
+
 // build sokol into a static library
-pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend, comptime prefix_path: []const u8) *LibExeObjStep {
-    const lib = b.addStaticLibrary("sokol", null);
+pub fn buildSokol(
+    b: *Builder,
+    target: CrossTarget,
+    mode: Mode,
+    opts: SokolBuildOpts,
+    comptime prefix_path: []const u8,
+) *LibExeObjStep {
+    const lib = b.addStaticLibrary("sokol", prefix_path ++ "/src/sokol_zig_hooks.zig");
     lib.setBuildMode(mode);
     lib.setTarget(target);
     lib.linkLibC();
@@ -31,7 +43,7 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend
         "sokol_debugtext.c",
         "sokol_shape.c",
     };
-    var _backend = backend;
+    var _backend = opts.backend;
     if (_backend == .auto) {
         if (lib.target.isDarwin()) { _backend = .metal; }
         else if (lib.target.isWindows()) { _backend = .d3d11; }
@@ -46,10 +58,14 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend
         .wgpu => "-DSOKOL_WGPU",
         else => unreachable,
     };
+    const log_def = if (opts.zig_log_hook) "-DSOKOL_ZIG_LOG_HOOK" else "";
+    const assert_def = if (opts.zig_assert_hook) "-DSOKOL_ZIG_ASSERT_HOOK" else "";
+
     if (lib.target.isDarwin()) {
         inline for (csources) |csrc| {
-            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-ObjC", "-DIMPL", backend_option});
+            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-ObjC", "-DIMPL", backend_option, log_def, assert_def});
         }
+
         lib.linkFramework("Cocoa");
         lib.linkFramework("QuartzCore");
         lib.linkFramework("AudioToolbox");
@@ -62,8 +78,9 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend
         }
     } else {
         inline for (csources) |csrc| {
-            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-DIMPL", backend_option});
+            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-DIMPL", backend_option, log_def, assert_def});
         }
+
         if (lib.target.isLinux()) {
             lib.linkSystemLibrary("X11");
             lib.linkSystemLibrary("Xi");
@@ -102,7 +119,7 @@ pub fn build(b: *Builder) void {
 
     const target = b.standardTargetOptions(.{});
     const mode = b.standardReleaseOptions();
-    const sokol = buildSokol(b, target, mode, backend, "");
+    const sokol = buildSokol(b, target, mode, .{.backend = backend}, "");
     const examples = .{
         "clear",
         "triangle",
