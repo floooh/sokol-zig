@@ -277,6 +277,8 @@ pub const VertexFormat = enum(i32) {
     SHORT4N,
     USHORT4N,
     UINT10_N2,
+    HALF2,
+    HALF4,
     NUM,
 };
 pub const VertexStep = enum(i32) {
