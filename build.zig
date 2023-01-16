@@ -72,13 +72,13 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend
             lib.linkSystemLibrary("asound");
         }
         else if (lib.target.isWindows()) {
-            lib.linkSystemLibrary("kernel32");
-            lib.linkSystemLibrary("user32");
-            lib.linkSystemLibrary("gdi32");
-            lib.linkSystemLibrary("ole32");
+            lib.linkSystemLibraryName("kernel32");
+            lib.linkSystemLibraryName("user32");
+            lib.linkSystemLibraryName("gdi32");
+            lib.linkSystemLibraryName("ole32");
             if (.d3d11 == _backend) {
-                lib.linkSystemLibrary("d3d11");
-                lib.linkSystemLibrary("dxgi");
+                lib.linkSystemLibraryName("d3d11");
+                lib.linkSystemLibraryName("dxgi");
             }
         }
     }
