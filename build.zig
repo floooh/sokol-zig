@@ -16,10 +16,12 @@ pub const Backend = enum {
 };
 
 // build sokol into a static library
-pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend, comptime prefix_path: []const u8) *LibExeObjStep {
-    const lib = b.addStaticLibrary("sokol", null);
-    lib.setBuildMode(mode);
-    lib.setTarget(target);
+pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, backend: Backend, comptime prefix_path: []const u8) *LibExeObjStep {
+    const lib = b.addStaticLibrary(.{
+        .name = "sokol",
+        .target = target,
+        .optimize = optimize,
+    });
     lib.linkLibC();
     const sokol_path = prefix_path ++ "src/sokol/c/";
     const csources = [_][]const u8 {
@@ -86,12 +88,15 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend
 }
 
 // build one of the example exes
-fn buildExample(b: *Builder, target: CrossTarget, mode: Mode, sokol: *LibExeObjStep, comptime name: []const u8) void {
-    const e = b.addExecutable(name, "src/examples/" ++ name ++ ".zig");
-    e.setBuildMode(mode);
-    e.setTarget(target);
+fn buildExample(b: *Builder, target: CrossTarget, optimize: Mode, sokol: *LibExeObjStep, comptime name: []const u8) void {
+    const e = b.addExecutable(.{
+        .name = name,
+        .root_source_file = .{ .path = "src/examples/" ++ name ++ ".zig" },
+        .target = target,
+        .optimize = optimize,
+    });
     e.linkLibrary(sokol);
-    e.addPackagePath("sokol", "src/sokol/sokol.zig");
+    e.addAnonymousModule("sokol", .{ .source_file = .{ .path = "src/sokol/sokol.zig" } });
     e.install();
     b.step("run-" ++ name, "Run " ++ name).dependOn(&e.run().step);
 }
@@ -101,8 +106,8 @@ pub fn build(b: *Builder) void {
     const backend: Backend = if (force_gl) .gl else .auto;
 
     const target = b.standardTargetOptions(.{});
-    const mode = b.standardReleaseOptions();
-    const sokol = buildSokol(b, target, mode, backend, "");
+    const optimize = b.standardOptimizeOption(.{});
+    const sokol = buildSokol(b, target, optimize, backend, "");
     const examples = .{
         "clear",
         "triangle",
@@ -125,7 +130,7 @@ pub fn build(b: *Builder) void {
         "shapes"
     };
     inline for (examples) |example| {
-        buildExample(b, target, mode, sokol, example);
+        buildExample(b, target, optimize, sokol, example);
     }
     buildShaders(b);
 }
