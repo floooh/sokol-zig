@@ -2,9 +2,11 @@
 //  blend.zig
 //  Test/demonstrate blend modes.
 //------------------------------------------------------------------------------
-const sg    = @import("sokol").gfx;
-const sapp  = @import("sokol").app;
-const sgapp = @import("sokol").app_gfx_glue;
+const sokol = @import("sokol");
+const slog  = sokol.log;
+const sg    = sokol.gfx;
+const sapp  = sokol.app;
+const sgapp = sokol.app_gfx_glue;
 const vec3  = @import("math.zig").Vec3;
 const mat4  = @import("math.zig").Mat4;
 const shd   = @import("shaders/blend.glsl.zig");
@@ -23,7 +25,8 @@ const state = struct {
 export fn init() void {
     sg.setup(.{
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
-        .context = sgapp.context()
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
     });
 
     state.pass_action.colors[0].action = .DONTCARE;
@@ -129,5 +132,6 @@ pub fn main() void {
         .sample_count = 4,
         .window_title = "blend.zig",
         .icon = .{ .sokol_default = true },
+        .logger = .{ .func = slog.func },
     });
 }

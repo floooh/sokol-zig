@@ -3,10 +3,12 @@
 //
 //  sokol_gl.h / sokol.sgl sample program.
 //------------------------------------------------------------------------------
-const sg    = @import("sokol").gfx;
-const sapp  = @import("sokol").app;
-const sgl   = @import("sokol").gl;
-const sgapp = @import("sokol").app_gfx_glue;
+const sokol = @import("sokol");
+const slog  = sokol.log;
+const sg    = sokol.gfx;
+const sapp  = sokol.app;
+const sgl   = sokol.gl;
+const sgapp = sokol.app_gfx_glue;
 const math  = @import("std").math;
 
 const state = struct {
@@ -28,10 +30,13 @@ const state = struct {
 export fn init() void {
     // setup sokol-gfx
     sg.setup(.{
-        .context = sgapp.context()
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
     });
     // setup sokol-gl
-    sgl.setup(.{});
+    sgl.setup(.{
+        .logger = .{ .func = slog.func },
+    });
 
     // a checkerboard texture
     const img_width = 8;
@@ -234,9 +239,8 @@ pub fn main() void {
         .width = 512,
         .height = 512,
         .sample_count = 4,
-        .icon = .{
-            .sokol_default = true,
-        },
-        .window_title = "sgl.zig"
+        .icon = .{ .sokol_default = true },
+        .window_title = "sgl.zig",
+        .logger = .{ .func = slog.func },
     });
 }

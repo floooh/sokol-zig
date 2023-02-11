@@ -3,9 +3,11 @@
 //
 //  Vertex buffer, shader, pipeline state object.
 //------------------------------------------------------------------------------
-const sg    = @import("sokol").gfx;
-const sapp  = @import("sokol").app;
-const sgapp = @import("sokol").app_gfx_glue;
+const sokol = @import("sokol");
+const slog  = sokol.log;
+const sg    = sokol.gfx;
+const sapp  = sokol.app;
+const sgapp = sokol.app_gfx_glue;
 
 const state = struct {
     var bind: sg.Bindings = .{};
@@ -14,7 +16,8 @@ const state = struct {
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context()
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
     });
 
     // create vertex buffer with triangle vertices
@@ -58,10 +61,9 @@ pub fn main() void {
         .cleanup_cb = cleanup,
         .width = 640,
         .height = 480,
-        .icon = .{
-            .sokol_default = true,
-        },
-        .window_title = "triangle.zig"
+        .icon = .{ .sokol_default = true },
+        .window_title = "triangle.zig",
+        .logger = .{ .func = slog.func },
     });
 }
 
@@ -151,4 +153,3 @@ fn shaderDesc() sg.ShaderDesc {
     }
     return desc;
 }
-

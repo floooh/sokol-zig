@@ -3,10 +3,12 @@
 //
 //  Demonstrates formatted printing with sokol.debugtext
 //------------------------------------------------------------------------------
-const sg    = @import("sokol").gfx;
-const sapp  = @import("sokol").app;
-const sgapp = @import("sokol").app_gfx_glue;
-const stm   = @import("sokol").time;
+const sokol = @import("sokol");
+const slog  = sokol.log;
+const sg    = sokol.gfx;
+const sapp  = sokol.app;
+const sgapp = sokol.app_gfx_glue;
+const stm   = sokol.time;
 const sdtx  = @import("sokol").debugtext;
 
 // only needed when using std.fmt directly instead of sokol.debugtext.print()
@@ -35,10 +37,13 @@ const state = struct {
 export fn init() void {
     // setup sokol.time and sokol.gfx
     stm.setup();
-    sg.setup(.{ .context = sgapp.context() });
+    sg.setup(.{
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
+    });
 
     // setup sokol.debugtext with 3 builtin fonts
-    var sdtx_desc: sdtx.Desc = .{};
+    var sdtx_desc: sdtx.Desc = .{ .logger = .{ .func = slog.func } };
     sdtx_desc.fonts[KC854] = sdtx.fontKc854();
     sdtx_desc.fonts[C64] = sdtx.fontC64();
     sdtx_desc.fonts[ORIC] = sdtx.fontOric();
@@ -91,9 +96,8 @@ pub fn main() void {
         .cleanup_cb = cleanup,
         .width = 640,
         .height = 480,
-        .icon = .{
-            .sokol_default = true,
-        },
-        .window_title = "debugtext-print.zig"
+        .icon = .{ .sokol_default = true },
+        .window_title = "debugtext-print.zig",
+        .logger = .{ .func = slog.func },
     });
 }

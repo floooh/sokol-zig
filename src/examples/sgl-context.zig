@@ -5,6 +5,7 @@
 //  using contexts.
 //------------------------------------------------------------------------------
 const sokol = @import("sokol");
+const slog  = sokol.log;
 const sg    = sokol.gfx;
 const sapp  = sokol.app;
 const sgapp = sokol.app_gfx_glue;
@@ -31,7 +32,10 @@ const offscreen_height = 32;
 
 export fn init() void {
     // setup sokol-gfx
-    sg.setup(.{ .context = sgapp.context() });
+    sg.setup(.{
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
+    });
 
     // setup sokol-gl with the default context compatible with the default
     // render pass (which means just keep pixelformats and sample count at defaults)
@@ -41,6 +45,7 @@ export fn init() void {
     sgl.setup(.{
         .max_vertices = 64,
         .max_commands = 16,
+        .logger = .{ .func = slog.func },
     });
 
     // initialize a pass action struct for the default pass to clear to a light-blue color
@@ -133,10 +138,9 @@ pub fn main() void {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .icon = .{
-            .sokol_default = true,
-        },
-        .window_title = "sgl-context.zig"
+        .icon = .{ .sokol_default = true },
+        .window_title = "sgl-context.zig",
+        .logger = .{ .func = slog.func },
     });
 }
 
@@ -177,4 +181,3 @@ fn draw_cube() void {
     sgl.v3fT2f( 1.0,  1.0, -1.0, 0.0, 0.0);
     sgl.end();
 }
-

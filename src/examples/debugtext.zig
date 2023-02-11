@@ -3,10 +3,12 @@
 //
 //  Basic test and demo for the sokol.debugtext module
 //------------------------------------------------------------------------------
-const sg    = @import("sokol").gfx;
-const sapp  = @import("sokol").app;
-const sgapp = @import("sokol").app_gfx_glue;
-const sdtx  = @import("sokol").debugtext;
+const sokol = @import("sokol");
+const slog  = sokol.log;
+const sg    = sokol.gfx;
+const sapp  = sokol.app;
+const sgapp = sokol.app_gfx_glue;
+const sdtx  = sokol.debugtext;
 
 // font indices
 const KC853 = 0;
@@ -19,10 +21,13 @@ const ORIC  = 5;
 var pass_action: sg.PassAction = .{};
 
 export fn init() void {
-    sg.setup(.{ .context = sgapp.context() });
+    sg.setup(.{
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
+    });
 
     // setup sokol-debugtext with all builtin fonts
-    var sdtx_desc: sdtx.Desc = .{};
+    var sdtx_desc: sdtx.Desc = .{ .logger = .{ .func = slog.func } };
     sdtx_desc.fonts[KC853] = sdtx.fontKc853();
     sdtx_desc.fonts[KC854] = sdtx.fontKc854();
     sdtx_desc.fonts[Z1013] = sdtx.fontZ1013();
@@ -83,9 +88,8 @@ pub fn main() void {
         .cleanup_cb = cleanup,
         .width = 1024,
         .height = 600,
-        .icon = .{
-            .sokol_default = true,
-        },
-        .window_title = "debugtext.zig"
+        .icon = .{ .sokol_default = true },
+        .window_title = "debugtext.zig",
+        .logger = .{ .func = slog.func },
     });
 }

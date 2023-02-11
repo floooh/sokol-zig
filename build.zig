@@ -23,6 +23,7 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, backend: Backend
     lib.linkLibC();
     const sokol_path = prefix_path ++ "src/sokol/c/";
     const csources = [_][]const u8 {
+        "sokol_log.c",
         "sokol_app.c",
         "sokol_gfx.c",
         "sokol_time.c",

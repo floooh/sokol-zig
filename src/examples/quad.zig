@@ -3,9 +3,11 @@
 //
 //  Simple 2D rendering with vertex- and index-buffer.
 //------------------------------------------------------------------------------
-const sg    = @import("sokol").gfx;
-const sapp  = @import("sokol").app;
-const sgapp = @import("sokol").app_gfx_glue;
+const sokol = @import("sokol");
+const slog  = sokol.log;
+const sg    = sokol.gfx;
+const sapp  = sokol.app;
+const sgapp = sokol.app_gfx_glue;
 const shd   = @import("shaders/quad.glsl.zig");
 
 const state = struct {
@@ -16,7 +18,8 @@ const state = struct {
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context()
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
     });
 
     // a vertex buffer
@@ -69,9 +72,8 @@ pub fn main() void {
         .cleanup_cb = cleanup,
         .width = 640,
         .height = 480,
-        .icon = .{
-            .sokol_default = true,
-        },
-        .window_title = "quad.zig"
+        .icon = .{ .sokol_default = true },
+        .window_title = "quad.zig",
+        .logger = .{ .func = slog.func },
     });
 }

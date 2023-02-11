@@ -3,16 +3,19 @@
 //
 //  Just clear the framebuffer with an animated color.
 //------------------------------------------------------------------------------
-const sg    = @import("sokol").gfx;
-const sapp  = @import("sokol").app;
-const sgapp = @import("sokol").app_gfx_glue;
+const sokol = @import("sokol");
+const slog  = sokol.log;
+const sg    = sokol.gfx;
+const sapp  = sokol.app;
+const sgapp = sokol.app_gfx_glue;
 const print = @import("std").debug.print;
 
 var pass_action: sg.PassAction = .{};
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context()
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func }
     });
     pass_action.colors[0] = .{ .action=.CLEAR, .value=.{ .r=1, .g=1, .b=0, .a=1 } };
     print("Backend: {}\n", .{ sg.queryBackend()});
@@ -41,6 +44,9 @@ pub fn main() void {
             .sokol_default = true,
         },
         .window_title = "clear.zig",
+        .logger = .{
+            .func = slog.func,
+        },
         .win32_console_attach = true,
     });
 }

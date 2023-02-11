@@ -10,9 +10,11 @@
 //  (using the sokol shader compiler allows to easily 'normalize' those differences.
 //------------------------------------------------------------------------------
 const math  = @import("std").math;
-const sg    = @import("sokol").gfx;
-const sapp  = @import("sokol").app;
-const sgapp = @import("sokol").app_gfx_glue;
+const sokol = @import("sokol");
+const slog  = sokol.log;
+const sg    = sokol.gfx;
+const sapp  = sokol.app;
+const sgapp = sokol.app_gfx_glue;
 const vec2  = @import("math.zig").Vec2;
 const vec3  = @import("math.zig").Vec3;
 const mat4  = @import("math.zig").Mat4;
@@ -46,7 +48,8 @@ const state = struct {
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context()
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
     });
 
     // setup pass action for default render pass
@@ -226,10 +229,9 @@ pub fn main() void {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .icon = .{
-            .sokol_default = true,
-        },
-        .window_title = "mrt.zig"
+        .icon = .{ .sokol_default = true },
+        .window_title = "mrt.zig",
+        .logger = .{ .func = slog.func },
     });
 }
 

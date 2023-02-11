@@ -4,9 +4,11 @@
 //  Render separate geometries in vertex- and index-buffers with
 //  buffer offsets.
 //------------------------------------------------------------------------------
-const sg    = @import("sokol").gfx;
-const sapp  = @import("sokol").app;
-const sgapp = @import("sokol").app_gfx_glue;
+const sokol = @import("sokol");
+const slog  = sokol.log;
+const sg    = sokol.gfx;
+const sapp  = sokol.app;
+const sgapp = sokol.app_gfx_glue;
 const shd   = @import("shaders/bufferoffsets.glsl.zig");
 
 const state = struct {
@@ -22,7 +24,8 @@ const Vertex = extern struct {
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context()
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
     });
 
     // clear to a blue-ish color
@@ -94,9 +97,8 @@ pub fn main() void {
         .cleanup_cb = cleanup,
         .width = 800,
         .height = 600,
-        .icon = .{
-            .sokol_default = true,
-        },
-        .window_title = "bufferoffsets.zig"
+        .icon = .{ .sokol_default = true },
+        .window_title = "bufferoffsets.zig",
+        .logger = .{ .func = slog.func },
     });
 }

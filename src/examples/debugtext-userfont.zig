@@ -3,10 +3,12 @@
 //
 //  How to use a user-defined font with sokol.debugtext
 //------------------------------------------------------------------------------
-const sg    = @import("sokol").gfx;
-const sapp  = @import("sokol").app;
-const sgapp = @import("sokol").app_gfx_glue;
-const sdtx  = @import("sokol").debugtext;
+const sokol = @import("sokol");
+const slog  = sokol.log;
+const sg    = sokol.gfx;
+const sapp  = sokol.app;
+const sgapp = sokol.app_gfx_glue;
+const sdtx  = sokol.debugtext;
 
 // use font-slot 1 for the user-defined font, there's no particular
 // reason why this isn't 0, except for testing
@@ -40,12 +42,15 @@ const state = struct {
 };
 
 export fn init() void {
-    sg.setup(.{ .context = sgapp.context() });
+    sg.setup(.{
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
+    });
 
     // setup sokol.debugtext with a user-defined font as the only font
     // NOTE that the user font only provides pixel data for the
     // characters 0x20 to 0x9F (inclusive)
-    var sdtx_desc: sdtx.Desc = .{};
+    var sdtx_desc: sdtx.Desc = .{ .logger = .{ .func = slog.func }};
     sdtx_desc.fonts[UserFont] = .{
         .data = sdtx.asRange(&user_font),
         .first_char = 0x20,
@@ -96,10 +101,9 @@ pub fn main() void {
         .cleanup_cb = cleanup,
         .width = 800,
         .height = 600,
-        .icon = .{
-            .sokol_default = true,
-        },
-        .window_title = "debugtext-userfont.zig"
+        .icon = .{ .sokol_default = true },
+        .window_title = "debugtext-userfont.zig",
+        .logger = .{ .func = slog.func },
     });
 }
 

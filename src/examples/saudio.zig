@@ -2,10 +2,12 @@
 //  saudio.zig
 //  Test sokol-audio zig bindings
 //------------------------------------------------------------------------------
-const sg     = @import("sokol").gfx;
-const sapp   = @import("sokol").app;
-const saudio = @import("sokol").audio;
-const sgapp  = @import("sokol").app_gfx_glue;
+const sokol  = @import("sokol");
+const slog   = sokol.log;
+const sg     = sokol.gfx;
+const sapp   = sokol.app;
+const saudio = sokol.audio;
+const sgapp  = sokol.app_gfx_glue;
 
 const NumSamples = 32;
 
@@ -17,8 +19,13 @@ const state = struct {
 };
 
 export fn init() void {
-    sg.setup(.{ .context = sgapp.context() });
-    saudio.setup(.{});
+    sg.setup(.{
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
+    });
+    saudio.setup(.{
+        .logger = .{ .func = slog.func },
+    });
     state.pass_action.colors[0] = .{ .action=.CLEAR, .value = .{ .r=1, .g=0.5, .b=0, .a=1 }};
 }
 
@@ -50,9 +57,8 @@ pub fn main() void {
         .cleanup_cb = cleanup,
         .width = 640,
         .height = 480,
-        .icon = .{
-            .sokol_default = true,
-        },
-        .window_title = "saudio.zig"
+        .icon = .{ .sokol_default = true },
+        .window_title = "saudio.zig",
+        .logger = .{ .func = slog.func },
     });
 }
