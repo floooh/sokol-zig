@@ -42,25 +42,39 @@
         ...
         saudio_setup(&(saudio_desc){ .logger.func = slog_func });
 
-    Logging output goes to stderr and/or a platform specific logging subsystem:
+    Logging output goes to stderr and/or a platform specific logging subsystem
+    (which means that in some scenarios you might see logging messages duplicated):
 
         - Windows: stderr + OutputDebugStringA()
         - macOS/iOS/Linux: stderr + syslog()
-        - Emscripten: browser console
+        - Emscripten: console.info()/warn()/error()
         - Android: __android_log_write()
+
+    On Windows with sokol_app.h also note the runtime config items to make
+    stdout/stderr output visible on the console for WinMain() applications
+    via sapp_desc.win32_console_attach or sapp_desc.win32_console_create,
+    however when running in a debugger on Windows, the logging output should
+    show up on the debug output UI panel.
 
     In debug mode, a log message might look like this:
 
-        [saudio] [error] /Users/floh/projects/sokol/sokol_audio.h:2422:0: COREAUDIO_NEW_OUTPUT_FAILED (id:32)
+        [sspine][error][id:12] /Users/floh/projects/sokol/util/sokol_spine.h:3472:0:
+            SKELETON_DESC_NO_ATLAS: no atlas object provided in sspine_skeleton_desc.atlas
 
-    The source path and line number is formatted in like compiler errors, in some IDEs (like VSCode)
+    The source path and line number is formatted like compiler errors, in some IDEs (like VSCode)
     such error messages are clickable.
 
     In release mode, logging is less verbose as to not bloat the executable with string data, but you still get
-    enough information to identify an error:
+    enough information to identify the type and location of an error:
 
-        [saudio] [error] line:2422 id:32
+        [sspine][error][id:12][line:3472]
 
+    RULES FOR WRITING YOUR OWN LOGGING FUNCTION
+    ===========================================
+    - must be re-entrant because it might be called from different threads
+    - must treat **all** provided string pointers as optional (can be null)
+    - don't store the string pointers, copy the string data instead
+    - must not return for log level panic
 
     LICENSE
     =======
@@ -124,12 +138,11 @@ SOKOL_LOG_API_DECL void slog_func(const char* tag, uint32_t log_level, uint32_t 
 #endif
 #endif // SOKOL_LOG_INCLUDED
 
-// ██╗███╗   ███╗██████╗ ██╗     ███████╗███╗   ███╗███████╗███╗   ██╗████████╗ █████╗ ████████╗██╗ ██████╗ ███╗   ██╗
-// ██║████╗ ████║██╔══██╗██║     ██╔════╝████╗ ████║██╔════╝████╗  ██║╚══██╔══╝██╔══██╗╚══██╔══╝██║██╔═══██╗████╗  ██║
-// ██║██╔████╔██║██████╔╝██║     █████╗  ██╔████╔██║█████╗  ██╔██╗ ██║   ██║   ███████║   ██║   ██║██║   ██║██╔██╗ ██║
-// ██║██║╚██╔╝██║██╔═══╝ ██║     ██╔══╝  ██║╚██╔╝██║██╔══╝  ██║╚██╗██║   ██║   ██╔══██║   ██║   ██║██║   ██║██║╚██╗██║
-// ██║██║ ╚═╝ ██║██║     ███████╗███████╗██║ ╚═╝ ██║███████╗██║ ╚████║   ██║   ██║  ██║   ██║   ██║╚██████╔╝██║ ╚████║
-// ╚═╝╚═╝     ╚═╝╚═╝     ╚══════╝╚══════╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+// ██ ███    ███ ██████  ██      ███████ ███    ███ ███████ ███    ██ ████████  █████  ████████ ██  ██████  ███    ██
+// ██ ████  ████ ██   ██ ██      ██      ████  ████ ██      ████   ██    ██    ██   ██    ██    ██ ██    ██ ████   ██
+// ██ ██ ████ ██ ██████  ██      █████   ██ ████ ██ █████   ██ ██  ██    ██    ███████    ██    ██ ██    ██ ██ ██  ██
+// ██ ██  ██  ██ ██      ██      ██      ██  ██  ██ ██      ██  ██ ██    ██    ██   ██    ██    ██ ██    ██ ██  ██ ██
+// ██ ██      ██ ██      ███████ ███████ ██      ██ ███████ ██   ████    ██    ██   ██    ██    ██  ██████  ██   ████
 //
 // >>implementation
 #ifdef SOKOL_LOG_IMPL
@@ -195,7 +208,10 @@ SOKOL_LOG_API_DECL void slog_func(const char* tag, uint32_t log_level, uint32_t 
 #include <syslog.h>
 #endif
 
-_SOKOL_PRIVATE char* _slog_append(const char* str, char* dst, const char* end) {
+// size of line buffer (on stack!) in bytes including terminating zero
+#define _SLOG_LINE_LENGTH (512)
+
+_SOKOL_PRIVATE char* _slog_append(const char* str, char* dst, char* end) {
     if (str) {
         char c;
         while (((c = *str++) != 0) && (dst < (end - 1))) {
@@ -244,9 +260,9 @@ SOKOL_API_IMPL void slog_func(const char* tag, uint32_t log_level, uint32_t log_
     }
 
     // build log output line
-    char line_buf[512];
+    char line_buf[_SLOG_LINE_LENGTH];
     char* str = line_buf;
-    const char* end = line_buf + sizeof(line_buf);
+    char* end = line_buf + sizeof(line_buf);
     char num_buf[32];
     if (tag) {
         str = _slog_append("[", str, end);
@@ -258,25 +274,29 @@ SOKOL_API_IMPL void slog_func(const char* tag, uint32_t log_level, uint32_t log_
     str = _slog_append("]", str, end);
     str = _slog_append("[id:", str, end);
     str = _slog_append(_slog_itoa(log_item, num_buf, sizeof(num_buf)), str, end);
-    str = _slog_append("] ", str, end);
+    str = _slog_append("]", str, end);
     // if a filename is provided, build a clickable log message that's compatible with compiler error messages
-    #if defined(_MSC_VER)
-        // MSVC compiler error format
-        if (filename) {
+    if (filename) {
+        str = _slog_append(" ", str, end);
+        #if defined(_MSC_VER)
+            // MSVC compiler error format
             str = _slog_append(filename, str, end);
-        }
-        str = _slog_append("(", str, end);
-        str = _slog_append(_slog_itoa(line_nr, num_buf, sizeof(num_buf)), str, end);
-        str = _slog_append("): ", str, end);
-    #else
-        // gcc/clang compiler error format
-        if (filename) {
+            str = _slog_append("(", str, end);
+            str = _slog_append(_slog_itoa(line_nr, num_buf, sizeof(num_buf)), str, end);
+            str = _slog_append("): ", str, end);
+        #else
+            // gcc/clang compiler error format
             str = _slog_append(filename, str, end);
-        }
-        str = _slog_append(":", str, end);
+            str = _slog_append(":", str, end);
+            str = _slog_append(_slog_itoa(line_nr, num_buf, sizeof(num_buf)), str, end);
+            str = _slog_append(":0: ", str, end);
+        #endif
+    }
+    else {
+        str = _slog_append("[line:", str, end);
         str = _slog_append(_slog_itoa(line_nr, num_buf, sizeof(num_buf)), str, end);
-        str = _slog_append(":0: ", str, end);
-    #endif
+        str = _slog_append("] ", str, end);
+    }
     if (message) {
         str = _slog_append("\n\t", str, end);
         str = _slog_append(message, str, end);
@@ -284,6 +304,7 @@ SOKOL_API_IMPL void slog_func(const char* tag, uint32_t log_level, uint32_t log_
     str = _slog_append("\n\n", str, end);
     if (0 == log_level) {
         str = _slog_append("ABORTING because of [panic]\n", str, end);
+        (void)str;
     }
 
     // print to stderr?
