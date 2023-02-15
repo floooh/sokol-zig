@@ -172,6 +172,7 @@ pub const Limits = extern struct {
     max_image_array_layers: i32 = 0,
     max_vertex_attrs: i32 = 0,
     gl_max_vertex_uniform_vectors: i32 = 0,
+    gl_max_combined_texture_image_units: i32 = 0,
 };
 pub const ResourceState = enum(i32) {
     INITIAL,
