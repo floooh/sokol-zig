@@ -19,7 +19,7 @@ pub const Config = struct {
     backend: Backend = .auto,
     force_egl: bool = false,
 
-    enable_x11: bool = true, 
+    enable_x11: bool = true,
     enable_wayland: bool = false
 };
 
@@ -28,7 +28,7 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, config: Config, 
     const lib = b.addStaticLibrary("sokol", null);
     lib.setBuildMode(mode);
     lib.setTarget(target);
-    
+
     lib.linkLibC();
     const sokol_path = prefix_path ++ "src/sokol/c/";
     const csources = [_][]const u8 {
@@ -106,8 +106,8 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, config: Config, 
                 lib.linkSystemLibrary("xkbcommon");
             }
             if (link_egl) {
-                lib.linkSystemLibrary("egl");  
-            } 
+                lib.linkSystemLibrary("egl");
+            }
         }
         else if (lib.target.isWindows()) {
             lib.linkSystemLibraryName("kernel32");
@@ -142,6 +142,7 @@ pub fn build(b: *Builder) void {
 
     config.enable_wayland = b.option(bool, "wayland", "Compile with wayland-support (default: false)") orelse false;
     config.enable_x11 = b.option(bool, "x11", "Compile with x11-support (default: true)") orelse true;
+    config.force_egl = b.option(bool, "egl", "Use EGL instead of GLX if possible (default: false)") orelse false;
 
     const target = b.standardTargetOptions(.{});
     const mode = b.standardReleaseOptions();
