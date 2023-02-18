@@ -85,7 +85,7 @@ const sokol = @import("lib/sokol-zig/build.zig");
 // pub fn build(b: *std.build.Builder) void {
 // ...
 
-const sokol_build = sokol.buildSokol(b, target, mode, Backend.auto, "lib/sokol-zig/");
+const sokol_build = sokol.buildSokol(b, target, mode, .{}, "lib/sokol-zig/");
 
 // ...
 // const exe = b.addExecutable("demo", "src/main.zig");
