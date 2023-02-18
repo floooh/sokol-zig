@@ -140,6 +140,8 @@ pub fn build(b: *Builder) void {
     const force_gl = b.option(bool, "gl", "Force GL backend") orelse false;
     config.backend = if (force_gl) .gl else .auto;
 
+    // NOTE: Wayland support is *not* currently supported in the standard sokol-zig bindings,
+    // you need to generate your own bindings using this PR: https://github.com/floooh/sokol/pull/425
     config.enable_wayland = b.option(bool, "wayland", "Compile with wayland-support (default: false)") orelse false;
     config.enable_x11 = b.option(bool, "x11", "Compile with x11-support (default: true)") orelse true;
     config.force_egl = b.option(bool, "egl", "Use EGL instead of GLX if possible (default: false)") orelse false;
