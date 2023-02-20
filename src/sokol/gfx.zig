@@ -609,8 +609,6 @@ pub const ImageInfo = extern struct {
     upd_frame_index: u32 = 0,
     num_slots: i32 = 0,
     active_slot: i32 = 0,
-    width: i32 = 0,
-    height: i32 = 0,
 };
 pub const ShaderInfo = extern struct {
     slot: SlotInfo = .{ },
@@ -1074,6 +1072,26 @@ pub fn queryPipelineInfo(pip: Pipeline) PipelineInfo {
 pub extern fn sg_query_pass_info(Pass) PassInfo;
 pub fn queryPassInfo(pass: Pass) PassInfo {
     return sg_query_pass_info(pass);
+}
+pub extern fn sg_query_buffer_desc(Buffer) BufferDesc;
+pub fn queryBufferDesc(buf: Buffer) BufferDesc {
+    return sg_query_buffer_desc(buf);
+}
+pub extern fn sg_query_image_desc(Image) ImageDesc;
+pub fn queryImageDesc(img: Image) ImageDesc {
+    return sg_query_image_desc(img);
+}
+pub extern fn sg_query_shader_desc(Shader) ShaderDesc;
+pub fn queryShaderDesc(shd: Shader) ShaderDesc {
+    return sg_query_shader_desc(shd);
+}
+pub extern fn sg_query_pipeline_desc(Pipeline) PipelineDesc;
+pub fn queryPipelineDesc(pip: Pipeline) PipelineDesc {
+    return sg_query_pipeline_desc(pip);
+}
+pub extern fn sg_query_pass_desc(Pass) PassDesc;
+pub fn queryPassDesc(pass: Pass) PassDesc {
+    return sg_query_pass_desc(pass);
 }
 pub extern fn sg_query_buffer_defaults([*c]const BufferDesc) BufferDesc;
 pub fn queryBufferDefaults(desc: BufferDesc) BufferDesc {
