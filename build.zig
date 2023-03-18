@@ -1,9 +1,10 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const Builder = std.build.Builder;
-const LibExeObjStep = std.build.LibExeObjStep;
+const Build = std.Build;
+const CompileStep = std.build.CompileStep;
 const CrossTarget = std.zig.CrossTarget;
-const Mode = std.builtin.Mode;
+const Module = std.build.Module;
+const OptimizeMode = std.builtin.OptimizeMode;
 
 pub const Backend = enum {
     auto,   // Windows: D3D11, macOS/iOS: Metal, otherwise: GL
@@ -24,10 +25,12 @@ pub const Config = struct {
 };
 
 // build sokol into a static library
-pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, config: Config, comptime prefix_path: []const u8) *LibExeObjStep {
-    const lib = b.addStaticLibrary("sokol", null);
-    lib.setBuildMode(mode);
-    lib.setTarget(target);
+pub fn buildSokol(b: *Build, target: CrossTarget, optimize: OptimizeMode, config: Config, comptime prefix_path: []const u8) *CompileStep {
+    const lib = b.addStaticLibrary(.{
+        .name = "sokol",
+        .target = target,
+        .optimize = optimize,
+    });
 
     lib.linkLibC();
     const sokol_path = prefix_path ++ "src/sokol/c/";
@@ -124,17 +127,22 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, config: Config, 
 }
 
 // build one of the example exes
-fn buildExample(b: *Builder, target: CrossTarget, mode: Mode, sokol: *LibExeObjStep, comptime name: []const u8) void {
-    const e = b.addExecutable(name, "src/examples/" ++ name ++ ".zig");
-    e.setBuildMode(mode);
-    e.setTarget(target);
+fn buildExample(b: *Build, target: CrossTarget, optimize: OptimizeMode, sokol: *CompileStep, sokol_module: *Module, comptime name: []const u8) void {
+    const e = b.addExecutable(.{
+        .name = name,
+        .root_source_file = .{
+            .path = "src/examples/" ++ name ++ ".zig",
+        },
+        .target = target,
+        .optimize = optimize,
+    });
     e.linkLibrary(sokol);
-    e.addPackagePath("sokol", "src/sokol/sokol.zig");
+    e.addModule("sokol", sokol_module);
     e.install();
     b.step("run-" ++ name, "Run " ++ name).dependOn(&e.run().step);
 }
 
-pub fn build(b: *Builder) void {
+pub fn build(b: *Build) void {
     var config: Config = .{};
 
     const force_gl = b.option(bool, "gl", "Force GL backend") orelse false;
@@ -147,8 +155,9 @@ pub fn build(b: *Builder) void {
     config.force_egl = b.option(bool, "egl", "Use EGL instead of GLX if possible (default: false)") orelse false;
 
     const target = b.standardTargetOptions(.{});
-    const mode = b.standardReleaseOptions();
-    const sokol = buildSokol(b, target, mode, config, "");
+    const optimize = b.standardOptimizeOption(.{});
+    const sokol = buildSokol(b, target, optimize, config, "");
+    const sokol_module = b.addModule("sokol", .{ .source_file = .{ .path = "src/sokol/sokol.zig" }});
     const examples = .{
         "clear",
         "triangle",
@@ -171,13 +180,13 @@ pub fn build(b: *Builder) void {
         "shapes"
     };
     inline for (examples) |example| {
-        buildExample(b, target, mode, sokol, example);
+        buildExample(b, target, optimize, sokol, sokol_module, example);
     }
     buildShaders(b);
 }
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
-fn buildShaders(b: *Builder) void {
+fn buildShaders(b: *Build) void {
     const sokol_tools_bin_dir = "../sokol-tools-bin/bin/";
     const shaders_dir = "src/examples/shaders/";
     const shaders = .{
