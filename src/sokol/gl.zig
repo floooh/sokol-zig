@@ -7,6 +7,19 @@ const sg = @import("gfx.zig");
 fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
   return @import("std").mem.span(c_str);
 }
+pub const LogItem = enum(i32) {
+    OK,
+    MALLOC_FAILED,
+    MAKE_PIPELINE_FAILED,
+    PIPELINE_POOL_EXHAUSTED,
+    ADD_COMMIT_LISTENER_FAILED,
+    CONTEXT_POOL_EXHAUSTED,
+    CANNOT_DESTROY_DEFAULT_CONTEXT,
+};
+pub const Logger = extern struct {
+    func: ?*const fn([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
+    user_data: ?*anyopaque = null,
+};
 pub const Pipeline = extern struct {
     id: u32 = 0,
 };
@@ -32,10 +45,6 @@ pub const ContextDesc = extern struct {
 pub const Allocator = extern struct {
     alloc: ?*const fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
     free: ?*const fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
-    user_data: ?*anyopaque = null,
-};
-pub const Logger = extern struct {
-    log_cb: ?*const fn([*c]const u8, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Desc = extern struct {

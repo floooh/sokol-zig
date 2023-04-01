@@ -4,10 +4,12 @@
 //  Render to an offscreen rendertarget texture, and use this texture
 //  for rendering to the display.
 //------------------------------------------------------------------------------
-const sg     = @import("sokol").gfx;
-const sapp   = @import("sokol").app;
-const sgapp  = @import("sokol").app_gfx_glue;
-const sshape = @import("sokol").shape;
+const sokol  = @import("sokol");
+const slog   = sokol.log;
+const sg     = sokol.gfx;
+const sapp   = sokol.app;
+const sgapp  = sokol.app_gfx_glue;
+const sshape = sokol.shape;
 const vec3   = @import("math.zig").Vec3;
 const mat4   = @import("math.zig").Mat4;
 const shd    = @import("shaders/offscreen.glsl.zig");
@@ -34,7 +36,8 @@ const state = struct {
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context()
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
     });
 
     // default pass action: clear to blue-ish
@@ -172,10 +175,9 @@ pub fn main() void {
         .sample_count = 4,
         .width = 800,
         .height = 600,
-        .icon = .{
-            .sokol_default = true,
-        },
-        .window_title = "offscreen.zig"
+        .icon = .{ .sokol_default = true },
+        .window_title = "offscreen.zig",
+        .logger = .{ .func = slog.func },
     });
 }
 

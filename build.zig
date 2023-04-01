@@ -2,11 +2,11 @@ const std = @import("std");
 const builtin = @import("builtin");
 const Builder = std.build.Builder;
 const LibExeObjStep = std.build.LibExeObjStep;
-const CrossTarget = @import("std").zig.CrossTarget;
+const CrossTarget = std.zig.CrossTarget;
 const Mode = std.builtin.Mode;
 
 pub const Backend = enum {
-    auto,   // Windows: D3D11, macOS/iOS: Metal, otherwise: GL
+    auto, // Windows: D3D11, macOS/iOS: Metal, otherwise: GL
     d3d11,
     metal,
     gl,
@@ -15,8 +15,15 @@ pub const Backend = enum {
     wgpu,
 };
 
+pub const Config = struct {
+    backend: Backend = .auto,
+    force_egl: bool = false,
+    enable_x11: bool = true,
+    enable_wayland: bool = false
+};
+
 // build sokol into a static library
-pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, backend: Backend, comptime prefix_path: []const u8) *LibExeObjStep {
+pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, config: Config, comptime prefix_path: []const u8) *LibExeObjStep {
     const lib = b.addStaticLibrary(.{
         .name = "sokol",
         .target = target,
@@ -24,7 +31,8 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, backend: Bac
     });
     lib.linkLibC();
     const sokol_path = prefix_path ++ "src/sokol/c/";
-    const csources = [_][]const u8 {
+    const csources = [_][]const u8{
+        "sokol_log.c",
         "sokol_app.c",
         "sokol_gfx.c",
         "sokol_time.c",
@@ -33,11 +41,15 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, backend: Bac
         "sokol_debugtext.c",
         "sokol_shape.c",
     };
-    var _backend = backend;
+    var _backend = config.backend;
     if (_backend == .auto) {
-        if (lib.target.isDarwin()) { _backend = .metal; }
-        else if (lib.target.isWindows()) { _backend = .d3d11; }
-        else { _backend = .gl; }
+        if (lib.target.isDarwin()) {
+            _backend = .metal;
+        } else if (lib.target.isWindows()) {
+            _backend = .d3d11;
+        } else {
+            _backend = .gl;
+        }
     }
     const backend_option = switch (_backend) {
         .d3d11 => "-DSOKOL_D3D11",
@@ -48,9 +60,10 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, backend: Bac
         .wgpu => "-DSOKOL_WGPU",
         else => unreachable,
     };
+
     if (lib.target.isDarwin()) {
         inline for (csources) |csrc| {
-            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-ObjC", "-DIMPL", backend_option});
+            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{ "-ObjC", "-DIMPL", backend_option });
         }
         lib.linkFramework("Cocoa");
         lib.linkFramework("QuartzCore");
@@ -58,22 +71,47 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, backend: Bac
         if (.metal == _backend) {
             lib.linkFramework("MetalKit");
             lib.linkFramework("Metal");
-        }
-        else {
+        } else {
             lib.linkFramework("OpenGL");
         }
     } else {
+        var egl_flag = if (config.force_egl) "-DSOKOL_FORCE_EGL " else "";
+        var x11_flag = if (!config.enable_x11) "-DSOKOL_DISABLE_X11 " else "";
+        var wayland_flag = if (!config.enable_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
+
         inline for (csources) |csrc| {
-            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-DIMPL", backend_option});
+            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{ "-DIMPL", backend_option, egl_flag, x11_flag, wayland_flag });
         }
+
         if (lib.target.isLinux()) {
-            lib.linkSystemLibrary("X11");
-            lib.linkSystemLibrary("Xi");
-            lib.linkSystemLibrary("Xcursor");
-            lib.linkSystemLibrary("GL");
+            var link_egl = config.force_egl or config.enable_wayland;
+            var egl_ensured = (config.force_egl and config.enable_x11) or config.enable_wayland;
+
             lib.linkSystemLibrary("asound");
-        }
-        else if (lib.target.isWindows()) {
+
+            if (.gles2 == _backend) {
+                lib.linkSystemLibrary("glesv2");
+                if (!egl_ensured) {
+                    @panic("GLES2 in Linux only available with Config.force_egl and/or Wayland");
+                }
+            } else {
+                lib.linkSystemLibrary("GL");
+            }
+            if (config.enable_x11) {
+                lib.linkSystemLibrary("X11");
+                lib.linkSystemLibrary("Xi");
+                lib.linkSystemLibrary("Xcursor");
+            }
+            if (config.enable_wayland) {
+                lib.linkSystemLibrary("wayland-client");
+                lib.linkSystemLibrary("wayland-cursor");
+                lib.linkSystemLibrary("wayland-egl");
+                lib.linkSystemLibrary("xkbcommon");
+            }
+            if (link_egl) {
+                lib.linkSystemLibrary("egl");
+            }
+        } else if (lib.target.isWindows()) {
             lib.linkSystemLibraryName("kernel32");
             lib.linkSystemLibraryName("user32");
             lib.linkSystemLibraryName("gdi32");
@@ -102,12 +140,20 @@ fn buildExample(b: *Builder, target: CrossTarget, optimize: Mode, sokol: *LibExe
 }
 
 pub fn build(b: *Builder) void {
+    var config: Config = .{};
+
     const force_gl = b.option(bool, "gl", "Force GL backend") orelse false;
-    const backend: Backend = if (force_gl) .gl else .auto;
+    config.backend = if (force_gl) .gl else .auto;
+
+    // NOTE: Wayland support is *not* currently supported in the standard sokol-zig bindings,
+    // you need to generate your own bindings using this PR: https://github.com/floooh/sokol/pull/425
+    config.enable_wayland = b.option(bool, "wayland", "Compile with wayland-support (default: false)") orelse false;
+    config.enable_x11 = b.option(bool, "x11", "Compile with x11-support (default: true)") orelse true;
+    config.force_egl = b.option(bool, "egl", "Use EGL instead of GLX if possible (default: false)") orelse false;
 
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    const sokol = buildSokol(b, target, optimize, backend, "");
+    const sokol = buildSokol(b, target, optimize, config, "");
     const examples = .{
         "clear",
         "triangle",
@@ -115,8 +161,7 @@ pub fn build(b: *Builder) void {
         "bufferoffsets",
         "cube",
         "noninterleaved",
-        "texcube",
-        "blend",
+        "texcube", "blend",
         "offscreen",
         "instancing",
         "mrt",

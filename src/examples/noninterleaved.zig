@@ -7,9 +7,11 @@
 //  are 4 vertex buffer bind slots in sg_bindings, but you can keep
 //  several related vertex components interleaved in the same chunk.
 //------------------------------------------------------------------------------
-const sg    = @import("sokol").gfx;
-const sapp  = @import("sokol").app;
-const sgapp = @import("sokol").app_gfx_glue;
+const sokol = @import("sokol");
+const slog  = sokol.log;
+const sg    = sokol.gfx;
+const sapp  = sokol.app;
+const sgapp = sokol.app_gfx_glue;
 const vec3  = @import("math.zig").Vec3;
 const mat4  = @import("math.zig").Mat4;
 const shd   = @import("shaders/noninterleaved.glsl.zig");
@@ -26,7 +28,8 @@ const state = struct {
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context()
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
     });
 
     // cube vertex buffer, NOTE how the vertex components are separate
@@ -116,9 +119,8 @@ pub fn main() void {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .icon = .{
-            .sokol_default = true,
-        },
+        .icon = .{ .sokol_default = true },
+        .logger = .{ .func = slog.func },
         .window_title = "noninterleaved.zig"
     });
 }

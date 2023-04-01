@@ -4,9 +4,11 @@
 //  Demonstrate simple hardware-instancing using a static geometry buffer
 //  and a dynamic instance-data buffer.
 //------------------------------------------------------------------------------
-const sg    = @import("sokol").gfx;
-const sapp  = @import("sokol").app;
-const sgapp = @import("sokol").app_gfx_glue;
+const sokol = @import("sokol");
+const slog  = sokol.log;
+const sg    = sokol.gfx;
+const sapp  = sokol.app;
+const sgapp = sokol.app_gfx_glue;
 const vec3  = @import("math.zig").Vec3;
 const mat4  = @import("math.zig").Mat4;
 const shd   = @import("shaders/instancing.glsl.zig");
@@ -29,7 +31,8 @@ const state = struct {
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context()
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
     });
 
     // pass action to clear frame buffer to black
@@ -151,10 +154,9 @@ pub fn main() void {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .icon = .{
-            .sokol_default = true,
-        },
-        .window_title = "instancing.zig"
+        .icon = .{ .sokol_default = true, },
+        .window_title = "instancing.zig",
+        .logger = .{ .func = slog.func },
     });
 }
 

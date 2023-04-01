@@ -4,6 +4,7 @@
 //  Simple sokol.shape demo.
 //------------------------------------------------------------------------------
 const sokol  = @import("sokol");
+const slog   = sokol.log;
 const sg     = sokol.gfx;
 const sapp   = sokol.app;
 const sgapp  = sokol.app_gfx_glue;
@@ -39,9 +40,14 @@ const state = struct {
 };
 
 export fn init() void {
-    sg.setup(.{ .context = sgapp.context() });
+    sg.setup(.{
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
+    });
 
-    var sdtx_desc: sdtx.Desc = .{};
+    var sdtx_desc: sdtx.Desc = .{
+        .logger = .{ .func = slog.func },
+    };
     sdtx_desc.fonts[0] = sdtx.fontOric();
     sdtx.setup(sdtx_desc);
 
@@ -152,9 +158,8 @@ pub fn main() void {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .icon = .{
-            .sokol_default = true,
-        },
-        .window_title = "shapes.zig"
+        .icon = .{ .sokol_default = true },
+        .window_title = "shapes.zig",
+        .logger = .{ .func = slog.func },
     });
 }

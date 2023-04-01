@@ -4,6 +4,10 @@ Auto-generated Zig bindings for the [sokol headers](https://github.com/floooh/so
 
 For Zig version 0.10.0
 
+If you're on the current dev version, check the branch:
+
+- zig-0.11.0
+
 If you're on an older Zig version, check the following branches (note that these
 also contain older versions of the Sokol C headers):
 
@@ -81,7 +85,7 @@ const sokol = @import("lib/sokol-zig/build.zig");
 // pub fn build(b: *std.build.Builder) void {
 // ...
 
-const sokol_build = sokol.buildSokol(b, target, mode, Backend.auto, "lib/sokol-zig/");
+const sokol_build = sokol.buildSokol(b, target, mode, .{}, "lib/sokol-zig/");
 
 // ...
 // const exe = b.addExecutable("demo", "src/main.zig");

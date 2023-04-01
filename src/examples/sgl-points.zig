@@ -6,9 +6,10 @@
 //  (port of this C sample: https://floooh.github.io/sokol-html5/sgl-points-sapp.html)
 //------------------------------------------------------------------------------
 const sokol = @import("sokol");
-const sg = sokol.gfx;
-const sapp = sokol.app;
-const sgl = sokol.gl;
+const slog  = sokol.log;
+const sg    = sokol.gfx;
+const sapp  = sokol.app;
+const sgl   = sokol.gl;
 const sgapp = sokol.app_gfx_glue;
 const math = @import("std").math;
 
@@ -37,8 +38,13 @@ const palette = [16]Rgb {
 };
 
 export fn init() void {
-    sg.setup(.{ .context = sgapp.context() });
-    sgl.setup(.{});
+    sg.setup(.{
+        .context = sgapp.context(),
+        .logger = .{ .func = slog.func },
+    });
+    sgl.setup(.{
+        .logger = .{ .func = slog.func },
+    });
     state.pass_action.colors[0] = .{ .action=.CLEAR, .value=.{ .r=0, .g=0, .b=0 } };
 }
 
@@ -95,9 +101,8 @@ pub fn main() void {
         .cleanup_cb = cleanup,
         .width = 512,
         .height = 512,
-        .icon = .{
-            .sokol_default = true,
-        },
+        .icon = .{ .sokol_default = true },
         .window_title = "sgl-points.zig",
+        .logger = .{ .func = slog.func },
     });
 }

@@ -1,3 +1,4 @@
+pub const log = @import("log.zig");
 pub const gfx = @import("gfx.zig");
 pub const app = @import("app.zig");
 pub const time = @import("time.zig");
