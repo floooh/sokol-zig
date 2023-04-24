@@ -135,8 +135,9 @@ fn buildExample(b: *Builder, target: CrossTarget, optimize: Mode, sokol: *LibExe
     });
     e.linkLibrary(sokol);
     e.addAnonymousModule("sokol", .{ .source_file = .{ .path = "src/sokol/sokol.zig" } });
-    e.install();
-    b.step("run-" ++ name, "Run " ++ name).dependOn(&e.run().step);
+    b.installArtifact(e);
+    const run = b.addRunArtifact(e);
+    b.step("run-" ++ name, "Run " ++ name).dependOn(&run.step);
 }
 
 pub fn build(b: *Builder) void {
