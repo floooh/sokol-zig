@@ -343,7 +343,6 @@ pub const Desc = extern struct {
     icon: IconDesc = .{ },
     allocator: Allocator = .{ },
     logger: Logger = .{ },
-    gl_force_gles2: bool = false,
     gl_major_version: i32 = 0,
     gl_minor_version: i32 = 0,
     win32_console_utf8: bool = false,
@@ -536,10 +535,6 @@ pub fn eglGetDisplay() ?*const anyopaque {
 pub extern fn sapp_egl_get_context() ?*const anyopaque;
 pub fn eglGetContext() ?*const anyopaque {
     return sapp_egl_get_context();
-}
-pub extern fn sapp_gles2() bool;
-pub fn gles2() bool {
-    return sapp_gles2();
 }
 pub extern fn sapp_html5_ask_leave_site(bool) void;
 pub fn html5AskLeaveSite(ask: bool) void {

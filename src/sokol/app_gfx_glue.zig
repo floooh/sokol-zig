@@ -6,9 +6,6 @@ pub fn context() sg.ContextDesc {
         .color_format = sapp.colorFormat(),
         .depth_format = sapp.depthFormat(),
         .sample_count = sapp.sampleCount(),
-        .gl = .{
-            .force_gles2 = sapp.gles2(),
-        },
         .metal = .{
             .device = sapp.sapp_metal_get_device(),
             .renderpass_descriptor_cb = sapp.sapp_metal_get_renderpass_descriptor,
@@ -28,6 +25,3 @@ pub fn context() sg.ContextDesc {
         }
     };
 }
-
-
-

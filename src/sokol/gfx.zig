@@ -67,7 +67,6 @@ pub const Color = extern struct {
 };
 pub const Backend = enum(i32) {
     GLCORE33,
-    GLES2,
     GLES3,
     D3D11,
     METAL_IOS,
@@ -153,12 +152,7 @@ pub const PixelformatInfo = extern struct {
     __pad: [3]u32 = [_]u32{0} ** 3,
 };
 pub const Features = extern struct {
-    instancing: bool = false,
     origin_top_left: bool = false,
-    multiple_render_targets: bool = false,
-    msaa_render_targets: bool = false,
-    imagetype_3d: bool = false,
-    imagetype_array: bool = false,
     image_clamp_to_border: bool = false,
     mrt_independent_blend_state: bool = false,
     mrt_independent_write_mask: bool = false,
@@ -734,14 +728,12 @@ pub const LogItem = enum(i32) {
     VALIDATE_SHADERDESC_UB_STD140_ARRAY_TYPE,
     VALIDATE_SHADERDESC_NO_CONT_IMGS,
     VALIDATE_SHADERDESC_IMG_NAME,
-    VALIDATE_SHADERDESC_ATTR_NAMES,
     VALIDATE_SHADERDESC_ATTR_SEMANTICS,
     VALIDATE_SHADERDESC_ATTR_STRING_TOO_LONG,
     VALIDATE_PIPELINEDESC_CANARY,
     VALIDATE_PIPELINEDESC_SHADER,
     VALIDATE_PIPELINEDESC_NO_ATTRS,
     VALIDATE_PIPELINEDESC_LAYOUT_STRIDE4,
-    VALIDATE_PIPELINEDESC_ATTR_NAME,
     VALIDATE_PIPELINEDESC_ATTR_SEMANTICS,
     VALIDATE_PASSDESC_CANARY,
     VALIDATE_PASSDESC_NO_COLOR_ATTS,
@@ -799,9 +791,6 @@ pub const LogItem = enum(i32) {
     VALIDATE_UPDIMG_ONCE,
     VALIDATION_FAILED,
 };
-pub const GlContextDesc = extern struct {
-    force_gles2: bool = false,
-};
 pub const MetalContextDesc = extern struct {
     device: ?*const anyopaque = null,
     renderpass_descriptor_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
@@ -833,7 +822,6 @@ pub const ContextDesc = extern struct {
     color_format: i32 = 0,
     depth_format: i32 = 0,
     sample_count: i32 = 0,
-    gl: GlContextDesc = .{ },
     metal: MetalContextDesc = .{ },
     d3d11: D3d11ContextDesc = .{ },
     wgpu: WgpuContextDesc = .{ },
