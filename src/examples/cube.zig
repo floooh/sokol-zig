@@ -91,7 +91,7 @@ export fn init() void {
     state.pip = sg.makePipeline(pip_desc);
 
     // framebuffer clear color
-    state.pass_action.colors[0] = .{ .action=.CLEAR, .value = .{ .r=0.25, .g=0.5, .b=0.75, .a=1 } };
+    state.pass_action.colors[0] = .{ .load_action=.CLEAR, .clear_value = .{ .r=0.25, .g=0.5, .b=0.75, .a=1 } };
 }
 
 export fn frame() void {

@@ -17,13 +17,13 @@ export fn init() void {
         .context = sgapp.context(),
         .logger = .{ .func = slog.func }
     });
-    pass_action.colors[0] = .{ .action=.CLEAR, .value=.{ .r=1, .g=1, .b=0, .a=1 } };
+    pass_action.colors[0] = .{ .load_action=.CLEAR, .clear_value=.{ .r=1, .g=1, .b=0, .a=1 } };
     print("Backend: {}\n", .{ sg.queryBackend()});
 }
 
 export fn frame() void {
-    const g = pass_action.colors[0].value.g + 0.01;
-    pass_action.colors[0].value.g = if (g > 1.0) 0.0 else g;
+    const g = pass_action.colors[0].clear_value.g + 0.01;
+    pass_action.colors[0].clear_value.g = if (g > 1.0) 0.0 else g;
     sg.beginDefaultPass(pass_action, sapp.width(), sapp.height());
     sg.endPass();
     sg.commit();

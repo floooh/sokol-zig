@@ -29,7 +29,7 @@ export fn init() void {
     });
 
     // clear to a blue-ish color
-    state.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r=0.5, .g=0.5, .b=1, .a=1 } };
+    state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r=0.5, .g=0.5, .b=1, .a=1 } };
 
     // a 2D triangle and quad in 1 vertex buffer and 1 index buffer
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{

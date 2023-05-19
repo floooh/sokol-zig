@@ -20,7 +20,7 @@ const vec3  = @import("math.zig").Vec3;
 const mat4  = @import("math.zig").Mat4;
 const shd   = @import("shaders/mrt.glsl.zig");
 
-const offscreen_sample_count = 4;
+const offscreen_sample_count = 1;
 
 const state = struct {
     const offscreen = struct {
@@ -53,14 +53,14 @@ export fn init() void {
     });
 
     // setup pass action for default render pass
-    state.default.pass_action.colors[0] = .{ .action = .DONTCARE };
-    state.default.pass_action.depth     = .{ .action = .DONTCARE };
-    state.default.pass_action.stencil   = .{ .action = .DONTCARE };
+    state.default.pass_action.colors[0] = .{ .load_action = .DONTCARE };
+    state.default.pass_action.depth     = .{ .load_action = .DONTCARE };
+    state.default.pass_action.stencil   = .{ .load_action = .DONTCARE };
 
     // set pass action for offscreen render pass
-    state.offscreen.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r=0.25, .g=0, .b=0, .a=1 } };
-    state.offscreen.pass_action.colors[1] = .{ .action = .CLEAR, .value = .{ .r=0, .g=0.25, .b=0, .a=1 } };
-    state.offscreen.pass_action.colors[2] = .{ .action = .CLEAR, .value = .{ .r=0, .g=0, .b=0.25, .a=1 } };
+    state.offscreen.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r=0.25, .g=0, .b=0, .a=1 } };
+    state.offscreen.pass_action.colors[1] = .{ .load_action = .CLEAR, .clear_value = .{ .r=0, .g=0.25, .b=0, .a=1 } };
+    state.offscreen.pass_action.colors[2] = .{ .load_action = .CLEAR, .clear_value = .{ .r=0, .g=0, .b=0.25, .a=1 } };
 
     // setup the offscreen render pass and render target images,
     // this will also be called when the window resizes

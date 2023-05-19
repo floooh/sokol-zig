@@ -73,7 +73,7 @@ export fn init() void {
     });
 
     // pass-action to clear to black
-    state.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r=0, .g=0, .b=0, .a=1 }};
+    state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r=0, .g=0, .b=0, .a=1 }};
 }
 
 export fn frame() void {

@@ -26,7 +26,7 @@ export fn init() void {
     saudio.setup(.{
         .logger = .{ .func = slog.func },
     });
-    state.pass_action.colors[0] = .{ .action=.CLEAR, .value = .{ .r=1, .g=0.5, .b=0, .a=1 }};
+    state.pass_action.colors[0] = .{ .load_action=.CLEAR, .clear_value = .{ .r=1, .g=0.5, .b=0, .a=1 }};
 }
 
 export fn frame() void {

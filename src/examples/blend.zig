@@ -29,9 +29,9 @@ export fn init() void {
         .logger = .{ .func = slog.func },
     });
 
-    state.pass_action.colors[0].action = .DONTCARE;
-    state.pass_action.depth.action = .DONTCARE;
-    state.pass_action.stencil.action = .DONTCARE;
+    state.pass_action.colors[0].load_action = .DONTCARE;
+    state.pass_action.depth.load_action = .DONTCARE;
+    state.pass_action.stencil.load_action = .DONTCARE;
 
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
         .data = sg.asRange(&[_]f32 {

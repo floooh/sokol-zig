@@ -14,7 +14,7 @@ const vec3   = @import("math.zig").Vec3;
 const mat4   = @import("math.zig").Mat4;
 const shd    = @import("shaders/offscreen.glsl.zig");
 
-const offscreen_sample_count = 4;
+const offscreen_sample_count = 1;
 
 const state = struct {
     const offscreen = struct {
@@ -41,10 +41,10 @@ export fn init() void {
     });
 
     // default pass action: clear to blue-ish
-    state.default.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r=0.25, .g=0.45, .b=0.65, .a=1.0 } };
+    state.default.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r=0.25, .g=0.45, .b=0.65, .a=1.0 } };
 
     // offscreen pass action: clear to black
-    state.offscreen.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r=0.25, .g=0.25, .b=0.25, .a=1.0 } };
+    state.offscreen.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r=0.25, .g=0.25, .b=0.25, .a=1.0 } };
 
     // a render pass with one color- and one depth-attachment image
     var img_desc: sg.ImageDesc = .{

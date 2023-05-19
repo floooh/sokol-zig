@@ -45,7 +45,7 @@ export fn init() void {
     sgl.setup(.{
         .logger = .{ .func = slog.func },
     });
-    state.pass_action.colors[0] = .{ .action=.CLEAR, .value=.{ .r=0, .g=0, .b=0 } };
+    state.pass_action.colors[0] = .{ .load_action=.CLEAR, .clear_value=.{ .r=0, .g=0, .b=0 } };
 }
 
 fn computeColor(t: f32) Rgb {
