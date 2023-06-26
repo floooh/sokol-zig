@@ -49,7 +49,7 @@ export fn init() void {
 }
 
 fn computeColor(t: f32) Rgb {
-    const idx0 = @floatToInt(usize, t * 16) % 16;
+    const idx0 = @intFromFloat(usize, t * 16) % 16;
     const idx1 = (idx0 + 1) % 16;
     const l = (t * 16) - @floor(t * 16);
     const c0 = palette[idx0];
@@ -62,15 +62,15 @@ fn computeColor(t: f32) Rgb {
 }
 
 export fn frame() void {
-    const angle = @intToFloat(f32, sapp.frameCount() % 360);
+    const angle = @floatFromInt(f32, sapp.frameCount() % 360);
 
     sgl.defaults();
     sgl.beginPoints();
     var psize: f32 = 5;
     var i: usize = 0;
     while (i < 300): (i += 1) {
-        const a = sgl.asRadians(angle + @intToFloat(f32,i));
-        const color = computeColor(@intToFloat(f32, (sapp.frameCount() + i) % 300) / 300);
+        const a = sgl.asRadians(angle + @floatFromInt(f32,i));
+        const color = computeColor(@floatFromInt(f32, (sapp.frameCount() + i) % 300) / 300);
         const r = math.sin(a * 4.0);
         const s = math.sin(a);
         const c = math.cos(a);

@@ -93,7 +93,7 @@ export fn init() void {
 }
 
 export fn frame() void {
-    const a = sgl.asRadians(@intToFloat(f32, sapp.frameCount()));
+    const a = sgl.asRadians(@floatFromInt(f32, sapp.frameCount()));
 
     // draw a rotating quad into the offscreen render target texture
     sgl.setContext(state.offscreen.sgl_ctx);

@@ -184,5 +184,5 @@ fn xorshift32() u32 {
 }
 
 fn rand(min_val: f32, max_val: f32) f32 {
-    return (@intToFloat(f32, xorshift32() & 0xFFFF) / 0x10000) * (max_val - min_val) + min_val;
+    return (@floatFromInt(f32, xorshift32() & 0xFFFF) / 0x10000) * (max_val - min_val) + min_val;
 }
