@@ -13,7 +13,12 @@ const print = @import("std").debug.print;
 var pass_action: sg.PassAction = .{};
 
 export fn init() void {
-    sg.setup(.{ .context = sgapp.context(), .logger = .{ .func = slog.func } });
+    sg.setup(.{
+        .context = sgapp.context(),
+        .logger = .{
+            .func = slog.func,
+        },
+    });
     pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r = 1, .g = 1, .b = 0, .a = 1 } };
     print("Backend: {}\n", .{sg.queryBackend()});
 }

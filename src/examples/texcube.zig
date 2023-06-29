@@ -74,7 +74,17 @@ export fn init() void {
     });
 
     // cube index buffer
-    state.bind.index_buffer = sg.makeBuffer(.{ .type = .INDEXBUFFER, .data = sg.asRange(&[_]u16{ 0, 1, 2, 0, 2, 3, 6, 5, 4, 7, 6, 4, 8, 9, 10, 8, 10, 11, 14, 13, 12, 15, 14, 12, 16, 17, 18, 16, 18, 19, 22, 21, 20, 23, 22, 20 }) });
+    state.bind.index_buffer = sg.makeBuffer(.{
+        .type = .INDEXBUFFER,
+        .data = sg.asRange(&[_]u16{
+            0,  1,  2,  0,  2,  3,
+            6,  5,  4,  7,  6,  4,
+            8,  9,  10, 8,  10, 11,
+            14, 13, 12, 15, 14, 12,
+            16, 17, 18, 16, 18, 19,
+            22, 21, 20, 23, 22, 20,
+        }),
+    });
 
     // create a small checker-board texture
     var img_desc: sg.ImageDesc = .{
@@ -90,10 +100,15 @@ export fn init() void {
     state.bind.fs_images[shd.SLOT_tex] = sg.makeImage(img_desc);
 
     // shader and pipeline object
-    var pip_desc: sg.PipelineDesc = .{ .shader = sg.makeShader(shd.texcubeShaderDesc(sg.queryBackend())), .index_type = .UINT16, .depth = .{
-        .compare = .LESS_EQUAL,
-        .write_enabled = true,
-    }, .cull_mode = .BACK };
+    var pip_desc: sg.PipelineDesc = .{
+        .shader = sg.makeShader(shd.texcubeShaderDesc(sg.queryBackend())),
+        .index_type = .UINT16,
+        .depth = .{
+            .compare = .LESS_EQUAL,
+            .write_enabled = true,
+        },
+        .cull_mode = .BACK,
+    };
     pip_desc.layout.attrs[shd.ATTR_vs_pos].format = .FLOAT3;
     pip_desc.layout.attrs[shd.ATTR_vs_color0].format = .UBYTE4N;
     pip_desc.layout.attrs[shd.ATTR_vs_texcoord0].format = .SHORT2N;

@@ -53,7 +53,11 @@ export fn init() void {
     state.bg_pip = sg.makePipeline(pip_desc);
 
     // lot of pipeline objects for rendering the blended quads
-    pip_desc = .{ .shader = sg.makeShader(shd.quadShaderDesc(sg.queryBackend())), .primitive_type = .TRIANGLE_STRIP, .blend_color = .{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 1.0 } };
+    pip_desc = .{
+        .shader = sg.makeShader(shd.quadShaderDesc(sg.queryBackend())),
+        .primitive_type = .TRIANGLE_STRIP,
+        .blend_color = .{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 1.0 },
+    };
     pip_desc.layout.attrs[shd.ATTR_vs_quad_position].format = .FLOAT3;
     pip_desc.layout.attrs[shd.ATTR_vs_quad_color0].format = .FLOAT4;
     pip_desc.colors[0].blend = .{
@@ -98,9 +102,15 @@ export fn frame() void {
         while (dst < NUM_BLEND_FACTORS) : (dst += 1) {
             // compute model-view-proj matrix
             const shift = NUM_BLEND_FACTORS / 2;
-            const t: vec3 = .{ .x = (@as(f32, @floatFromInt(dst)) - shift) * 3.0, .y = (@as(f32, @floatFromInt(src)) - shift) * 2.2, .z = 0.0 };
+            const t: vec3 = .{
+                .x = (@as(f32, @floatFromInt(dst)) - shift) * 3.0,
+                .y = (@as(f32, @floatFromInt(src)) - shift) * 2.2,
+                .z = 0.0,
+            };
             const model = mat4.mul(mat4.translate(t), mat4.rotate(r0, vec3.up()));
-            const quad_vs_params: shd.QuadVsParams = .{ .mvp = mat4.mul(view_proj, model) };
+            const quad_vs_params: shd.QuadVsParams = .{
+                .mvp = mat4.mul(view_proj, model),
+            };
             sg.applyPipeline(state.pip[src][dst]);
             sg.applyBindings(state.bind);
             sg.applyUniforms(.VS, shd.SLOT_quad_vs_params, sg.asRange(&quad_vs_params));

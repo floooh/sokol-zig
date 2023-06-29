@@ -17,7 +17,12 @@ const state = struct {
     var bind: sg.Bindings = .{};
 };
 
-const Vertex = extern struct { x: f32, y: f32, r: f32, g: f32, b: f32 };
+// zig fmt: off
+const Vertex = extern struct {
+    x: f32, y: f32,
+    r: f32, g: f32, b: f32,
+};
+// zig fmt: on
 
 export fn init() void {
     sg.setup(.{
@@ -55,7 +60,10 @@ export fn init() void {
     });
 
     // a shader and pipeline object
-    var pip_desc: sg.PipelineDesc = .{ .shader = sg.makeShader(shd.bufferoffsetsShaderDesc(sg.queryBackend())), .index_type = .UINT16 };
+    var pip_desc: sg.PipelineDesc = .{
+        .shader = sg.makeShader(shd.bufferoffsetsShaderDesc(sg.queryBackend())),
+        .index_type = .UINT16,
+    };
     pip_desc.layout.attrs[shd.ATTR_vs_position].format = .FLOAT2;
     pip_desc.layout.attrs[shd.ATTR_vs_color0].format = .FLOAT3;
     state.pip = sg.makePipeline(pip_desc);

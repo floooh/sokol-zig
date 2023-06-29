@@ -54,7 +54,11 @@ fn computeColor(t: f32) Rgb {
     const l = (t * 16) - @floor(t * 16);
     const c0 = palette[idx0];
     const c1 = palette[idx1];
-    return .{ .r = (c0.r * (1 - l)) + (c1.r * l), .g = (c0.g * (1 - l)) + (c1.g * l), .b = (c0.b * (1 - l)) + (c1.b * l) };
+    return .{
+        .r = (c0.r * (1 - l)) + (c1.r * l),
+        .g = (c0.g * (1 - l)) + (c1.g * l),
+        .b = (c0.b * (1 - l)) + (c1.b * l),
+    };
 }
 
 export fn frame() void {

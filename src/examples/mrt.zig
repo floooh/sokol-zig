@@ -103,7 +103,17 @@ export fn init() void {
     });
 
     // index buffer for a cube
-    const cube_ibuf = sg.makeBuffer(.{ .type = .INDEXBUFFER, .data = sg.asRange(&[_]u16{ 0, 1, 2, 0, 2, 3, 6, 5, 4, 7, 6, 4, 8, 9, 10, 8, 10, 11, 14, 13, 12, 15, 14, 12, 16, 17, 18, 16, 18, 19, 22, 21, 20, 23, 22, 20 }) });
+    const cube_ibuf = sg.makeBuffer(.{
+        .type = .INDEXBUFFER,
+        .data = sg.asRange(&[_]u16{
+            0,  1,  2,  0,  2,  3,
+            6,  5,  4,  7,  6,  4,
+            8,  9,  10, 8,  10, 11,
+            14, 13, 12, 15, 14, 12,
+            16, 17, 18, 16, 18, 19,
+            22, 21, 20, 23, 22, 20,
+        }),
+    });
 
     // resource bindings for offscreen rendering
     state.offscreen.bind.vertex_buffers[0] = cube_vbuf;
@@ -164,8 +174,13 @@ export fn frame() void {
     state.ry += 2.0 * dt;
 
     // compute shader uniform data
-    const offscreen_params: shd.OffscreenParams = .{ .mvp = computeMVP(state.rx, state.ry) };
-    const fsq_params: shd.FsqParams = .{ .offset = .{ .x = math.sin(state.rx * 0.01) * 0.1, .y = math.cos(state.ry * 0.01) * 0.1 } };
+    const offscreen_params: shd.OffscreenParams = .{
+        .mvp = computeMVP(state.rx, state.ry),
+    };
+    const fsq_params: shd.FsqParams = .{ .offset = .{
+        .x = math.sin(state.rx * 0.01) * 0.1,
+        .y = math.cos(state.ry * 0.01) * 0.1,
+    } };
 
     // render cube into MRT offscreen render targets
     sg.beginPass(state.offscreen.pass, state.offscreen.pass_action);

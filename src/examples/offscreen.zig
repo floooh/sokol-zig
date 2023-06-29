@@ -47,7 +47,17 @@ export fn init() void {
     state.offscreen.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r = 0.25, .g = 0.25, .b = 0.25, .a = 1.0 } };
 
     // a render pass with one color- and one depth-attachment image
-    var img_desc: sg.ImageDesc = .{ .render_target = true, .width = 256, .height = 256, .pixel_format = .RGBA8, .min_filter = .LINEAR, .mag_filter = .LINEAR, .wrap_u = .REPEAT, .wrap_v = .REPEAT, .sample_count = offscreen_sample_count };
+    var img_desc: sg.ImageDesc = .{
+        .render_target = true,
+        .width = 256,
+        .height = 256,
+        .pixel_format = .RGBA8,
+        .min_filter = .LINEAR,
+        .mag_filter = .LINEAR,
+        .wrap_u = .REPEAT,
+        .wrap_v = .REPEAT,
+        .sample_count = offscreen_sample_count,
+    };
     const color_img = sg.makeImage(img_desc);
     img_desc.pixel_format = .DEPTH;
     const depth_img = sg.makeImage(img_desc);
@@ -65,7 +75,12 @@ export fn init() void {
         .vertices = .{ .buffer = sshape.asRange(&vertices) },
         .indices = .{ .buffer = sshape.asRange(&indices) },
     };
-    buf = sshape.buildTorus(buf, .{ .radius = 0.5, .ring_radius = 0.3, .sides = 20, .rings = 36 });
+    buf = sshape.buildTorus(buf, .{
+        .radius = 0.5,
+        .ring_radius = 0.3,
+        .sides = 20,
+        .rings = 36,
+    });
     state.donut = sshape.elementRange(buf);
     buf = sshape.buildSphere(buf, .{
         .radius = 0.5,

@@ -55,13 +55,28 @@ export fn init() void {
     });
 
     // cube index buffer
-    const ibuf = sg.makeBuffer(.{ .type = .INDEXBUFFER, .data = sg.asRange(&[_]u16{ 0, 1, 2, 0, 2, 3, 6, 5, 4, 7, 6, 4, 8, 9, 10, 8, 10, 11, 14, 13, 12, 15, 14, 12, 16, 17, 18, 16, 18, 19, 22, 21, 20, 23, 22, 20 }) });
+    const ibuf = sg.makeBuffer(.{
+        .type = .INDEXBUFFER,
+        .data = sg.asRange(&[_]u16{
+            0,  1,  2,  0,  2,  3,
+            6,  5,  4,  7,  6,  4,
+            8,  9,  10, 8,  10, 11,
+            14, 13, 12, 15, 14, 12,
+            16, 17, 18, 16, 18, 19,
+            22, 21, 20, 23, 22, 20,
+        }),
+    });
 
     // shader and pipeline object
-    var pip_desc: sg.PipelineDesc = .{ .shader = sg.makeShader(shd.noninterleavedShaderDesc(sg.queryBackend())), .index_type = .UINT16, .cull_mode = .BACK, .depth = .{
-        .compare = .LESS_EQUAL,
-        .write_enabled = true,
-    } };
+    var pip_desc: sg.PipelineDesc = .{
+        .shader = sg.makeShader(shd.noninterleavedShaderDesc(sg.queryBackend())),
+        .index_type = .UINT16,
+        .cull_mode = .BACK,
+        .depth = .{
+            .compare = .LESS_EQUAL,
+            .write_enabled = true,
+        },
+    };
     // NOTE how the vertex components are pulled from different buffer bind slots
     pip_desc.layout.attrs[shd.ATTR_vs_position] = .{ .format = .FLOAT3, .buffer_index = 0 };
     pip_desc.layout.attrs[shd.ATTR_vs_color0] = .{ .format = .FLOAT4, .buffer_index = 1 };
@@ -99,7 +114,17 @@ export fn cleanup() void {
 }
 
 pub fn main() void {
-    sapp.run(.{ .init_cb = init, .frame_cb = frame, .cleanup_cb = cleanup, .width = 800, .height = 600, .sample_count = 4, .icon = .{ .sokol_default = true }, .logger = .{ .func = slog.func }, .window_title = "noninterleaved.zig" });
+    sapp.run(.{
+        .init_cb = init,
+        .frame_cb = frame,
+        .cleanup_cb = cleanup,
+        .width = 800,
+        .height = 600,
+        .sample_count = 4,
+        .icon = .{ .sokol_default = true },
+        .logger = .{ .func = slog.func },
+        .window_title = "noninterleaved.zig",
+    });
 }
 
 fn computeVsParams(rx: f32, ry: f32) shd.VsParams {
