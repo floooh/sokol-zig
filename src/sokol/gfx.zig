@@ -4,7 +4,7 @@ const builtin = @import("builtin");
 
 // helper function to convert a C string to a Zig string slice
 fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
-  return @import("std").mem.span(c_str);
+    return @import("std").mem.span(c_str);
 }
 // helper function to convert "anything" to a Range struct
 pub fn asRange(val: anytype) Range {
@@ -22,7 +22,7 @@ pub fn asRange(val: anytype) Range {
         },
         else => {
             @compileError("Cannot convert to range!");
-        }
+        },
     }
 }
 
@@ -399,7 +399,7 @@ pub const Action = enum(i32) {
 };
 pub const ColorAttachmentAction = extern struct {
     action: Action = .DEFAULT,
-    value: Color = .{ },
+    value: Color = .{},
 };
 pub const DepthAttachmentAction = extern struct {
     action: Action = .DEFAULT,
@@ -412,15 +412,15 @@ pub const StencilAttachmentAction = extern struct {
 pub const PassAction = extern struct {
     _start_canary: u32 = 0,
     colors: [4]ColorAttachmentAction = [_]ColorAttachmentAction{.{}} ** 4,
-    depth: DepthAttachmentAction = .{ },
-    stencil: StencilAttachmentAction = .{ },
+    depth: DepthAttachmentAction = .{},
+    stencil: StencilAttachmentAction = .{},
     _end_canary: u32 = 0,
 };
 pub const Bindings = extern struct {
     _start_canary: u32 = 0,
     vertex_buffers: [8]Buffer = [_]Buffer{.{}} ** 8,
     vertex_buffer_offsets: [8]i32 = [_]i32{0} ** 8,
-    index_buffer: Buffer = .{ },
+    index_buffer: Buffer = .{},
     index_buffer_offset: i32 = 0,
     vs_images: [12]Image = [_]Image{.{}} ** 12,
     fs_images: [12]Image = [_]Image{.{}} ** 12,
@@ -431,16 +431,16 @@ pub const BufferDesc = extern struct {
     size: usize = 0,
     type: BufferType = .DEFAULT,
     usage: Usage = .DEFAULT,
-    data: Range = .{ },
+    data: Range = .{},
     label: [*c]const u8 = null,
     gl_buffers: [2]u32 = [_]u32{0} ** 2,
-    mtl_buffers: [2]?*const anyopaque = [_]?*const anyopaque { null } ** 2,
+    mtl_buffers: [2]?*const anyopaque = [_]?*const anyopaque{null} ** 2,
     d3d11_buffer: ?*const anyopaque = null,
     wgpu_buffer: ?*const anyopaque = null,
     _end_canary: u32 = 0,
 };
 pub const ImageData = extern struct {
-    subimage: [6][16]Range = [_][16]Range{[_]Range{ .{ } }**16}**6,
+    subimage: [6][16]Range = [_][16]Range{[_]Range{.{}} ** 16} ** 6,
 };
 pub const ImageDesc = extern struct {
     _start_canary: u32 = 0,
@@ -462,11 +462,11 @@ pub const ImageDesc = extern struct {
     max_anisotropy: u32 = 0,
     min_lod: f32 = 0.0,
     max_lod: f32 = 0.0,
-    data: ImageData = .{ },
+    data: ImageData = .{},
     label: [*c]const u8 = null,
     gl_textures: [2]u32 = [_]u32{0} ** 2,
     gl_texture_target: u32 = 0,
-    mtl_textures: [2]?*const anyopaque = [_]?*const anyopaque { null } ** 2,
+    mtl_textures: [2]?*const anyopaque = [_]?*const anyopaque{null} ** 2,
     d3d11_texture: ?*const anyopaque = null,
     d3d11_shader_resource_view: ?*const anyopaque = null,
     wgpu_texture: ?*const anyopaque = null,
@@ -494,7 +494,7 @@ pub const ShaderImageDesc = extern struct {
 };
 pub const ShaderStageDesc = extern struct {
     source: [*c]const u8 = null,
-    bytecode: Range = .{ },
+    bytecode: Range = .{},
     entry: [*c]const u8 = null,
     d3d11_target: [*c]const u8 = null,
     uniform_blocks: [4]ShaderUniformBlockDesc = [_]ShaderUniformBlockDesc{.{}} ** 4,
@@ -503,8 +503,8 @@ pub const ShaderStageDesc = extern struct {
 pub const ShaderDesc = extern struct {
     _start_canary: u32 = 0,
     attrs: [16]ShaderAttrDesc = [_]ShaderAttrDesc{.{}} ** 16,
-    vs: ShaderStageDesc = .{ },
-    fs: ShaderStageDesc = .{ },
+    vs: ShaderStageDesc = .{},
+    fs: ShaderStageDesc = .{},
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
 };
@@ -532,8 +532,8 @@ pub const StencilFaceState = extern struct {
 };
 pub const StencilState = extern struct {
     enabled: bool = false,
-    front: StencilFaceState = .{ },
-    back: StencilFaceState = .{ },
+    front: StencilFaceState = .{},
+    back: StencilFaceState = .{},
     read_mask: u8 = 0,
     write_mask: u8 = 0,
     ref: u8 = 0,
@@ -558,14 +558,14 @@ pub const BlendState = extern struct {
 pub const ColorState = extern struct {
     pixel_format: PixelFormat = .DEFAULT,
     write_mask: ColorMask = .DEFAULT,
-    blend: BlendState = .{ },
+    blend: BlendState = .{},
 };
 pub const PipelineDesc = extern struct {
     _start_canary: u32 = 0,
-    shader: Shader = .{ },
-    layout: LayoutDesc = .{ },
-    depth: DepthState = .{ },
-    stencil: StencilState = .{ },
+    shader: Shader = .{},
+    layout: LayoutDesc = .{},
+    depth: DepthState = .{},
+    stencil: StencilState = .{},
     color_count: i32 = 0,
     colors: [4]ColorState = [_]ColorState{.{}} ** 4,
     primitive_type: PrimitiveType = .DEFAULT,
@@ -573,20 +573,20 @@ pub const PipelineDesc = extern struct {
     cull_mode: CullMode = .DEFAULT,
     face_winding: FaceWinding = .DEFAULT,
     sample_count: i32 = 0,
-    blend_color: Color = .{ },
+    blend_color: Color = .{},
     alpha_to_coverage_enabled: bool = false,
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
 };
 pub const PassAttachmentDesc = extern struct {
-    image: Image = .{ },
+    image: Image = .{},
     mip_level: i32 = 0,
     slice: i32 = 0,
 };
 pub const PassDesc = extern struct {
     _start_canary: u32 = 0,
     color_attachments: [4]PassAttachmentDesc = [_]PassAttachmentDesc{.{}} ** 4,
-    depth_stencil_attachment: PassAttachmentDesc = .{ },
+    depth_stencil_attachment: PassAttachmentDesc = .{},
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
 };
@@ -596,7 +596,7 @@ pub const SlotInfo = extern struct {
     ctx_id: u32 = 0,
 };
 pub const BufferInfo = extern struct {
-    slot: SlotInfo = .{ },
+    slot: SlotInfo = .{},
     update_frame_index: u32 = 0,
     append_frame_index: u32 = 0,
     append_pos: i32 = 0,
@@ -605,19 +605,19 @@ pub const BufferInfo = extern struct {
     active_slot: i32 = 0,
 };
 pub const ImageInfo = extern struct {
-    slot: SlotInfo = .{ },
+    slot: SlotInfo = .{},
     upd_frame_index: u32 = 0,
     num_slots: i32 = 0,
     active_slot: i32 = 0,
 };
 pub const ShaderInfo = extern struct {
-    slot: SlotInfo = .{ },
+    slot: SlotInfo = .{},
 };
 pub const PipelineInfo = extern struct {
-    slot: SlotInfo = .{ },
+    slot: SlotInfo = .{},
 };
 pub const PassInfo = extern struct {
-    slot: SlotInfo = .{ },
+    slot: SlotInfo = .{},
 };
 pub const LogItem = enum(i32) {
     OK,
@@ -804,51 +804,51 @@ pub const GlContextDesc = extern struct {
 };
 pub const MetalContextDesc = extern struct {
     device: ?*const anyopaque = null,
-    renderpass_descriptor_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
-    renderpass_descriptor_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    drawable_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
-    drawable_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    renderpass_descriptor_cb: ?*const fn () callconv(.C) ?*const anyopaque = null,
+    renderpass_descriptor_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    drawable_cb: ?*const fn () callconv(.C) ?*const anyopaque = null,
+    drawable_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
     user_data: ?*anyopaque = null,
 };
 pub const D3d11ContextDesc = extern struct {
     device: ?*const anyopaque = null,
     device_context: ?*const anyopaque = null,
-    render_target_view_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
-    render_target_view_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    depth_stencil_view_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
-    depth_stencil_view_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    render_target_view_cb: ?*const fn () callconv(.C) ?*const anyopaque = null,
+    render_target_view_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    depth_stencil_view_cb: ?*const fn () callconv(.C) ?*const anyopaque = null,
+    depth_stencil_view_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
     user_data: ?*anyopaque = null,
 };
 pub const WgpuContextDesc = extern struct {
     device: ?*const anyopaque = null,
-    render_view_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
-    render_view_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    resolve_view_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
-    resolve_view_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    depth_stencil_view_cb: ?*const fn() callconv(.C) ?*const anyopaque = null,
-    depth_stencil_view_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    render_view_cb: ?*const fn () callconv(.C) ?*const anyopaque = null,
+    render_view_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    resolve_view_cb: ?*const fn () callconv(.C) ?*const anyopaque = null,
+    resolve_view_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
+    depth_stencil_view_cb: ?*const fn () callconv(.C) ?*const anyopaque = null,
+    depth_stencil_view_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
     user_data: ?*anyopaque = null,
 };
 pub const ContextDesc = extern struct {
     color_format: i32 = 0,
     depth_format: i32 = 0,
     sample_count: i32 = 0,
-    gl: GlContextDesc = .{ },
-    metal: MetalContextDesc = .{ },
-    d3d11: D3d11ContextDesc = .{ },
-    wgpu: WgpuContextDesc = .{ },
+    gl: GlContextDesc = .{},
+    metal: MetalContextDesc = .{},
+    d3d11: D3d11ContextDesc = .{},
+    wgpu: WgpuContextDesc = .{},
 };
 pub const CommitListener = extern struct {
-    func: ?*const fn(?*anyopaque) callconv(.C) void = null,
+    func: ?*const fn (?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Allocator = extern struct {
-    alloc: ?*const fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free: ?*const fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
+    free: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Logger = extern struct {
-    func: ?*const fn([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
+    func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Desc = extern struct {
@@ -864,9 +864,9 @@ pub const Desc = extern struct {
     sampler_cache_size: i32 = 0,
     max_commit_listeners: i32 = 0,
     disable_validation: bool = false,
-    allocator: Allocator = .{ },
-    logger: Logger = .{ },
-    context: ContextDesc = .{ },
+    allocator: Allocator = .{},
+    logger: Logger = .{},
+    context: ContextDesc = .{},
     _end_canary: u32 = 0,
 };
 pub extern fn sg_setup([*c]const Desc) void;
@@ -887,7 +887,7 @@ pub fn resetStateCache() void {
 }
 pub extern fn sg_push_debug_group([*c]const u8) void;
 pub fn pushDebugGroup(name: [:0]const u8) void {
-    sg_push_debug_group(@ptrCast([*c]const u8,name));
+    sg_push_debug_group(@as([*c]const u8, @ptrCast(name)));
 }
 pub extern fn sg_pop_debug_group() void;
 pub fn popDebugGroup() void {

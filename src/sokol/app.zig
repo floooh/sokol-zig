@@ -4,7 +4,7 @@ const builtin = @import("builtin");
 
 // helper function to convert a C string to a Zig string slice
 fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
-  return @import("std").mem.span(c_str);
+    return @import("std").mem.span(c_str);
 }
 pub const max_touchpoints = 8;
 pub const max_mousebuttons = 3;
@@ -214,15 +214,15 @@ pub const Range = extern struct {
 pub const ImageDesc = extern struct {
     width: i32 = 0,
     height: i32 = 0,
-    pixels: Range = .{ },
+    pixels: Range = .{},
 };
 pub const IconDesc = extern struct {
     sokol_default: bool = false,
     images: [8]ImageDesc = [_]ImageDesc{.{}} ** 8,
 };
 pub const Allocator = extern struct {
-    alloc: ?*const fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free: ?*const fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
+    free: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const LogItem = enum(i32) {
@@ -314,19 +314,19 @@ pub const LogItem = enum(i32) {
     CLIPBOARD_STRING_TOO_BIG,
 };
 pub const Logger = extern struct {
-    func: ?*const fn([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
+    func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Desc = extern struct {
-    init_cb: ?*const fn() callconv(.C) void = null,
-    frame_cb: ?*const fn() callconv(.C) void = null,
-    cleanup_cb: ?*const fn() callconv(.C) void = null,
-    event_cb: ?*const fn([*c]const Event) callconv(.C) void = null,
+    init_cb: ?*const fn () callconv(.C) void = null,
+    frame_cb: ?*const fn () callconv(.C) void = null,
+    cleanup_cb: ?*const fn () callconv(.C) void = null,
+    event_cb: ?*const fn ([*c]const Event) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
-    init_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) void = null,
-    frame_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) void = null,
-    cleanup_userdata_cb: ?*const fn(?*anyopaque) callconv(.C) void = null,
-    event_userdata_cb: ?*const fn([*c]const Event, ?*anyopaque) callconv(.C) void = null,
+    init_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) void = null,
+    frame_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) void = null,
+    cleanup_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) void = null,
+    event_userdata_cb: ?*const fn ([*c]const Event, ?*anyopaque) callconv(.C) void = null,
     width: i32 = 0,
     height: i32 = 0,
     sample_count: i32 = 0,
@@ -340,9 +340,9 @@ pub const Desc = extern struct {
     enable_dragndrop: bool = false,
     max_dropped_files: i32 = 0,
     max_dropped_file_path_length: i32 = 0,
-    icon: IconDesc = .{ },
-    allocator: Allocator = .{ },
-    logger: Logger = .{ },
+    icon: IconDesc = .{},
+    allocator: Allocator = .{},
+    logger: Logger = .{},
     gl_force_gles2: bool = false,
     gl_major_version: i32 = 0,
     gl_minor_version: i32 = 0,
@@ -365,14 +365,14 @@ pub const Html5FetchResponse = extern struct {
     succeeded: bool = false,
     error_code: Html5FetchError = .FETCH_ERROR_NO_ERROR,
     file_index: i32 = 0,
-    data: Range = .{ },
-    buffer: Range = .{ },
+    data: Range = .{},
+    buffer: Range = .{},
     user_data: ?*anyopaque = null,
 };
 pub const Html5FetchRequest = extern struct {
     dropped_file_index: i32 = 0,
-    callback: ?*const fn([*c]const Html5FetchResponse) callconv(.C) void = null,
-    buffer: Range = .{ },
+    callback: ?*const fn ([*c]const Html5FetchResponse) callconv(.C) void = null,
+    buffer: Range = .{},
     user_data: ?*anyopaque = null,
 };
 pub const MouseCursor = enum(i32) {
@@ -503,7 +503,7 @@ pub fn frameDuration() f64 {
 }
 pub extern fn sapp_set_clipboard_string([*c]const u8) void;
 pub fn setClipboardString(str: [:0]const u8) void {
-    sapp_set_clipboard_string(@ptrCast([*c]const u8,str));
+    sapp_set_clipboard_string(@as([*c]const u8, @ptrCast(str)));
 }
 pub extern fn sapp_get_clipboard_string() [*c]const u8;
 pub fn getClipboardString() [:0]const u8 {
@@ -511,7 +511,7 @@ pub fn getClipboardString() [:0]const u8 {
 }
 pub extern fn sapp_set_window_title([*c]const u8) void;
 pub fn setWindowTitle(str: [:0]const u8) void {
-    sapp_set_window_title(@ptrCast([*c]const u8,str));
+    sapp_set_window_title(@as([*c]const u8, @ptrCast(str)));
 }
 pub extern fn sapp_set_icon([*c]const IconDesc) void;
 pub fn setIcon(icon_desc: IconDesc) void {
