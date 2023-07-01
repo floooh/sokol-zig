@@ -45,7 +45,7 @@ export fn init() void {
     sgl.setup(.{
         .logger = .{ .func = slog.func },
     });
-    state.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r = 0, .g = 0, .b = 0 } };
+    state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0, .g = 0, .b = 0 } };
 }
 
 fn computeColor(t: f32) Rgb {
@@ -54,11 +54,7 @@ fn computeColor(t: f32) Rgb {
     const l = (t * 16) - @floor(t * 16);
     const c0 = palette[idx0];
     const c1 = palette[idx1];
-    return .{
-        .r = (c0.r * (1 - l)) + (c1.r * l),
-        .g = (c0.g * (1 - l)) + (c1.g * l),
-        .b = (c0.b * (1 - l)) + (c1.b * l),
-    };
+    return .{ .r = (c0.r * (1 - l)) + (c1.r * l), .g = (c0.g * (1 - l)) + (c1.g * l), .b = (c0.b * (1 - l)) + (c1.b * l) };
 }
 
 export fn frame() void {
