@@ -5,7 +5,7 @@ const sg = @import("gfx.zig");
 
 // helper function to convert a C string to a Zig string slice
 fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
-  return @import("std").mem.span(c_str);
+    return @import("std").mem.span(c_str);
 }
 // helper function to convert "anything" to a Range struct
 pub fn asRange(val: anytype) Range {
@@ -23,7 +23,7 @@ pub fn asRange(val: anytype) Range {
         },
         else => {
             @compileError("Cannot convert to range!");
-        }
+        },
     }
 }
 
@@ -32,7 +32,7 @@ pub const Range = extern struct {
     size: usize = 0,
 };
 pub const Mat4 = extern struct {
-    m: [4][4]f32 = [_][4]f32{[_]f32{ 0.0 }**4}**4,
+    m: [4][4]f32 = [_][4]f32{[_]f32{0.0} ** 4} ** 4,
 };
 pub const Vertex = extern struct {
     x: f32 = 0.0,
@@ -54,18 +54,18 @@ pub const SizesItem = extern struct {
     __pad: [3]u32 = [_]u32{0} ** 3,
 };
 pub const Sizes = extern struct {
-    vertices: SizesItem = .{ },
-    indices: SizesItem = .{ },
+    vertices: SizesItem = .{},
+    indices: SizesItem = .{},
 };
 pub const BufferItem = extern struct {
-    buffer: Range = .{ },
+    buffer: Range = .{},
     data_size: usize = 0,
     shape_offset: usize = 0,
 };
 pub const Buffer = extern struct {
     valid: bool = false,
-    vertices: BufferItem = .{ },
-    indices: BufferItem = .{ },
+    vertices: BufferItem = .{},
+    indices: BufferItem = .{},
 };
 pub const Plane = extern struct {
     width: f32 = 0.0,
@@ -74,7 +74,7 @@ pub const Plane = extern struct {
     color: u32 = 0,
     random_colors: bool = false,
     merge: bool = false,
-    transform: Mat4 = .{ },
+    transform: Mat4 = .{},
 };
 pub const Box = extern struct {
     width: f32 = 0.0,
@@ -84,7 +84,7 @@ pub const Box = extern struct {
     color: u32 = 0,
     random_colors: bool = false,
     merge: bool = false,
-    transform: Mat4 = .{ },
+    transform: Mat4 = .{},
 };
 pub const Sphere = extern struct {
     radius: f32 = 0.0,
@@ -93,7 +93,7 @@ pub const Sphere = extern struct {
     color: u32 = 0,
     random_colors: bool = false,
     merge: bool = false,
-    transform: Mat4 = .{ },
+    transform: Mat4 = .{},
 };
 pub const Cylinder = extern struct {
     radius: f32 = 0.0,
@@ -103,7 +103,7 @@ pub const Cylinder = extern struct {
     color: u32 = 0,
     random_colors: bool = false,
     merge: bool = false,
-    transform: Mat4 = .{ },
+    transform: Mat4 = .{},
 };
 pub const Torus = extern struct {
     radius: f32 = 0.0,
@@ -113,7 +113,7 @@ pub const Torus = extern struct {
     color: u32 = 0,
     random_colors: bool = false,
     merge: bool = false,
-    transform: Mat4 = .{ },
+    transform: Mat4 = .{},
 };
 pub extern fn sshape_build_plane([*c]const Buffer, [*c]const Plane) Buffer;
 pub fn buildPlane(buf: Buffer, params: Plane) Buffer {

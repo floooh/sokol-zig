@@ -2,12 +2,12 @@
 //  saudio.zig
 //  Test sokol-audio zig bindings
 //------------------------------------------------------------------------------
-const sokol  = @import("sokol");
-const slog   = sokol.log;
-const sg     = sokol.gfx;
-const sapp   = sokol.app;
+const sokol = @import("sokol");
+const slog = sokol.log;
+const sg = sokol.gfx;
+const sapp = sokol.app;
 const saudio = sokol.audio;
-const sgapp  = sokol.app_gfx_glue;
+const sgapp = sokol.app_gfx_glue;
 
 const NumSamples = 32;
 
@@ -26,13 +26,17 @@ export fn init() void {
     saudio.setup(.{
         .logger = .{ .func = slog.func },
     });
-    state.pass_action.colors[0] = .{ .action=.CLEAR, .value = .{ .r=1, .g=0.5, .b=0, .a=1 }};
+    state.pass_action.colors[0] = .{ .action = .CLEAR, .value = .{ .r = 1, .g = 0.5, .b = 0, .a = 1 } };
 }
 
 export fn frame() void {
     const num_frames = saudio.expect();
     var i: i32 = 0;
-    while (i < num_frames): ({ i += 1; state.even_odd += 1; state.sample_pos += 1; }) {
+    while (i < num_frames) : ({
+        i += 1;
+        state.even_odd += 1;
+        state.sample_pos += 1;
+    }) {
         if (state.sample_pos == NumSamples) {
             state.sample_pos = 0;
             _ = saudio.push(&(state.samples[0]), NumSamples);
