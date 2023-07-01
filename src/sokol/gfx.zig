@@ -67,7 +67,6 @@ pub const Color = extern struct {
 };
 pub const Backend = enum(i32) {
     GLCORE33,
-    GLES2,
     GLES3,
     D3D11,
     METAL_IOS,
@@ -153,12 +152,7 @@ pub const PixelformatInfo = extern struct {
     __pad: [3]u32 = [_]u32{0} ** 3,
 };
 pub const Features = extern struct {
-    instancing: bool = false,
     origin_top_left: bool = false,
-    multiple_render_targets: bool = false,
-    msaa_render_targets: bool = false,
-    imagetype_3d: bool = false,
-    imagetype_array: bool = false,
     image_clamp_to_border: bool = false,
     mrt_independent_blend_state: bool = false,
     mrt_independent_write_mask: bool = false,
@@ -390,24 +384,31 @@ pub const ColorMask = enum(i32) {
     GBA = 14,
     RGBA = 15,
 };
-pub const Action = enum(i32) {
+pub const LoadAction = enum(i32) {
     DEFAULT,
     CLEAR,
     LOAD,
     DONTCARE,
-    NUM,
+};
+pub const StoreAction = enum(i32) {
+    DEFAULT,
+    STORE,
+    DONTCARE,
 };
 pub const ColorAttachmentAction = extern struct {
-    action: Action = .DEFAULT,
-    value: Color = .{},
+    load_action: LoadAction = .DEFAULT,
+    store_action: StoreAction = .DEFAULT,
+    clear_value: Color = .{},
 };
 pub const DepthAttachmentAction = extern struct {
-    action: Action = .DEFAULT,
-    value: f32 = 0.0,
+    load_action: LoadAction = .DEFAULT,
+    store_action: StoreAction = .DEFAULT,
+    clear_value: f32 = 0.0,
 };
 pub const StencilAttachmentAction = extern struct {
-    action: Action = .DEFAULT,
-    value: u8 = 0,
+    load_action: LoadAction = .DEFAULT,
+    store_action: StoreAction = .DEFAULT,
+    clear_value: u8 = 0,
 };
 pub const PassAction = extern struct {
     _start_canary: u32 = 0,
@@ -586,6 +587,7 @@ pub const PassAttachmentDesc = extern struct {
 pub const PassDesc = extern struct {
     _start_canary: u32 = 0,
     color_attachments: [4]PassAttachmentDesc = [_]PassAttachmentDesc{.{}} ** 4,
+    resolve_attachments: [4]PassAttachmentDesc = [_]PassAttachmentDesc{.{}} ** 4,
     depth_stencil_attachment: PassAttachmentDesc = .{},
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
@@ -628,6 +630,7 @@ pub const LogItem = enum(i32) {
     GL_SHADER_COMPILATION_FAILED,
     GL_SHADER_LINKING_FAILED,
     GL_VERTEX_ATTRIBUTE_NOT_FOUND_IN_SHADER,
+    GL_TEXTURE_NAME_NOT_FOUND_IN_SHADER,
     GL_FRAMEBUFFER_INCOMPLETE,
     GL_MSAA_FRAMEBUFFER_INCOMPLETE,
     D3D11_CREATE_BUFFER_FAILED,
@@ -715,6 +718,9 @@ pub const LogItem = enum(i32) {
     VALIDATE_IMAGEDESC_NONRT_PIXELFORMAT,
     VALIDATE_IMAGEDESC_MSAA_BUT_NO_RT,
     VALIDATE_IMAGEDESC_NO_MSAA_RT_SUPPORT,
+    VALIDATE_IMAGEDESC_MSAA_NUM_MIPMAPS,
+    VALIDATE_IMAGEDESC_MSAA_3D_IMAGE,
+    VALIDATE_IMAGEDESC_DEPTH_3D_IMAGE,
     VALIDATE_IMAGEDESC_RT_IMMUTABLE,
     VALIDATE_IMAGEDESC_RT_NO_DATA,
     VALIDATE_IMAGEDESC_INJECTED_NO_DATA,
@@ -734,14 +740,12 @@ pub const LogItem = enum(i32) {
     VALIDATE_SHADERDESC_UB_STD140_ARRAY_TYPE,
     VALIDATE_SHADERDESC_NO_CONT_IMGS,
     VALIDATE_SHADERDESC_IMG_NAME,
-    VALIDATE_SHADERDESC_ATTR_NAMES,
     VALIDATE_SHADERDESC_ATTR_SEMANTICS,
     VALIDATE_SHADERDESC_ATTR_STRING_TOO_LONG,
     VALIDATE_PIPELINEDESC_CANARY,
     VALIDATE_PIPELINEDESC_SHADER,
     VALIDATE_PIPELINEDESC_NO_ATTRS,
     VALIDATE_PIPELINEDESC_LAYOUT_STRIDE4,
-    VALIDATE_PIPELINEDESC_ATTR_NAME,
     VALIDATE_PIPELINEDESC_ATTR_SEMANTICS,
     VALIDATE_PASSDESC_CANARY,
     VALIDATE_PASSDESC_NO_COLOR_ATTS,
@@ -756,8 +760,28 @@ pub const LogItem = enum(i32) {
     VALIDATE_PASSDESC_DEPTH_INV_PIXELFORMAT,
     VALIDATE_PASSDESC_IMAGE_SIZES,
     VALIDATE_PASSDESC_IMAGE_SAMPLE_COUNTS,
+    VALIDATE_PASSDESC_RESOLVE_COLOR_IMAGE_MSAA,
+    VALIDATE_PASSDESC_RESOLVE_IMAGE,
+    VALIDATE_PASSDESC_RESOLVE_SAMPLE_COUNT,
+    VALIDATE_PASSDESC_RESOLVE_MIPLEVEL,
+    VALIDATE_PASSDESC_RESOLVE_FACE,
+    VALIDATE_PASSDESC_RESOLVE_LAYER,
+    VALIDATE_PASSDESC_RESOLVE_SLICE,
+    VALIDATE_PASSDESC_RESOLVE_IMAGE_NO_RT,
+    VALIDATE_PASSDESC_RESOLVE_IMAGE_SIZES,
+    VALIDATE_PASSDESC_RESOLVE_IMAGE_FORMAT,
+    VALIDATE_PASSDESC_DEPTH_IMAGE,
+    VALIDATE_PASSDESC_DEPTH_MIPLEVEL,
+    VALIDATE_PASSDESC_DEPTH_FACE,
+    VALIDATE_PASSDESC_DEPTH_LAYER,
+    VALIDATE_PASSDESC_DEPTH_SLICE,
+    VALIDATE_PASSDESC_DEPTH_IMAGE_NO_RT,
+    VALIDATE_PASSDESC_DEPTH_IMAGE_SIZES,
+    VALIDATE_PASSDESC_DEPTH_IMAGE_SAMPLE_COUNT,
     VALIDATE_BEGINPASS_PASS,
-    VALIDATE_BEGINPASS_IMAGE,
+    VALIDATE_BEGINPASS_COLOR_ATTACHMENT_IMAGE,
+    VALIDATE_BEGINPASS_RESOLVE_ATTACHMENT_IMAGE,
+    VALIDATE_BEGINPASS_DEPTHSTENCIL_ATTACHMENT_IMAGE,
     VALIDATE_APIP_PIPELINE_VALID_ID,
     VALIDATE_APIP_PIPELINE_EXISTS,
     VALIDATE_APIP_PIPELINE_VALID,
@@ -782,9 +806,13 @@ pub const LogItem = enum(i32) {
     VALIDATE_ABND_VS_IMGS,
     VALIDATE_ABND_VS_IMG_EXISTS,
     VALIDATE_ABND_VS_IMG_TYPES,
+    VALIDATE_ABND_VS_IMG_MSAA,
+    VALIDATE_ABND_VS_IMG_DEPTH,
     VALIDATE_ABND_FS_IMGS,
     VALIDATE_ABND_FS_IMG_EXISTS,
     VALIDATE_ABND_FS_IMG_TYPES,
+    VALIDATE_ABND_FS_IMG_MSAA,
+    VALIDATE_ABND_FS_IMG_DEPTH,
     VALIDATE_AUB_NO_PIPELINE,
     VALIDATE_AUB_NO_UB_AT_SLOT,
     VALIDATE_AUB_SIZE,
@@ -798,9 +826,6 @@ pub const LogItem = enum(i32) {
     VALIDATE_UPDIMG_USAGE,
     VALIDATE_UPDIMG_ONCE,
     VALIDATION_FAILED,
-};
-pub const GlContextDesc = extern struct {
-    force_gles2: bool = false,
 };
 pub const MetalContextDesc = extern struct {
     device: ?*const anyopaque = null,
@@ -833,7 +858,6 @@ pub const ContextDesc = extern struct {
     color_format: i32 = 0,
     depth_format: i32 = 0,
     sample_count: i32 = 0,
-    gl: GlContextDesc = .{},
     metal: MetalContextDesc = .{},
     d3d11: D3d11ContextDesc = .{},
     wgpu: WgpuContextDesc = .{},
@@ -887,7 +911,7 @@ pub fn resetStateCache() void {
 }
 pub extern fn sg_push_debug_group([*c]const u8) void;
 pub fn pushDebugGroup(name: [:0]const u8) void {
-    sg_push_debug_group(@as([*c]const u8, @ptrCast(name)));
+    sg_push_debug_group(@ptrCast(name));
 }
 pub extern fn sg_pop_debug_group() void;
 pub fn popDebugGroup() void {

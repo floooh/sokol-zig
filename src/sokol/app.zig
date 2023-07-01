@@ -343,7 +343,6 @@ pub const Desc = extern struct {
     icon: IconDesc = .{},
     allocator: Allocator = .{},
     logger: Logger = .{},
-    gl_force_gles2: bool = false,
     gl_major_version: i32 = 0,
     gl_minor_version: i32 = 0,
     win32_console_utf8: bool = false,
@@ -503,7 +502,7 @@ pub fn frameDuration() f64 {
 }
 pub extern fn sapp_set_clipboard_string([*c]const u8) void;
 pub fn setClipboardString(str: [:0]const u8) void {
-    sapp_set_clipboard_string(@as([*c]const u8, @ptrCast(str)));
+    sapp_set_clipboard_string(@ptrCast(str));
 }
 pub extern fn sapp_get_clipboard_string() [*c]const u8;
 pub fn getClipboardString() [:0]const u8 {
@@ -511,7 +510,7 @@ pub fn getClipboardString() [:0]const u8 {
 }
 pub extern fn sapp_set_window_title([*c]const u8) void;
 pub fn setWindowTitle(str: [:0]const u8) void {
-    sapp_set_window_title(@as([*c]const u8, @ptrCast(str)));
+    sapp_set_window_title(@ptrCast(str));
 }
 pub extern fn sapp_set_icon([*c]const IconDesc) void;
 pub fn setIcon(icon_desc: IconDesc) void {
@@ -536,10 +535,6 @@ pub fn eglGetDisplay() ?*const anyopaque {
 pub extern fn sapp_egl_get_context() ?*const anyopaque;
 pub fn eglGetContext() ?*const anyopaque {
     return sapp_egl_get_context();
-}
-pub extern fn sapp_gles2() bool;
-pub fn gles2() bool {
-    return sapp_gles2();
 }
 pub extern fn sapp_html5_ask_leave_site(bool) void;
 pub fn html5AskLeaveSite(ask: bool) void {

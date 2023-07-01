@@ -239,9 +239,9 @@ pub fn putc(c: u8) void {
 }
 pub extern fn sdtx_puts([*c]const u8) void;
 pub fn puts(str: [:0]const u8) void {
-    sdtx_puts(@as([*c]const u8, @ptrCast(str)));
+    sdtx_puts(@ptrCast(str));
 }
 pub extern fn sdtx_putr([*c]const u8, i32) void;
 pub fn putr(str: [:0]const u8, len: i32) void {
-    sdtx_putr(@as([*c]const u8, @ptrCast(str)), len);
+    sdtx_putr(@ptrCast(str), len);
 }
