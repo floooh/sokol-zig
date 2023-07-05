@@ -167,25 +167,25 @@ pub extern fn sshape_index_buffer_desc([*c]const Buffer) sg.BufferDesc;
 pub fn indexBufferDesc(buf: Buffer) sg.BufferDesc {
     return sshape_index_buffer_desc(&buf);
 }
-pub extern fn sshape_buffer_layout_desc() sg.BufferLayoutDesc;
-pub fn bufferLayoutDesc() sg.BufferLayoutDesc {
-    return sshape_buffer_layout_desc();
+pub extern fn sshape_vertex_buffer_layout_state() sg.VertexBufferLayoutState;
+pub fn vertexBufferLayoutState() sg.VertexBufferLayoutState {
+    return sshape_vertex_buffer_layout_state();
 }
-pub extern fn sshape_position_attr_desc() sg.VertexAttrDesc;
-pub fn positionAttrDesc() sg.VertexAttrDesc {
-    return sshape_position_attr_desc();
+pub extern fn sshape_position_vertex_attr_state() sg.VertexAttrState;
+pub fn positionVertexAttrState() sg.VertexAttrState {
+    return sshape_position_vertex_attr_state();
 }
-pub extern fn sshape_normal_attr_desc() sg.VertexAttrDesc;
-pub fn normalAttrDesc() sg.VertexAttrDesc {
-    return sshape_normal_attr_desc();
+pub extern fn sshape_normal_vertex_attr_state() sg.VertexAttrState;
+pub fn normalVertexAttrState() sg.VertexAttrState {
+    return sshape_normal_vertex_attr_state();
 }
-pub extern fn sshape_texcoord_attr_desc() sg.VertexAttrDesc;
-pub fn texcoordAttrDesc() sg.VertexAttrDesc {
-    return sshape_texcoord_attr_desc();
+pub extern fn sshape_texcoord_vertex_attr_state() sg.VertexAttrState;
+pub fn texcoordVertexAttrState() sg.VertexAttrState {
+    return sshape_texcoord_vertex_attr_state();
 }
-pub extern fn sshape_color_attr_desc() sg.VertexAttrDesc;
-pub fn colorAttrDesc() sg.VertexAttrDesc {
-    return sshape_color_attr_desc();
+pub extern fn sshape_color_vertex_attr_state() sg.VertexAttrState;
+pub fn colorVertexAttrState() sg.VertexAttrState {
+    return sshape_color_vertex_attr_state();
 }
 pub extern fn sshape_color_4f(f32, f32, f32, f32) u32;
 pub fn color4f(r: f32, g: f32, b: f32, a: f32) u32 {
