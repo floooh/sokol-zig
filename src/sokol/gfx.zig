@@ -147,7 +147,7 @@ pub const PixelFormat = enum(i32) {
     RGB9E5,
     NUM,
 };
-pub const PixelFormatInfo = extern struct {
+pub const PixelformatInfo = extern struct {
     sample: bool = false,
     filter: bool = false,
     render: bool = false,

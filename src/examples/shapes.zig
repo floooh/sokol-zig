@@ -64,11 +64,11 @@ export fn init() void {
             .write_enabled = true,
         },
     };
-    pip_desc.layout.buffers[0] = sshape.bufferLayoutDesc();
-    pip_desc.layout.attrs[shd.ATTR_vs_position] = sshape.positionAttrDesc();
-    pip_desc.layout.attrs[shd.ATTR_vs_normal]   = sshape.normalAttrDesc();
-    pip_desc.layout.attrs[shd.ATTR_vs_texcoord] = sshape.texcoordAttrDesc();
-    pip_desc.layout.attrs[shd.ATTR_vs_color0]   = sshape.colorAttrDesc();
+    pip_desc.layout.buffers[0] = sshape.vertexBufferLayoutState();
+    pip_desc.layout.attrs[shd.ATTR_vs_position] = sshape.positionVertexAttrState();
+    pip_desc.layout.attrs[shd.ATTR_vs_normal]   = sshape.normalVertexAttrState();
+    pip_desc.layout.attrs[shd.ATTR_vs_texcoord] = sshape.texcoordVertexAttrState();
+    pip_desc.layout.attrs[shd.ATTR_vs_color0]   = sshape.colorVertexAttrState();
     state.pip = sg.makePipeline(pip_desc);
 
     // generate shape geometries
