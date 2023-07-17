@@ -14,6 +14,7 @@ const math = @import("std").math;
 const state = struct {
     var pass_action: sg.PassAction = .{};
     var img: sg.Image = .{};
+    var smp: sg.Sampler = .{};
     var pip3d: sgl.Pipeline = .{};
     const quad = struct {
         var rot: f32 = 0.0;
@@ -59,6 +60,12 @@ export fn init() void {
     // FIXME: https://github.com/ziglang/zig/issues/6068
     img_desc.data.subimage[0][0] = sg.asRange(&pixels);
     state.img = sg.makeImage(img_desc);
+
+    // ...and a sampler
+    state.smp = sg.makeSampler(.{
+        .min_filter = .NEAREST,
+        .mag_filter = .NEAREST,
+    });
 
     // create a pipeline object for 3d rendering, with less-equal
     // depth-test and cull-face enabled, note that we don't provide
@@ -219,7 +226,7 @@ fn drawTexCube(dt: f32) void {
     sgl.loadPipeline(state.pip3d);
 
     sgl.enableTexture();
-    sgl.texture(state.img);
+    sgl.texture(state.img, state.smp);
 
     sgl.matrixModeProjection();
     sgl.perspective(sgl.asRadians(45.0), 1.0, 0.1, 100.0);

@@ -21,6 +21,7 @@ const state = struct {
     };
     const display = struct {
         var pass_action: sg.PassAction = .{};
+        var smp: sg.Sampler = .{};
         var sgl_pip: sgl.Pipeline = .{};
     };
 };
@@ -77,10 +78,6 @@ export fn init() void {
         .height = offscreen_height,
         .pixel_format = offscreen_pixel_format,
         .sample_count = offscreen_sample_count,
-        .wrap_u = .CLAMP_TO_EDGE,
-        .wrap_v = .CLAMP_TO_EDGE,
-        .min_filter = .NEAREST,
-        .mag_filter = .NEAREST,
     });
 
     var pass_desc = sg.PassDesc{};
@@ -88,6 +85,14 @@ export fn init() void {
     state.offscreen.pass = sg.makePass(pass_desc);
 
     state.offscreen.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0, .g = 0, .b = 0, .a = 1 } };
+
+    // sampler for sampling the offscreen render target
+    state.display.smp = sg.makeSampler(.{
+        .wrap_u = .CLAMP_TO_EDGE,
+        .wrap_v = .CLAMP_TO_EDGE,
+        .min_filter = .NEAREST,
+        .mag_filter = .NEAREST,
+    });
 }
 
 export fn frame() void {
@@ -104,7 +109,7 @@ export fn frame() void {
     sgl.setContext(sgl.defaultContext());
     sgl.defaults();
     sgl.enableTexture();
-    sgl.texture(state.offscreen.img);
+    sgl.texture(state.offscreen.img, state.display.smp);
     sgl.loadPipeline(state.display.sgl_pip);
     sgl.matrixModeProjection();
     sgl.perspective(sgl.asRadians(45.0), sapp.widthf() / sapp.heightf(), 0.1, 100.0);
