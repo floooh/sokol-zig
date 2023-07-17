@@ -61,7 +61,6 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, config: Config, 
         inline for (csources) |csrc| {
             lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-ObjC", "-DIMPL", backend_option});
         }
-        lib.linkFramework("Foundation");
         lib.linkFramework("Cocoa");
         lib.linkFramework("QuartzCore");
         lib.linkFramework("AudioToolbox");
