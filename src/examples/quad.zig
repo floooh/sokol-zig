@@ -4,11 +4,11 @@
 //  Simple 2D rendering with vertex- and index-buffer.
 //------------------------------------------------------------------------------
 const sokol = @import("sokol");
-const slog  = sokol.log;
-const sg    = sokol.gfx;
-const sapp  = sokol.app;
+const slog = sokol.log;
+const sg = sokol.gfx;
+const sapp = sokol.app;
 const sgapp = sokol.app_gfx_glue;
-const shd   = @import("shaders/quad.glsl.zig");
+const shd = @import("shaders/quad.glsl.zig");
 
 const state = struct {
     var bind: sg.Bindings = .{};
@@ -26,18 +26,15 @@ export fn init() void {
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
         .data = sg.asRange(&[_]f32{
             // positions      colors
-            -0.5,  0.5, 0.5,  1.0, 0.0, 0.0, 1.0,
-             0.5,  0.5, 0.5,  0.0, 1.0, 0.0, 1.0,
-             0.5, -0.5, 0.5,  0.0, 0.0, 1.0, 1.0,
-            -0.5, -0.5, 0.5,  1.0, 1.0, 0.0, 1.0
-        })
+            -0.5, 0.5,  0.5, 1.0, 0.0, 0.0, 1.0,
+            0.5,  0.5,  0.5, 0.0, 1.0, 0.0, 1.0,
+            0.5,  -0.5, 0.5, 0.0, 0.0, 1.0, 1.0,
+            -0.5, -0.5, 0.5, 1.0, 1.0, 0.0, 1.0,
+        }),
     });
 
     // an index buffer
-    state.bind.index_buffer = sg.makeBuffer(.{
-        .type = .INDEXBUFFER,
-        .data = sg.asRange(&[_]u16{ 0, 1, 2, 0, 2, 3 })
-    });
+    state.bind.index_buffer = sg.makeBuffer(.{ .type = .INDEXBUFFER, .data = sg.asRange(&[_]u16{ 0, 1, 2, 0, 2, 3 }) });
 
     // a shader and pipeline state object
     var pip_desc: sg.PipelineDesc = .{
@@ -49,7 +46,7 @@ export fn init() void {
     state.pip = sg.makePipeline(pip_desc);
 
     // clear to black
-    state.pass_action.colors[0] = .{ .load_action=.CLEAR, .clear_value=.{ .r=0, .g=0, .b=0, .a=1 } };
+    state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0, .g = 0, .b = 0, .a = 1 } };
 }
 
 export fn frame() void {

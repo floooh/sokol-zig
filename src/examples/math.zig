@@ -14,30 +14,33 @@ fn radians(deg: f32) f32 {
 }
 
 pub const Vec2 = extern struct {
-    x: f32, y: f32,
+    x: f32,
+    y: f32,
 
     pub fn zero() Vec2 {
-        return Vec2 { .x=0.0, .y=0.0 };
+        return Vec2{ .x = 0.0, .y = 0.0 };
     }
 
     pub fn new(x: f32, y: f32) Vec2 {
-        return Vec2 { .x=x, .y=y };
+        return Vec2{ .x = x, .y = y };
     }
 };
 
 pub const Vec3 = extern struct {
-    x: f32, y: f32, z: f32,
+    x: f32,
+    y: f32,
+    z: f32,
 
     pub fn zero() Vec3 {
-        return Vec3 { .x=0.0, .y=0.0, .z=0.0 };
+        return Vec3{ .x = 0.0, .y = 0.0, .z = 0.0 };
     }
 
     pub fn new(x: f32, y: f32, z: f32) Vec3 {
-        return Vec3 { .x=x, .y=y, .z=z };
+        return Vec3{ .x = x, .y = y, .z = z };
     }
 
     pub fn up() Vec3 {
-        return Vec3 { .x=0.0, .y=1.0, .z=0.0 };
+        return Vec3{ .x = 0.0, .y = 1.0, .z = 0.0 };
     }
 
     pub fn len(v: Vec3) f32 {
@@ -45,49 +48,28 @@ pub const Vec3 = extern struct {
     }
 
     pub fn add(left: Vec3, right: Vec3) Vec3 {
-        return Vec3 {
-            .x = left.x + right.x,
-            .y = left.y + right.y,
-            .z = left.z + right.z
-        };
+        return Vec3{ .x = left.x + right.x, .y = left.y + right.y, .z = left.z + right.z };
     }
 
     pub fn sub(left: Vec3, right: Vec3) Vec3 {
-        return Vec3 {
-            .x = left.x - right.x,
-            .y = left.y - right.y,
-            .z = left.z - right.z
-        };
+        return Vec3{ .x = left.x - right.x, .y = left.y - right.y, .z = left.z - right.z };
     }
 
     pub fn mul(v: Vec3, s: f32) Vec3 {
-        return Vec3 {
-            .x = v.x * s,
-            .y = v.y * s,
-            .z = v.z * s
-        };
+        return Vec3{ .x = v.x * s, .y = v.y * s, .z = v.z * s };
     }
 
     pub fn norm(v: Vec3) Vec3 {
         const l = Vec3.len(v);
         if (l != 0.0) {
-            return Vec3 {
-                .x = v.x / l,
-                .y = v.y / l,
-                .z = v.z / l
-            };
-        }
-        else {
+            return Vec3{ .x = v.x / l, .y = v.y / l, .z = v.z / l };
+        } else {
             return Vec3.zero();
         }
     }
 
     pub fn cross(v0: Vec3, v1: Vec3) Vec3 {
-        return Vec3 {
-            .x = (v0.y * v1.z) - (v0.z * v1.y),
-            .y = (v0.z * v1.x) - (v0.x * v1.z),
-            .z = (v0.x * v1.y) - (v0.y * v1.x)
-        };
+        return Vec3{ .x = (v0.y * v1.z) - (v0.z * v1.y), .y = (v0.z * v1.x) - (v0.x * v1.z), .z = (v0.x * v1.y) - (v0.y * v1.x) };
     }
 
     pub fn dot(v0: Vec3, v1: Vec3) f32 {
@@ -99,37 +81,27 @@ pub const Mat4 = extern struct {
     m: [4][4]f32,
 
     pub fn identity() Mat4 {
-        return Mat4 {
-            .m = [_][4]f32 {
-                .{ 1.0, 0.0, 0.0, 0.0 },
-                .{ 0.0, 1.0, 0.0, 0.0 },
-                .{ 0.0, 0.0, 1.0, 0.0 },
-                .{ 0.0, 0.0, 0.0, 1.0 }
-            },
+        return Mat4{
+            .m = [_][4]f32{ .{ 1.0, 0.0, 0.0, 0.0 }, .{ 0.0, 1.0, 0.0, 0.0 }, .{ 0.0, 0.0, 1.0, 0.0 }, .{ 0.0, 0.0, 0.0, 1.0 } },
         };
     }
 
     pub fn zero() Mat4 {
-        return Mat4 {
-            .m = [_][4]f32 {
-                .{ 0.0, 0.0, 0.0, 0.0 },
-                .{ 0.0, 0.0, 0.0, 0.0 },
-                .{ 0.0, 0.0, 0.0, 0.0 },
-                .{ 0.0, 0.0, 0.0, 0.0 }
-            },
+        return Mat4{
+            .m = [_][4]f32{ .{ 0.0, 0.0, 0.0, 0.0 }, .{ 0.0, 0.0, 0.0, 0.0 }, .{ 0.0, 0.0, 0.0, 0.0 }, .{ 0.0, 0.0, 0.0, 0.0 } },
         };
     }
 
     pub fn mul(left: Mat4, right: Mat4) Mat4 {
         var res = Mat4.zero();
         var col: usize = 0;
-        while (col < 4): (col += 1) {
+        while (col < 4) : (col += 1) {
             var row: usize = 0;
-            while (row < 4): (row += 1) {
+            while (row < 4) : (row += 1) {
                 res.m[col][row] = left.m[0][row] * right.m[col][0] +
-                                  left.m[1][row] * right.m[col][1] +
-                                  left.m[2][row] * right.m[col][2] +
-                                  left.m[3][row] * right.m[col][3];
+                    left.m[1][row] * right.m[col][1] +
+                    left.m[2][row] * right.m[col][2] +
+                    left.m[3][row] * right.m[col][3];
             }
         }
         return res;
@@ -216,28 +188,26 @@ test "Vec3.new" {
 
 test "Mat4.ident" {
     const m = Mat4.identity();
-    for (m.m) |row, y| {
-        for (row) |val, x| {
+    for (m.m, 0..) |row, y| {
+        for (row, 0..) |val, x| {
             if (x == y) {
                 assert(val == 1.0);
-            }
-            else {
+            } else {
                 assert(val == 0.0);
             }
         }
     }
 }
 
-test "Mat4.mul"{
+test "Mat4.mul" {
     const l = Mat4.identity();
     const r = Mat4.identity();
     const m = Mat4.mul(l, r);
-    for (m.m) |row, y| {
-        for (row) |val, x| {
+    for (m.m, 0..) |row, y| {
+        for (row, 0..) |val, x| {
             if (x == y) {
                 assert(val == 1.0);
-            }
-            else {
+            } else {
                 assert(val == 0.0);
             }
         }
@@ -246,7 +216,7 @@ test "Mat4.mul"{
 
 fn eq(val: f32, cmp: f32) bool {
     const delta: f32 = 0.00001;
-    return (val > (cmp-delta)) and (val < (cmp+delta));
+    return (val > (cmp - delta)) and (val < (cmp + delta));
 }
 
 test "Mat4.persp" {
@@ -274,7 +244,7 @@ test "Mat4.persp" {
 }
 
 test "Mat4.lookat" {
-    const m = Mat4.lookat(.{ .x=0.0, .y=1.5, .z=6.0 }, Vec3.zero(), Vec3.up());
+    const m = Mat4.lookat(.{ .x = 0.0, .y = 1.5, .z = 6.0 }, Vec3.zero(), Vec3.up());
 
     assert(eq(m.m[0][0], 1.0));
     assert(eq(m.m[0][1], 0.0));
@@ -298,7 +268,7 @@ test "Mat4.lookat" {
 }
 
 test "Mat4.rotate" {
-    const m = Mat4.rotate(2.0, .{ .x=0.0, .y=1.0, .z=0.0 });
+    const m = Mat4.rotate(2.0, .{ .x = 0.0, .y = 1.0, .z = 0.0 });
 
     assert(eq(m.m[0][0], 0.99939));
     assert(eq(m.m[0][1], 0.0));
@@ -320,6 +290,3 @@ test "Mat4.rotate" {
     assert(eq(m.m[3][2], 0.0));
     assert(eq(m.m[3][3], 1.0));
 }
-
-
-

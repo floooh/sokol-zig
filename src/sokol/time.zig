@@ -4,7 +4,7 @@ const builtin = @import("builtin");
 
 // helper function to convert a C string to a Zig string slice
 fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
-  return @import("std").mem.span(c_str);
+    return @import("std").mem.span(c_str);
 }
 pub extern fn stm_setup() void;
 pub fn setup() void {
@@ -22,8 +22,8 @@ pub extern fn stm_since(u64) u64;
 pub fn since(start_ticks: u64) u64 {
     return stm_since(start_ticks);
 }
-pub extern fn stm_laptime([*c] u64) u64;
-pub fn laptime(last_time: * u64) u64 {
+pub extern fn stm_laptime([*c]u64) u64;
+pub fn laptime(last_time: *u64) u64 {
     return stm_laptime(last_time);
 }
 pub extern fn stm_round_to_common_refresh_rate(u64) u64;
