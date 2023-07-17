@@ -47,7 +47,13 @@ export fn init() void {
     state.offscreen.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0.25, .g = 0.25, .b = 0.25, .a = 1.0 } };
 
     // a render pass with one color- and one depth-attachment image
-    var img_desc: sg.ImageDesc = .{ .render_target = true, .width = 256, .height = 256, .pixel_format = .RGBA8, .min_filter = .LINEAR, .mag_filter = .LINEAR, .wrap_u = .REPEAT, .wrap_v = .REPEAT, .sample_count = offscreen_sample_count };
+    var img_desc: sg.ImageDesc = .{
+        .render_target = true,
+        .width = 256,
+        .height = 256,
+        .pixel_format = .RGBA8,
+        .sample_count = offscreen_sample_count
+    };
     const color_img = sg.makeImage(img_desc);
     img_desc.pixel_format = .DEPTH;
     const depth_img = sg.makeImage(img_desc);
@@ -90,9 +96,9 @@ export fn init() void {
         },
     };
     offscreen_pip_desc.colors[0].pixel_format = .RGBA8;
-    offscreen_pip_desc.layout.buffers[0] = sshape.bufferLayoutDesc();
-    offscreen_pip_desc.layout.attrs[shd.ATTR_vs_offscreen_position] = sshape.positionAttrDesc();
-    offscreen_pip_desc.layout.attrs[shd.ATTR_vs_offscreen_normal] = sshape.normalAttrDesc();
+    offscreen_pip_desc.layout.buffers[0] = sshape.vertexBufferLayoutState();
+    offscreen_pip_desc.layout.attrs[shd.ATTR_vs_offscreen_position] = sshape.positionVertexAttrState();
+    offscreen_pip_desc.layout.attrs[shd.ATTR_vs_offscreen_normal] = sshape.normalVertexAttrState();
     state.offscreen.pip = sg.makePipeline(offscreen_pip_desc);
 
     // shader and pipeline object for the default render pass
@@ -105,11 +111,20 @@ export fn init() void {
             .write_enabled = true,
         },
     };
-    default_pip_desc.layout.buffers[0] = sshape.bufferLayoutDesc();
-    default_pip_desc.layout.attrs[shd.ATTR_vs_default_position] = sshape.positionAttrDesc();
-    default_pip_desc.layout.attrs[shd.ATTR_vs_default_normal] = sshape.normalAttrDesc();
-    default_pip_desc.layout.attrs[shd.ATTR_vs_default_texcoord0] = sshape.texcoordAttrDesc();
+    default_pip_desc.layout.buffers[0] = sshape.vertexBufferLayoutState();
+    default_pip_desc.layout.attrs[shd.ATTR_vs_default_position] = sshape.positionVertexAttrState();
+    default_pip_desc.layout.attrs[shd.ATTR_vs_default_normal] = sshape.normalVertexAttrState();
+    default_pip_desc.layout.attrs[shd.ATTR_vs_default_texcoord0] = sshape.texcoordVertexAttrState();
     state.default.pip = sg.makePipeline(default_pip_desc);
+
+    // a sampler object for sampling the render target texture
+    const smp = sg.makeSampler(.{
+        .min_filter = .LINEAR,
+        .mag_filter = .LINEAR,
+        .wrap_u = .REPEAT,
+        .wrap_v = .REPEAT,
+    });
+
 
     // resource bindings to render a non-textured cube (into the offscreen render target)
     state.offscreen.bind.vertex_buffers[0] = vbuf;
@@ -118,7 +133,8 @@ export fn init() void {
     // resource bindings to render a textured cube, using the offscreen render target as texture
     state.default.bind.vertex_buffers[0] = vbuf;
     state.default.bind.index_buffer = ibuf;
-    state.default.bind.fs_images[0] = color_img;
+    state.default.bind.fs.images[0] = color_img;
+    state.default.bind.fs.samplers[0] = smp;
 }
 
 export fn frame() void {

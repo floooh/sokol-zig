@@ -159,9 +159,9 @@ pub extern fn sgl_disable_texture() void;
 pub fn disableTexture() void {
     sgl_disable_texture();
 }
-pub extern fn sgl_texture(sg.Image) void;
-pub fn texture(img: sg.Image) void {
-    sgl_texture(img);
+pub extern fn sgl_texture(sg.Image, sg.Sampler) void;
+pub fn texture(img: sg.Image, smp: sg.Sampler) void {
+    sgl_texture(img, smp);
 }
 pub extern fn sgl_layer(i32) void;
 pub fn layer(layer_id: i32) void {

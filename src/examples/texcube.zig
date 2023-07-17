@@ -87,7 +87,10 @@ export fn init() void {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     });
-    state.bind.fs_images[shd.SLOT_tex] = sg.makeImage(img_desc);
+    state.bind.fs.images[shd.SLOT_tex] = sg.makeImage(img_desc);
+
+    // ...and a sampler object with default attributes
+    state.bind.fs.samplers[shd.SLOT_smp] = sg.makeSampler(.{});
 
     // shader and pipeline object
     var pip_desc: sg.PipelineDesc = .{ .shader = sg.makeShader(shd.texcubeShaderDesc(sg.queryBackend())), .index_type = .UINT16, .depth = .{
