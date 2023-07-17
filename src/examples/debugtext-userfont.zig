@@ -4,40 +4,42 @@
 //  How to use a user-defined font with sokol.debugtext
 //------------------------------------------------------------------------------
 const sokol = @import("sokol");
-const slog  = sokol.log;
-const sg    = sokol.gfx;
-const sapp  = sokol.app;
+const slog = sokol.log;
+const sg = sokol.gfx;
+const sapp = sokol.app;
 const sgapp = sokol.app_gfx_glue;
-const sdtx  = sokol.debugtext;
+const sdtx = sokol.debugtext;
 
 // use font-slot 1 for the user-defined font, there's no particular
 // reason why this isn't 0, except for testing
 const UserFont = 1;
 
 const Color = struct {
-    r: u8, g: u8, b: u8,
+    r: u8,
+    g: u8,
+    b: u8,
 };
 
 const state = struct {
     var pass_action: sg.PassAction = .{};
     var frame_count: u32 = 0;
-    const color_palette = [_]Color {
-        .{ .r=0xf4, .g=0x43, .b=0x36 },
-        .{ .r=0xe9, .g=0x1e, .b=0x63 },
-        .{ .r=0x9c, .g=0x27, .b=0xb0 },
-        .{ .r=0x67, .g=0x3a, .b=0xb7 },
-        .{ .r=0x3f, .g=0x51, .b=0xb5 },
-        .{ .r=0x21, .g=0x96, .b=0xf3 },
-        .{ .r=0x03, .g=0xa9, .b=0xf4 },
-        .{ .r=0x00, .g=0xbc, .b=0xd4 },
-        .{ .r=0x00, .g=0x96, .b=0x88 },
-        .{ .r=0x4c, .g=0xaf, .b=0x50 },
-        .{ .r=0x8b, .g=0xc3, .b=0x4a },
-        .{ .r=0xcd, .g=0xdc, .b=0x39 },
-        .{ .r=0xff, .g=0xeb, .b=0x3b },
-        .{ .r=0xff, .g=0xc1, .b=0x07 },
-        .{ .r=0xff, .g=0x98, .b=0x00 },
-        .{ .r=0xff, .g=0x57, .b=0x22 },
+    const color_palette = [_]Color{
+        .{ .r = 0xf4, .g = 0x43, .b = 0x36 },
+        .{ .r = 0xe9, .g = 0x1e, .b = 0x63 },
+        .{ .r = 0x9c, .g = 0x27, .b = 0xb0 },
+        .{ .r = 0x67, .g = 0x3a, .b = 0xb7 },
+        .{ .r = 0x3f, .g = 0x51, .b = 0xb5 },
+        .{ .r = 0x21, .g = 0x96, .b = 0xf3 },
+        .{ .r = 0x03, .g = 0xa9, .b = 0xf4 },
+        .{ .r = 0x00, .g = 0xbc, .b = 0xd4 },
+        .{ .r = 0x00, .g = 0x96, .b = 0x88 },
+        .{ .r = 0x4c, .g = 0xaf, .b = 0x50 },
+        .{ .r = 0x8b, .g = 0xc3, .b = 0x4a },
+        .{ .r = 0xcd, .g = 0xdc, .b = 0x39 },
+        .{ .r = 0xff, .g = 0xeb, .b = 0x3b },
+        .{ .r = 0xff, .g = 0xc1, .b = 0x07 },
+        .{ .r = 0xff, .g = 0x98, .b = 0x00 },
+        .{ .r = 0xff, .g = 0x57, .b = 0x22 },
     };
 };
 
@@ -50,16 +52,12 @@ export fn init() void {
     // setup sokol.debugtext with a user-defined font as the only font
     // NOTE that the user font only provides pixel data for the
     // characters 0x20 to 0x9F (inclusive)
-    var sdtx_desc: sdtx.Desc = .{ .logger = .{ .func = slog.func }};
-    sdtx_desc.fonts[UserFont] = .{
-        .data = sdtx.asRange(&user_font),
-        .first_char = 0x20,
-        .last_char = 0x9F
-    };
+    var sdtx_desc: sdtx.Desc = .{ .logger = .{ .func = slog.func } };
+    sdtx_desc.fonts[UserFont] = .{ .data = sdtx.asRange(&user_font), .first_char = 0x20, .last_char = 0x9F };
     sdtx.setup(sdtx_desc);
 
     // pass-action to clear background to blue-ish
-    state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r=0, .g=0.125, .b=0.25, .a=1 }};
+    state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0, .g = 0.125, .b = 0.25, .a = 1 } };
 }
 
 export fn frame() void {
@@ -72,7 +70,7 @@ export fn frame() void {
     sdtx.puts("Hello 8-bit ATARI font:\n\n");
     var line: u32 = 0;
     var c: u8 = 0x20;
-    while (c < 0xA0): (c += 1) {
+    while (c < 0xA0) : (c += 1) {
         if ((c & 15) == 0) {
             sdtx.puts("\n\t");
             line += 1;
@@ -110,7 +108,7 @@ pub fn main() void {
 // Font data extracted from Atari 400 ROM at address 0xE000,
 // and reshuffled to map to ASCII. Each character is 8 bytes,
 // 1 bit per pixel in an 8x8 matrix.
-const user_font = [128*8]u8 {
+const user_font = [128 * 8]u8{
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 20
     0x00, 0x18, 0x18, 0x18, 0x18, 0x00, 0x18, 0x00, // 21
     0x00, 0x66, 0x66, 0x66, 0x00, 0x00, 0x00, 0x00, // 22

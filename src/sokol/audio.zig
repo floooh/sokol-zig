@@ -4,7 +4,7 @@ const builtin = @import("builtin");
 
 // helper function to convert a C string to a Zig string slice
 fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
-  return @import("std").mem.span(c_str);
+    return @import("std").mem.span(c_str);
 }
 pub const LogItem = enum(i32) {
     OK,
@@ -45,12 +45,12 @@ pub const LogItem = enum(i32) {
     BACKEND_BUFFER_SIZE_ISNT_MULTIPLE_OF_PACKET_SIZE,
 };
 pub const Logger = extern struct {
-    func: ?*const fn([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
+    func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Allocator = extern struct {
-    alloc: ?*const fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free: ?*const fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
+    free: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Desc = extern struct {
@@ -59,11 +59,11 @@ pub const Desc = extern struct {
     buffer_frames: i32 = 0,
     packet_frames: i32 = 0,
     num_packets: i32 = 0,
-    stream_cb: ?*const fn([*c] f32, i32, i32) callconv(.C) void = null,
-    stream_userdata_cb: ?*const fn([*c] f32, i32, i32, ?*anyopaque) callconv(.C) void = null,
+    stream_cb: ?*const fn ([*c]f32, i32, i32) callconv(.C) void = null,
+    stream_userdata_cb: ?*const fn ([*c]f32, i32, i32, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
-    allocator: Allocator = .{ },
-    logger: Logger = .{ },
+    allocator: Allocator = .{},
+    logger: Logger = .{},
 };
 pub extern fn saudio_setup([*c]const Desc) void;
 pub fn setup(desc: Desc) void {

@@ -5,7 +5,7 @@ const sg = @import("gfx.zig");
 
 // helper function to convert a C string to a Zig string slice
 fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
-  return @import("std").mem.span(c_str);
+    return @import("std").mem.span(c_str);
 }
 // helper function to convert "anything" to a Range struct
 pub fn asRange(val: anytype) Range {
@@ -23,13 +23,13 @@ pub fn asRange(val: anytype) Range {
         },
         else => {
             @compileError("Cannot convert to range!");
-        }
+        },
     }
 }
 
 // std.fmt compatible Writer
 pub const Writer = struct {
-    pub const Error = error { };
+    pub const Error = error{};
     pub fn writeAll(self: Writer, bytes: []const u8) Error!void {
         _ = self;
         for (bytes) |byte| {
@@ -39,7 +39,7 @@ pub const Writer = struct {
     pub fn writeByteNTimes(self: Writer, byte: u8, n: u64) Error!void {
         _ = self;
         var i: u64 = 0;
-        while (i < n): (i += 1) {
+        while (i < n) : (i += 1) {
             putc(byte);
         }
     }
@@ -59,7 +59,7 @@ pub const LogItem = enum(i32) {
     CANNOT_DESTROY_DEFAULT_CONTEXT,
 };
 pub const Logger = extern struct {
-    func: ?*const fn([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
+    func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Context = extern struct {
@@ -70,7 +70,7 @@ pub const Range = extern struct {
     size: usize = 0,
 };
 pub const FontDesc = extern struct {
-    data: Range = .{ },
+    data: Range = .{},
     first_char: u8 = 0,
     last_char: u8 = 0,
 };
@@ -85,17 +85,17 @@ pub const ContextDesc = extern struct {
     sample_count: i32 = 0,
 };
 pub const Allocator = extern struct {
-    alloc: ?*const fn(usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free: ?*const fn(?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
+    free: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Desc = extern struct {
     context_pool_size: i32 = 0,
     printf_buf_size: i32 = 0,
     fonts: [8]FontDesc = [_]FontDesc{.{}} ** 8,
-    context: ContextDesc = .{ },
-    allocator: Allocator = .{ },
-    logger: Logger = .{ },
+    context: ContextDesc = .{},
+    allocator: Allocator = .{},
+    logger: Logger = .{},
 };
 pub extern fn sdtx_setup([*c]const Desc) void;
 pub fn setup(desc: Desc) void {
@@ -239,9 +239,9 @@ pub fn putc(c: u8) void {
 }
 pub extern fn sdtx_puts([*c]const u8) void;
 pub fn puts(str: [:0]const u8) void {
-    sdtx_puts(@ptrCast([*c]const u8,str));
+    sdtx_puts(@ptrCast(str));
 }
 pub extern fn sdtx_putr([*c]const u8, i32) void;
 pub fn putr(str: [:0]const u8, len: i32) void {
-    sdtx_putr(@ptrCast([*c]const u8,str), len);
+    sdtx_putr(@ptrCast(str), len);
 }

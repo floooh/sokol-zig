@@ -3,13 +3,13 @@
 //  Test/demonstrate blend modes.
 //------------------------------------------------------------------------------
 const sokol = @import("sokol");
-const slog  = sokol.log;
-const sg    = sokol.gfx;
-const sapp  = sokol.app;
+const slog = sokol.log;
+const sg = sokol.gfx;
+const sapp = sokol.app;
 const sgapp = sokol.app_gfx_glue;
-const vec3  = @import("math.zig").Vec3;
-const mat4  = @import("math.zig").Mat4;
-const shd   = @import("shaders/blend.glsl.zig");
+const vec3 = @import("math.zig").Vec3;
+const mat4 = @import("math.zig").Mat4;
+const shd = @import("shaders/blend.glsl.zig");
 
 const NUM_BLEND_FACTORS = 15;
 
@@ -34,13 +34,13 @@ export fn init() void {
     state.pass_action.stencil.load_action = .DONTCARE;
 
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
-        .data = sg.asRange(&[_]f32 {
-             // pos               color
-            -1.0, -1.0, 0.0,  1.0, 0.0, 0.0, 0.5,
-             1.0, -1.0, 0.0,  0.0, 1.0, 0.0, 0.5,
-            -1.0,  1.0, 0.0,  0.0, 0.0, 1.0, 0.5,
-             1.0,  1.0, 0.0,  1.0, 1.0, 0.0, 0.5
-        })
+        .data = sg.asRange(&[_]f32{
+            // pos               color
+            -1.0, -1.0, 0.0, 1.0, 0.0, 0.0, 0.5,
+            1.0,  -1.0, 0.0, 0.0, 1.0, 0.0, 0.5,
+            -1.0, 1.0,  0.0, 0.0, 0.0, 1.0, 0.5,
+            1.0,  1.0,  0.0, 1.0, 1.0, 0.0, 0.5,
+        }),
     });
 
     // pipeline object for rendering the background
@@ -56,7 +56,7 @@ export fn init() void {
     pip_desc = .{
         .shader = sg.makeShader(shd.quadShaderDesc(sg.queryBackend())),
         .primitive_type = .TRIANGLE_STRIP,
-        .blend_color = .{ .r=1.0, .g=0.0, .b=0.0, .a=1.0 }
+        .blend_color = .{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 1.0 },
     };
     pip_desc.layout.attrs[shd.ATTR_vs_quad_position].format = .FLOAT3;
     pip_desc.layout.attrs[shd.ATTR_vs_quad_color0].format = .FLOAT4;
@@ -65,17 +65,19 @@ export fn init() void {
         .src_factor_alpha = .ONE,
         .dst_factor_alpha = .ZERO,
     };
-    var src: usize = 0; while (src < NUM_BLEND_FACTORS): (src += 1) {
-        var dst: usize = 0; while (dst < NUM_BLEND_FACTORS): (dst += 1) {
-            pip_desc.colors[0].blend.src_factor_rgb = @intToEnum(sg.BlendFactor, src + 1);
-            pip_desc.colors[0].blend.dst_factor_rgb = @intToEnum(sg.BlendFactor, dst + 1);
+    var src: usize = 0;
+    while (src < NUM_BLEND_FACTORS) : (src += 1) {
+        var dst: usize = 0;
+        while (dst < NUM_BLEND_FACTORS) : (dst += 1) {
+            pip_desc.colors[0].blend.src_factor_rgb = @as(sg.BlendFactor, @enumFromInt(src + 1));
+            pip_desc.colors[0].blend.dst_factor_rgb = @as(sg.BlendFactor, @enumFromInt(dst + 1));
             state.pip[src][dst] = sg.makePipeline(pip_desc);
         }
     }
 }
 
 export fn frame() void {
-    const time = @floatCast(f32, sapp.frameDuration()) * 60.0;
+    const time = @as(f32, @floatCast(sapp.frameDuration())) * 60.0;
 
     sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
 
@@ -94,18 +96,20 @@ export fn frame() void {
 
     state.r += 0.6 * time;
     var r0 = state.r;
-    var src: usize = 0; while (src < NUM_BLEND_FACTORS): (src += 1) {
-        var dst: usize = 0; while (dst < NUM_BLEND_FACTORS): (dst += 1) {
+    var src: usize = 0;
+    while (src < NUM_BLEND_FACTORS) : (src += 1) {
+        var dst: usize = 0;
+        while (dst < NUM_BLEND_FACTORS) : (dst += 1) {
             // compute model-view-proj matrix
             const shift = NUM_BLEND_FACTORS / 2;
             const t: vec3 = .{
-                .x = (@intToFloat(f32, dst) - shift) * 3.0,
-                .y = (@intToFloat(f32, src) - shift) * 2.2,
-                .z = 0.0
+                .x = (@as(f32, @floatFromInt(dst)) - shift) * 3.0,
+                .y = (@as(f32, @floatFromInt(src)) - shift) * 2.2,
+                .z = 0.0,
             };
             const model = mat4.mul(mat4.translate(t), mat4.rotate(r0, vec3.up()));
             const quad_vs_params: shd.QuadVsParams = .{
-                .mvp = mat4.mul(view_proj, model)
+                .mvp = mat4.mul(view_proj, model),
             };
             sg.applyPipeline(state.pip[src][dst]);
             sg.applyBindings(state.bind);
