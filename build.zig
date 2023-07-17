@@ -59,8 +59,9 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, mode: Mode, config: Config, 
 
     if (lib.target.isDarwin()) {
         inline for (csources) |csrc| {
-            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-ObjC", "-mmacos-version-min=11.0", "-DIMPL", backend_option});
+            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{"-ObjC", "-DIMPL", backend_option});
         }
+        lib.linkFramework("Foundation");
         lib.linkFramework("Cocoa");
         lib.linkFramework("QuartzCore");
         lib.linkFramework("AudioToolbox");
