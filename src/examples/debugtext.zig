@@ -46,7 +46,7 @@ fn printFont(font_index: u32, title: [:0]const u8, r: u8, g: u8, b: u8) void {
     sdtx.puts(title);
     var c: u16 = 32;
     while (c < 256) : (c += 1) {
-        sdtx.putc(@as(u8, @intCast(c)));
+        sdtx.putc(@intCast(c));
         if (((c + 1) & 63) == 0) {
             sdtx.crlf();
         }

@@ -137,7 +137,7 @@ export fn init() void {
 }
 
 export fn frame() void {
-    const dt = @as(f32, @floatCast(sapp.frameDuration())) * 60.0;
+    const dt: f32 = @floatCast(sapp.frameDuration() * 60);
     state.rx += 1 * dt;
     state.ry += 2 * dt;
     const aspect = sapp.widthf() / sapp.heightf();

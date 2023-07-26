@@ -87,7 +87,7 @@ export fn init() void {
 }
 
 export fn frame() void {
-    const dt = @as(f32, @floatCast(sapp.frameDuration() * 60));
+    const dt: f32 = @floatCast(sapp.frameDuration() * 60);
     state.rx += 1.0 * dt;
     state.ry += 2.0 * dt;
     const vs_params = computeVsParams(state.rx, state.ry);

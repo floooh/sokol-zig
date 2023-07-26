@@ -85,7 +85,7 @@ export fn init() void {
 
 export fn frame() void {
     // frame time 'normalized' to 60fps
-    const dt = @as(f32, @floatCast(sapp.frameDuration())) * 60.0;
+    const dt: f32 = @floatCast(sapp.frameDuration() * 60);
 
     // compute viewport rectangles so that the views are horizontally
     // centered and keep a 1:1 aspect ratio

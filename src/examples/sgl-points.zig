@@ -58,7 +58,7 @@ fn computeColor(t: f32) Rgb {
 }
 
 export fn frame() void {
-    const angle = @as(f32, @floatFromInt(sapp.frameCount() % 360));
+    const angle: f32 = @floatFromInt(sapp.frameCount() % 360);
 
     sgl.defaults();
     sgl.beginPoints();

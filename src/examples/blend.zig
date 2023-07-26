@@ -77,7 +77,7 @@ export fn init() void {
 }
 
 export fn frame() void {
-    const time = @as(f32, @floatCast(sapp.frameDuration())) * 60.0;
+    const time: f32 = @floatCast(sapp.frameDuration() * 60.0);
 
     sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
 

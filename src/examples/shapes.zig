@@ -109,7 +109,7 @@ export fn frame() void {
     const view_proj = mat4.mul(proj, state.view);
 
     // model-rotation matrix
-    const dt = @as(f32, @floatCast(sapp.frameDuration())) * 60.0;
+    const dt: f32 = @floatCast(sapp.frameDuration() * 60);
     state.rx += 1.0 * dt;
     state.ry += 1.0 * dt;
     const rxm = mat4.rotate(state.rx, .{ .x = 1, .y = 0, .z = 0 });
