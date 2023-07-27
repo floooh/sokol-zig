@@ -1,4 +1,3 @@
-#define SOKOL_ZIG_BINDINGS
 #if !defined(__ANDROID__)
     #define SOKOL_NO_ENTRY
 #endif

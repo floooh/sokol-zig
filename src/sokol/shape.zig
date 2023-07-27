@@ -46,12 +46,10 @@ pub const Vertex = extern struct {
 pub const ElementRange = extern struct {
     base_element: u32 = 0,
     num_elements: u32 = 0,
-    __pad: [3]u32 = [_]u32{0} ** 3,
 };
 pub const SizesItem = extern struct {
     num: u32 = 0,
     size: u32 = 0,
-    __pad: [3]u32 = [_]u32{0} ** 3,
 };
 pub const Sizes = extern struct {
     vertices: SizesItem = .{},

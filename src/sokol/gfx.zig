@@ -154,14 +154,12 @@ pub const PixelformatInfo = extern struct {
     blend: bool = false,
     msaa: bool = false,
     depth: bool = false,
-    __pad: [3]u32 = [_]u32{0} ** 3,
 };
 pub const Features = extern struct {
     origin_top_left: bool = false,
     image_clamp_to_border: bool = false,
     mrt_independent_blend_state: bool = false,
     mrt_independent_write_mask: bool = false,
-    __pad: [3]u32 = [_]u32{0} ** 3,
 };
 pub const Limits = extern struct {
     max_image_size_2d: i32 = 0,
@@ -551,13 +549,11 @@ pub const VertexBufferLayoutState = extern struct {
     stride: i32 = 0,
     step_func: VertexStep = .DEFAULT,
     step_rate: i32 = 0,
-    __pad: [2]u32 = [_]u32{0} ** 2,
 };
 pub const VertexAttrState = extern struct {
     buffer_index: i32 = 0,
     offset: i32 = 0,
     format: VertexFormat = .INVALID,
-    __pad: [2]u32 = [_]u32{0} ** 2,
 };
 pub const VertexLayoutState = extern struct {
     buffers: [8]VertexBufferLayoutState = [_]VertexBufferLayoutState{.{}} ** 8,
