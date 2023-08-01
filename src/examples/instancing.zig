@@ -40,25 +40,33 @@ export fn init() void {
 
     // a vertex buffer for the static particle geometry, goes into vertex buffer slot 0
     const r = 0.05;
-    state.bind.vertex_buffers[0] = sg.makeBuffer(.{ .data = sg.asRange(&[_]f32{
-        0.0, -r,  0.0, 1.0, 0.0, 0.0, 1.0,
-        r,   0.0, r,   0.0, 1.0, 0.0, 1.0,
-        r,   0.0, -r,  0.0, 0.0, 1.0, 1.0,
-        -r,  0.0, -r,  1.0, 1.0, 0.0, 1.0,
-        -r,  0.0, r,   0.0, 1.0, 1.0, 1.0,
-        0.0, r,   0.0, 1.0, 0.0, 1.0, 1.0,
-    }) });
+    state.bind.vertex_buffers[0] = sg.makeBuffer(.{
+        .data = sg.asRange(&[_]f32{
+            0.0, -r,  0.0, 1.0, 0.0, 0.0, 1.0,
+            r,   0.0, r,   0.0, 1.0, 0.0, 1.0,
+            r,   0.0, -r,  0.0, 0.0, 1.0, 1.0,
+            -r,  0.0, -r,  1.0, 1.0, 0.0, 1.0,
+            -r,  0.0, r,   0.0, 1.0, 1.0, 1.0,
+            0.0, r,   0.0, 1.0, 0.0, 1.0, 1.0,
+        }),
+    });
 
     // an index buffer for the static geometry
-    state.bind.index_buffer = sg.makeBuffer(.{ .type = .INDEXBUFFER, .data = sg.asRange(&[_]u16{
-        2, 1, 0, 3, 2, 0,
-        4, 3, 0, 1, 4, 0,
-        5, 1, 2, 5, 2, 3,
-        5, 3, 4, 5, 4, 1,
-    }) });
+    state.bind.index_buffer = sg.makeBuffer(.{
+        .type = .INDEXBUFFER,
+        .data = sg.asRange(&[_]u16{
+            2, 1, 0, 3, 2, 0,
+            4, 3, 0, 1, 4, 0,
+            5, 1, 2, 5, 2, 3,
+            5, 3, 4, 5, 4, 1,
+        }),
+    });
 
     // an empty dynamic vertex buffer for the instancing data, goes in vertex buffer slot 1
-    state.bind.vertex_buffers[1] = sg.makeBuffer(.{ .usage = .STREAM, .size = max_particles * @sizeOf(vec3) });
+    state.bind.vertex_buffers[1] = sg.makeBuffer(.{
+        .usage = .STREAM,
+        .size = max_particles * @sizeOf(vec3),
+    });
 
     // shader and pipeline object
     var pip_desc: sg.PipelineDesc = .{
@@ -89,7 +97,11 @@ export fn frame() void {
         while (i < num_particles_emitted_per_frame) : (i += 1) {
             if (state.cur_num_particles < max_particles) {
                 state.pos[state.cur_num_particles] = vec3.zero();
-                state.vel[state.cur_num_particles] = .{ .x = rand(-0.5, 0.5), .y = rand(2.0, 2.5), .z = rand(-0.5, 0.5) };
+                state.vel[state.cur_num_particles] = .{
+                    .x = rand(-0.5, 0.5),
+                    .y = rand(2.0, 2.5),
+                    .z = rand(-0.5, 0.5),
+                };
                 state.cur_num_particles += 1;
             } else {
                 break;
@@ -103,7 +115,6 @@ export fn frame() void {
         while (i < max_particles) : (i += 1) {
             const vel = &state.vel[i];
             const pos = &state.pos[i];
-
             vel.y -= 1.0 * frame_time;
             pos.* = vec3.add(pos.*, vec3.mul(vel.*, frame_time));
             if (pos.y < -2.0) {

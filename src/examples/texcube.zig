@@ -74,14 +74,17 @@ export fn init() void {
     });
 
     // cube index buffer
-    state.bind.index_buffer = sg.makeBuffer(.{ .type = .INDEXBUFFER, .data = sg.asRange(&[_]u16{
-        0,  1,  2,  0,  2,  3,
-        6,  5,  4,  7,  6,  4,
-        8,  9,  10, 8,  10, 11,
-        14, 13, 12, 15, 14, 12,
-        16, 17, 18, 16, 18, 19,
-        22, 21, 20, 23, 22, 20,
-    }) });
+    state.bind.index_buffer = sg.makeBuffer(.{
+        .type = .INDEXBUFFER,
+        .data = sg.asRange(&[_]u16{
+            0,  1,  2,  0,  2,  3,
+            6,  5,  4,  7,  6,  4,
+            8,  9,  10, 8,  10, 11,
+            14, 13, 12, 15, 14, 12,
+            16, 17, 18, 16, 18, 19,
+            22, 21, 20, 23, 22, 20,
+        }),
+    });
 
     // create a small checker-board texture
     var img_desc: sg.ImageDesc = .{
@@ -100,17 +103,25 @@ export fn init() void {
     state.bind.fs.samplers[shd.SLOT_smp] = sg.makeSampler(.{});
 
     // shader and pipeline object
-    var pip_desc: sg.PipelineDesc = .{ .shader = sg.makeShader(shd.texcubeShaderDesc(sg.queryBackend())), .index_type = .UINT16, .depth = .{
-        .compare = .LESS_EQUAL,
-        .write_enabled = true,
-    }, .cull_mode = .BACK };
+    var pip_desc: sg.PipelineDesc = .{
+        .shader = sg.makeShader(shd.texcubeShaderDesc(sg.queryBackend())),
+        .index_type = .UINT16,
+        .depth = .{
+            .compare = .LESS_EQUAL,
+            .write_enabled = true,
+        },
+        .cull_mode = .BACK,
+    };
     pip_desc.layout.attrs[shd.ATTR_vs_pos].format = .FLOAT3;
     pip_desc.layout.attrs[shd.ATTR_vs_color0].format = .UBYTE4N;
     pip_desc.layout.attrs[shd.ATTR_vs_texcoord0].format = .SHORT2N;
     state.pip = sg.makePipeline(pip_desc);
 
     // pass action for clearing the frame buffer
-    state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0.25, .g = 0.5, .b = 0.75, .a = 1 } };
+    state.pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0.25, .g = 0.5, .b = 0.75, .a = 1 },
+    };
 }
 
 export fn frame() void {

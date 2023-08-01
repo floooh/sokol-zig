@@ -50,7 +50,10 @@ export fn init() void {
     });
 
     // initialize a pass action struct for the default pass to clear to a light-blue color
-    state.display.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0.5, .g = 0.7, .b = 1, .a = 1 } };
+    state.display.pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0.5, .g = 0.7, .b = 1, .a = 1 },
+    };
 
     // create a sokol-gl pipeline object for 3D rendering into the default pass
     state.display.sgl_pip = sgl.contextMakePipeline(sgl.defaultContext(), .{
@@ -84,7 +87,10 @@ export fn init() void {
     pass_desc.color_attachments[0].image = state.offscreen.img;
     state.offscreen.pass = sg.makePass(pass_desc);
 
-    state.offscreen.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0, .g = 0, .b = 0, .a = 1 } };
+    state.offscreen.pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0, .g = 0, .b = 0, .a = 1 },
+    };
 
     // sampler for sampling the offscreen render target
     state.display.smp = sg.makeSampler(.{

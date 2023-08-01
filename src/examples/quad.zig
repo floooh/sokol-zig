@@ -34,7 +34,10 @@ export fn init() void {
     });
 
     // an index buffer
-    state.bind.index_buffer = sg.makeBuffer(.{ .type = .INDEXBUFFER, .data = sg.asRange(&[_]u16{ 0, 1, 2, 0, 2, 3 }) });
+    state.bind.index_buffer = sg.makeBuffer(.{
+        .type = .INDEXBUFFER,
+        .data = sg.asRange(&[_]u16{ 0, 1, 2, 0, 2, 3 }),
+    });
 
     // a shader and pipeline state object
     var pip_desc: sg.PipelineDesc = .{
@@ -46,7 +49,10 @@ export fn init() void {
     state.pip = sg.makePipeline(pip_desc);
 
     // clear to black
-    state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0, .g = 0, .b = 0, .a = 1 } };
+    state.pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0, .g = 0, .b = 0, .a = 1 },
+    };
 }
 
 export fn frame() void {

@@ -69,8 +69,8 @@ export fn init() void {
     while (src < NUM_BLEND_FACTORS) : (src += 1) {
         var dst: usize = 0;
         while (dst < NUM_BLEND_FACTORS) : (dst += 1) {
-            pip_desc.colors[0].blend.src_factor_rgb = @as(sg.BlendFactor, @enumFromInt(src + 1));
-            pip_desc.colors[0].blend.dst_factor_rgb = @as(sg.BlendFactor, @enumFromInt(dst + 1));
+            pip_desc.colors[0].blend.src_factor_rgb = @enumFromInt(src + 1);
+            pip_desc.colors[0].blend.dst_factor_rgb = @enumFromInt(dst + 1);
             state.pip[src][dst] = sg.makePipeline(pip_desc);
         }
     }

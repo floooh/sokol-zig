@@ -58,9 +58,18 @@ export fn init() void {
     state.default.pass_action.stencil = .{ .load_action = .DONTCARE };
 
     // set pass action for offscreen render pass
-    state.offscreen.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0.25, .g = 0, .b = 0, .a = 1 } };
-    state.offscreen.pass_action.colors[1] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0, .g = 0.25, .b = 0, .a = 1 } };
-    state.offscreen.pass_action.colors[2] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0, .g = 0, .b = 0.25, .a = 1 } };
+    state.offscreen.pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0.25, .g = 0, .b = 0, .a = 1 },
+    };
+    state.offscreen.pass_action.colors[1] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0, .g = 0.25, .b = 0, .a = 1 },
+    };
+    state.offscreen.pass_action.colors[2] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0, .g = 0, .b = 0.25, .a = 1 },
+    };
 
     // setup the offscreen render pass and render target images,
     // this will also be called when the window resizes
@@ -182,7 +191,12 @@ export fn frame() void {
 
     // compute shader uniform data
     const offscreen_params: shd.OffscreenParams = .{ .mvp = computeMVP(state.rx, state.ry) };
-    const fsq_params: shd.FsqParams = .{ .offset = .{ .x = math.sin(state.rx * 0.01) * 0.1, .y = math.cos(state.ry * 0.01) * 0.1 } };
+    const fsq_params: shd.FsqParams = .{
+        .offset = .{
+            .x = math.sin(state.rx * 0.01) * 0.1,
+            .y = math.cos(state.ry * 0.01) * 0.1,
+        },
+    };
 
     // render cube into MRT offscreen render targets
     sg.beginPass(state.offscreen.pass, state.offscreen.pass_action);

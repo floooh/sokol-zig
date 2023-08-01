@@ -52,7 +52,10 @@ export fn init() void {
     sdtx.setup(sdtx_desc);
 
     // pass-action for clearing to black
-    state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0, .g = 0, .b = 0, .a = 1 } };
+    state.pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0, .g = 0, .b = 0, .a = 1 },
+    };
 
     // shader- and pipeline-object
     var pip_desc: sg.PipelineDesc = .{
@@ -78,15 +81,43 @@ export fn init() void {
         .vertices = .{ .buffer = sshape.asRange(&vertices) },
         .indices = .{ .buffer = sshape.asRange(&indices) },
     };
-    buf = sshape.buildBox(buf, .{ .width = 1.0, .height = 1.0, .depth = 1.0, .tiles = 10, .random_colors = true });
+    buf = sshape.buildBox(buf, .{
+        .width = 1.0,
+        .height = 1.0,
+        .depth = 1.0,
+        .tiles = 10,
+        .random_colors = true,
+    });
     state.shapes[0].draw = sshape.elementRange(buf);
-    buf = sshape.buildPlane(buf, .{ .width = 1.0, .depth = 1.0, .tiles = 10, .random_colors = true });
+    buf = sshape.buildPlane(buf, .{
+        .width = 1.0,
+        .depth = 1.0,
+        .tiles = 10,
+        .random_colors = true,
+    });
     state.shapes[1].draw = sshape.elementRange(buf);
-    buf = sshape.buildSphere(buf, .{ .radius = 0.75, .slices = 36, .stacks = 20, .random_colors = true });
+    buf = sshape.buildSphere(buf, .{
+        .radius = 0.75,
+        .slices = 36,
+        .stacks = 20,
+        .random_colors = true,
+    });
     state.shapes[2].draw = sshape.elementRange(buf);
-    buf = sshape.buildCylinder(buf, .{ .radius = 0.5, .height = 1.5, .slices = 36, .stacks = 10, .random_colors = true });
+    buf = sshape.buildCylinder(buf, .{
+        .radius = 0.5,
+        .height = 1.5,
+        .slices = 36,
+        .stacks = 10,
+        .random_colors = true,
+    });
     state.shapes[3].draw = sshape.elementRange(buf);
-    buf = sshape.buildTorus(buf, .{ .radius = 0.5, .ring_radius = 0.3, .rings = 36, .sides = 18, .random_colors = true });
+    buf = sshape.buildTorus(buf, .{
+        .radius = 0.5,
+        .ring_radius = 0.3,
+        .rings = 36,
+        .sides = 18,
+        .random_colors = true,
+    });
     state.shapes[4].draw = sshape.elementRange(buf);
     assert(buf.valid);
 

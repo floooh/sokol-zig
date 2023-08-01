@@ -53,7 +53,11 @@ export fn init() void {
     // NOTE that the user font only provides pixel data for the
     // characters 0x20 to 0x9F (inclusive)
     var sdtx_desc: sdtx.Desc = .{ .logger = .{ .func = slog.func } };
-    sdtx_desc.fonts[UserFont] = .{ .data = sdtx.asRange(&user_font), .first_char = 0x20, .last_char = 0x9F };
+    sdtx_desc.fonts[UserFont] = .{
+        .data = sdtx.asRange(&user_font),
+        .first_char = 0x20,
+        .last_char = 0x9F,
+    };
     sdtx.setup(sdtx_desc);
 
     // pass-action to clear background to blue-ish

@@ -74,10 +74,15 @@ export fn init() void {
     }) });
 
     // shader and pipeline object
-    var pip_desc: sg.PipelineDesc = .{ .shader = sg.makeShader(shd.cubeShaderDesc(sg.queryBackend())), .index_type = .UINT16, .depth = .{
-        .compare = .LESS_EQUAL,
-        .write_enabled = true,
-    }, .cull_mode = .BACK };
+    var pip_desc: sg.PipelineDesc = .{
+        .shader = sg.makeShader(shd.cubeShaderDesc(sg.queryBackend())),
+        .index_type = .UINT16,
+        .depth = .{
+            .compare = .LESS_EQUAL,
+            .write_enabled = true,
+        },
+        .cull_mode = .BACK,
+    };
     pip_desc.layout.attrs[shd.ATTR_vs_position].format = .FLOAT3;
     pip_desc.layout.attrs[shd.ATTR_vs_color0].format = .FLOAT4;
     state.pip = sg.makePipeline(pip_desc);
