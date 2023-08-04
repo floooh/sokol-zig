@@ -1,7 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const Builder = std.build.Builder;
-const LibExeObjStep = std.build.LibExeObjStep;
+const CompileStep = std.build.CompileStep;
 const CrossTarget = std.zig.CrossTarget;
 const Mode = std.builtin.Mode;
 
@@ -23,7 +23,7 @@ pub const Config = struct {
 };
 
 // build sokol into a static library
-pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, config: Config, comptime prefix_path: []const u8) *LibExeObjStep {
+pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, config: Config, comptime prefix_path: []const u8) *CompileStep {
     const lib = b.addStaticLibrary(.{
         .name = "sokol",
         .target = target,
@@ -63,7 +63,10 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, config: Conf
 
     if (lib.target.isDarwin()) {
         inline for (csources) |csrc| {
-            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{ "-ObjC", "-DIMPL", backend_option });
+            lib.addCSourceFile(.{
+                .file = std.Build.LazyPath.relative(sokol_path ++ csrc),
+                .flags = &[_][]const u8{ "-ObjC", "-DIMPL", backend_option }
+            });
         }
         lib.linkFramework("Cocoa");
         lib.linkFramework("QuartzCore");
@@ -80,7 +83,10 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, config: Conf
         var wayland_flag = if (!config.enable_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
 
         inline for (csources) |csrc| {
-            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{ "-DIMPL", backend_option, egl_flag, x11_flag, wayland_flag });
+            lib.addCSourceFile(.{
+                .file = std.Build.LazyPath.relative(sokol_path ++ csrc),
+                .flags = &[_][]const u8{ "-DIMPL", backend_option, egl_flag, x11_flag, wayland_flag }
+            });
         }
 
         if (lib.target.isLinux()) {
@@ -126,7 +132,7 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, config: Conf
 }
 
 // build one of the example exes
-fn buildExample(b: *Builder, target: CrossTarget, optimize: Mode, sokol: *LibExeObjStep, comptime name: []const u8) void {
+fn buildExample(b: *Builder, target: CrossTarget, optimize: Mode, sokol: *CompileStep, comptime name: []const u8) void {
     const e = b.addExecutable(.{
         .name = name,
         .root_source_file = .{ .path = "src/examples/" ++ name ++ ".zig" },
