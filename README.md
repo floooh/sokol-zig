@@ -2,11 +2,7 @@
 
 Auto-generated Zig bindings for the [sokol headers](https://github.com/floooh/sokol).
 
-For Zig version 0.11.0-dev
-
-> NOTE: the zig-0.11.0 branch has been merged before Zig 0.11.0 is actually released because of
-> a problem in the latest sokol headers involving `if (@available(...))`, which the sokol
-> headers have started to use to conditionally support more recent Metal features.
+For Zig version 0.11.0
 
 Related projects:
 

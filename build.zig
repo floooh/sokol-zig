@@ -19,7 +19,7 @@ pub const Config = struct {
     backend: Backend = .auto,
     force_egl: bool = false,
     enable_x11: bool = true,
-    enable_wayland: bool = false
+    enable_wayland: bool = false,
 };
 
 // build sokol into a static library
@@ -63,7 +63,10 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, config: Conf
 
     if (lib.target.isDarwin()) {
         inline for (csources) |csrc| {
-            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{ "-ObjC", "-DIMPL", backend_option });
+            lib.addCSourceFile(.{
+                .file = .{ .path = sokol_path ++ csrc },
+                .flags = &[_][]const u8{ "-ObjC", "-DIMPL", backend_option },
+            });
         }
         lib.linkFramework("Cocoa");
         lib.linkFramework("QuartzCore");
@@ -80,7 +83,10 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, config: Conf
         var wayland_flag = if (!config.enable_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
 
         inline for (csources) |csrc| {
-            lib.addCSourceFile(sokol_path ++ csrc, &[_][]const u8{ "-DIMPL", backend_option, egl_flag, x11_flag, wayland_flag });
+            lib.addCSourceFile(.{
+                .file = .{ .path = sokol_path ++ csrc },
+                .flags = &[_][]const u8{ "-DIMPL", backend_option, egl_flag, x11_flag, wayland_flag },
+            });
         }
 
         if (lib.target.isLinux()) {
@@ -162,7 +168,8 @@ pub fn build(b: *Builder) void {
         "bufferoffsets",
         "cube",
         "noninterleaved",
-        "texcube", "blend",
+        "texcube",
+        "blend",
         "offscreen",
         "instancing",
         "mrt",
@@ -173,7 +180,7 @@ pub fn build(b: *Builder) void {
         "debugtext",
         "debugtext-print",
         "debugtext-userfont",
-        "shapes"
+        "shapes",
     };
     inline for (examples) |example| {
         buildExample(b, target, optimize, sokol, example);
@@ -212,10 +219,14 @@ fn buildShaders(b: *Builder) void {
     inline for (shaders) |shader| {
         const cmd = b.addSystemCommand(&.{
             shdc_path,
-            "-i", shaders_dir ++ shader,
-            "-o", shaders_dir ++ shader ++ ".zig",
-            "-l", "glsl330:metal_macos:hlsl4",
-            "-f", "sokol_zig"
+            "-i",
+            shaders_dir ++ shader,
+            "-o",
+            shaders_dir ++ shader ++ ".zig",
+            "-l",
+            "glsl330:metal_macos:hlsl4",
+            "-f",
+            "sokol_zig",
         });
         shdc_step.dependOn(&cmd.step);
     }
