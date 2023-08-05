@@ -3,7 +3,7 @@ const builtin = @import("builtin");
 const Builder = std.build.Builder;
 const CompileStep = std.build.CompileStep;
 const CrossTarget = std.zig.CrossTarget;
-const Mode = std.builtin.Mode;
+const OptimizeMode = std.builtin.OptimizeMode;
 
 pub const Backend = enum {
     auto, // Windows: D3D11, macOS/iOS: Metal, otherwise: GL
@@ -23,7 +23,7 @@ pub const Config = struct {
 };
 
 // build sokol into a static library
-pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, config: Config, comptime prefix_path: []const u8) *CompileStep {
+pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: OptimizeMode, config: Config, comptime prefix_path: []const u8) *CompileStep {
     const lib = b.addStaticLibrary(.{
         .name = "sokol",
         .target = target,
@@ -132,7 +132,7 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: Mode, config: Conf
 }
 
 // build one of the example exes
-fn buildExample(b: *Builder, target: CrossTarget, optimize: Mode, sokol: *CompileStep, comptime name: []const u8) void {
+fn buildExample(b: *Builder, target: CrossTarget, optimize: OptimizeMode, sokol: *CompileStep, comptime name: []const u8) void {
     const e = b.addExecutable(.{
         .name = name,
         .root_source_file = .{ .path = "src/examples/" ++ name ++ ".zig" },
