@@ -16,10 +16,10 @@ pub const Backend = enum {
 };
 
 pub const LibSokolOptions = struct {
-    build_root: ?[]const u8,
     target: CrossTarget,
     optimize: OptimizeMode,
-    sysroot: ?[]const u8,
+    build_root: ?[]const u8 = null,
+    sysroot: ?[]const u8 = null,
     backend: Backend = .auto,
     force_egl: bool = false,
     enable_x11: bool = true,
@@ -38,7 +38,6 @@ pub fn build(b: *Build) void {
     // you need to generate your own bindings using this PR: https://github.com/floooh/sokol/pull/425
 
     const lib_sokol = buildLibSokol(b, .{
-        .build_root = null,
         .target = target,
         .optimize = optimize,
         .sysroot = b.sysroot,
