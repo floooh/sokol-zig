@@ -1,9 +1,62 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const Builder = std.build.Builder;
-const CompileStep = std.build.CompileStep;
+const Build = std.Build;
+const CompileStep = std.build.Step.Compile;
+const Module = std.build.Module;
 const CrossTarget = std.zig.CrossTarget;
 const OptimizeMode = std.builtin.OptimizeMode;
+
+pub fn build(b: *Build) void {
+    const force_gl = b.option(bool, "gl", "Force GL backend") orelse false;
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
+
+    // NOTE: Wayland support is *not* currently supported in the standard sokol-zig bindings,
+    // you need to generate your own bindings using this PR: https://github.com/floooh/sokol/pull/425
+
+    const lib_sokol = buildLibSokol(b, "", .{
+        .target = target,
+        .optimize = optimize,
+        .backend = if (force_gl) .gl else .auto,
+        .enable_wayland = b.option(bool, "wayland", "Compile with wayland-support (default: false)") orelse false,
+        .enable_x11 = b.option(bool, "x11", "Compile with x11-support (default: true)") orelse true,
+        .force_egl = b.option(bool, "egl", "Use EGL instead of GLX if possible (default: false)") orelse false,
+    });
+
+    b.installArtifact(lib_sokol);
+    const mod_sokol = b.addModule("sokol", .{ .source_file = .{ .path = "src/sokol/sokol.zig" } });
+
+    const examples = .{
+        "clear",
+        "triangle",
+        "quad",
+        "bufferoffsets",
+        "cube",
+        "noninterleaved",
+        "texcube",
+        "blend",
+        "offscreen",
+        "instancing",
+        "mrt",
+        "saudio",
+        "sgl",
+        "sgl-context",
+        "sgl-points",
+        "debugtext",
+        "debugtext-print",
+        "debugtext-userfont",
+        "shapes",
+    };
+    inline for (examples) |example| {
+        buildExample(b, example, .{
+            .target = target,
+            .optimize = optimize,
+            .lib_sokol = lib_sokol,
+            .mod_sokol = mod_sokol,
+        });
+    }
+    buildShaders(b);
+}
 
 pub const Backend = enum {
     auto, // Windows: D3D11, macOS/iOS: Metal, otherwise: GL
@@ -15,19 +68,28 @@ pub const Backend = enum {
     wgpu,
 };
 
-pub const Config = struct {
+pub const LibSokolOptions = struct {
+    target: CrossTarget,
+    optimize: OptimizeMode,
     backend: Backend = .auto,
     force_egl: bool = false,
     enable_x11: bool = true,
     enable_wayland: bool = false,
 };
 
+const ExampleOptions = struct {
+    target: CrossTarget,
+    optimize: OptimizeMode,
+    lib_sokol: *CompileStep,
+    mod_sokol: *Module,
+};
+
 // build sokol into a static library
-pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: OptimizeMode, config: Config, comptime prefix_path: []const u8) *CompileStep {
+pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSokolOptions) *CompileStep {
     const lib = b.addStaticLibrary(.{
         .name = "sokol",
-        .target = target,
-        .optimize = optimize,
+        .target = options.target,
+        .optimize = options.optimize,
     });
     lib.linkLibC();
     const sokol_path = prefix_path ++ "src/sokol/c/";
@@ -41,7 +103,7 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: OptimizeMode, conf
         "sokol_debugtext.c",
         "sokol_shape.c",
     };
-    var _backend = config.backend;
+    var _backend = options.backend;
     if (_backend == .auto) {
         if (lib.target.isDarwin()) {
             _backend = .metal;
@@ -78,9 +140,9 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: OptimizeMode, conf
             lib.linkFramework("OpenGL");
         }
     } else {
-        var egl_flag = if (config.force_egl) "-DSOKOL_FORCE_EGL " else "";
-        var x11_flag = if (!config.enable_x11) "-DSOKOL_DISABLE_X11 " else "";
-        var wayland_flag = if (!config.enable_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
+        var egl_flag = if (options.force_egl) "-DSOKOL_FORCE_EGL " else "";
+        var x11_flag = if (!options.enable_x11) "-DSOKOL_DISABLE_X11 " else "";
+        var wayland_flag = if (!options.enable_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
 
         inline for (csources) |csrc| {
             lib.addCSourceFile(.{
@@ -90,8 +152,8 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: OptimizeMode, conf
         }
 
         if (lib.target.isLinux()) {
-            var link_egl = config.force_egl or config.enable_wayland;
-            var egl_ensured = (config.force_egl and config.enable_x11) or config.enable_wayland;
+            var link_egl = options.force_egl or options.enable_wayland;
+            var egl_ensured = (options.force_egl and options.enable_x11) or options.enable_wayland;
 
             lib.linkSystemLibrary("asound");
 
@@ -103,12 +165,12 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: OptimizeMode, conf
             } else {
                 lib.linkSystemLibrary("GL");
             }
-            if (config.enable_x11) {
+            if (options.enable_x11) {
                 lib.linkSystemLibrary("X11");
                 lib.linkSystemLibrary("Xi");
                 lib.linkSystemLibrary("Xcursor");
             }
-            if (config.enable_wayland) {
+            if (options.enable_wayland) {
                 lib.linkSystemLibrary("wayland-client");
                 lib.linkSystemLibrary("wayland-cursor");
                 lib.linkSystemLibrary("wayland-egl");
@@ -132,64 +194,22 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: OptimizeMode, conf
 }
 
 // build one of the example exes
-fn buildExample(b: *Builder, target: CrossTarget, optimize: OptimizeMode, sokol: *CompileStep, comptime name: []const u8) void {
+fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) void {
     const e = b.addExecutable(.{
         .name = name,
         .root_source_file = .{ .path = "src/examples/" ++ name ++ ".zig" },
-        .target = target,
-        .optimize = optimize,
+        .target = options.target,
+        .optimize = options.optimize,
     });
-    e.linkLibrary(sokol);
-    e.addAnonymousModule("sokol", .{ .source_file = .{ .path = "src/sokol/sokol.zig" } });
+    e.linkLibrary(options.lib_sokol);
+    e.addModule("sokol", options.mod_sokol);
     b.installArtifact(e);
     const run = b.addRunArtifact(e);
     b.step("run-" ++ name, "Run " ++ name).dependOn(&run.step);
 }
 
-pub fn build(b: *Builder) void {
-    var config: Config = .{};
-
-    const force_gl = b.option(bool, "gl", "Force GL backend") orelse false;
-    config.backend = if (force_gl) .gl else .auto;
-
-    // NOTE: Wayland support is *not* currently supported in the standard sokol-zig bindings,
-    // you need to generate your own bindings using this PR: https://github.com/floooh/sokol/pull/425
-    config.enable_wayland = b.option(bool, "wayland", "Compile with wayland-support (default: false)") orelse false;
-    config.enable_x11 = b.option(bool, "x11", "Compile with x11-support (default: true)") orelse true;
-    config.force_egl = b.option(bool, "egl", "Use EGL instead of GLX if possible (default: false)") orelse false;
-
-    const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{});
-    const sokol = buildSokol(b, target, optimize, config, "");
-    const examples = .{
-        "clear",
-        "triangle",
-        "quad",
-        "bufferoffsets",
-        "cube",
-        "noninterleaved",
-        "texcube",
-        "blend",
-        "offscreen",
-        "instancing",
-        "mrt",
-        "saudio",
-        "sgl",
-        "sgl-context",
-        "sgl-points",
-        "debugtext",
-        "debugtext-print",
-        "debugtext-userfont",
-        "shapes",
-    };
-    inline for (examples) |example| {
-        buildExample(b, target, optimize, sokol, example);
-    }
-    buildShaders(b);
-}
-
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
-fn buildShaders(b: *Builder) void {
+fn buildShaders(b: *Build) void {
     const sokol_tools_bin_dir = "../sokol-tools-bin/bin/";
     const shaders_dir = "src/examples/shaders/";
     const shaders = .{

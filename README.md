@@ -73,12 +73,16 @@ const sokol = @import("lib/sokol-zig/build.zig");
 // pub fn build(b: *std.build.Builder) void {
 // ...
 
-const sokol_build = sokol.buildSokol(b, target, mode, .{}, "lib/sokol-zig/");
+const lib_sokol = sokol.buildLibSokol(b, "lib/sokol-zig/", .{
+    .target = ...,
+    .optimize = ...,
+    ...
+});
 
 // ...
 // const exe = b.addExecutable("demo", "src/main.zig");
 // ...
 
 exe.addPackagePath("sokol", "lib/sokol-zig/src/sokol/sokol.zig");
-exe.linkLibrary(sokol_build);
+exe.linkLibrary(lib_sokol);
 ```
