@@ -6,6 +6,26 @@ const Module = std.build.Module;
 const CrossTarget = std.zig.CrossTarget;
 const OptimizeMode = std.builtin.OptimizeMode;
 
+pub const Backend = enum {
+    auto, // Windows: D3D11, macOS/iOS: Metal, otherwise: GL
+    d3d11,
+    metal,
+    gl,
+    gles3,
+    wgpu,
+};
+
+pub const LibSokolOptions = struct {
+    build_root: ?[]const u8,
+    target: CrossTarget,
+    optimize: OptimizeMode,
+    sysroot: ?[]const u8,
+    backend: Backend = .auto,
+    force_egl: bool = false,
+    enable_x11: bool = true,
+    enable_wayland: bool = false,
+};
+
 pub fn build(b: *Build) void {
     const force_gl = b.option(bool, "gl", "Force GL backend") orelse false;
     const target = b.standardTargetOptions(.{});
@@ -17,9 +37,11 @@ pub fn build(b: *Build) void {
     // NOTE: Wayland support is *not* currently supported in the standard sokol-zig bindings,
     // you need to generate your own bindings using this PR: https://github.com/floooh/sokol/pull/425
 
-    const lib_sokol = buildLibSokol(b, "", .{
+    const lib_sokol = buildLibSokol(b, .{
+        .build_root = null,
         .target = target,
         .optimize = optimize,
+        .sysroot = b.sysroot,
         .backend = if (force_gl) .gl else .auto,
         .enable_wayland = b.option(bool, "wayland", "Compile with wayland-support (default: false)") orelse false,
         .enable_x11 = b.option(bool, "x11", "Compile with x11-support (default: true)") orelse true,
@@ -29,7 +51,6 @@ pub fn build(b: *Build) void {
         return;
     };
 
-    b.installArtifact(lib_sokol);
     const mod_sokol = b.addModule("sokol", .{ .source_file = .{ .path = "src/sokol/sokol.zig" } });
 
     const examples = .{
@@ -64,24 +85,6 @@ pub fn build(b: *Build) void {
     buildShaders(b);
 }
 
-pub const Backend = enum {
-    auto, // Windows: D3D11, macOS/iOS: Metal, otherwise: GL
-    d3d11,
-    metal,
-    gl,
-    gles3,
-    wgpu,
-};
-
-pub const LibSokolOptions = struct {
-    target: CrossTarget,
-    optimize: OptimizeMode,
-    backend: Backend = .auto,
-    force_egl: bool = false,
-    enable_x11: bool = true,
-    enable_wayland: bool = false,
-};
-
 const ExampleOptions = struct {
     target: CrossTarget,
     optimize: OptimizeMode,
@@ -90,7 +93,7 @@ const ExampleOptions = struct {
 };
 
 // build sokol into a static library
-pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSokolOptions) !*CompileStep {
+pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
     const is_wasm = options.target.getCpu().arch == .wasm32;
 
     // special case wasm, must compile as wasm32-emscripten, not wasm32-freestanding
@@ -110,16 +113,19 @@ pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSo
     lib.linkLibC();
     if (is_wasm) {
         // need to add Emscripten SDK include path
-        if (b.sysroot == null) {
+        if (options.sysroot == null) {
             std.log.err("Must provide Emscripten sysroot via '--sysroot [path/to/emsdk]/upstream/emscripten/cache/sysroot'", .{});
             return error.Wasm32SysRootExpected;
         }
-        const include_path = try std.fs.path.join(b.allocator, &.{ b.sysroot.?, "include" });
+        const include_path = try std.fs.path.join(b.allocator, &.{ options.sysroot.?, "include" });
         defer b.allocator.free(include_path);
         lib.addIncludePath(.{ .path = include_path });
         lib.defineCMacro("__EMSCRIPTEN__", "1");
     }
-    const sokol_path = prefix_path ++ "src/sokol/c/";
+    var sokol_path: []const u8 = "src/sokol/c";
+    if (options.build_root) |build_root| {
+        sokol_path = try std.fmt.allocPrint(b.allocator, "{s}/src/sokol/c", .{build_root});
+    }
     const csources = [_][]const u8{
         "sokol_log.c",
         "sokol_app.c",
@@ -152,9 +158,9 @@ pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSo
     };
 
     if (lib.target.isDarwin()) {
-        inline for (csources) |csrc| {
+        for (csources) |csrc| {
             lib.addCSourceFile(.{
-                .file = .{ .path = sokol_path ++ csrc },
+                .file = .{ .path = try std.fmt.allocPrint(b.allocator, "{s}/{s}", .{ sokol_path, csrc }) },
                 .flags = &[_][]const u8{ "-ObjC", "-DIMPL", backend_option },
             });
         }
@@ -172,9 +178,9 @@ pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSo
         const x11_flag = if (!options.enable_x11) "-DSOKOL_DISABLE_X11 " else "";
         const wayland_flag = if (!options.enable_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
 
-        inline for (csources) |csrc| {
+        for (csources) |csrc| {
             lib.addCSourceFile(.{
-                .file = .{ .path = sokol_path ++ csrc },
+                .file = .{ .path = try std.fmt.allocPrint(b.allocator, "{s}/{s}", .{ sokol_path, csrc }) },
                 .flags = &[_][]const u8{ "-DIMPL", backend_option, egl_flag, x11_flag, wayland_flag },
             });
         }
@@ -197,9 +203,9 @@ pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSo
             lib.linkSystemLibrary("egl");
         }
     } else if (lib.target.isWindows()) {
-        inline for (csources) |csrc| {
+        for (csources) |csrc| {
             lib.addCSourceFile(.{
-                .file = .{ .path = sokol_path ++ csrc },
+                .file = .{ .path = try std.fmt.allocPrint(b.allocator, "{s}/{s}", .{ sokol_path, csrc }) },
                 .flags = &[_][]const u8{ "-DIMPL", backend_option },
             });
         }
@@ -212,9 +218,9 @@ pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSo
             lib.linkSystemLibraryName("dxgi");
         }
     } else {
-        inline for (csources) |csrc| {
+        for (csources) |csrc| {
             lib.addCSourceFile(.{
-                .file = .{ .path = sokol_path ++ csrc },
+                .file = .{ .path = try std.fmt.allocPrint(b.allocator, "{s}/{s}", .{ sokol_path, csrc }) },
                 .flags = &[_][]const u8{ "-DIMPL", backend_option },
             });
         }
