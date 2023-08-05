@@ -93,7 +93,10 @@ pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSo
     // special case wasm, must compile as wasm32-emscripten, not wasm32-freestanding
     var target = options.target;
     if (is_wasm) {
+        std.log.info("Build libsokol for wasm32.", .{});
         target.os_tag = .emscripten;
+    } else {
+        std.log.info("Building libsokol for native.", .{});
     }
 
     const lib = b.addStaticLibrary(.{
