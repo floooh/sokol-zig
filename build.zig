@@ -10,6 +10,8 @@ pub fn build(b: *Build) void {
     const force_gl = b.option(bool, "gl", "Force GL backend") orelse false;
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    std.log.info("sokol target cpu_arch: {?}", .{target.cpu_arch});
+    std.log.info("sokol target os_tag: {?}", .{target.os_tag});
 
     // NOTE: Wayland support is *not* currently supported in the standard sokol-zig bindings,
     // you need to generate your own bindings using this PR: https://github.com/floooh/sokol/pull/425
