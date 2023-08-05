@@ -88,15 +88,11 @@ const ExampleOptions = struct {
 
 // build sokol into a static library
 pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSokolOptions) !*CompileStep {
-    var target = options.target;
     const is_wasm = options.target.getCpu().arch == .wasm32;
 
     // special case wasm, must compile as wasm32-emscripten, not wasm32-freestanding
+    var target = options.target;
     if (is_wasm) {
-        if (b.sysroot == null) {
-            std.log.err("Must provide Emscripten sysroot via '--sysroot [path/to/emsdk]/upstream/emscripten/cache/sysroot'", .{});
-            return error.Wasm32SysRootExpected;
-        }
         target.os_tag = .emscripten;
     }
 
@@ -107,7 +103,11 @@ pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSo
     });
     lib.linkLibC();
     if (is_wasm) {
-        // need to add Emscripten include path
+        // need to add Emscripten SDK include path
+        if (b.sysroot == null) {
+            std.log.err("Must provide Emscripten sysroot via '--sysroot [path/to/emsdk]/upstream/emscripten/cache/sysroot'", .{});
+            return error.Wasm32SysRootExpected;
+        }
         const include_path = try std.fs.path.join(b.allocator, &.{ b.sysroot.?, "include" });
         defer b.allocator.free(include_path);
         lib.addIncludePath(.{ .path = include_path });
@@ -161,10 +161,10 @@ pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSo
         } else {
             lib.linkFramework("OpenGL");
         }
-    } else {
-        var egl_flag = if (options.force_egl) "-DSOKOL_FORCE_EGL " else "";
-        var x11_flag = if (!options.enable_x11) "-DSOKOL_DISABLE_X11 " else "";
-        var wayland_flag = if (!options.enable_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
+    } else if (lib.target.isLinux()) {
+        const egl_flag = if (options.force_egl) "-DSOKOL_FORCE_EGL " else "";
+        const x11_flag = if (!options.enable_x11) "-DSOKOL_DISABLE_X11 " else "";
+        const wayland_flag = if (!options.enable_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
 
         inline for (csources) |csrc| {
             lib.addCSourceFile(.{
@@ -172,37 +172,45 @@ pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSo
                 .flags = &[_][]const u8{ "-DIMPL", backend_option, egl_flag, x11_flag, wayland_flag },
             });
         }
+        const link_egl = options.force_egl or options.enable_wayland;
 
-        if (lib.target.isLinux()) {
-            var link_egl = options.force_egl or options.enable_wayland;
-            var egl_ensured = (options.force_egl and options.enable_x11) or options.enable_wayland;
-            _ = egl_ensured;
-
-            lib.linkSystemLibrary("asound");
-            lib.linkSystemLibrary("GL");
-            if (options.enable_x11) {
-                lib.linkSystemLibrary("X11");
-                lib.linkSystemLibrary("Xi");
-                lib.linkSystemLibrary("Xcursor");
-            }
-            if (options.enable_wayland) {
-                lib.linkSystemLibrary("wayland-client");
-                lib.linkSystemLibrary("wayland-cursor");
-                lib.linkSystemLibrary("wayland-egl");
-                lib.linkSystemLibrary("xkbcommon");
-            }
-            if (link_egl) {
-                lib.linkSystemLibrary("egl");
-            }
-        } else if (lib.target.isWindows()) {
-            lib.linkSystemLibraryName("kernel32");
-            lib.linkSystemLibraryName("user32");
-            lib.linkSystemLibraryName("gdi32");
-            lib.linkSystemLibraryName("ole32");
-            if (.d3d11 == _backend) {
-                lib.linkSystemLibraryName("d3d11");
-                lib.linkSystemLibraryName("dxgi");
-            }
+        lib.linkSystemLibrary("asound");
+        lib.linkSystemLibrary("GL");
+        if (options.enable_x11) {
+            lib.linkSystemLibrary("X11");
+            lib.linkSystemLibrary("Xi");
+            lib.linkSystemLibrary("Xcursor");
+        }
+        if (options.enable_wayland) {
+            lib.linkSystemLibrary("wayland-client");
+            lib.linkSystemLibrary("wayland-cursor");
+            lib.linkSystemLibrary("wayland-egl");
+            lib.linkSystemLibrary("xkbcommon");
+        }
+        if (link_egl) {
+            lib.linkSystemLibrary("egl");
+        }
+    } else if (lib.target.isWindows()) {
+        inline for (csources) |csrc| {
+            lib.addCSourceFile(.{
+                .file = .{ .path = sokol_path ++ csrc },
+                .flags = &[_][]const u8{ "-DIMPL", backend_option },
+            });
+        }
+        lib.linkSystemLibraryName("kernel32");
+        lib.linkSystemLibraryName("user32");
+        lib.linkSystemLibraryName("gdi32");
+        lib.linkSystemLibraryName("ole32");
+        if (.d3d11 == _backend) {
+            lib.linkSystemLibraryName("d3d11");
+            lib.linkSystemLibraryName("dxgi");
+        }
+    } else {
+        inline for (csources) |csrc| {
+            lib.addCSourceFile(.{
+                .file = .{ .path = sokol_path ++ csrc },
+                .flags = &[_][]const u8{ "-DIMPL", backend_option },
+            });
         }
     }
     return lib;
