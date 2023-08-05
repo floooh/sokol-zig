@@ -21,7 +21,10 @@ pub fn build(b: *Build) void {
         .enable_wayland = b.option(bool, "wayland", "Compile with wayland-support (default: false)") orelse false,
         .enable_x11 = b.option(bool, "x11", "Compile with x11-support (default: true)") orelse true,
         .force_egl = b.option(bool, "egl", "Use EGL instead of GLX if possible (default: false)") orelse false,
-    });
+    }) catch |err| {
+        std.log.err("buildLibSokol return with error {}", .{err});
+        return;
+    };
 
     b.installArtifact(lib_sokol);
     const mod_sokol = b.addModule("sokol", .{ .source_file = .{ .path = "src/sokol/sokol.zig" } });
@@ -63,7 +66,6 @@ pub const Backend = enum {
     d3d11,
     metal,
     gl,
-    gles2,
     gles3,
     wgpu,
 };
@@ -85,13 +87,32 @@ const ExampleOptions = struct {
 };
 
 // build sokol into a static library
-pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSokolOptions) *CompileStep {
+pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSokolOptions) !*CompileStep {
+    var target = options.target;
+    const is_wasm = options.target.getCpu().arch == .wasm32;
+
+    // special case wasm, must compile as wasm32-emscripten, not wasm32-freestanding
+    if (is_wasm) {
+        if (b.sysroot == null) {
+            std.log.err("Must provide Emscripten sysroot via '--sysroot [path/to/emsdk]/upstream/emscripten/cache/sysroot'", .{});
+            return error.Wasm32SysRootExpected;
+        }
+        target.os_tag = .emscripten;
+    }
+
     const lib = b.addStaticLibrary(.{
         .name = "sokol",
-        .target = options.target,
+        .target = target,
         .optimize = options.optimize,
     });
     lib.linkLibC();
+    if (is_wasm) {
+        // need to add Emscripten include path
+        const include_path = try std.fs.path.join(b.allocator, &.{ b.sysroot.?, "include" });
+        defer b.allocator.free(include_path);
+        lib.addIncludePath(.{ .path = include_path });
+        lib.defineCMacro("__EMSCRIPTEN__", "1");
+    }
     const sokol_path = prefix_path ++ "src/sokol/c/";
     const csources = [_][]const u8{
         "sokol_log.c",
@@ -109,6 +130,8 @@ pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSo
             _backend = .metal;
         } else if (lib.target.isWindows()) {
             _backend = .d3d11;
+        } else if (lib.target.getCpu().arch == .wasm32) {
+            _backend = .gles3;
         } else {
             _backend = .gl;
         }
@@ -117,7 +140,6 @@ pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSo
         .d3d11 => "-DSOKOL_D3D11",
         .metal => "-DSOKOL_METAL",
         .gl => "-DSOKOL_GLCORE33",
-        .gles2 => "-DSOKOL_GLES2",
         .gles3 => "-DSOKOL_GLES3",
         .wgpu => "-DSOKOL_WGPU",
         else => unreachable,
@@ -154,17 +176,10 @@ pub fn buildLibSokol(b: *Build, comptime prefix_path: []const u8, options: LibSo
         if (lib.target.isLinux()) {
             var link_egl = options.force_egl or options.enable_wayland;
             var egl_ensured = (options.force_egl and options.enable_x11) or options.enable_wayland;
+            _ = egl_ensured;
 
             lib.linkSystemLibrary("asound");
-
-            if (.gles2 == _backend) {
-                lib.linkSystemLibrary("glesv2");
-                if (!egl_ensured) {
-                    @panic("GLES2 in Linux only available with Config.force_egl and/or Wayland");
-                }
-            } else {
-                lib.linkSystemLibrary("GL");
-            }
+            lib.linkSystemLibrary("GL");
             if (options.enable_x11) {
                 lib.linkSystemLibrary("X11");
                 lib.linkSystemLibrary("Xi");
