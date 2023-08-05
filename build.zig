@@ -30,9 +30,8 @@ pub fn build(b: *Build) void {
     const force_gl = b.option(bool, "gl", "Force GL backend") orelse false;
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    std.log.info("sokol target cpu_arch: {?}", .{target.cpu_arch});
-    std.log.info("sokol target os_tag: {?}", .{target.os_tag});
-    std.log.info("sokol sysroot: {?s}", .{b.sysroot});
+
+    const mod_sokol = b.addModule("sokol", .{ .source_file = .{ .path = "src/sokol/sokol.zig" } });
 
     // NOTE: Wayland support is *not* currently supported in the standard sokol-zig bindings,
     // you need to generate your own bindings using this PR: https://github.com/floooh/sokol/pull/425
@@ -49,8 +48,6 @@ pub fn build(b: *Build) void {
         std.log.err("buildLibSokol return with error {}", .{err});
         return;
     };
-
-    const mod_sokol = b.addModule("sokol", .{ .source_file = .{ .path = "src/sokol/sokol.zig" } });
 
     const examples = .{
         "clear",
@@ -98,10 +95,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
     // special case wasm, must compile as wasm32-emscripten, not wasm32-freestanding
     var target = options.target;
     if (is_wasm) {
-        std.log.info("Build libsokol for wasm32.", .{});
         target.os_tag = .emscripten;
-    } else {
-        std.log.info("Building libsokol for native.", .{});
     }
 
     const lib = b.addStaticLibrary(.{
