@@ -92,6 +92,8 @@ const ExampleOptions = struct {
 pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
     const is_wasm = options.target.getCpu().arch == .wasm32;
 
+    std.log.info("sokol build root: {?s}", .{b.build_root.path});
+
     // special case wasm, must compile as wasm32-emscripten, not wasm32-freestanding
     var target = options.target;
     if (is_wasm) {
