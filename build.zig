@@ -19,7 +19,6 @@ pub const LibSokolOptions = struct {
     target: CrossTarget,
     optimize: OptimizeMode,
     build_root: ?[]const u8 = null,
-    sysroot: ?[]const u8 = null,
     backend: Backend = .auto,
     force_egl: bool = false,
     enable_x11: bool = true,
@@ -39,7 +38,6 @@ pub fn build(b: *Build) void {
     const lib_sokol = buildLibSokol(b, .{
         .target = target,
         .optimize = optimize,
-        .sysroot = b.sysroot,
         .backend = if (force_gl) .gl else .auto,
         .enable_wayland = b.option(bool, "wayland", "Compile with wayland-support (default: false)") orelse false,
         .enable_x11 = b.option(bool, "x11", "Compile with x11-support (default: true)") orelse true,
@@ -106,11 +104,11 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
     });
     if (is_wasm) {
         // need to add Emscripten SDK include path
-        if (options.sysroot == null) {
+        if (b.sysroot == null) {
             std.log.err("Must provide Emscripten sysroot via '--sysroot [path/to/emsdk]/upstream/emscripten/cache/sysroot'", .{});
             return error.Wasm32SysRootExpected;
         }
-        const include_path = try std.fs.path.join(b.allocator, &.{ options.sysroot.?, "include" });
+        const include_path = try std.fs.path.join(b.allocator, &.{ b.sysroot.?, "include" });
         defer b.allocator.free(include_path);
         lib.addIncludePath(.{ .path = include_path });
         lib.defineCMacro("__EMSCRIPTEN__", "1");
