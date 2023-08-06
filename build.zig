@@ -36,9 +36,6 @@ pub fn build(b: *Build) void {
 
     const mod_sokol = b.addModule("sokol", .{ .source_file = .{ .path = "src/sokol/sokol.zig" } });
 
-    // NOTE: Wayland support is *not* currently supported in the standard sokol-zig bindings,
-    // you need to generate your own bindings using this PR: https://github.com/floooh/sokol/pull/425
-
     const lib_sokol = buildLibSokol(b, .{
         .target = target,
         .optimize = optimize,
@@ -50,6 +47,8 @@ pub fn build(b: *Build) void {
         std.log.err("buildLibSokol return with error {}", .{err});
         return;
     };
+    // make the sokol library available to the package manager as artifact
+    b.installArtifact(lib_sokol);
 
     const examples = .{
         "clear",
