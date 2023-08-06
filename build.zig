@@ -30,6 +30,10 @@ pub fn build(b: *Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    std.log.info("sokol target cpu: {?}", .{target.getCpu().arch});
+    std.log.info("sokol target os_tag: {?}", .{target.os_tag});
+    std.log.info("sokol sysroot: {?s}", .{b.sysroot});
+
     const mod_sokol = b.addModule("sokol", .{ .source_file = .{ .path = "src/sokol/sokol.zig" } });
 
     // NOTE: Wayland support is *not* currently supported in the standard sokol-zig bindings,
