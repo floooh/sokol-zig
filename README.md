@@ -61,28 +61,49 @@ sokol-zig ➤ zig build -Dgl=true run-clear
 Backend: .sokol.gfx.Backend.GLCORE33
 ```
 
-## Use as Library
+## Use with the Zig package manager
 
-Clone this repo into your project via ``git submodule add https://github.com/floooh/sokol-zig.git`` (for this example into a folder called ``lib`` within your project).
+Add a build.zig.zon file to your project:
 
-Add to your ``build.zig``:
 ```zig
-const sokol = @import("lib/sokol-zig/build.zig");
+.{
+    .name = "xxx",
+    .version = "0.1.0",
+    .dependencies = .{
+        .sokol = .{
+            .url = "https://github.com/floooh/sokol-zig/archive/[commit-sha].tar.gz",
+            .hash = "[content-hash]",
+        },
+    },
+}
+```
 
-// ...
-// pub fn build(b: *std.build.Builder) void {
-// ...
+For the `[commit-sha]` just pick the latest from here: https://github.com/floooh/sokol-zig/commits/master
 
-const lib_sokol = sokol.buildLibSokol(b, "lib/sokol-zig/", .{
-    .target = ...,
-    .optimize = ...,
-    ...
-});
+To find out the `[content-hash]`, just omit the `.hash` line, and run `zig build`, this will then output
+the expected hash on the terminal. Copy-paste this into the build.zig.zon file.
 
-// ...
-// const exe = b.addExecutable("demo", "src/main.zig");
-// ...
+Next in your build.zig file, get a Dependency object like this:
 
-exe.addPackagePath("sokol", "lib/sokol-zig/src/sokol/sokol.zig");
-exe.linkLibrary(lib_sokol);
+```zig
+    const dep_sokol = b.dependency("sokol", .{
+        .target = target,
+        .optimize = optimize,
+        // optionally more options like `.gl: true`
+    });
+```
+
+This dependency contains one module and one static-library artifact which can be added
+to your executable CompileStep like this:
+
+```zig
+    const exe = b.addExecutable(.{
+        .name = "pacman",
+        .target = target,
+        .optimize = optimize,
+        .root_source_file = .{ .path = "src/pacman.zig" },
+    });
+    exe.addModule("sokol", dep_sokol.module("sokol"));
+    exe.linkLibrary(dep_sokol.artifact("sokol"));
+    b.installArtifact(exe);
 ```
