@@ -30,10 +30,6 @@ pub fn build(b: *Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    std.log.warn("sokol target cpu: {?}", .{target.getCpu().arch});
-    std.log.warn("sokol target os_tag: {?}", .{target.os_tag});
-    std.log.warn("sokol sysroot: {?s}", .{b.sysroot});
-
     const mod_sokol = b.addModule("sokol", .{ .source_file = .{ .path = "src/sokol/sokol.zig" } });
 
     const lib_sokol = buildLibSokol(b, .{
