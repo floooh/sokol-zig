@@ -102,8 +102,8 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
         .name = "sokol",
         .target = target,
         .optimize = options.optimize,
+        .link_libc = true,
     });
-    lib.linkLibC();
     if (is_wasm) {
         // need to add Emscripten SDK include path
         if (options.sysroot == null) {
