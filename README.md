@@ -9,6 +9,9 @@ Related projects:
 - [pacman.zig](https://github.com/floooh/pacman.zig)
 - [kc85.zig](https://github.com/floooh/kc85.zig)
 
+> NOTE: for experimental package manager support see the branch [package](https://github.com/floooh/sokol-zig/tree/package),
+> and as example for how to integrate sokol-zig as package the [pacman.zig branch sokol-package](https://github.com/floooh/pacman.zig/tree/sokol-package)
+
 ## BUILD
 
 Supported platforms are: Windows, macOS, Linux (with X11)
