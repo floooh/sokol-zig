@@ -925,6 +925,11 @@ pub const WgpuContextDesc = extern struct {
     depth_stencil_view_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
     user_data: ?*anyopaque = null,
 };
+pub const GlContextDesc = extern struct {
+    default_framebuffer_cb: ?*const fn () callconv(.C) u32 = null,
+    default_framebuffer_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) u32 = null,
+    user_data: ?*anyopaque = null,
+};
 pub const ContextDesc = extern struct {
     color_format: i32 = 0,
     depth_format: i32 = 0,
@@ -932,6 +937,7 @@ pub const ContextDesc = extern struct {
     metal: MetalContextDesc = .{},
     d3d11: D3d11ContextDesc = .{},
     wgpu: WgpuContextDesc = .{},
+    gl: GlContextDesc = .{},
 };
 pub const CommitListener = extern struct {
     func: ?*const fn (?*anyopaque) callconv(.C) void = null,
