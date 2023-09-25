@@ -221,8 +221,8 @@ pub const IconDesc = extern struct {
     images: [8]ImageDesc = [_]ImageDesc{.{}} ** 8,
 };
 pub const Allocator = extern struct {
-    alloc: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
+    free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const LogItem = enum(i32) {

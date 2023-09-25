@@ -944,8 +944,8 @@ pub const CommitListener = extern struct {
     user_data: ?*anyopaque = null,
 };
 pub const Allocator = extern struct {
-    alloc: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
+    free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Logger = extern struct {
