@@ -212,12 +212,14 @@ pub const ImageSampleType = enum(i32) {
     DEPTH,
     SINT,
     UINT,
+    UNFILTERABLE_FLOAT,
     NUM,
 };
 pub const SamplerType = enum(i32) {
     DEFAULT,
-    SAMPLE,
-    COMPARE,
+    FILTERING,
+    NONFILTERING,
+    COMPARISON,
     NUM,
 };
 pub const CubeFace = enum(i32) {
@@ -658,6 +660,136 @@ pub const PipelineInfo = extern struct {
 pub const PassInfo = extern struct {
     slot: SlotInfo = .{},
 };
+pub const FrameStatsGl = extern struct {
+    num_bind_buffer: u32 = 0,
+    num_active_texture: u32 = 0,
+    num_bind_texture: u32 = 0,
+    num_bind_sampler: u32 = 0,
+    num_use_program: u32 = 0,
+    num_render_state: u32 = 0,
+    num_vertex_attrib_pointer: u32 = 0,
+    num_vertex_attrib_divisor: u32 = 0,
+    num_enable_vertex_attrib_array: u32 = 0,
+    num_disable_vertex_attrib_array: u32 = 0,
+    num_uniform: u32 = 0,
+};
+pub const FrameStatsD3d11Pass = extern struct {
+    num_om_set_render_targets: u32 = 0,
+    num_clear_render_target_view: u32 = 0,
+    num_clear_depth_stencil_view: u32 = 0,
+    num_resolve_subresource: u32 = 0,
+};
+pub const FrameStatsD3d11Pipeline = extern struct {
+    num_rs_set_state: u32 = 0,
+    num_om_set_depth_stencil_state: u32 = 0,
+    num_om_set_blend_state: u32 = 0,
+    num_ia_set_primitive_topology: u32 = 0,
+    num_ia_set_input_layout: u32 = 0,
+    num_vs_set_shader: u32 = 0,
+    num_vs_set_constant_buffers: u32 = 0,
+    num_ps_set_shader: u32 = 0,
+    num_ps_set_constant_buffers: u32 = 0,
+};
+pub const FrameStatsD3d11Bindings = extern struct {
+    num_ia_set_vertex_buffers: u32 = 0,
+    num_ia_set_index_buffer: u32 = 0,
+    num_vs_set_shader_resources: u32 = 0,
+    num_ps_set_shader_resources: u32 = 0,
+    num_vs_set_samplers: u32 = 0,
+    num_ps_set_samplers: u32 = 0,
+};
+pub const FrameStatsD3d11Uniforms = extern struct {
+    num_update_subresource: u32 = 0,
+};
+pub const FrameStatsD3d11Draw = extern struct {
+    num_draw_indexed_instanced: u32 = 0,
+    num_draw_indexed: u32 = 0,
+    num_draw_instanced: u32 = 0,
+    num_draw: u32 = 0,
+};
+pub const FrameStatsD3d11 = extern struct {
+    pass: FrameStatsD3d11Pass = .{},
+    pipeline: FrameStatsD3d11Pipeline = .{},
+    bindings: FrameStatsD3d11Bindings = .{},
+    uniforms: FrameStatsD3d11Uniforms = .{},
+    draw: FrameStatsD3d11Draw = .{},
+    num_map: u32 = 0,
+    num_unmap: u32 = 0,
+};
+pub const FrameStatsMetalIdpool = extern struct {
+    num_added: u32 = 0,
+    num_released: u32 = 0,
+    num_garbage_collected: u32 = 0,
+};
+pub const FrameStatsMetalPipeline = extern struct {
+    num_set_blend_color: u32 = 0,
+    num_set_cull_mode: u32 = 0,
+    num_set_front_facing_winding: u32 = 0,
+    num_set_stencil_reference_value: u32 = 0,
+    num_set_depth_bias: u32 = 0,
+    num_set_render_pipeline_state: u32 = 0,
+    num_set_depth_stencil_state: u32 = 0,
+};
+pub const FrameStatsMetalBindings = extern struct {
+    num_set_vertex_buffer: u32 = 0,
+    num_set_vertex_texture: u32 = 0,
+    num_set_vertex_sampler_state: u32 = 0,
+    num_set_fragment_texture: u32 = 0,
+    num_set_fragment_sampler_state: u32 = 0,
+};
+pub const FrameStatsMetalUniforms = extern struct {
+    num_set_vertex_buffer_offset: u32 = 0,
+    num_set_fragment_buffer_offset: u32 = 0,
+};
+pub const FrameStatsMetal = extern struct {
+    idpool: FrameStatsMetalIdpool = .{},
+    pipeline: FrameStatsMetalPipeline = .{},
+    bindings: FrameStatsMetalBindings = .{},
+    uniforms: FrameStatsMetalUniforms = .{},
+};
+pub const FrameStatsWgpuUniforms = extern struct {
+    num_set_bindgroup: u32 = 0,
+    size_write_buffer: u32 = 0,
+};
+pub const FrameStatsWgpuBindings = extern struct {
+    num_set_vertex_buffer: u32 = 0,
+    num_skip_redundant_vertex_buffer: u32 = 0,
+    num_set_index_buffer: u32 = 0,
+    num_skip_redundant_index_buffer: u32 = 0,
+    num_create_bindgroup: u32 = 0,
+    num_discard_bindgroup: u32 = 0,
+    num_set_bindgroup: u32 = 0,
+    num_skip_redundant_bindgroup: u32 = 0,
+    num_bindgroup_cache_hits: u32 = 0,
+    num_bindgroup_cache_misses: u32 = 0,
+    num_bindgroup_cache_collisions: u32 = 0,
+    num_bindgroup_cache_hash_vs_key_mismatch: u32 = 0,
+};
+pub const FrameStatsWgpu = extern struct {
+    uniforms: FrameStatsWgpuUniforms = .{},
+    bindings: FrameStatsWgpuBindings = .{},
+};
+pub const FrameStats = extern struct {
+    frame_index: u32 = 0,
+    num_passes: u32 = 0,
+    num_apply_viewport: u32 = 0,
+    num_apply_scissor_rect: u32 = 0,
+    num_apply_pipeline: u32 = 0,
+    num_apply_bindings: u32 = 0,
+    num_apply_uniforms: u32 = 0,
+    num_draw: u32 = 0,
+    num_update_buffer: u32 = 0,
+    num_append_buffer: u32 = 0,
+    num_update_image: u32 = 0,
+    size_apply_uniforms: u32 = 0,
+    size_update_buffer: u32 = 0,
+    size_append_buffer: u32 = 0,
+    size_update_image: u32 = 0,
+    gl: FrameStatsGl = .{},
+    d3d11: FrameStatsD3d11 = .{},
+    metal: FrameStatsMetal = .{},
+    wgpu: FrameStatsWgpu = .{},
+};
 pub const LogItem = enum(i32) {
     OK,
     MALLOC_FAILED,
@@ -706,11 +838,21 @@ pub const LogItem = enum(i32) {
     METAL_CREATE_RPS_FAILED,
     METAL_CREATE_RPS_OUTPUT,
     METAL_CREATE_DSS_FAILED,
-    WGPU_MAP_UNIFORM_BUFFER_FAILED,
-    WGPU_STAGING_BUFFER_FULL_COPY_TO_BUFFER,
-    WGPU_STAGING_BUFFER_FULL_COPY_TO_TEXTURE,
-    WGPU_RESET_STATE_CACHE_FIXME,
-    WGPU_ACTIVATE_CONTEXT_FIXME,
+    WGPU_BINDGROUPS_POOL_EXHAUSTED,
+    WGPU_BINDGROUPSCACHE_SIZE_GREATER_ONE,
+    WGPU_BINDGROUPSCACHE_SIZE_POW2,
+    WGPU_CREATEBINDGROUP_FAILED,
+    WGPU_CREATE_BUFFER_FAILED,
+    WGPU_CREATE_TEXTURE_FAILED,
+    WGPU_CREATE_TEXTURE_VIEW_FAILED,
+    WGPU_CREATE_SAMPLER_FAILED,
+    WGPU_CREATE_SHADER_MODULE_FAILED,
+    WGPU_SHADER_TOO_MANY_IMAGES,
+    WGPU_SHADER_TOO_MANY_SAMPLERS,
+    WGPU_SHADER_CREATE_BINDGROUP_LAYOUT_FAILED,
+    WGPU_CREATE_PIPELINE_LAYOUT_FAILED,
+    WGPU_CREATE_RENDER_PIPELINE_FAILED,
+    WGPU_PASS_CREATE_TEXTURE_VIEW_FAILED,
     UNINIT_BUFFER_ACTIVE_CONTEXT_MISMATCH,
     UNINIT_IMAGE_ACTIVE_CONTEXT_MISMATCH,
     UNINIT_SAMPLER_ACTIVE_CONTEXT_MISMATCH,
@@ -776,6 +918,7 @@ pub const LogItem = enum(i32) {
     VALIDATE_SAMPLERDESC_CANARY,
     VALIDATE_SAMPLERDESC_MINFILTER_NONE,
     VALIDATE_SAMPLERDESC_MAGFILTER_NONE,
+    VALIDATE_SAMPLERDESC_ANISTROPIC_REQUIRES_LINEAR_FILTERING,
     VALIDATE_SHADERDESC_CANARY,
     VALIDATE_SHADERDESC_SOURCE,
     VALIDATE_SHADERDESC_BYTECODE,
@@ -796,6 +939,8 @@ pub const LogItem = enum(i32) {
     VALIDATE_SHADERDESC_IMAGE_SAMPLER_PAIR_HAS_NAME_BUT_NOT_USED,
     VALIDATE_SHADERDESC_IMAGE_SAMPLER_PAIR_HAS_IMAGE_BUT_NOT_USED,
     VALIDATE_SHADERDESC_IMAGE_SAMPLER_PAIR_HAS_SAMPLER_BUT_NOT_USED,
+    VALIDATE_SHADERDESC_NONFILTERING_SAMPLER_REQUIRED,
+    VALIDATE_SHADERDESC_COMPARISON_SAMPLER_REQUIRED,
     VALIDATE_SHADERDESC_IMAGE_NOT_REFERENCED_BY_IMAGE_SAMPLER_PAIRS,
     VALIDATE_SHADERDESC_SAMPLER_NOT_REFERENCED_BY_IMAGE_SAMPLER_PAIRS,
     VALIDATE_SHADERDESC_NO_CONT_IMAGE_SAMPLER_PAIRS,
@@ -866,10 +1011,13 @@ pub const LogItem = enum(i32) {
     VALIDATE_ABND_VS_IMG_EXISTS,
     VALIDATE_ABND_VS_IMAGE_TYPE_MISMATCH,
     VALIDATE_ABND_VS_IMAGE_MSAA,
+    VALIDATE_ABND_VS_EXPECTED_FILTERABLE_IMAGE,
+    VALIDATE_ABND_VS_EXPECTED_DEPTH_IMAGE,
     VALIDATE_ABND_VS_UNEXPECTED_IMAGE_BINDING,
     VALIDATE_ABND_VS_EXPECTED_SAMPLER_BINDING,
     VALIDATE_ABND_VS_UNEXPECTED_SAMPLER_COMPARE_NEVER,
     VALIDATE_ABND_VS_EXPECTED_SAMPLER_COMPARE_NEVER,
+    VALIDATE_ABND_VS_EXPECTED_NONFILTERING_SAMPLER,
     VALIDATE_ABND_VS_UNEXPECTED_SAMPLER_BINDING,
     VALIDATE_ABND_VS_SMP_EXISTS,
     VALIDATE_ABND_VS_IMG_SMP_MIPMAPS,
@@ -877,10 +1025,13 @@ pub const LogItem = enum(i32) {
     VALIDATE_ABND_FS_IMG_EXISTS,
     VALIDATE_ABND_FS_IMAGE_TYPE_MISMATCH,
     VALIDATE_ABND_FS_IMAGE_MSAA,
+    VALIDATE_ABND_FS_EXPECTED_FILTERABLE_IMAGE,
+    VALIDATE_ABND_FS_EXPECTED_DEPTH_IMAGE,
     VALIDATE_ABND_FS_UNEXPECTED_IMAGE_BINDING,
     VALIDATE_ABND_FS_EXPECTED_SAMPLER_BINDING,
     VALIDATE_ABND_FS_UNEXPECTED_SAMPLER_COMPARE_NEVER,
     VALIDATE_ABND_FS_EXPECTED_SAMPLER_COMPARE_NEVER,
+    VALIDATE_ABND_FS_EXPECTED_NONFILTERING_SAMPLER,
     VALIDATE_ABND_FS_UNEXPECTED_SAMPLER_BINDING,
     VALIDATE_ABND_FS_SMP_EXISTS,
     VALIDATE_ABND_FS_IMG_SMP_MIPMAPS,
@@ -962,10 +1113,11 @@ pub const Desc = extern struct {
     pass_pool_size: i32 = 0,
     context_pool_size: i32 = 0,
     uniform_buffer_size: i32 = 0,
-    staging_buffer_size: i32 = 0,
     max_commit_listeners: i32 = 0,
     disable_validation: bool = false,
     mtl_force_managed_storage_mode: bool = false,
+    wgpu_disable_bindgroups_cache: bool = false,
+    wgpu_bindgroups_cache_size: i32 = 0,
     allocator: Allocator = .{},
     logger: Logger = .{},
     context: ContextDesc = .{},
@@ -1359,6 +1511,22 @@ pub extern fn sg_fail_pass(Pass) void;
 pub fn failPass(pass: Pass) void {
     sg_fail_pass(pass);
 }
+pub extern fn sg_enable_frame_stats() void;
+pub fn enableFrameStats() void {
+    sg_enable_frame_stats();
+}
+pub extern fn sg_disable_frame_stats() void;
+pub fn disableFrameStats() void {
+    sg_disable_frame_stats();
+}
+pub extern fn sg_frame_stats_enabled() bool;
+pub fn frameStatsEnabled() bool {
+    return sg_frame_stats_enabled();
+}
+pub extern fn sg_query_frame_stats() FrameStats;
+pub fn queryFrameStats() FrameStats {
+    return sg_query_frame_stats();
+}
 pub extern fn sg_setup_context() Context;
 pub fn setupContext() Context {
     return sg_setup_context();
@@ -1382,4 +1550,20 @@ pub fn mtlDevice() ?*const anyopaque {
 pub extern fn sg_mtl_render_command_encoder() ?*const anyopaque;
 pub fn mtlRenderCommandEncoder() ?*const anyopaque {
     return sg_mtl_render_command_encoder();
+}
+pub extern fn sg_wgpu_device() ?*const anyopaque;
+pub fn wgpuDevice() ?*const anyopaque {
+    return sg_wgpu_device();
+}
+pub extern fn sg_wgpu_queue() ?*const anyopaque;
+pub fn wgpuQueue() ?*const anyopaque {
+    return sg_wgpu_queue();
+}
+pub extern fn sg_wgpu_command_encoder() ?*const anyopaque;
+pub fn wgpuCommandEncoder() ?*const anyopaque {
+    return sg_wgpu_command_encoder();
+}
+pub extern fn sg_wgpu_render_pass_encoder() ?*const anyopaque;
+pub fn wgpuRenderPassEncoder() ?*const anyopaque {
+    return sg_wgpu_render_pass_encoder();
 }
