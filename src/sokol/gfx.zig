@@ -476,6 +476,7 @@ pub const ImageDesc = extern struct {
     d3d11_texture: ?*const anyopaque = null,
     d3d11_shader_resource_view: ?*const anyopaque = null,
     wgpu_texture: ?*const anyopaque = null,
+    wgpu_texture_view: ?*const anyopaque = null,
     _end_canary: u32 = 0,
 };
 pub const SamplerDesc = extern struct {
@@ -1541,9 +1542,130 @@ pub extern fn sg_discard_context(Context) void;
 pub fn discardContext(ctx_id: Context) void {
     sg_discard_context(ctx_id);
 }
+pub const D3d11BufferInfo = extern struct {
+    buf: ?*const anyopaque = null,
+};
+pub const D3d11ImageInfo = extern struct {
+    tex2d: ?*const anyopaque = null,
+    tex3d: ?*const anyopaque = null,
+    res: ?*const anyopaque = null,
+    srv: ?*const anyopaque = null,
+};
+pub const D3d11SamplerInfo = extern struct {
+    smp: ?*const anyopaque = null,
+};
+pub const D3d11ShaderInfo = extern struct {
+    vs_cbufs: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
+    fs_cbufs: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
+    vs: ?*const anyopaque = null,
+    fs: ?*const anyopaque = null,
+};
+pub const D3d11PipelineInfo = extern struct {
+    il: ?*const anyopaque = null,
+    rs: ?*const anyopaque = null,
+    dss: ?*const anyopaque = null,
+    bs: ?*const anyopaque = null,
+};
+pub const D3d11PassInfo = extern struct {
+    color_rtv: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
+    resolve_rtv: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
+    dsv: ?*const anyopaque = null,
+};
+pub const MtlBufferInfo = extern struct {
+    buf: [2]?*const anyopaque = [_]?*const anyopaque{null} ** 2,
+    active_slot: i32 = 0,
+};
+pub const MtlImageInfo = extern struct {
+    tex: [2]?*const anyopaque = [_]?*const anyopaque{null} ** 2,
+    active_slot: i32 = 0,
+};
+pub const MtlSamplerInfo = extern struct {
+    smp: ?*const anyopaque = null,
+};
+pub const MtlShaderInfo = extern struct {
+    vs_lib: ?*const anyopaque = null,
+    fs_lib: ?*const anyopaque = null,
+    vs_func: ?*const anyopaque = null,
+    fs_func: ?*const anyopaque = null,
+};
+pub const MtlPipelineInfo = extern struct {
+    rps: ?*const anyopaque = null,
+    dss: ?*const anyopaque = null,
+};
+pub const WgpuBufferInfo = extern struct {
+    buf: ?*const anyopaque = null,
+};
+pub const WgpuImageInfo = extern struct {
+    tex: ?*const anyopaque = null,
+    view: ?*const anyopaque = null,
+};
+pub const WgpuSamplerInfo = extern struct {
+    smp: ?*const anyopaque = null,
+};
+pub const WgpuShaderInfo = extern struct {
+    vs_mod: ?*const anyopaque = null,
+    fs_mod: ?*const anyopaque = null,
+    bgl: ?*const anyopaque = null,
+};
+pub const WgpuPipelineInfo = extern struct {
+    pip: ?*const anyopaque = null,
+};
+pub const WgpuPassInfo = extern struct {
+    color_view: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
+    resolve_view: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
+    ds_view: ?*const anyopaque = null,
+};
+pub const GlBufferInfo = extern struct {
+    buf: [2]u32 = [_]u32{0} ** 2,
+    active_slot: i32 = 0,
+};
+pub const GlImageInfo = extern struct {
+    tex: [2]u32 = [_]u32{0} ** 2,
+    tex_target: u32 = 0,
+    msaa_render_buffer: u32 = 0,
+    active_slot: i32 = 0,
+};
+pub const GlSamplerInfo = extern struct {
+    smp: u32 = 0,
+};
+pub const GlShaderInfo = extern struct {
+    prog: u32 = 0,
+};
+pub const GlPassInfo = extern struct {
+    frame_buffer: u32 = 0,
+    msaa_resolve_framebuffer: [4]u32 = [_]u32{0} ** 4,
+};
 pub extern fn sg_d3d11_device() ?*const anyopaque;
 pub fn d3d11Device() ?*const anyopaque {
     return sg_d3d11_device();
+}
+pub extern fn sg_d3d11_device_context() ?*const anyopaque;
+pub fn d3d11DeviceContext() ?*const anyopaque {
+    return sg_d3d11_device_context();
+}
+pub extern fn sg_d3d11_query_buffer_info(Buffer) D3d11BufferInfo;
+pub fn d3d11QueryBufferInfo(buf: Buffer) D3d11BufferInfo {
+    return sg_d3d11_query_buffer_info(buf);
+}
+pub extern fn sg_d3d11_query_image_info(Image) D3d11ImageInfo;
+pub fn d3d11QueryImageInfo(img: Image) D3d11ImageInfo {
+    return sg_d3d11_query_image_info(img);
+}
+pub extern fn sg_d3d11_query_sampler_info(Sampler) D3d11SamplerInfo;
+pub fn d3d11QuerySamplerInfo(smp: Sampler) D3d11SamplerInfo {
+    return sg_d3d11_query_sampler_info(smp);
+}
+pub extern fn sg_d3d11_query_shader_info(Shader) D3d11ShaderInfo;
+pub fn d3d11QueryShaderInfo(shd: Shader) D3d11ShaderInfo {
+    return sg_d3d11_query_shader_info(shd);
+}
+pub extern fn sg_d3d11_query_pipeline_info(Pipeline) D3d11PipelineInfo;
+pub fn d3d11QueryPipelineInfo(pip: Pipeline) D3d11PipelineInfo {
+    return sg_d3d11_query_pipeline_info(pip);
+}
+pub extern fn sg_d3d11_query_pass_info(Pass) D3d11PassInfo;
+pub fn d3d11QueryPassInfo(pass: Pass) D3d11PassInfo {
+    return sg_d3d11_query_pass_info(pass);
 }
 pub extern fn sg_mtl_device() ?*const anyopaque;
 pub fn mtlDevice() ?*const anyopaque {
@@ -1552,6 +1674,26 @@ pub fn mtlDevice() ?*const anyopaque {
 pub extern fn sg_mtl_render_command_encoder() ?*const anyopaque;
 pub fn mtlRenderCommandEncoder() ?*const anyopaque {
     return sg_mtl_render_command_encoder();
+}
+pub extern fn sg_mtl_query_buffer_info(Buffer) MtlBufferInfo;
+pub fn mtlQueryBufferInfo(buf: Buffer) MtlBufferInfo {
+    return sg_mtl_query_buffer_info(buf);
+}
+pub extern fn sg_mtl_query_image_info(Image) MtlImageInfo;
+pub fn mtlQueryImageInfo(img: Image) MtlImageInfo {
+    return sg_mtl_query_image_info(img);
+}
+pub extern fn sg_mtl_query_sampler_info(Sampler) MtlSamplerInfo;
+pub fn mtlQuerySamplerInfo(smp: Sampler) MtlSamplerInfo {
+    return sg_mtl_query_sampler_info(smp);
+}
+pub extern fn sg_mtl_query_shader_info(Shader) MtlShaderInfo;
+pub fn mtlQueryShaderInfo(shd: Shader) MtlShaderInfo {
+    return sg_mtl_query_shader_info(shd);
+}
+pub extern fn sg_mtl_query_pipeline_info(Pipeline) MtlPipelineInfo;
+pub fn mtlQueryPipelineInfo(pip: Pipeline) MtlPipelineInfo {
+    return sg_mtl_query_pipeline_info(pip);
 }
 pub extern fn sg_wgpu_device() ?*const anyopaque;
 pub fn wgpuDevice() ?*const anyopaque {
@@ -1568,4 +1710,48 @@ pub fn wgpuCommandEncoder() ?*const anyopaque {
 pub extern fn sg_wgpu_render_pass_encoder() ?*const anyopaque;
 pub fn wgpuRenderPassEncoder() ?*const anyopaque {
     return sg_wgpu_render_pass_encoder();
+}
+pub extern fn sg_wgpu_query_buffer_info(Buffer) WgpuBufferInfo;
+pub fn wgpuQueryBufferInfo(buf: Buffer) WgpuBufferInfo {
+    return sg_wgpu_query_buffer_info(buf);
+}
+pub extern fn sg_wgpu_query_image_info(Image) WgpuImageInfo;
+pub fn wgpuQueryImageInfo(img: Image) WgpuImageInfo {
+    return sg_wgpu_query_image_info(img);
+}
+pub extern fn sg_wgpu_query_sampler_info(Sampler) WgpuSamplerInfo;
+pub fn wgpuQuerySamplerInfo(smp: Sampler) WgpuSamplerInfo {
+    return sg_wgpu_query_sampler_info(smp);
+}
+pub extern fn sg_wgpu_query_shader_info(Shader) WgpuShaderInfo;
+pub fn wgpuQueryShaderInfo(shd: Shader) WgpuShaderInfo {
+    return sg_wgpu_query_shader_info(shd);
+}
+pub extern fn sg_wgpu_query_pipeline_info(Pipeline) WgpuPipelineInfo;
+pub fn wgpuQueryPipelineInfo(pip: Pipeline) WgpuPipelineInfo {
+    return sg_wgpu_query_pipeline_info(pip);
+}
+pub extern fn sg_wgpu_query_pass_info(Pass) WgpuPassInfo;
+pub fn wgpuQueryPassInfo(pass: Pass) WgpuPassInfo {
+    return sg_wgpu_query_pass_info(pass);
+}
+pub extern fn sg_gl_query_buffer_info(Buffer) GlBufferInfo;
+pub fn glQueryBufferInfo(buf: Buffer) GlBufferInfo {
+    return sg_gl_query_buffer_info(buf);
+}
+pub extern fn sg_gl_query_image_info(Image) GlImageInfo;
+pub fn glQueryImageInfo(img: Image) GlImageInfo {
+    return sg_gl_query_image_info(img);
+}
+pub extern fn sg_gl_query_sampler_info(Sampler) GlSamplerInfo;
+pub fn glQuerySamplerInfo(smp: Sampler) GlSamplerInfo {
+    return sg_gl_query_sampler_info(smp);
+}
+pub extern fn sg_gl_query_shader_info(Shader) GlShaderInfo;
+pub fn glQueryShaderInfo(shd: Shader) GlShaderInfo {
+    return sg_gl_query_shader_info(shd);
+}
+pub extern fn sg_gl_query_pass_info(Pass) GlPassInfo;
+pub fn glQueryPassInfo(pass: Pass) GlPassInfo {
+    return sg_gl_query_pass_info(pass);
 }
