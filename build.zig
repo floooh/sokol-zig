@@ -68,14 +68,20 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: OptimizeMode, conf
                 .flags = &[_][]const u8{ "-ObjC", "-DIMPL", backend_option },
             });
         }
-        lib.linkFramework("Cocoa");
-        lib.linkFramework("QuartzCore");
         lib.linkFramework("AudioToolbox");
         if (.metal == _backend) {
             lib.linkFramework("MetalKit");
             lib.linkFramework("Metal");
         } else {
             lib.linkFramework("OpenGL");
+        }
+        if (target.getOsTag() == .ios) {
+            lib.linkFramework("UIKit");
+            lib.linkFramework("AVFoundation");
+            lib.linkFramework("Foundation");
+        } else {
+            lib.linkFramework("Cocoa");
+            lib.linkFramework("QuartzCore");
         }
     } else {
         var egl_flag = if (config.force_egl) "-DSOKOL_FORCE_EGL " else "";
