@@ -89,9 +89,9 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: OptimizeMode, conf
             }
         }
     } else {
-        var egl_flag = if (config.force_egl) "-DSOKOL_FORCE_EGL " else "";
-        var x11_flag = if (!config.enable_x11) "-DSOKOL_DISABLE_X11 " else "";
-        var wayland_flag = if (!config.enable_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
+        const egl_flag = if (config.force_egl) "-DSOKOL_FORCE_EGL " else "";
+        const x11_flag = if (!config.enable_x11) "-DSOKOL_DISABLE_X11 " else "";
+        const wayland_flag = if (!config.enable_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
 
         inline for (csources) |csrc| {
             lib.addCSourceFile(.{
@@ -101,8 +101,8 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: OptimizeMode, conf
         }
 
         if (lib.target.isLinux()) {
-            var link_egl = config.force_egl or config.enable_wayland;
-            var egl_ensured = (config.force_egl and config.enable_x11) or config.enable_wayland;
+            const link_egl = config.force_egl or config.enable_wayland;
+            const egl_ensured = (config.force_egl and config.enable_x11) or config.enable_wayland;
 
             lib.linkSystemLibrary("asound");
 
