@@ -46,7 +46,7 @@ pub const Writer = struct {
 };
 // std.fmt-style formatted print
 pub fn print(comptime fmt: anytype, args: anytype) void {
-    var writer: Writer = .{};
+    const writer: Writer = .{};
     @import("std").fmt.format(writer, fmt, args) catch {};
 }
 
