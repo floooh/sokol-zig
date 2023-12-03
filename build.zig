@@ -47,6 +47,8 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: OptimizeMode, conf
             _backend = .metal;
         } else if (lib.target.isWindows()) {
             _backend = .d3d11;
+        } else if (lib.target.getAbi() == .android) {
+            _backend = .gles3;
         } else {
             _backend = .gl;
         }
@@ -100,7 +102,15 @@ pub fn buildSokol(b: *Builder, target: CrossTarget, optimize: OptimizeMode, conf
             });
         }
 
-        if (lib.target.isLinux()) {
+        if (lib.target.getAbi() == .android) {
+            if (.gles3 != _backend) {
+                @panic("For android targets, you must have backend set to GLES3");
+            }
+            lib.linkSystemLibrary("GLESv3");
+            lib.linkSystemLibrary("EGL");
+            lib.linkSystemLibrary("android");
+            lib.linkSystemLibrary("log");
+        } else if (lib.target.isLinux()) {
             var link_egl = config.force_egl or config.enable_wayland;
             var egl_ensured = (config.force_egl and config.enable_x11) or config.enable_wayland;
 
