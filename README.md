@@ -4,6 +4,12 @@ Auto-generated Zig bindings for the [sokol headers](https://github.com/floooh/so
 
 For Zig version 0.11.0
 
+> **IMPORTANT** If you are suddenly getting weird memory corruption issues or sokol-gfx validation
+layer errors, check that you don't have the old SOKOL_ZIG_BINDINGS define defined anywhere.
+The sokol-zig bindings are now generated without that define to check if the ABI issues
+for structs < 16 bytes are still an issue. If not, that define will be removed from the
+sokol-headers alltogether.
+
 Related projects:
 
 - [pacman.zig](https://github.com/floooh/pacman.zig)
