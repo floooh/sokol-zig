@@ -72,7 +72,7 @@ export fn frame() void {
     sdtx.color3b(255, 128, 0);
 
     // can also use sdtx.Writer with std.fmt directly:
-    var writer: sdtx.Writer = .{};
+    const writer: sdtx.Writer = .{};
     fmt.format(writer, "using std.fmt directly ({d})\n", .{state.frame_count}) catch unreachable;
 
     // render the frame via sokol.gfx

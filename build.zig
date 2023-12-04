@@ -134,6 +134,8 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
             _backend = .d3d11;
         } else if (lib.target.getCpu().arch == .wasm32) {
             _backend = .gles3;
+        } else if (lib.target.getAbi() == .android) {
+            _backend = .gles3;
         } else {
             _backend = .gl;
         }
@@ -154,28 +156,51 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
                 .flags = &[_][]const u8{ "-ObjC", "-DIMPL", backend_option },
             });
         }
-        lib.linkFramework("Cocoa");
-        lib.linkFramework("QuartzCore");
+        lib.linkFramework("Foundation");
         lib.linkFramework("AudioToolbox");
         if (.metal == _backend) {
             lib.linkFramework("MetalKit");
             lib.linkFramework("Metal");
-        } else {
-            lib.linkFramework("OpenGL");
         }
+        if (lib.target.getOsTag() == .ios) {
+            lib.linkFramework("UIKit");
+            lib.linkFramework("AVFoundation");
+            if (.gl == _backend) {
+                lib.linkFramework("OpenGLES");
+                lib.linkFramework("GLKit");
+            }
+        } else if (lib.target.getOsTag() == .macos) {
+            lib.linkFramework("Cocoa");
+            lib.linkFramework("QuartzCore");
+            if (.gl == _backend) {
+                lib.linkFramework("OpenGL");
+            }
+        }
+    } else if (lib.target.getAbi() == .android) {
+        if (.gles3 != _backend) {
+            @panic("For android targets, you must have backend set to GLES3");
+        }
+        for (csources) |csrc| {
+            lib.addCSourceFile(.{
+                .file = .{ .path = try std.fmt.allocPrint(b.allocator, "{s}/{s}", .{ sokol_path, csrc }) },
+                .flags = &[_][]const u8{ "-DIMPL", backend_option },
+            });
+        }
+        lib.linkSystemLibrary("GLESv3");
+        lib.linkSystemLibrary("EGL");
+        lib.linkSystemLibrary("android");
+        lib.linkSystemLibrary("log");
     } else if (lib.target.isLinux()) {
         const egl_flag = if (options.force_egl) "-DSOKOL_FORCE_EGL " else "";
         const x11_flag = if (!options.enable_x11) "-DSOKOL_DISABLE_X11 " else "";
         const wayland_flag = if (!options.enable_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
-
+        const link_egl = options.force_egl or options.enable_wayland;
         for (csources) |csrc| {
             lib.addCSourceFile(.{
                 .file = .{ .path = try std.fmt.allocPrint(b.allocator, "{s}/{s}", .{ sokol_path, csrc }) },
                 .flags = &[_][]const u8{ "-DIMPL", backend_option, egl_flag, x11_flag, wayland_flag },
             });
         }
-        const link_egl = options.force_egl or options.enable_wayland;
-
         lib.linkSystemLibrary("asound");
         lib.linkSystemLibrary("GL");
         if (options.enable_x11) {

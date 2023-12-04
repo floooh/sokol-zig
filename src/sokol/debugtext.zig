@@ -46,7 +46,7 @@ pub const Writer = struct {
 };
 // std.fmt-style formatted print
 pub fn print(comptime fmt: anytype, args: anytype) void {
-    var writer: Writer = .{};
+    const writer: Writer = .{};
     @import("std").fmt.format(writer, fmt, args) catch {};
 }
 
@@ -85,8 +85,8 @@ pub const ContextDesc = extern struct {
     sample_count: i32 = 0,
 };
 pub const Allocator = extern struct {
-    alloc: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
+    free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Desc = extern struct {

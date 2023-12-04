@@ -212,12 +212,14 @@ pub const ImageSampleType = enum(i32) {
     DEPTH,
     SINT,
     UINT,
+    UNFILTERABLE_FLOAT,
     NUM,
 };
 pub const SamplerType = enum(i32) {
     DEFAULT,
-    SAMPLE,
-    COMPARE,
+    FILTERING,
+    NONFILTERING,
+    COMPARISON,
     NUM,
 };
 pub const CubeFace = enum(i32) {
@@ -474,6 +476,7 @@ pub const ImageDesc = extern struct {
     d3d11_texture: ?*const anyopaque = null,
     d3d11_shader_resource_view: ?*const anyopaque = null,
     wgpu_texture: ?*const anyopaque = null,
+    wgpu_texture_view: ?*const anyopaque = null,
     _end_canary: u32 = 0,
 };
 pub const SamplerDesc = extern struct {
@@ -658,6 +661,136 @@ pub const PipelineInfo = extern struct {
 pub const PassInfo = extern struct {
     slot: SlotInfo = .{},
 };
+pub const FrameStatsGl = extern struct {
+    num_bind_buffer: u32 = 0,
+    num_active_texture: u32 = 0,
+    num_bind_texture: u32 = 0,
+    num_bind_sampler: u32 = 0,
+    num_use_program: u32 = 0,
+    num_render_state: u32 = 0,
+    num_vertex_attrib_pointer: u32 = 0,
+    num_vertex_attrib_divisor: u32 = 0,
+    num_enable_vertex_attrib_array: u32 = 0,
+    num_disable_vertex_attrib_array: u32 = 0,
+    num_uniform: u32 = 0,
+};
+pub const FrameStatsD3d11Pass = extern struct {
+    num_om_set_render_targets: u32 = 0,
+    num_clear_render_target_view: u32 = 0,
+    num_clear_depth_stencil_view: u32 = 0,
+    num_resolve_subresource: u32 = 0,
+};
+pub const FrameStatsD3d11Pipeline = extern struct {
+    num_rs_set_state: u32 = 0,
+    num_om_set_depth_stencil_state: u32 = 0,
+    num_om_set_blend_state: u32 = 0,
+    num_ia_set_primitive_topology: u32 = 0,
+    num_ia_set_input_layout: u32 = 0,
+    num_vs_set_shader: u32 = 0,
+    num_vs_set_constant_buffers: u32 = 0,
+    num_ps_set_shader: u32 = 0,
+    num_ps_set_constant_buffers: u32 = 0,
+};
+pub const FrameStatsD3d11Bindings = extern struct {
+    num_ia_set_vertex_buffers: u32 = 0,
+    num_ia_set_index_buffer: u32 = 0,
+    num_vs_set_shader_resources: u32 = 0,
+    num_ps_set_shader_resources: u32 = 0,
+    num_vs_set_samplers: u32 = 0,
+    num_ps_set_samplers: u32 = 0,
+};
+pub const FrameStatsD3d11Uniforms = extern struct {
+    num_update_subresource: u32 = 0,
+};
+pub const FrameStatsD3d11Draw = extern struct {
+    num_draw_indexed_instanced: u32 = 0,
+    num_draw_indexed: u32 = 0,
+    num_draw_instanced: u32 = 0,
+    num_draw: u32 = 0,
+};
+pub const FrameStatsD3d11 = extern struct {
+    pass: FrameStatsD3d11Pass = .{},
+    pipeline: FrameStatsD3d11Pipeline = .{},
+    bindings: FrameStatsD3d11Bindings = .{},
+    uniforms: FrameStatsD3d11Uniforms = .{},
+    draw: FrameStatsD3d11Draw = .{},
+    num_map: u32 = 0,
+    num_unmap: u32 = 0,
+};
+pub const FrameStatsMetalIdpool = extern struct {
+    num_added: u32 = 0,
+    num_released: u32 = 0,
+    num_garbage_collected: u32 = 0,
+};
+pub const FrameStatsMetalPipeline = extern struct {
+    num_set_blend_color: u32 = 0,
+    num_set_cull_mode: u32 = 0,
+    num_set_front_facing_winding: u32 = 0,
+    num_set_stencil_reference_value: u32 = 0,
+    num_set_depth_bias: u32 = 0,
+    num_set_render_pipeline_state: u32 = 0,
+    num_set_depth_stencil_state: u32 = 0,
+};
+pub const FrameStatsMetalBindings = extern struct {
+    num_set_vertex_buffer: u32 = 0,
+    num_set_vertex_texture: u32 = 0,
+    num_set_vertex_sampler_state: u32 = 0,
+    num_set_fragment_texture: u32 = 0,
+    num_set_fragment_sampler_state: u32 = 0,
+};
+pub const FrameStatsMetalUniforms = extern struct {
+    num_set_vertex_buffer_offset: u32 = 0,
+    num_set_fragment_buffer_offset: u32 = 0,
+};
+pub const FrameStatsMetal = extern struct {
+    idpool: FrameStatsMetalIdpool = .{},
+    pipeline: FrameStatsMetalPipeline = .{},
+    bindings: FrameStatsMetalBindings = .{},
+    uniforms: FrameStatsMetalUniforms = .{},
+};
+pub const FrameStatsWgpuUniforms = extern struct {
+    num_set_bindgroup: u32 = 0,
+    size_write_buffer: u32 = 0,
+};
+pub const FrameStatsWgpuBindings = extern struct {
+    num_set_vertex_buffer: u32 = 0,
+    num_skip_redundant_vertex_buffer: u32 = 0,
+    num_set_index_buffer: u32 = 0,
+    num_skip_redundant_index_buffer: u32 = 0,
+    num_create_bindgroup: u32 = 0,
+    num_discard_bindgroup: u32 = 0,
+    num_set_bindgroup: u32 = 0,
+    num_skip_redundant_bindgroup: u32 = 0,
+    num_bindgroup_cache_hits: u32 = 0,
+    num_bindgroup_cache_misses: u32 = 0,
+    num_bindgroup_cache_collisions: u32 = 0,
+    num_bindgroup_cache_hash_vs_key_mismatch: u32 = 0,
+};
+pub const FrameStatsWgpu = extern struct {
+    uniforms: FrameStatsWgpuUniforms = .{},
+    bindings: FrameStatsWgpuBindings = .{},
+};
+pub const FrameStats = extern struct {
+    frame_index: u32 = 0,
+    num_passes: u32 = 0,
+    num_apply_viewport: u32 = 0,
+    num_apply_scissor_rect: u32 = 0,
+    num_apply_pipeline: u32 = 0,
+    num_apply_bindings: u32 = 0,
+    num_apply_uniforms: u32 = 0,
+    num_draw: u32 = 0,
+    num_update_buffer: u32 = 0,
+    num_append_buffer: u32 = 0,
+    num_update_image: u32 = 0,
+    size_apply_uniforms: u32 = 0,
+    size_update_buffer: u32 = 0,
+    size_append_buffer: u32 = 0,
+    size_update_image: u32 = 0,
+    gl: FrameStatsGl = .{},
+    d3d11: FrameStatsD3d11 = .{},
+    metal: FrameStatsMetal = .{},
+    wgpu: FrameStatsWgpu = .{},
+};
 pub const LogItem = enum(i32) {
     OK,
     MALLOC_FAILED,
@@ -668,8 +801,12 @@ pub const LogItem = enum(i32) {
     GL_SHADER_LINKING_FAILED,
     GL_VERTEX_ATTRIBUTE_NOT_FOUND_IN_SHADER,
     GL_TEXTURE_NAME_NOT_FOUND_IN_SHADER,
-    GL_FRAMEBUFFER_INCOMPLETE,
-    GL_MSAA_FRAMEBUFFER_INCOMPLETE,
+    GL_FRAMEBUFFER_STATUS_UNDEFINED,
+    GL_FRAMEBUFFER_STATUS_INCOMPLETE_ATTACHMENT,
+    GL_FRAMEBUFFER_STATUS_INCOMPLETE_MISSING_ATTACHMENT,
+    GL_FRAMEBUFFER_STATUS_UNSUPPORTED,
+    GL_FRAMEBUFFER_STATUS_INCOMPLETE_MULTISAMPLE,
+    GL_FRAMEBUFFER_STATUS_UNKNOWN,
     D3D11_CREATE_BUFFER_FAILED,
     D3D11_CREATE_DEPTH_TEXTURE_UNSUPPORTED_PIXEL_FORMAT,
     D3D11_CREATE_DEPTH_TEXTURE_FAILED,
@@ -694,7 +831,10 @@ pub const LogItem = enum(i32) {
     D3D11_MAP_FOR_UPDATE_BUFFER_FAILED,
     D3D11_MAP_FOR_APPEND_BUFFER_FAILED,
     D3D11_MAP_FOR_UPDATE_IMAGE_FAILED,
+    METAL_CREATE_BUFFER_FAILED,
     METAL_TEXTURE_FORMAT_NOT_SUPPORTED,
+    METAL_CREATE_TEXTURE_FAILED,
+    METAL_CREATE_SAMPLER_FAILED,
     METAL_SHADER_COMPILATION_FAILED,
     METAL_SHADER_CREATION_FAILED,
     METAL_SHADER_COMPILATION_OUTPUT,
@@ -702,11 +842,22 @@ pub const LogItem = enum(i32) {
     METAL_FRAGMENT_SHADER_ENTRY_NOT_FOUND,
     METAL_CREATE_RPS_FAILED,
     METAL_CREATE_RPS_OUTPUT,
-    WGPU_MAP_UNIFORM_BUFFER_FAILED,
-    WGPU_STAGING_BUFFER_FULL_COPY_TO_BUFFER,
-    WGPU_STAGING_BUFFER_FULL_COPY_TO_TEXTURE,
-    WGPU_RESET_STATE_CACHE_FIXME,
-    WGPU_ACTIVATE_CONTEXT_FIXME,
+    METAL_CREATE_DSS_FAILED,
+    WGPU_BINDGROUPS_POOL_EXHAUSTED,
+    WGPU_BINDGROUPSCACHE_SIZE_GREATER_ONE,
+    WGPU_BINDGROUPSCACHE_SIZE_POW2,
+    WGPU_CREATEBINDGROUP_FAILED,
+    WGPU_CREATE_BUFFER_FAILED,
+    WGPU_CREATE_TEXTURE_FAILED,
+    WGPU_CREATE_TEXTURE_VIEW_FAILED,
+    WGPU_CREATE_SAMPLER_FAILED,
+    WGPU_CREATE_SHADER_MODULE_FAILED,
+    WGPU_SHADER_TOO_MANY_IMAGES,
+    WGPU_SHADER_TOO_MANY_SAMPLERS,
+    WGPU_SHADER_CREATE_BINDGROUP_LAYOUT_FAILED,
+    WGPU_CREATE_PIPELINE_LAYOUT_FAILED,
+    WGPU_CREATE_RENDER_PIPELINE_FAILED,
+    WGPU_PASS_CREATE_TEXTURE_VIEW_FAILED,
     UNINIT_BUFFER_ACTIVE_CONTEXT_MISMATCH,
     UNINIT_IMAGE_ACTIVE_CONTEXT_MISMATCH,
     UNINIT_SAMPLER_ACTIVE_CONTEXT_MISMATCH,
@@ -772,6 +923,7 @@ pub const LogItem = enum(i32) {
     VALIDATE_SAMPLERDESC_CANARY,
     VALIDATE_SAMPLERDESC_MINFILTER_NONE,
     VALIDATE_SAMPLERDESC_MAGFILTER_NONE,
+    VALIDATE_SAMPLERDESC_ANISTROPIC_REQUIRES_LINEAR_FILTERING,
     VALIDATE_SHADERDESC_CANARY,
     VALIDATE_SHADERDESC_SOURCE,
     VALIDATE_SHADERDESC_BYTECODE,
@@ -792,6 +944,8 @@ pub const LogItem = enum(i32) {
     VALIDATE_SHADERDESC_IMAGE_SAMPLER_PAIR_HAS_NAME_BUT_NOT_USED,
     VALIDATE_SHADERDESC_IMAGE_SAMPLER_PAIR_HAS_IMAGE_BUT_NOT_USED,
     VALIDATE_SHADERDESC_IMAGE_SAMPLER_PAIR_HAS_SAMPLER_BUT_NOT_USED,
+    VALIDATE_SHADERDESC_NONFILTERING_SAMPLER_REQUIRED,
+    VALIDATE_SHADERDESC_COMPARISON_SAMPLER_REQUIRED,
     VALIDATE_SHADERDESC_IMAGE_NOT_REFERENCED_BY_IMAGE_SAMPLER_PAIRS,
     VALIDATE_SHADERDESC_SAMPLER_NOT_REFERENCED_BY_IMAGE_SAMPLER_PAIRS,
     VALIDATE_SHADERDESC_NO_CONT_IMAGE_SAMPLER_PAIRS,
@@ -862,24 +1016,28 @@ pub const LogItem = enum(i32) {
     VALIDATE_ABND_VS_IMG_EXISTS,
     VALIDATE_ABND_VS_IMAGE_TYPE_MISMATCH,
     VALIDATE_ABND_VS_IMAGE_MSAA,
+    VALIDATE_ABND_VS_EXPECTED_FILTERABLE_IMAGE,
+    VALIDATE_ABND_VS_EXPECTED_DEPTH_IMAGE,
     VALIDATE_ABND_VS_UNEXPECTED_IMAGE_BINDING,
     VALIDATE_ABND_VS_EXPECTED_SAMPLER_BINDING,
     VALIDATE_ABND_VS_UNEXPECTED_SAMPLER_COMPARE_NEVER,
     VALIDATE_ABND_VS_EXPECTED_SAMPLER_COMPARE_NEVER,
+    VALIDATE_ABND_VS_EXPECTED_NONFILTERING_SAMPLER,
     VALIDATE_ABND_VS_UNEXPECTED_SAMPLER_BINDING,
     VALIDATE_ABND_VS_SMP_EXISTS,
-    VALIDATE_ABND_VS_IMG_SMP_MIPMAPS,
     VALIDATE_ABND_FS_EXPECTED_IMAGE_BINDING,
     VALIDATE_ABND_FS_IMG_EXISTS,
     VALIDATE_ABND_FS_IMAGE_TYPE_MISMATCH,
     VALIDATE_ABND_FS_IMAGE_MSAA,
+    VALIDATE_ABND_FS_EXPECTED_FILTERABLE_IMAGE,
+    VALIDATE_ABND_FS_EXPECTED_DEPTH_IMAGE,
     VALIDATE_ABND_FS_UNEXPECTED_IMAGE_BINDING,
     VALIDATE_ABND_FS_EXPECTED_SAMPLER_BINDING,
     VALIDATE_ABND_FS_UNEXPECTED_SAMPLER_COMPARE_NEVER,
     VALIDATE_ABND_FS_EXPECTED_SAMPLER_COMPARE_NEVER,
+    VALIDATE_ABND_FS_EXPECTED_NONFILTERING_SAMPLER,
     VALIDATE_ABND_FS_UNEXPECTED_SAMPLER_BINDING,
     VALIDATE_ABND_FS_SMP_EXISTS,
-    VALIDATE_ABND_FS_IMG_SMP_MIPMAPS,
     VALIDATE_AUB_NO_PIPELINE,
     VALIDATE_AUB_NO_UB_AT_SLOT,
     VALIDATE_AUB_SIZE,
@@ -921,6 +1079,11 @@ pub const WgpuContextDesc = extern struct {
     depth_stencil_view_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
     user_data: ?*anyopaque = null,
 };
+pub const GlContextDesc = extern struct {
+    default_framebuffer_cb: ?*const fn () callconv(.C) u32 = null,
+    default_framebuffer_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) u32 = null,
+    user_data: ?*anyopaque = null,
+};
 pub const ContextDesc = extern struct {
     color_format: i32 = 0,
     depth_format: i32 = 0,
@@ -928,14 +1091,15 @@ pub const ContextDesc = extern struct {
     metal: MetalContextDesc = .{},
     d3d11: D3d11ContextDesc = .{},
     wgpu: WgpuContextDesc = .{},
+    gl: GlContextDesc = .{},
 };
 pub const CommitListener = extern struct {
     func: ?*const fn (?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Allocator = extern struct {
-    alloc: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
+    free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 pub const Logger = extern struct {
@@ -952,10 +1116,11 @@ pub const Desc = extern struct {
     pass_pool_size: i32 = 0,
     context_pool_size: i32 = 0,
     uniform_buffer_size: i32 = 0,
-    staging_buffer_size: i32 = 0,
     max_commit_listeners: i32 = 0,
     disable_validation: bool = false,
     mtl_force_managed_storage_mode: bool = false,
+    wgpu_disable_bindgroups_cache: bool = false,
+    wgpu_bindgroups_cache_size: i32 = 0,
     allocator: Allocator = .{},
     logger: Logger = .{},
     context: ContextDesc = .{},
@@ -1349,6 +1514,22 @@ pub extern fn sg_fail_pass(Pass) void;
 pub fn failPass(pass: Pass) void {
     sg_fail_pass(pass);
 }
+pub extern fn sg_enable_frame_stats() void;
+pub fn enableFrameStats() void {
+    sg_enable_frame_stats();
+}
+pub extern fn sg_disable_frame_stats() void;
+pub fn disableFrameStats() void {
+    sg_disable_frame_stats();
+}
+pub extern fn sg_frame_stats_enabled() bool;
+pub fn frameStatsEnabled() bool {
+    return sg_frame_stats_enabled();
+}
+pub extern fn sg_query_frame_stats() FrameStats;
+pub fn queryFrameStats() FrameStats {
+    return sg_query_frame_stats();
+}
 pub extern fn sg_setup_context() Context;
 pub fn setupContext() Context {
     return sg_setup_context();
@@ -1361,9 +1542,130 @@ pub extern fn sg_discard_context(Context) void;
 pub fn discardContext(ctx_id: Context) void {
     sg_discard_context(ctx_id);
 }
+pub const D3d11BufferInfo = extern struct {
+    buf: ?*const anyopaque = null,
+};
+pub const D3d11ImageInfo = extern struct {
+    tex2d: ?*const anyopaque = null,
+    tex3d: ?*const anyopaque = null,
+    res: ?*const anyopaque = null,
+    srv: ?*const anyopaque = null,
+};
+pub const D3d11SamplerInfo = extern struct {
+    smp: ?*const anyopaque = null,
+};
+pub const D3d11ShaderInfo = extern struct {
+    vs_cbufs: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
+    fs_cbufs: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
+    vs: ?*const anyopaque = null,
+    fs: ?*const anyopaque = null,
+};
+pub const D3d11PipelineInfo = extern struct {
+    il: ?*const anyopaque = null,
+    rs: ?*const anyopaque = null,
+    dss: ?*const anyopaque = null,
+    bs: ?*const anyopaque = null,
+};
+pub const D3d11PassInfo = extern struct {
+    color_rtv: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
+    resolve_rtv: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
+    dsv: ?*const anyopaque = null,
+};
+pub const MtlBufferInfo = extern struct {
+    buf: [2]?*const anyopaque = [_]?*const anyopaque{null} ** 2,
+    active_slot: i32 = 0,
+};
+pub const MtlImageInfo = extern struct {
+    tex: [2]?*const anyopaque = [_]?*const anyopaque{null} ** 2,
+    active_slot: i32 = 0,
+};
+pub const MtlSamplerInfo = extern struct {
+    smp: ?*const anyopaque = null,
+};
+pub const MtlShaderInfo = extern struct {
+    vs_lib: ?*const anyopaque = null,
+    fs_lib: ?*const anyopaque = null,
+    vs_func: ?*const anyopaque = null,
+    fs_func: ?*const anyopaque = null,
+};
+pub const MtlPipelineInfo = extern struct {
+    rps: ?*const anyopaque = null,
+    dss: ?*const anyopaque = null,
+};
+pub const WgpuBufferInfo = extern struct {
+    buf: ?*const anyopaque = null,
+};
+pub const WgpuImageInfo = extern struct {
+    tex: ?*const anyopaque = null,
+    view: ?*const anyopaque = null,
+};
+pub const WgpuSamplerInfo = extern struct {
+    smp: ?*const anyopaque = null,
+};
+pub const WgpuShaderInfo = extern struct {
+    vs_mod: ?*const anyopaque = null,
+    fs_mod: ?*const anyopaque = null,
+    bgl: ?*const anyopaque = null,
+};
+pub const WgpuPipelineInfo = extern struct {
+    pip: ?*const anyopaque = null,
+};
+pub const WgpuPassInfo = extern struct {
+    color_view: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
+    resolve_view: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
+    ds_view: ?*const anyopaque = null,
+};
+pub const GlBufferInfo = extern struct {
+    buf: [2]u32 = [_]u32{0} ** 2,
+    active_slot: i32 = 0,
+};
+pub const GlImageInfo = extern struct {
+    tex: [2]u32 = [_]u32{0} ** 2,
+    tex_target: u32 = 0,
+    msaa_render_buffer: u32 = 0,
+    active_slot: i32 = 0,
+};
+pub const GlSamplerInfo = extern struct {
+    smp: u32 = 0,
+};
+pub const GlShaderInfo = extern struct {
+    prog: u32 = 0,
+};
+pub const GlPassInfo = extern struct {
+    frame_buffer: u32 = 0,
+    msaa_resolve_framebuffer: [4]u32 = [_]u32{0} ** 4,
+};
 pub extern fn sg_d3d11_device() ?*const anyopaque;
 pub fn d3d11Device() ?*const anyopaque {
     return sg_d3d11_device();
+}
+pub extern fn sg_d3d11_device_context() ?*const anyopaque;
+pub fn d3d11DeviceContext() ?*const anyopaque {
+    return sg_d3d11_device_context();
+}
+pub extern fn sg_d3d11_query_buffer_info(Buffer) D3d11BufferInfo;
+pub fn d3d11QueryBufferInfo(buf: Buffer) D3d11BufferInfo {
+    return sg_d3d11_query_buffer_info(buf);
+}
+pub extern fn sg_d3d11_query_image_info(Image) D3d11ImageInfo;
+pub fn d3d11QueryImageInfo(img: Image) D3d11ImageInfo {
+    return sg_d3d11_query_image_info(img);
+}
+pub extern fn sg_d3d11_query_sampler_info(Sampler) D3d11SamplerInfo;
+pub fn d3d11QuerySamplerInfo(smp: Sampler) D3d11SamplerInfo {
+    return sg_d3d11_query_sampler_info(smp);
+}
+pub extern fn sg_d3d11_query_shader_info(Shader) D3d11ShaderInfo;
+pub fn d3d11QueryShaderInfo(shd: Shader) D3d11ShaderInfo {
+    return sg_d3d11_query_shader_info(shd);
+}
+pub extern fn sg_d3d11_query_pipeline_info(Pipeline) D3d11PipelineInfo;
+pub fn d3d11QueryPipelineInfo(pip: Pipeline) D3d11PipelineInfo {
+    return sg_d3d11_query_pipeline_info(pip);
+}
+pub extern fn sg_d3d11_query_pass_info(Pass) D3d11PassInfo;
+pub fn d3d11QueryPassInfo(pass: Pass) D3d11PassInfo {
+    return sg_d3d11_query_pass_info(pass);
 }
 pub extern fn sg_mtl_device() ?*const anyopaque;
 pub fn mtlDevice() ?*const anyopaque {
@@ -1372,4 +1674,84 @@ pub fn mtlDevice() ?*const anyopaque {
 pub extern fn sg_mtl_render_command_encoder() ?*const anyopaque;
 pub fn mtlRenderCommandEncoder() ?*const anyopaque {
     return sg_mtl_render_command_encoder();
+}
+pub extern fn sg_mtl_query_buffer_info(Buffer) MtlBufferInfo;
+pub fn mtlQueryBufferInfo(buf: Buffer) MtlBufferInfo {
+    return sg_mtl_query_buffer_info(buf);
+}
+pub extern fn sg_mtl_query_image_info(Image) MtlImageInfo;
+pub fn mtlQueryImageInfo(img: Image) MtlImageInfo {
+    return sg_mtl_query_image_info(img);
+}
+pub extern fn sg_mtl_query_sampler_info(Sampler) MtlSamplerInfo;
+pub fn mtlQuerySamplerInfo(smp: Sampler) MtlSamplerInfo {
+    return sg_mtl_query_sampler_info(smp);
+}
+pub extern fn sg_mtl_query_shader_info(Shader) MtlShaderInfo;
+pub fn mtlQueryShaderInfo(shd: Shader) MtlShaderInfo {
+    return sg_mtl_query_shader_info(shd);
+}
+pub extern fn sg_mtl_query_pipeline_info(Pipeline) MtlPipelineInfo;
+pub fn mtlQueryPipelineInfo(pip: Pipeline) MtlPipelineInfo {
+    return sg_mtl_query_pipeline_info(pip);
+}
+pub extern fn sg_wgpu_device() ?*const anyopaque;
+pub fn wgpuDevice() ?*const anyopaque {
+    return sg_wgpu_device();
+}
+pub extern fn sg_wgpu_queue() ?*const anyopaque;
+pub fn wgpuQueue() ?*const anyopaque {
+    return sg_wgpu_queue();
+}
+pub extern fn sg_wgpu_command_encoder() ?*const anyopaque;
+pub fn wgpuCommandEncoder() ?*const anyopaque {
+    return sg_wgpu_command_encoder();
+}
+pub extern fn sg_wgpu_render_pass_encoder() ?*const anyopaque;
+pub fn wgpuRenderPassEncoder() ?*const anyopaque {
+    return sg_wgpu_render_pass_encoder();
+}
+pub extern fn sg_wgpu_query_buffer_info(Buffer) WgpuBufferInfo;
+pub fn wgpuQueryBufferInfo(buf: Buffer) WgpuBufferInfo {
+    return sg_wgpu_query_buffer_info(buf);
+}
+pub extern fn sg_wgpu_query_image_info(Image) WgpuImageInfo;
+pub fn wgpuQueryImageInfo(img: Image) WgpuImageInfo {
+    return sg_wgpu_query_image_info(img);
+}
+pub extern fn sg_wgpu_query_sampler_info(Sampler) WgpuSamplerInfo;
+pub fn wgpuQuerySamplerInfo(smp: Sampler) WgpuSamplerInfo {
+    return sg_wgpu_query_sampler_info(smp);
+}
+pub extern fn sg_wgpu_query_shader_info(Shader) WgpuShaderInfo;
+pub fn wgpuQueryShaderInfo(shd: Shader) WgpuShaderInfo {
+    return sg_wgpu_query_shader_info(shd);
+}
+pub extern fn sg_wgpu_query_pipeline_info(Pipeline) WgpuPipelineInfo;
+pub fn wgpuQueryPipelineInfo(pip: Pipeline) WgpuPipelineInfo {
+    return sg_wgpu_query_pipeline_info(pip);
+}
+pub extern fn sg_wgpu_query_pass_info(Pass) WgpuPassInfo;
+pub fn wgpuQueryPassInfo(pass: Pass) WgpuPassInfo {
+    return sg_wgpu_query_pass_info(pass);
+}
+pub extern fn sg_gl_query_buffer_info(Buffer) GlBufferInfo;
+pub fn glQueryBufferInfo(buf: Buffer) GlBufferInfo {
+    return sg_gl_query_buffer_info(buf);
+}
+pub extern fn sg_gl_query_image_info(Image) GlImageInfo;
+pub fn glQueryImageInfo(img: Image) GlImageInfo {
+    return sg_gl_query_image_info(img);
+}
+pub extern fn sg_gl_query_sampler_info(Sampler) GlSamplerInfo;
+pub fn glQuerySamplerInfo(smp: Sampler) GlSamplerInfo {
+    return sg_gl_query_sampler_info(smp);
+}
+pub extern fn sg_gl_query_shader_info(Shader) GlShaderInfo;
+pub fn glQueryShaderInfo(shd: Shader) GlShaderInfo {
+    return sg_gl_query_shader_info(shd);
+}
+pub extern fn sg_gl_query_pass_info(Pass) GlPassInfo;
+pub fn glQueryPassInfo(pass: Pass) GlPassInfo {
+    return sg_gl_query_pass_info(pass);
 }
