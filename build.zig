@@ -124,6 +124,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
         "sokol_audio.c",
         "sokol_gl.c",
         "sokol_debugtext.c",
+        "sokol_fontstash.c",
         "sokol_shape.c",
     };
     var _backend = options.backend;
