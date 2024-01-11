@@ -112,6 +112,7 @@ pub const PixelFormat = enum(i32) {
     BGRA8,
     RGB10A2,
     RG11B10F,
+    RGB9E5,
     RG32UI,
     RG32SI,
     RG32F,
@@ -144,7 +145,6 @@ pub const PixelFormat = enum(i32) {
     ETC2_RGBA8,
     ETC2_RG11,
     ETC2_RG11SN,
-    RGB9E5,
     NUM,
 };
 pub const PixelformatInfo = extern struct {
@@ -154,6 +154,8 @@ pub const PixelformatInfo = extern struct {
     blend: bool = false,
     msaa: bool = false,
     depth: bool = false,
+    compressed: bool = false,
+    bytes_per_pixel: i32 = 0,
 };
 pub const Features = extern struct {
     origin_top_left: bool = false,
@@ -1297,6 +1299,14 @@ pub fn queryLimits() Limits {
 pub extern fn sg_query_pixelformat(PixelFormat) PixelformatInfo;
 pub fn queryPixelformat(fmt: PixelFormat) PixelformatInfo {
     return sg_query_pixelformat(fmt);
+}
+pub extern fn sg_query_row_pitch(PixelFormat, i32, i32) i32;
+pub fn queryRowPitch(fmt: PixelFormat, width: i32, row_align_bytes: i32) i32 {
+    return sg_query_row_pitch(fmt, width, row_align_bytes);
+}
+pub extern fn sg_query_surface_pitch(PixelFormat, i32, i32, i32) i32;
+pub fn querySurfacePitch(fmt: PixelFormat, width: i32, height: i32, row_align_bytes: i32) i32 {
+    return sg_query_surface_pitch(fmt, width, height, row_align_bytes);
 }
 pub extern fn sg_query_buffer_state(Buffer) ResourceState;
 pub fn queryBufferState(buf: Buffer) ResourceState {

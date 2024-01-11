@@ -4,6 +4,8 @@ Auto-generated Zig bindings for the [sokol headers](https://github.com/floooh/so
 
 For Zig version 0.11.0
 
+For the latest 0.12.0-dev version, please use the branch `zig-0.12.0`.
+
 Related projects:
 
 - [pacman.zig](https://github.com/floooh/pacman.zig)
