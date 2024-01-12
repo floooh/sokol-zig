@@ -372,6 +372,7 @@ fn buildWasm(b: *Build, example: *CompileStep, options: ExampleOptions) !*RunSte
     try emcc_cmd.append("-sMALLOC='emmalloc'");
     try emcc_cmd.append("-sASSERTIONS=0");
     try emcc_cmd.append("-sERROR_ON_UNDEFINED_SYMBOLS=0");
+    try emcc_cmd.append("--shell-file=src/sokol/web/shell.html");
 
     // TODO: fix undefined references
     // switch (options.backend) {
