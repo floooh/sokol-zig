@@ -9,14 +9,14 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{matrix.os}}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: goto-bus-stop/setup-zig@v2
-        with:
-          version: 0.11.0
       - name: prepare-linux
         if: runner.os == 'Linux'
         run: |
             sudo apt-get update
             sudo apt-get install libglu1-mesa-dev mesa-common-dev xorg-dev libasound-dev
-      - name: build
-        run: zig build
+      - name: build Native
+        run: zig build --summary all
+      - name: build Wasm
+        run: zig build --summary all -Dtarget=wasm32-emscripten

@@ -1,9 +1,10 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const Build = std.Build;
-const CompileStep = std.build.Step.Compile;
-const Module = std.build.Module;
-const CrossTarget = std.zig.CrossTarget;
+const CompileStep = Build.Step.Compile;
+const RunStep = Build.Step.Run;
+const Module = Build.Module;
+const ResolvedTarget = Build.ResolvedTarget;
 const OptimizeMode = std.builtin.OptimizeMode;
 
 pub const Backend = enum {
@@ -16,13 +17,21 @@ pub const Backend = enum {
 };
 
 pub const LibSokolOptions = struct {
-    target: CrossTarget,
+    target: ResolvedTarget,
     optimize: OptimizeMode,
     build_root: ?[]const u8 = null,
     backend: Backend = .auto,
     force_egl: bool = false,
     enable_x11: bool = true,
     enable_wayland: bool = false,
+    sysroot: ?[]const u8 = null,
+    emsdk: ?*Build.Dependency = null,
+
+    fn emsdkPath(self: LibSokolOptions, b: *Build) ?[]const u8 {
+        if (self.emsdk) |dep|
+            return dep.path("").getPath(b);
+        return null;
+    }
 };
 
 pub fn build(b: *Build) void {
@@ -30,11 +39,12 @@ pub fn build(b: *Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const mod_sokol = b.addModule("sokol", .{ .source_file = .{ .path = "src/sokol/sokol.zig" } });
+    const mod_sokol = b.addModule("sokol", .{ .root_source_file = .{ .path = "src/sokol/sokol.zig" } });
 
     const lib_sokol = buildLibSokol(b, .{
         .target = target,
         .optimize = optimize,
+        .emsdk = b.dependency("emsdk", .{}),
         .backend = if (force_gl) .gl else .auto,
         .enable_wayland = b.option(bool, "wayland", "Compile with wayland-support (default: false)") orelse false,
         .enable_x11 = b.option(bool, "x11", "Compile with x11-support (default: true)") orelse true,
@@ -43,8 +53,6 @@ pub fn build(b: *Build) void {
         std.log.err("buildLibSokol return with error {}", .{err});
         return;
     };
-    // make the sokol library available to the package manager as artifact
-    b.installArtifact(lib_sokol);
 
     const examples = .{
         "clear",
@@ -73,48 +81,71 @@ pub fn build(b: *Build) void {
             .optimize = optimize,
             .lib_sokol = lib_sokol,
             .mod_sokol = mod_sokol,
+            .emsdk = b.dependency("emsdk", .{}),
         });
     }
     buildShaders(b);
 }
 
 const ExampleOptions = struct {
-    target: CrossTarget,
+    target: ResolvedTarget,
     optimize: OptimizeMode,
     lib_sokol: *CompileStep,
     mod_sokol: *Module,
+    emsdk: ?*Build.Dependency = null,
+
+    fn emsdkPath(self: ExampleOptions, b: *Build) ?[]const u8 {
+        if (self.emsdk) |dep|
+            return dep.path("").getPath(b);
+        return null;
+    }
 };
 
 // build sokol into a static library
 pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
-    const is_wasm = options.target.getCpu().arch == .wasm32;
-
-    // special case wasm, must compile as wasm32-emscripten, not wasm32-freestanding
-    var target = options.target;
-    if (is_wasm) {
-        target.os_tag = .emscripten;
-    }
+    const is_wasm = options.target.result.isWasm();
+    var config = options;
 
     const lib = b.addStaticLibrary(.{
         .name = "sokol",
-        .target = target,
+        .target = options.target,
         .optimize = options.optimize,
         .link_libc = true,
     });
     if (is_wasm) {
-        // need to add Emscripten SDK include path
-        if (b.sysroot == null) {
+        // need to add Emscripten SDK include path (system or package)
+        if (b.sysroot) |sysroot| {
+            config.sysroot = sysroot;
+        } else if (options.emsdkPath(b)) |path| {
+            config.sysroot = b.pathJoin(&.{ path, "upstream", "emscripten", "cache", "sysroot" });
+            var cmds = std.ArrayList([]const u8).init(b.allocator);
+            defer cmds.deinit();
+
+            if (lib.rootModuleTarget().os.tag == .windows)
+                try cmds.append(b.pathJoin(&.{ path, "emsdk.bat" }))
+            else {
+                try cmds.append("bash"); // or try chmod
+                try cmds.append(b.pathJoin(&.{ path, "emsdk" }));
+            }
+
+            var emsdk_run = b.addSystemCommand(cmds.items);
+            emsdk_run.addArgs(&.{ "install", "latest" });
+            var emsdk_active = b.addSystemCommand(cmds.items);
+            emsdk_active.addArgs(&.{ "activate", "latest" });
+            _ = emsdk_active.captureStdOut(); // hide emsdk_env output
+
+            emsdk_active.step.dependOn(&emsdk_run.step);
+            lib.step.dependOn(&emsdk_active.step);
+        } else {
             std.log.err("Must provide Emscripten sysroot via '--sysroot [path/to/emsdk]/upstream/emscripten/cache/sysroot'", .{});
             return error.Wasm32SysRootExpected;
         }
-        const include_path = try std.fs.path.join(b.allocator, &.{ b.sysroot.?, "include" });
-        defer b.allocator.free(include_path);
-        lib.addIncludePath(.{ .path = include_path });
-        lib.defineCMacro("__EMSCRIPTEN__", "1");
+        const include_path = b.pathJoin(&.{ config.sysroot.?, "include" });
+        lib.addSystemIncludePath(.{ .path = include_path }); // isystem
     }
     var sokol_path: []const u8 = "src/sokol/c";
     if (options.build_root) |build_root| {
-        sokol_path = try std.fmt.allocPrint(b.allocator, "{s}/src/sokol/c", .{build_root});
+        sokol_path = b.fmt("{s}/src/sokol/c", .{build_root});
     }
     const csources = [_][]const u8{
         "sokol_log.c",
@@ -128,13 +159,13 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
     };
     var _backend = options.backend;
     if (_backend == .auto) {
-        if (lib.target.isDarwin()) {
+        if (lib.rootModuleTarget().isDarwin()) {
             _backend = .metal;
-        } else if (lib.target.isWindows()) {
+        } else if (lib.rootModuleTarget().os.tag == .windows) {
             _backend = .d3d11;
-        } else if (lib.target.getCpu().arch == .wasm32) {
+        } else if (lib.rootModuleTarget().isWasm()) {
             _backend = .gles3;
-        } else if (lib.target.getAbi() == .android) {
+        } else if (lib.rootModuleTarget().isAndroid()) {
             _backend = .gles3;
         } else {
             _backend = .gl;
@@ -149,10 +180,10 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
         else => unreachable,
     };
 
-    if (lib.target.isDarwin()) {
+    if (lib.rootModuleTarget().isDarwin()) {
         for (csources) |csrc| {
             lib.addCSourceFile(.{
-                .file = .{ .path = try std.fmt.allocPrint(b.allocator, "{s}/{s}", .{ sokol_path, csrc }) },
+                .file = .{ .path = b.fmt("{s}/{s}", .{ sokol_path, csrc }) },
                 .flags = &[_][]const u8{ "-ObjC", "-DIMPL", backend_option },
             });
         }
@@ -162,27 +193,27 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
             lib.linkFramework("MetalKit");
             lib.linkFramework("Metal");
         }
-        if (lib.target.getOsTag() == .ios) {
+        if (lib.rootModuleTarget().os.tag == .ios) {
             lib.linkFramework("UIKit");
             lib.linkFramework("AVFoundation");
             if (.gl == _backend) {
                 lib.linkFramework("OpenGLES");
                 lib.linkFramework("GLKit");
             }
-        } else if (lib.target.getOsTag() == .macos) {
+        } else if (lib.rootModuleTarget().os.tag == .macos) {
             lib.linkFramework("Cocoa");
             lib.linkFramework("QuartzCore");
             if (.gl == _backend) {
                 lib.linkFramework("OpenGL");
             }
         }
-    } else if (lib.target.getAbi() == .android) {
+    } else if (lib.rootModuleTarget().isAndroid()) {
         if (.gles3 != _backend) {
             @panic("For android targets, you must have backend set to GLES3");
         }
         for (csources) |csrc| {
             lib.addCSourceFile(.{
-                .file = .{ .path = try std.fmt.allocPrint(b.allocator, "{s}/{s}", .{ sokol_path, csrc }) },
+                .file = .{ .path = b.fmt("{s}/{s}", .{ sokol_path, csrc }) },
                 .flags = &[_][]const u8{ "-DIMPL", backend_option },
             });
         }
@@ -190,14 +221,14 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
         lib.linkSystemLibrary("EGL");
         lib.linkSystemLibrary("android");
         lib.linkSystemLibrary("log");
-    } else if (lib.target.isLinux()) {
+    } else if (lib.rootModuleTarget().os.tag == .linux) {
         const egl_flag = if (options.force_egl) "-DSOKOL_FORCE_EGL " else "";
         const x11_flag = if (!options.enable_x11) "-DSOKOL_DISABLE_X11 " else "";
         const wayland_flag = if (!options.enable_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
         const link_egl = options.force_egl or options.enable_wayland;
         for (csources) |csrc| {
             lib.addCSourceFile(.{
-                .file = .{ .path = try std.fmt.allocPrint(b.allocator, "{s}/{s}", .{ sokol_path, csrc }) },
+                .file = .{ .path = b.fmt("{s}/{s}", .{ sokol_path, csrc }) },
                 .flags = &[_][]const u8{ "-DIMPL", backend_option, egl_flag, x11_flag, wayland_flag },
             });
         }
@@ -217,25 +248,25 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
         if (link_egl) {
             lib.linkSystemLibrary("egl");
         }
-    } else if (lib.target.isWindows()) {
+    } else if (lib.rootModuleTarget().os.tag == .windows) {
         for (csources) |csrc| {
             lib.addCSourceFile(.{
-                .file = .{ .path = try std.fmt.allocPrint(b.allocator, "{s}/{s}", .{ sokol_path, csrc }) },
+                .file = .{ .path = b.fmt("{s}/{s}", .{ sokol_path, csrc }) },
                 .flags = &[_][]const u8{ "-DIMPL", backend_option },
             });
         }
-        lib.linkSystemLibraryName("kernel32");
-        lib.linkSystemLibraryName("user32");
-        lib.linkSystemLibraryName("gdi32");
-        lib.linkSystemLibraryName("ole32");
+        lib.linkSystemLibrary("kernel32");
+        lib.linkSystemLibrary("user32");
+        lib.linkSystemLibrary("gdi32");
+        lib.linkSystemLibrary("ole32");
         if (.d3d11 == _backend) {
-            lib.linkSystemLibraryName("d3d11");
-            lib.linkSystemLibraryName("dxgi");
+            lib.linkSystemLibrary("d3d11");
+            lib.linkSystemLibrary("dxgi");
         }
     } else {
         for (csources) |csrc| {
             lib.addCSourceFile(.{
-                .file = .{ .path = try std.fmt.allocPrint(b.allocator, "{s}/{s}", .{ sokol_path, csrc }) },
+                .file = .{ .path = b.fmt("{s}/{s}", .{ sokol_path, csrc }) },
                 .flags = &[_][]const u8{ "-DIMPL", backend_option },
             });
         }
@@ -245,17 +276,27 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
 
 // build one of the example exes
 fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) void {
-    const e = b.addExecutable(.{
+    const e = if (options.target.result.isWasm()) b.addStaticLibrary(.{
+        .name = name,
+        .root_source_file = .{ .path = "src/examples/" ++ name ++ ".zig" },
+        .target = options.target,
+        .optimize = options.optimize,
+    }) else b.addExecutable(.{
         .name = name,
         .root_source_file = .{ .path = "src/examples/" ++ name ++ ".zig" },
         .target = options.target,
         .optimize = options.optimize,
     });
     e.linkLibrary(options.lib_sokol);
-    e.addModule("sokol", options.mod_sokol);
-    b.installArtifact(e);
-    const run = b.addRunArtifact(e);
-    b.step("run-" ++ name, "Run " ++ name).dependOn(&run.step);
+    e.root_module.addImport("sokol", options.mod_sokol);
+    var run: ?*RunStep = null;
+    if (e.rootModuleTarget().isWasm()) {
+        run = buildWasm(b, e, options) catch |err| @panic(@errorName(err));
+    } else {
+        b.installArtifact(e);
+        run = b.addRunArtifact(e);
+    }
+    b.step("run-" ++ name, "Run " ++ name).dependOn(&run.?.step);
 }
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
@@ -300,4 +341,59 @@ fn buildShaders(b: *Build) void {
         });
         shdc_step.dependOn(&cmd.step);
     }
+}
+
+fn buildWasm(b: *Build, example: *CompileStep, options: ExampleOptions) !*RunStep {
+    // system path or package path
+    const emcc_path = b.findProgram(&.{"emcc"}, &.{}) catch b.pathJoin(&.{ options.emsdkPath(b).?, "upstream", "emscripten", "emcc" });
+    const emrun_path = b.findProgram(&.{"emrun"}, &.{}) catch b.pathJoin(&.{ options.emsdkPath(b).?, "upstream", "emscripten", "emrun" });
+
+    if (options.lib_sokol.rootModuleTarget().os.tag != .emscripten) {
+        std.log.err("Please build with 'zig build -Dtarget=wasm32-emscripten", .{});
+        return error.Wasm32EmscriptenExpected;
+    }
+
+    // Make web content path
+    try std.fs.cwd().makePath(b.fmt("{s}/web", .{b.install_path}));
+
+    var emcc_cmd = std.ArrayList([]const u8).init(b.allocator);
+    defer emcc_cmd.deinit();
+
+    try emcc_cmd.append(emcc_path);
+    if (options.optimize != .Debug)
+        try emcc_cmd.append("-Oz")
+    else
+        try emcc_cmd.append("-Og");
+    try emcc_cmd.append("--closure");
+    try emcc_cmd.append("1");
+    try emcc_cmd.append(b.fmt("-o{s}/web/{s}.html", .{ b.install_path, example.name }));
+    try emcc_cmd.append("-sNO_FILESYSTEM=1");
+    try emcc_cmd.append("-sMALLOC='emmalloc'");
+    try emcc_cmd.append("-sASSERTIONS=0");
+    try emcc_cmd.append("-sERROR_ON_UNDEFINED_SYMBOLS=0");
+
+    // TODO: fix undefined references
+    // switch (options.backend) {
+    //     .wgpu => {
+    // try emcc_cmd.append("-sUSE_WEBGPU=1");
+    // },
+    // else => {
+    try emcc_cmd.append("-sUSE_WEBGL2=1");
+    //     },
+    // }
+
+    const emcc = b.addSystemCommand(emcc_cmd.items);
+    emcc.setName("emcc"); // hide emcc path
+
+    // get artifacts from zig-cache, no need zig-out
+    emcc.addArtifactArg(options.lib_sokol);
+    emcc.addArtifactArg(example);
+
+    // get the emcc step to run on 'zig build'
+    b.getInstallStep().dependOn(&emcc.step);
+
+    // a seperate run step using emrun
+    const emrun = b.addSystemCommand(&.{ emrun_path, b.fmt("{s}/web/{s}.html", .{ b.install_path, example.name }) });
+    emrun.step.dependOn(&emcc.step);
+    return emrun;
 }
