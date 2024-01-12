@@ -300,6 +300,7 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) v
 }
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
+// TODO: install sokol-shdc via package manager
 fn buildShaders(b: *Build) void {
     const sokol_tools_bin_dir = "../sokol-tools-bin/bin/";
     const shaders_dir = "src/examples/shaders/";
@@ -335,7 +336,7 @@ fn buildShaders(b: *Build) void {
             "-o",
             shaders_dir ++ shader ++ ".zig",
             "-l",
-            "glsl330:metal_macos:hlsl4",
+            "glsl330:metal_macos:hlsl4:glsl300es:wgsl",
             "-f",
             "sokol_zig",
         });
