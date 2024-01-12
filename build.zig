@@ -28,8 +28,9 @@ pub const LibSokolOptions = struct {
     emsdk: ?*Build.Dependency = null,
 
     fn emsdkPath(self: LibSokolOptions, b: *Build) ?[]const u8 {
-        if (self.emsdk) |dep|
+        if (self.emsdk) |dep| {
             return dep.path("").getPath(b);
+        }
         return null;
     }
 };
@@ -95,8 +96,9 @@ const ExampleOptions = struct {
     emsdk: ?*Build.Dependency = null,
 
     fn emsdkPath(self: ExampleOptions, b: *Build) ?[]const u8 {
-        if (self.emsdk) |dep|
+        if (self.emsdk) |dep| {
             return dep.path("").getPath(b);
+        }
         return null;
     }
 };
@@ -157,21 +159,21 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
         "sokol_debugtext.c",
         "sokol_shape.c",
     };
-    var _backend = options.backend;
-    if (_backend == .auto) {
+    var backend = options.backend;
+    if (backend == .auto) {
         if (lib.rootModuleTarget().isDarwin()) {
-            _backend = .metal;
+            backend = .metal;
         } else if (lib.rootModuleTarget().os.tag == .windows) {
-            _backend = .d3d11;
+            backend = .d3d11;
         } else if (lib.rootModuleTarget().isWasm()) {
-            _backend = .gles3;
+            backend = .gles3;
         } else if (lib.rootModuleTarget().isAndroid()) {
-            _backend = .gles3;
+            backend = .gles3;
         } else {
-            _backend = .gl;
+            backend = .gl;
         }
     }
-    const backend_option = switch (_backend) {
+    const backend_option = switch (backend) {
         .d3d11 => "-DSOKOL_D3D11",
         .metal => "-DSOKOL_METAL",
         .gl => "-DSOKOL_GLCORE33",
@@ -189,26 +191,26 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
         }
         lib.linkFramework("Foundation");
         lib.linkFramework("AudioToolbox");
-        if (.metal == _backend) {
+        if (.metal == backend) {
             lib.linkFramework("MetalKit");
             lib.linkFramework("Metal");
         }
         if (lib.rootModuleTarget().os.tag == .ios) {
             lib.linkFramework("UIKit");
             lib.linkFramework("AVFoundation");
-            if (.gl == _backend) {
+            if (.gl == backend) {
                 lib.linkFramework("OpenGLES");
                 lib.linkFramework("GLKit");
             }
         } else if (lib.rootModuleTarget().os.tag == .macos) {
             lib.linkFramework("Cocoa");
             lib.linkFramework("QuartzCore");
-            if (.gl == _backend) {
+            if (.gl == backend) {
                 lib.linkFramework("OpenGL");
             }
         }
     } else if (lib.rootModuleTarget().isAndroid()) {
-        if (.gles3 != _backend) {
+        if (.gles3 != backend) {
             @panic("For android targets, you must have backend set to GLES3");
         }
         for (csources) |csrc| {
@@ -259,7 +261,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
         lib.linkSystemLibrary("user32");
         lib.linkSystemLibrary("gdi32");
         lib.linkSystemLibrary("ole32");
-        if (.d3d11 == _backend) {
+        if (.d3d11 == backend) {
             lib.linkSystemLibrary("d3d11");
             lib.linkSystemLibrary("dxgi");
         }
@@ -274,7 +276,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
     return lib;
 }
 
-// build one of the example exes
+// build one of the examples
 fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) void {
     const e = if (options.target.result.isWasm()) b.addStaticLibrary(.{
         .name = name,
@@ -354,17 +356,18 @@ fn buildWasm(b: *Build, example: *CompileStep, options: ExampleOptions) !*RunSte
         return error.Wasm32EmscriptenExpected;
     }
 
-    // Make web content path
+    // create a separate output directory zig-out/web
     try std.fs.cwd().makePath(b.fmt("{s}/web", .{b.install_path}));
 
     var emcc_cmd = std.ArrayList([]const u8).init(b.allocator);
     defer emcc_cmd.deinit();
 
     try emcc_cmd.append(emcc_path);
-    if (options.optimize != .Debug)
-        try emcc_cmd.append("-Oz")
-    else
+    if (options.optimize != .Debug) {
+        try emcc_cmd.append("-Oz");
+    } else {
         try emcc_cmd.append("-Og");
+    }
     try emcc_cmd.append("--closure");
     try emcc_cmd.append("1");
     try emcc_cmd.append(b.fmt("-o{s}/web/{s}.html", .{ b.install_path, example.name }));
