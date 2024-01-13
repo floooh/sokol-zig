@@ -4,11 +4,11 @@ const Build = std.Build;
 const OptimizeMode = std.builtin.OptimizeMode;
 
 pub fn build(b: *Build) !void {
-    const opt_use_gl = b.option(bool, "gl", "Force OpenGL backend (default: false)") orelse false;
-    const opt_use_wgpu = b.option(bool, "wgpu", "Force WebGPU backend (default: false)") orelse false;
-    const opt_use_wayland = b.option(bool, "wayland", "Compile with wayland-support (default: false)") orelse false;
-    const opt_use_x11 = b.option(bool, "x11", "Compile with x11-support (default: true)") orelse true;
-    const opt_use_egl = b.option(bool, "egl", "Use EGL instead of GLX if possible (default: false)") orelse false;
+    const opt_use_gl = b.option(bool, "gl", "Force OpenGL (default: false)") orelse false;
+    const opt_use_wgpu = b.option(bool, "wgpu", "Force WebGPU (default: false, web only)") orelse false;
+    const opt_use_x11 = b.option(bool, "x11", "Force X11 (default: true, Linux only)") orelse true;
+    const opt_use_wayland = b.option(bool, "wayland", "Force Wayland (default: false, Linux only, not supported in main-line headers)") orelse false;
+    const opt_use_egl = b.option(bool, "egl", "Force EGL (default: false, Linux only)") orelse false;
     const sokol_backend: SokolBackend = if (opt_use_gl) .gl else if (opt_use_wgpu) .wgpu else .auto;
 
     const target = b.standardTargetOptions(.{});
