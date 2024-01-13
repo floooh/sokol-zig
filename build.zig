@@ -123,7 +123,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*CompileStep {
             var cmds = std.ArrayList([]const u8).init(b.allocator);
             defer cmds.deinit();
 
-            if (lib.rootModuleTarget().os.tag == .windows)
+            if (builtin.os.tag == .windows)
                 try cmds.append(b.pathJoin(&.{ path, "emsdk.bat" }))
             else {
                 try cmds.append("bash"); // or try chmod
