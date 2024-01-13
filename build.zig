@@ -4,14 +4,15 @@ const Build = std.Build;
 const OptimizeMode = std.builtin.OptimizeMode;
 
 pub fn build(b: *Build) !void {
-    const opt_force_gl = b.option(bool, "gl", "Force OpenGL backend (default: false)") orelse false;
-    const opt_enable_wayland = b.option(bool, "wayland", "Compile with wayland-support (default: false)") orelse false;
-    const opt_enable_x11 = b.option(bool, "x11", "Compile with x11-support (default: true)") orelse true;
-    const opt_force_egl = b.option(bool, "egl", "Use EGL instead of GLX if possible (default: false)") orelse false;
+    const opt_use_gl = b.option(bool, "gl", "Force OpenGL backend (default: false)") orelse false;
+    const opt_use_wgpu = b.option(bool, "wgpu", "Force WebGPU backend (default: false)") orelse false;
+    const opt_use_wayland = b.option(bool, "wayland", "Compile with wayland-support (default: false)") orelse false;
+    const opt_use_x11 = b.option(bool, "x11", "Compile with x11-support (default: true)") orelse true;
+    const opt_use_egl = b.option(bool, "egl", "Use EGL instead of GLX if possible (default: false)") orelse false;
+    const sokol_backend: SokolBackend = if (opt_use_gl) .gl else if (opt_use_wgpu) .wgpu else .auto;
 
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-
     const emsdk = b.dependency("emsdk", .{});
 
     // a module for the actual bindings, and a static link library with the C code
@@ -20,10 +21,10 @@ pub fn build(b: *Build) !void {
         .target = target,
         .optimize = optimize,
         .emsdk = emsdk,
-        .backend = if (opt_force_gl) .gl else .auto,
-        .enable_wayland = opt_enable_wayland,
-        .enable_x11 = opt_enable_x11,
-        .force_egl = opt_force_egl,
+        .backend = sokol_backend,
+        .use_wayland = opt_use_wayland,
+        .use_x11 = opt_use_x11,
+        .use_egl = opt_use_egl,
     });
     mod_sokol.linkLibrary(lib_sokol);
 
@@ -53,6 +54,7 @@ pub fn build(b: *Build) !void {
         try buildExample(b, example, .{
             .target = target,
             .optimize = optimize,
+            .backend = sokol_backend,
             .mod_sokol = mod_sokol,
             .lib_sokol = lib_sokol,
             .emsdk = emsdk,
@@ -72,13 +74,30 @@ const SokolBackend = enum {
     wgpu,
 };
 
+// helper function to resolve .auto backend based on target platform
+fn resolveSokolBackend(backend: SokolBackend, target: std.Target) SokolBackend {
+    if (backend != .auto) {
+        return backend;
+    } else if (target.isDarwin()) {
+        return .metal;
+    } else if (target.os.tag == .windows) {
+        return .d3d11;
+    } else if (target.isWasm()) {
+        return .gles3;
+    } else if (target.isAndroid()) {
+        return .gles3;
+    } else {
+        return .gl;
+    }
+}
+
 const LibSokolOptions = struct {
     target: Build.ResolvedTarget,
     optimize: OptimizeMode,
     backend: SokolBackend = .auto,
-    force_egl: bool = false,
-    enable_x11: bool = true,
-    enable_wayland: bool = false,
+    use_egl: bool = false,
+    use_x11: bool = true,
+    use_wayland: bool = false,
     emsdk: ?*Build.Dependency = null,
 };
 
@@ -107,27 +126,14 @@ fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     }
 
     // resolve .auto backend into specific backend by platform
-    var backend = options.backend;
-    if (backend == .auto) {
-        if (lib.rootModuleTarget().isDarwin()) {
-            backend = .metal;
-        } else if (lib.rootModuleTarget().os.tag == .windows) {
-            backend = .d3d11;
-        } else if (lib.rootModuleTarget().isWasm()) {
-            backend = .gles3;
-        } else if (lib.rootModuleTarget().isAndroid()) {
-            backend = .gles3;
-        } else {
-            backend = .gl;
-        }
-    }
+    const backend = resolveSokolBackend(options.backend, lib.rootModuleTarget());
     const backend_cflags = switch (backend) {
         .d3d11 => "-DSOKOL_D3D11",
         .metal => "-DSOKOL_METAL",
         .gl => "-DSOKOL_GLCORE33",
         .gles3 => "-DSOKOL_GLES3",
         .wgpu => "-DSOKOL_WGPU",
-        else => unreachable,
+        else => @panic("unknown sokol backend"),
     };
 
     // platform specific compile and link options
@@ -163,19 +169,19 @@ fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         lib.linkSystemLibrary("android");
         lib.linkSystemLibrary("log");
     } else if (lib.rootModuleTarget().os.tag == .linux) {
-        const egl_cflags = if (options.force_egl) "-DSOKOL_FORCE_EGL " else "";
-        const x11_cflags = if (!options.enable_x11) "-DSOKOL_DISABLE_X11 " else "";
-        const wayland_cflags = if (!options.enable_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
-        const link_egl = options.force_egl or options.enable_wayland;
+        const egl_cflags = if (options.use_egl) "-DSOKOL_FORCE_EGL " else "";
+        const x11_cflags = if (!options.use_x11) "-DSOKOL_DISABLE_X11 " else "";
+        const wayland_cflags = if (!options.use_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
+        const link_egl = options.use_egl or options.use_wayland;
         cflags = &.{ "-DIMPL", backend_cflags, egl_cflags, x11_cflags, wayland_cflags };
         lib.linkSystemLibrary("asound");
         lib.linkSystemLibrary("GL");
-        if (options.enable_x11) {
+        if (options.use_x11) {
             lib.linkSystemLibrary("X11");
             lib.linkSystemLibrary("Xi");
             lib.linkSystemLibrary("Xcursor");
         }
-        if (options.enable_wayland) {
+        if (options.use_wayland) {
             lib.linkSystemLibrary("wayland-client");
             lib.linkSystemLibrary("wayland-cursor");
             lib.linkSystemLibrary("wayland-egl");
@@ -220,6 +226,7 @@ fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
 const ExampleOptions = struct {
     target: Build.ResolvedTarget,
     optimize: OptimizeMode,
+    backend: SokolBackend,
     mod_sokol: *Build.Module,
     lib_sokol: *Build.Step.Compile, // only needed for WASM in the Emscripten linker step
     emsdk: ?*Build.Dependency = null,
@@ -250,9 +257,15 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !
         example.root_module.addImport("sokol", options.mod_sokol);
 
         // create a special emcc linker run step
+        const backend = resolveSokolBackend(options.backend, options.target.result);
         const emcc_link_step = try emccLinkStep(b, .{
             .target = options.target,
             .optimize = options.optimize,
+            .run_closure_in_release = true,
+            .use_webgpu = backend == .wgpu,
+            .use_webgl2 = backend != .wgpu,
+            .use_emmalloc = true,
+            .no_filesystem = true,
             .lib_sokol = options.lib_sokol,
             .lib_main = example,
             .emsdk = options.emsdk,
@@ -272,6 +285,11 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !
 const EmccLinkOptions = struct {
     target: Build.ResolvedTarget,
     optimize: OptimizeMode,
+    run_closure_in_release: bool = true,
+    use_webgpu: bool = false,
+    use_webgl2: bool = false,
+    use_emmalloc: bool = true,
+    no_filesystem: bool = true,
     lib_sokol: *Build.Step.Compile,
     lib_main: *Build.Step.Compile, // the actual Zig code must be compiled to a static link library
     emsdk: ?*Build.Dependency = null,
@@ -288,27 +306,28 @@ pub fn emccLinkStep(b: *Build, options: EmccLinkOptions) !*Build.Step.Run {
     try emcc_cmd.append(emcc_path);
     if (options.optimize != .Debug) {
         try emcc_cmd.append("-Oz");
+        try emcc_cmd.append("-sASSERTIONS=0");
+        if (options.run_closure_in_release) {
+            try emcc_cmd.append("--closure");
+            try emcc_cmd.append("1");
+        }
     } else {
         try emcc_cmd.append("-Og");
     }
-    try emcc_cmd.append("--closure");
-    try emcc_cmd.append("1");
-    try emcc_cmd.append(b.fmt("-o{s}/web/{s}.html", .{ b.install_path, options.lib_main.name }));
-    try emcc_cmd.append("-sNO_FILESYSTEM=1");
-    try emcc_cmd.append("-sMALLOC='emmalloc'");
-    try emcc_cmd.append("-sASSERTIONS=0");
-    try emcc_cmd.append("-sERROR_ON_UNDEFINED_SYMBOLS=0");
+    if (options.use_webgpu) {
+        try emcc_cmd.append("-sUSE_WEBGPU=1");
+    }
+    if (options.use_webgl2) {
+        try emcc_cmd.append("-sUSE_WEBGL2=1");
+    }
+    if (options.no_filesystem) {
+        try emcc_cmd.append("-sNO_FILESYSTEM=1");
+    }
+    if (options.use_emmalloc) {
+        try emcc_cmd.append("-sMALLOC='emmalloc'");
+    }
     try emcc_cmd.append("--shell-file=src/sokol/web/shell.html");
-
-    // TODO: fix undefined references
-    // switch (options.backend) {
-    //     .wgpu => {
-    // try emcc_cmd.append("-sUSE_WEBGPU=1");
-    // },
-    // else => {
-    try emcc_cmd.append("-sUSE_WEBGL2=1");
-    //     },
-    // }
+    try emcc_cmd.append(b.fmt("-o{s}/web/{s}.html", .{ b.install_path, options.lib_main.name }));
 
     const emcc = b.addSystemCommand(emcc_cmd.items);
     emcc.setName("emcc"); // hide emcc path
