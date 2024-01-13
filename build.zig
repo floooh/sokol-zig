@@ -100,7 +100,7 @@ fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         if (try emsdkSetupStep(b, options.emsdk.?)) |emsdk_setup| {
             lib.step.dependOn(&emsdk_setup.step);
         }
-        // need to manualle add the Emscripten SDK system include path
+        // add the Emscripten system include seach path
         const emsdk_sysroot = b.pathJoin(&.{ emsdkPath(b, options.emsdk.?), "upstream", "emscripten", "cache", "sysroot" });
         const include_path = b.pathJoin(&.{ emsdk_sysroot, "include" });
         lib.addSystemIncludePath(.{ .path = include_path });
