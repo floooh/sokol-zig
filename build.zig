@@ -121,11 +121,11 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
             return error.Wasm32EmscriptenExpected;
         }
         // one-time setup of Emscripten SDK
-        if (try emsdkSetupStep(b, options.emsdk.?)) |emsdk_setup| {
+        if (try emSdkSetupStep(b, options.emsdk.?)) |emsdk_setup| {
             lib.step.dependOn(&emsdk_setup.step);
         }
         // add the Emscripten system include seach path
-        const emsdk_sysroot = b.pathJoin(&.{ emsdkPath(b, options.emsdk.?), "upstream", "emscripten", "cache", "sysroot" });
+        const emsdk_sysroot = b.pathJoin(&.{ emSdkPath(b, options.emsdk.?), "upstream", "emscripten", "cache", "sysroot" });
         const include_path = b.pathJoin(&.{ emsdk_sysroot, "include" });
         lib.addSystemIncludePath(.{ .path = include_path });
     }
@@ -263,7 +263,7 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !
 
         // create a special emcc linker run step
         const backend = resolveSokolBackend(options.backend, options.target.result);
-        const emcc_link_step = try emccLinkStep(b, .{
+        const link_step = try emLinkStep(b, .{
             .target = options.target,
             .optimize = options.optimize,
             .run_closure_in_release = true,
@@ -277,30 +277,30 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !
             .lib_main = example,
             .emsdk = options.emsdk,
         });
-        // ...and special run step to run the build result via emrun
-        run = emrunStep(b, .{ .name = name, .emsdk = options.emsdk });
-        run.?.step.dependOn(&emcc_link_step.step);
+        // ...and a special run step to run the build result via emrun
+        run = emRunStep(b, .{ .name = name, .emsdk = options.emsdk });
+        run.?.step.dependOn(&link_step.step);
     }
     b.step("run-" ++ name, "Run " ++ name).dependOn(&run.?.step);
 }
 
 // for wasm32-emscripten, need to run the Emscripten linker from the Emscripten SDK
 // NOTE: ideally this would go into a separate emsdk-zig package
-pub const EmccLinkOptions = struct {
+pub const EmLinkOptions = struct {
     target: Build.ResolvedTarget,
     optimize: OptimizeMode,
+    emsdk: *Build.Dependency,
+    lib_sokol: *Build.Step.Compile, // the sokol C library
+    lib_main: *Build.Step.Compile, // the actual Zig code must be compiled to a static link library
     run_closure_in_release: bool = true,
     use_webgpu: bool = false,
     use_webgl2: bool = false,
     use_emmalloc: bool = true,
     no_filesystem: bool = true,
     shell_file_path: ?[]const u8 = null,
-    lib_sokol: *Build.Step.Compile,
-    lib_main: *Build.Step.Compile, // the actual Zig code must be compiled to a static link library
-    emsdk: *Build.Dependency,
 };
-pub fn emccLinkStep(b: *Build, options: EmccLinkOptions) !*Build.Step.Run {
-    const emcc_path = b.findProgram(&.{"emcc"}, &.{}) catch b.pathJoin(&.{ emsdkPath(b, options.emsdk), "upstream", "emscripten", "emcc" });
+pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.Run {
+    const emcc_path = b.findProgram(&.{"emcc"}, &.{}) catch b.pathJoin(&.{ emSdkPath(b, options.emsdk), "upstream", "emscripten", "emcc" });
 
     // create a separate output directory zig-out/web
     try std.fs.cwd().makePath(b.fmt("{s}/web", .{b.install_path}));
@@ -350,18 +350,18 @@ pub fn emccLinkStep(b: *Build, options: EmccLinkOptions) !*Build.Step.Run {
 
 // build a run step which uses the emsdk emrun command to run a build target in the browser
 // NOTE: ideally this would go into a separate emsdk-zig package
-pub const EmrunOptions = struct {
+pub const EmkRunOptions = struct {
     name: []const u8,
     emsdk: *Build.Dependency,
 };
-pub fn emrunStep(b: *Build, options: EmrunOptions) *Build.Step.Run {
-    const emrun_path = b.findProgram(&.{"emrun"}, &.{}) catch b.pathJoin(&.{ emsdkPath(b, options.emsdk), "upstream", "emscripten", "emrun" });
+pub fn emRunStep(b: *Build, options: EmkRunOptions) *Build.Step.Run {
+    const emrun_path = b.findProgram(&.{"emrun"}, &.{}) catch b.pathJoin(&.{ emSdkPath(b, options.emsdk), "upstream", "emscripten", "emrun" });
     const emrun = b.addSystemCommand(&.{ emrun_path, b.fmt("{s}/web/{s}.html", .{ b.install_path, options.name }) });
     return emrun;
 }
 
 // helper function to extract emsdk path from the emsdk package dependency
-fn emsdkPath(b: *Build, emsdk: *Build.Dependency) []const u8 {
+fn emSdkPath(b: *Build, emsdk: *Build.Dependency) []const u8 {
     return emsdk.path("").getPath(b);
 }
 
@@ -370,8 +370,8 @@ fn emsdkPath(b: *Build, emsdk: *Build.Dependency) []const u8 {
 // as dependency to the sokol library (since this needs the emsdk in place),
 // if the emsdk was already setup, null will be returned.
 // NOTE: ideally this would go into a separate emsdk-zig package
-fn emsdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
-    const emsdk_path = emsdkPath(b, emsdk);
+fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
+    const emsdk_path = emSdkPath(b, emsdk);
     const dot_emsc_path = b.pathJoin(&.{ emsdk_path, ".emscripten" });
     const dot_emsc_exists = !std.meta.isError(std.fs.accessAbsolute(dot_emsc_path, .{}));
     if (!dot_emsc_exists) {
