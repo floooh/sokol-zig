@@ -20,13 +20,18 @@ pub fn build(b: *Build) !void {
     const lib_sokol = try buildLibSokol(b, .{
         .target = target,
         .optimize = optimize,
-        .emsdk = emsdk,
         .backend = sokol_backend,
         .use_wayland = opt_use_wayland,
         .use_x11 = opt_use_x11,
         .use_egl = opt_use_egl,
+        .emsdk = emsdk,
     });
+    // add a linker dependency to the bindings module, that way for 'native' builds
+    // the C library doesn't need to be linked separately
     mod_sokol.linkLibrary(lib_sokol);
+    // ...but still make the C library available as artifact, this is needed for the
+    // web platform, since linking needs to happen via Emscripten
+    b.installArtifact(lib_sokol);
 
     // the integrated examples
     const examples = .{
@@ -229,7 +234,7 @@ const ExampleOptions = struct {
     backend: SokolBackend,
     mod_sokol: *Build.Module,
     lib_sokol: *Build.Step.Compile, // only needed for WASM in the Emscripten linker step
-    emsdk: ?*Build.Dependency = null,
+    emsdk: *Build.Dependency,
 };
 
 fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !void {
@@ -266,15 +271,14 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !
             .use_webgl2 = backend != .wgpu,
             .use_emmalloc = true,
             .no_filesystem = true,
+            // NOTE: when sokol-zig is used as package, this path needs to be absolute!
+            .shell_file_path = "src/sokol/web/shell.html",
             .lib_sokol = options.lib_sokol,
             .lib_main = example,
             .emsdk = options.emsdk,
         });
         // ...and special run step to run the build result via emrun
-        run = emrunStep(b, .{
-            .name = name,
-            .emsdk = options.emsdk,
-        });
+        run = emrunStep(b, .{ .name = name, .emsdk = options.emsdk });
         run.?.step.dependOn(&emcc_link_step.step);
     }
     b.step("run-" ++ name, "Run " ++ name).dependOn(&run.?.step);
@@ -290,12 +294,13 @@ pub const EmccLinkOptions = struct {
     use_webgl2: bool = false,
     use_emmalloc: bool = true,
     no_filesystem: bool = true,
+    shell_file_path: ?[]const u8 = null,
     lib_sokol: *Build.Step.Compile,
     lib_main: *Build.Step.Compile, // the actual Zig code must be compiled to a static link library
-    emsdk: ?*Build.Dependency = null,
+    emsdk: *Build.Dependency,
 };
 pub fn emccLinkStep(b: *Build, options: EmccLinkOptions) !*Build.Step.Run {
-    const emcc_path = b.findProgram(&.{"emcc"}, &.{}) catch b.pathJoin(&.{ emsdkPath(b, options.emsdk.?), "upstream", "emscripten", "emcc" });
+    const emcc_path = b.findProgram(&.{"emcc"}, &.{}) catch b.pathJoin(&.{ emsdkPath(b, options.emsdk), "upstream", "emscripten", "emcc" });
 
     // create a separate output directory zig-out/web
     try std.fs.cwd().makePath(b.fmt("{s}/web", .{b.install_path}));
@@ -326,7 +331,9 @@ pub fn emccLinkStep(b: *Build, options: EmccLinkOptions) !*Build.Step.Run {
     if (options.use_emmalloc) {
         try emcc_cmd.append("-sMALLOC='emmalloc'");
     }
-    try emcc_cmd.append("--shell-file=src/sokol/web/shell.html");
+    if (options.shell_file_path) |shell_file_path| {
+        try emcc_cmd.append(b.fmt("--shell-file={s}", .{shell_file_path}));
+    }
     try emcc_cmd.append(b.fmt("-o{s}/web/{s}.html", .{ b.install_path, options.lib_main.name }));
 
     const emcc = b.addSystemCommand(emcc_cmd.items);
@@ -345,10 +352,10 @@ pub fn emccLinkStep(b: *Build, options: EmccLinkOptions) !*Build.Step.Run {
 // NOTE: ideally this would go into a separate emsdk-zig package
 pub const EmrunOptions = struct {
     name: []const u8,
-    emsdk: ?*Build.Dependency = null,
+    emsdk: *Build.Dependency,
 };
 pub fn emrunStep(b: *Build, options: EmrunOptions) *Build.Step.Run {
-    const emrun_path = b.findProgram(&.{"emrun"}, &.{}) catch b.pathJoin(&.{ emsdkPath(b, options.emsdk.?), "upstream", "emscripten", "emrun" });
+    const emrun_path = b.findProgram(&.{"emrun"}, &.{}) catch b.pathJoin(&.{ emsdkPath(b, options.emsdk), "upstream", "emscripten", "emrun" });
     const emrun = b.addSystemCommand(&.{ emrun_path, b.fmt("{s}/web/{s}.html", .{ b.install_path, options.name }) });
     return emrun;
 }
