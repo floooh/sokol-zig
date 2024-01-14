@@ -65,7 +65,7 @@ pub fn build(b: *Build) !void {
     buildShaders(b);
 }
 
-const SokolBackend = enum {
+pub const SokolBackend = enum {
     auto, // Windows: D3D11, macOS/iOS: Metal, otherwise: GL
     d3d11,
     metal,
@@ -75,7 +75,7 @@ const SokolBackend = enum {
 };
 
 // helper function to resolve .auto backend based on target platform
-fn resolveSokolBackend(backend: SokolBackend, target: std.Target) SokolBackend {
+pub fn resolveSokolBackend(backend: SokolBackend, target: std.Target) SokolBackend {
     if (backend != .auto) {
         return backend;
     } else if (target.isDarwin()) {
@@ -91,7 +91,7 @@ fn resolveSokolBackend(backend: SokolBackend, target: std.Target) SokolBackend {
     }
 }
 
-const LibSokolOptions = struct {
+pub const LibSokolOptions = struct {
     target: Build.ResolvedTarget,
     optimize: OptimizeMode,
     backend: SokolBackend = .auto,
@@ -102,7 +102,7 @@ const LibSokolOptions = struct {
 };
 
 // build the sokol C headers into a static library
-fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
+pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     const lib = b.addStaticLibrary(.{
         .name = "sokol",
         .target = options.target,
@@ -282,7 +282,7 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !
 
 // for wasm32-emscripten, need to run the Emscripten linker from the Emscripten SDK
 // NOTE: ideally this would go into a separate emsdk-zig package
-const EmccLinkOptions = struct {
+pub const EmccLinkOptions = struct {
     target: Build.ResolvedTarget,
     optimize: OptimizeMode,
     run_closure_in_release: bool = true,
@@ -343,7 +343,7 @@ pub fn emccLinkStep(b: *Build, options: EmccLinkOptions) !*Build.Step.Run {
 
 // build a run step which uses the emsdk emrun command to run a build target in the browser
 // NOTE: ideally this would go into a separate emsdk-zig package
-const EmrunOptions = struct {
+pub const EmrunOptions = struct {
     name: []const u8,
     emsdk: ?*Build.Dependency = null,
 };
