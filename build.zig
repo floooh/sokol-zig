@@ -26,12 +26,7 @@ pub fn build(b: *Build) !void {
         .use_egl = opt_use_egl,
         .emsdk = emsdk,
     });
-    // add a linker dependency to the bindings module, that way for 'native' builds
-    // the C library doesn't need to be linked separately
     mod_sokol.linkLibrary(lib_sokol);
-    // ...but still make the C library available as artifact, this is needed for the
-    // web platform, since linking needs to happen via Emscripten
-    b.installArtifact(lib_sokol);
 
     // the integrated examples
     const examples = .{
@@ -61,7 +56,6 @@ pub fn build(b: *Build) !void {
             .optimize = optimize,
             .backend = sokol_backend,
             .mod_sokol = mod_sokol,
-            .lib_sokol = lib_sokol,
             .emsdk = emsdk,
         });
     }
@@ -233,7 +227,6 @@ const ExampleOptions = struct {
     optimize: OptimizeMode,
     backend: SokolBackend,
     mod_sokol: *Build.Module,
-    lib_sokol: *Build.Step.Compile, // only needed for WASM in the Emscripten linker step
     emsdk: *Build.Dependency,
 };
 
@@ -273,7 +266,6 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !
             .no_filesystem = true,
             // NOTE: when sokol-zig is used as package, this path needs to be absolute!
             .shell_file_path = "src/sokol/web/shell.html",
-            .lib_sokol = options.lib_sokol,
             .lib_main = example,
             .emsdk = options.emsdk,
         });
@@ -290,7 +282,6 @@ pub const EmLinkOptions = struct {
     target: Build.ResolvedTarget,
     optimize: OptimizeMode,
     emsdk: *Build.Dependency,
-    lib_sokol: *Build.Step.Compile, // the sokol C library
     lib_main: *Build.Step.Compile, // the actual Zig code must be compiled to a static link library
     run_closure_in_release: bool = true,
     use_webgpu: bool = false,
@@ -339,9 +330,24 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.Run {
     const emcc = b.addSystemCommand(emcc_cmd.items);
     emcc.setName("emcc"); // hide emcc path
 
-    // get artifacts from zig-cache, no need zig-out
-    emcc.addArtifactArg(options.lib_sokol);
+    // add the main lib, and then scan for library dependencies and add those too
     emcc.addArtifactArg(options.lib_main);
+    var it = options.lib_main.root_module.iterateDependencies(options.lib_main, false);
+    while (it.next()) |item| {
+        for (item.module.link_objects.items) |link_object| {
+            switch (link_object) {
+                .other_step => |compile_step| {
+                    switch (compile_step.kind) {
+                        .lib => {
+                            emcc.addArtifactArg(compile_step);
+                        },
+                        else => {},
+                    }
+                },
+                else => {},
+            }
+        }
+    }
 
     // get the emcc step to run on 'zig build'
     b.getInstallStep().dependOn(&emcc.step);
