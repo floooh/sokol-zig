@@ -3,6 +3,15 @@ const builtin = @import("builtin");
 const Build = std.Build;
 const OptimizeMode = std.builtin.OptimizeMode;
 
+pub const SokolBackend = enum {
+    auto, // Windows: D3D11, macOS/iOS: Metal, otherwise: GL
+    d3d11,
+    metal,
+    gl,
+    gles3,
+    wgpu,
+};
+
 pub fn build(b: *Build) !void {
     const opt_use_gl = b.option(bool, "gl", "Force OpenGL (default: false)") orelse false;
     const opt_use_wgpu = b.option(bool, "wgpu", "Force WebGPU (default: false, web only)") orelse false;
@@ -64,14 +73,58 @@ pub fn build(b: *Build) !void {
     buildShaders(b);
 }
 
-pub const SokolBackend = enum {
-    auto, // Windows: D3D11, macOS/iOS: Metal, otherwise: GL
-    d3d11,
-    metal,
-    gl,
-    gles3,
-    wgpu,
+// build one of the examples
+const ExampleOptions = struct {
+    target: Build.ResolvedTarget,
+    optimize: OptimizeMode,
+    backend: SokolBackend,
+    mod_sokol: *Build.Module,
+    emsdk: *Build.Dependency,
 };
+fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !void {
+    const main_src = "src/examples/" ++ name ++ ".zig";
+    var run: ?*Build.Step.Run = null;
+    if (!options.target.result.isWasm()) {
+        // for native platforms, build into a regular executable
+        const example = b.addExecutable(.{
+            .name = name,
+            .root_source_file = .{ .path = main_src },
+            .target = options.target,
+            .optimize = options.optimize,
+        });
+        example.root_module.addImport("sokol", options.mod_sokol);
+        b.installArtifact(example);
+        run = b.addRunArtifact(example);
+    } else {
+        // for WASM, need to build the Zig code as static library, since linking happens via emcc
+        const example = b.addStaticLibrary(.{
+            .name = name,
+            .root_source_file = .{ .path = main_src },
+            .target = options.target,
+            .optimize = options.optimize,
+        });
+        example.root_module.addImport("sokol", options.mod_sokol);
+
+        // create a special emcc linker run step
+        const backend = resolveSokolBackend(options.backend, options.target.result);
+        const link_step = try emLinkStep(b, .{
+            .lib_main = example,
+            .target = options.target,
+            .optimize = options.optimize,
+            .emsdk = options.emsdk,
+            .use_webgpu = backend == .wgpu,
+            .use_webgl2 = backend != .wgpu,
+            .use_emmalloc = true,
+            .use_filesystem = false,
+            // NOTE: when sokol-zig is used as package, this path needs to be absolute!
+            .shell_file_path = "src/sokol/web/shell.html",
+        });
+        // ...and a special run step to run the build result via emrun
+        run = emRunStep(b, .{ .name = name, .emsdk = options.emsdk });
+        run.?.step.dependOn(&link_step.step);
+    }
+    b.step("run-" ++ name, "Run " ++ name).dependOn(&run.?.step);
+}
 
 // helper function to resolve .auto backend based on target platform
 pub fn resolveSokolBackend(backend: SokolBackend, target: std.Target) SokolBackend {
@@ -90,6 +143,7 @@ pub fn resolveSokolBackend(backend: SokolBackend, target: std.Target) SokolBacke
     }
 }
 
+// build the sokol C headers into a static library
 pub const LibSokolOptions = struct {
     target: Build.ResolvedTarget,
     optimize: OptimizeMode,
@@ -99,8 +153,6 @@ pub const LibSokolOptions = struct {
     use_wayland: bool = false,
     emsdk: ?*Build.Dependency = null,
 };
-
-// build the sokol C headers into a static library
 pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     const lib = b.addStaticLibrary(.{
         .name = "sokol",
@@ -221,74 +273,21 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     return lib;
 }
 
-// build one of the examples
-const ExampleOptions = struct {
-    target: Build.ResolvedTarget,
-    optimize: OptimizeMode,
-    backend: SokolBackend,
-    mod_sokol: *Build.Module,
-    emsdk: *Build.Dependency,
-};
-
-fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !void {
-    const main_src = "src/examples/" ++ name ++ ".zig";
-    var run: ?*Build.Step.Run = null;
-    if (!options.target.result.isWasm()) {
-        // for native platforms, build into a regular executable
-        const example = b.addExecutable(.{
-            .name = name,
-            .root_source_file = .{ .path = main_src },
-            .target = options.target,
-            .optimize = options.optimize,
-        });
-        example.root_module.addImport("sokol", options.mod_sokol);
-        b.installArtifact(example);
-        run = b.addRunArtifact(example);
-    } else {
-        // for WASM, need to build the Zig code as static library, since linking happens via emcc
-        const example = b.addStaticLibrary(.{
-            .name = name,
-            .root_source_file = .{ .path = main_src },
-            .target = options.target,
-            .optimize = options.optimize,
-        });
-        example.root_module.addImport("sokol", options.mod_sokol);
-
-        // create a special emcc linker run step
-        const backend = resolveSokolBackend(options.backend, options.target.result);
-        const link_step = try emLinkStep(b, .{
-            .target = options.target,
-            .optimize = options.optimize,
-            .run_closure_in_release = true,
-            .use_webgpu = backend == .wgpu,
-            .use_webgl2 = backend != .wgpu,
-            .use_emmalloc = true,
-            .no_filesystem = true,
-            // NOTE: when sokol-zig is used as package, this path needs to be absolute!
-            .shell_file_path = "src/sokol/web/shell.html",
-            .lib_main = example,
-            .emsdk = options.emsdk,
-        });
-        // ...and a special run step to run the build result via emrun
-        run = emRunStep(b, .{ .name = name, .emsdk = options.emsdk });
-        run.?.step.dependOn(&link_step.step);
-    }
-    b.step("run-" ++ name, "Run " ++ name).dependOn(&run.?.step);
-}
-
 // for wasm32-emscripten, need to run the Emscripten linker from the Emscripten SDK
 // NOTE: ideally this would go into a separate emsdk-zig package
 pub const EmLinkOptions = struct {
     target: Build.ResolvedTarget,
     optimize: OptimizeMode,
-    emsdk: *Build.Dependency,
     lib_main: *Build.Step.Compile, // the actual Zig code must be compiled to a static link library
-    run_closure_in_release: bool = true,
+    emsdk: *Build.Dependency,
+    release_use_closure: bool = true,
+    release_use_lto: bool = true,
     use_webgpu: bool = false,
     use_webgl2: bool = false,
-    use_emmalloc: bool = true,
-    no_filesystem: bool = true,
+    use_emmalloc: bool = false,
+    use_filesystem: bool = true,
     shell_file_path: ?[]const u8 = null,
+    extra_args: []const []const u8 = &.{},
 };
 pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.Run {
     const emcc_path = b.findProgram(&.{"emcc"}, &.{}) catch b.pathJoin(&.{ emSdkPath(b, options.emsdk), "upstream", "emscripten", "emcc" });
@@ -300,15 +299,22 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.Run {
     defer emcc_cmd.deinit();
 
     try emcc_cmd.append(emcc_path);
-    if (options.optimize != .Debug) {
-        try emcc_cmd.append("-Oz");
+    if (options.optimize == .Debug) {
+        try emcc_cmd.append("-Og");
+    } else {
         try emcc_cmd.append("-sASSERTIONS=0");
-        if (options.run_closure_in_release) {
+        if (options.optimize == .ReleaseSmall) {
+            try emcc_cmd.append("-Oz");
+        } else {
+            try emcc_cmd.append("-O3");
+        }
+        if (options.release_use_lto) {
+            try emcc_cmd.append("-flto");
+        }
+        if (options.release_use_closure) {
             try emcc_cmd.append("--closure");
             try emcc_cmd.append("1");
         }
-    } else {
-        try emcc_cmd.append("-Og");
     }
     if (options.use_webgpu) {
         try emcc_cmd.append("-sUSE_WEBGPU=1");
@@ -316,7 +322,7 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.Run {
     if (options.use_webgl2) {
         try emcc_cmd.append("-sUSE_WEBGL2=1");
     }
-    if (options.no_filesystem) {
+    if (!options.use_filesystem) {
         try emcc_cmd.append("-sNO_FILESYSTEM=1");
     }
     if (options.use_emmalloc) {
@@ -326,6 +332,9 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.Run {
         try emcc_cmd.append(b.fmt("--shell-file={s}", .{shell_file_path}));
     }
     try emcc_cmd.append(b.fmt("-o{s}/web/{s}.html", .{ b.install_path, options.lib_main.name }));
+    for (options.extra_args) |arg| {
+        try emcc_cmd.append(arg);
+    }
 
     const emcc = b.addSystemCommand(emcc_cmd.items);
     emcc.setName("emcc"); // hide emcc path
