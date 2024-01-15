@@ -36,11 +36,17 @@ pub const Writer = struct {
             putc(byte);
         }
     }
-    pub fn writeByteNTimes(self: Writer, byte: u8, n: u64) Error!void {
+    pub fn writeByteNTimes(self: Writer, byte: u8, n: usize) Error!void {
         _ = self;
         var i: u64 = 0;
         while (i < n) : (i += 1) {
             putc(byte);
+        }
+    }
+    pub fn writeBytesNTimes(self: Writer, bytes: []const u8, n: usize) Error!void {
+        var i: usize = 0;
+        while (i < n) : (i += 1) {
+            try self.writeAll(bytes);
         }
     }
 };
