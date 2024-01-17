@@ -229,3 +229,8 @@ This list might grow longer over time!
   ```
 
   Also see the [kc85.zig build.zig](https://github.com/floooh/kc85.zig/blob/main/build.zig) as example!
+
+- the Zig stdlib only has limited support for the `wasm32-emscripten`
+  target, for instance using `std.fs` functions will most like fail
+  to compile (the sokol-zig bindings might add more sokol headers
+  in the future to fill some of the gaps)
