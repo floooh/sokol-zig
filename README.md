@@ -7,7 +7,7 @@ For Zig version 0.12.0-dev.
 In case of breaking changes in Zig, the bindings might fall behind. Please don't hesitate to
 ping me via a Github issue, or even better, provide a PR :)
 
-Support for previous stable Zig version is in branches.
+Support for previous stable Zig versions is in branches (e.g. `zig-0.11.0`), those versions are 'frozen in time' though.
 
 Related projects:
 
