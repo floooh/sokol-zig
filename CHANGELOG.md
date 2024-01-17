@@ -11,7 +11,7 @@ to the example code or the supported Zig version. For actual Sokol header change
   will be supported in 'archival branches' which remain frozen in time.
 - Fixed the build.zig for the latest API changes in zig-0.12.0 and also did a general code cleanup.
 - Switched over to use sokol-zig exclusively as package via the Zig package manager. The old
-  way of integrating the bindings as Zig submodule is no longer supported.
+  way of integrating the bindings as git submodule is no longer supported.
 - Integrate with the Emscripten SDK which enables straightforward support for building
   Zig WebGL/WebGPU applications that run in web browsers (see README for details).
   The way the Emscripten SDK is integrated isn't the 'final form' form though. Eventually
