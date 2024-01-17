@@ -1,0 +1,18 @@
+.{
+    .name = "sokol-zig",
+    .version = "0.1.0",
+    .minimum_zig_version = "0.12.0",
+    .paths = .{
+        "src",
+        "build.zig",
+        "build.zig.zon",
+        "CHANGELOG.md",
+        "README.md",
+    },
+    .dependencies = .{
+        .emsdk = .{
+            .url = "git+https://github.com/emscripten-core/emsdk#0bbae74935d57ff41739648c12cf90b56668398f",
+            .hash = "1220f1340cd871b444021c600661f921f96091ce0815fa43008528f4844cece7e245",
+        },
+    },
+}
