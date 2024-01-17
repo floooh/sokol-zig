@@ -210,3 +210,22 @@ fn buildWeb(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMode, dep
     b.step("run", "Run pacman").dependOn(&run.step);
 }
 ```
+
+## wasm32-emscripten caveats
+
+This list might grow longer over time!
+
+- Zig allocators use the `@returnAddress` builtin, which isn't supported in the Emscripten
+  runtime out of the box (you'll get a runtime error in the browser's Javascript console
+  looking like this: `Cannot use convertFrameToPC (needed by __builtin_return_address) without -sUSE_OFFSET_CONVERTER`.
+  To make it work, do as the error message says, to add the `-sUSE_OFFSET_CONVERTER` arg to the
+  Emscripten linker step in your `build.zig` file:
+
+  ```zig
+      const link_step = try sokol.emLinkStep(b, .{
+        // ...other settings here
+        .extra_args = &.{"-sUSE_OFFSET_CONVERTER=1"},
+    });
+  ```
+
+  Also see the [kc85.zig build.zig](https://github.com/floooh/kc85.zig/blob/main/build.zig) as example!
