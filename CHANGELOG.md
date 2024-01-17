@@ -17,3 +17,7 @@ to the example code or the supported Zig version. For actual Sokol header change
   The way the Emscripten SDK is integrated isn't the 'final form' form though. Eventually
   I want to move the Emscripten stuff into a separate `emsdk-zig` package, and rewrite the
   linker integration to be more 'Zig build system idiomatic'.
+
+Most of the work was done by @kassane, many thanks!
+
+Relevant PRs: https://github.com/floooh/sokol-zig/pull/50, https://github.com/floooh/sokol-zig/pull/51.
