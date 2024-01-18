@@ -255,18 +255,18 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     // finally add the C source files
     const csrc_root = "src/sokol/c/";
     const csources = [_][]const u8{
-        csrc_root ++ "sokol_log.c",
-        csrc_root ++ "sokol_app.c",
-        csrc_root ++ "sokol_gfx.c",
-        csrc_root ++ "sokol_time.c",
-        csrc_root ++ "sokol_audio.c",
-        csrc_root ++ "sokol_gl.c",
-        csrc_root ++ "sokol_debugtext.c",
-        csrc_root ++ "sokol_shape.c",
+        "sokol_log.c",
+        "sokol_app.c",
+        "sokol_gfx.c",
+        "sokol_time.c",
+        "sokol_audio.c",
+        "sokol_gl.c",
+        "sokol_debugtext.c",
+        "sokol_shape.c",
     };
-    for (csources) |csrc| {
+    inline for (csources) |csrc| {
         lib.addCSourceFile(.{
-            .file = .{ .path = csrc },
+            .file = .{ .path = csrc_root ++ csrc },
             .flags = cflags,
         });
     }
@@ -365,11 +365,11 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.Run {
 
 // build a run step which uses the emsdk emrun command to run a build target in the browser
 // NOTE: ideally this would go into a separate emsdk-zig package
-pub const EmkRunOptions = struct {
+pub const EmRunOptions = struct {
     name: []const u8,
     emsdk: *Build.Dependency,
 };
-pub fn emRunStep(b: *Build, options: EmkRunOptions) *Build.Step.Run {
+pub fn emRunStep(b: *Build, options: EmRunOptions) *Build.Step.Run {
     const emrun_path = b.findProgram(&.{"emrun"}, &.{}) catch b.pathJoin(&.{ emSdkPath(b, options.emsdk), "upstream", "emscripten", "emrun" });
     const emrun = b.addSystemCommand(&.{ emrun_path, b.fmt("{s}/web/{s}.html", .{ b.install_path, options.name }) });
     return emrun;
