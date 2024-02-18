@@ -365,6 +365,11 @@ pub const Desc = extern struct {
     html5_preserve_drawing_buffer: bool = false,
     html5_premultiplied_alpha: bool = false,
     html5_ask_leave_site: bool = false,
+    html5_bubble_mouse_events: bool = false,
+    html5_bubble_touch_events: bool = false,
+    html5_bubble_wheel_events: bool = false,
+    html5_bubble_key_events: bool = false,
+    html5_bubble_char_events: bool = false,
     ios_keyboard_resizes_canvas: bool = false,
 };
 pub const Html5FetchError = enum(i32) {

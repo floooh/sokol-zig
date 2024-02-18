@@ -537,7 +537,7 @@
     Like clipboard support, drag'n'drop support must be explicitly enabled
     at startup in the sapp_desc struct.
 
-        sapp_desc sokol_main() {
+        sapp_desc sokol_main(void) {
             return (sapp_desc) {
                 .enable_dragndrop = true,   // default is false
                 ...
@@ -547,7 +547,7 @@
     You can also adjust the maximum number of files that are accepted
     in a drop operation, and the maximum path length in bytes if needed:
 
-        sapp_desc sokol_main() {
+        sapp_desc sokol_main(void) {
             return (sapp_desc) {
                 .enable_dragndrop = true,               // default is false
                 .max_dropped_files = 8,                 // default is 1
@@ -687,7 +687,7 @@
     For instance on a Retina Mac, returning the following sapp_desc
     struct from sokol_main():
 
-    sapp_desc sokol_main() {
+    sapp_desc sokol_main(void) {
         return (sapp_desc) {
             .width = 640,
             .height = 480,
@@ -767,7 +767,7 @@
     A `programmatic quit` initiated by calling sapp_quit() or
     sapp_request_quit() will work as described above: the cleanup callback is
     called, platform-specific cleanup is performed (on the web
-    this means that JS event handlers are unregisters), and then
+    this means that JS event handlers are unregistered), and then
     the request-animation-loop will be exited. However that's all. The
     web page itself will continue to exist (e.g. it's not possible to
     programmatically close the browser tab).
@@ -926,7 +926,7 @@
           append a new favicon link element, but not delete any manually
           defined favicon in the page
 
-    For an example and test of the window icon feature, check out the the
+    For an example and test of the window icon feature, check out the
     'icon-sapp' sample on the sokol-samples git repository.
 
     ONSCREEN KEYBOARD
@@ -941,13 +941,46 @@
 
         sapp_show_keyboard(false);
 
-    Note that on the web platform, the keyboard can only be shown from
-    inside an input handler. On such platforms, sapp_show_keyboard()
-    will only work as expected when it is called from inside the
-    sokol-app event callback function. When called from other places,
-    an internal flag will be set, and the onscreen keyboard will be
-    called at the next 'legal' opportunity (when the next input event
-    is handled).
+    Note that onscreen keyboard functionality is no longer supported
+    on the browser platform (the previous hacks and workarounds to make browser
+    keyboards work for on web applications that don't use HTML UIs
+    never really worked across browsers).
+
+    INPUT EVENT BUBBLING ON THE WEB PLATFORM
+    ========================================
+    By default, input event bubbling on the web platform is configured in
+    a way that makes the most sense for 'full-canvas' apps that cover the
+    entire browser client window area:
+
+    - mouse, touch and wheel events do not bubble up, this prevents various
+      ugly side events, like:
+        - HTML text overlays being selected on double- or triple-click into
+          the canvas
+        - 'scroll bumping' even when the canvas covers the entire client area
+    - key_up/down events for 'character keys' *do* bubble up (otherwise
+      the browser will not generate UNICODE character events)
+    - all other key events *do not* bubble up by default (this prevents side effects
+      like F1 opening help, or F7 starting 'caret browsing')
+    - character events do no bubble up (although I haven't noticed any side effects
+      otherwise)
+
+    Event bubbling can be enabled for input event categories during initialization
+    in the sapp_desc struct:
+
+        sapp_desc sokol_main(int argc, char* argv[]) {
+            return (sapp_desc){
+                //...
+                .html5_bubble_mouse_events = true,
+                .html5_bubble_touch_events = true,
+                .html5_bubble_wheel_events = true,
+                .html5_bubble_key_events = true,
+                .html5_bubble_char_events = true,
+            };
+        }
+
+    This basically opens the floodgates lets *all* input events bubble up to the browser.
+    To prevent individual events from bubbling, call sapp_consume_event() from within
+    the sokol_app.h event callback.
 
     OPTIONAL: DON'T HIJACK main() (#define SOKOL_NO_ENTRY)
     ======================================================
@@ -1101,10 +1134,7 @@
 
     TEMP NOTE DUMP
     ==============
-    - onscreen keyboard support on Android requires Java :(, should we even bother?
     - sapp_desc needs a bool whether to initialize depth-stencil surface
-    - GL context initialization needs more control (at least what GL version to initialize)
-    - application icon
     - the Android implementation calls cleanup_cb() and destroys the egl context in onDestroy
       at the latest but should do it earlier, in onStop, as an app is "killable" after onStop
       on Android Honeycomb and later (it can't be done at the moment as the app may be started
@@ -1592,7 +1622,7 @@ typedef struct sapp_allocator {
     _SAPP_LOGITEM_XMACRO(ANDROID_NATIVE_ACTIVITY_DONE, "NativeActivity done") \
     _SAPP_LOGITEM_XMACRO(ANDROID_NATIVE_ACTIVITY_ONCREATE, "NativeActivity onCreate") \
     _SAPP_LOGITEM_XMACRO(ANDROID_CREATE_THREAD_PIPE_FAILED, "failed to create thread pipe") \
-    _SAPP_LOGITEM_XMACRO(ANDROID_NATIVE_ACTIVITY_CREATE_SUCCESS, "NativeActivity sucessfully created") \
+    _SAPP_LOGITEM_XMACRO(ANDROID_NATIVE_ACTIVITY_CREATE_SUCCESS, "NativeActivity successfully created") \
     _SAPP_LOGITEM_XMACRO(WGPU_SWAPCHAIN_CREATE_SURFACE_FAILED, "wgpu: failed to create surface for swapchain") \
     _SAPP_LOGITEM_XMACRO(WGPU_SWAPCHAIN_CREATE_SWAPCHAIN_FAILED, "wgpu: failed to create swapchain object") \
     _SAPP_LOGITEM_XMACRO(WGPU_SWAPCHAIN_CREATE_DEPTH_STENCIL_TEXTURE_FAILED, "wgpu: failed to create depth-stencil texture for swapchain") \
@@ -1665,7 +1695,7 @@ typedef struct sapp_desc {
     sapp_allocator allocator;           // optional memory allocation overrides (default: malloc/free)
     sapp_logger logger;                 // logging callback override (default: NO LOGGING!)
 
-    /* backend-specific options */
+    // backend-specific options
     int gl_major_version;               // override GL major and minor version (the default GL version is 3.2)
     int gl_minor_version;
     bool win32_console_utf8;            // if true, set the output console codepage to UTF-8
@@ -1676,6 +1706,11 @@ typedef struct sapp_desc {
     bool html5_preserve_drawing_buffer; // HTML5 only: whether to preserve default framebuffer content between frames
     bool html5_premultiplied_alpha;     // HTML5 only: whether the rendered pixels use premultiplied alpha convention
     bool html5_ask_leave_site;          // initial state of the internal html5_ask_leave_site flag (see sapp_html5_ask_leave_site())
+    bool html5_bubble_mouse_events;     // if true, mouse events will bubble up to the web page
+    bool html5_bubble_touch_events;     // same for touch events
+    bool html5_bubble_wheel_events;     // same for wheel events
+    bool html5_bubble_key_events;       // if true, bubble up *all* key events to browser, not just key events that represent characters
+    bool html5_bubble_char_events;      // if true, bubble up character events to browser
     bool ios_keyboard_resizes_canvas;   // if true, showing the iOS keyboard shrinks the canvas
 } sapp_desc;
 
@@ -1775,7 +1810,7 @@ SOKOL_APP_API_DECL sapp_desc sapp_query_desc(void);
 SOKOL_APP_API_DECL void sapp_request_quit(void);
 /* cancel a pending quit (when SAPP_EVENTTYPE_QUIT_REQUESTED has been received) */
 SOKOL_APP_API_DECL void sapp_cancel_quit(void);
-/* initiate a "hard quit" (quit application without sending SAPP_EVENTTYPE_QUIT_REQUSTED) */
+/* initiate a "hard quit" (quit application without sending SAPP_EVENTTYPE_QUIT_REQUESTED) */
 SOKOL_APP_API_DECL void sapp_quit(void);
 /* call from inside event callback to consume the current event (don't forward to platform) */
 SOKOL_APP_API_DECL void sapp_consume_event(void);
@@ -1894,19 +1929,8 @@ inline void sapp_run(const sapp_desc& desc) { return sapp_run(&desc); }
 // NOTE: the pixel format values *must* be compatible with sg_pixel_format
 #define _SAPP_PIXELFORMAT_RGBA8 (23)
 #define _SAPP_PIXELFORMAT_BGRA8 (28)
-#define _SAPP_PIXELFORMAT_DEPTH (42)
-#define _SAPP_PIXELFORMAT_DEPTH_STENCIL (43)
-
-#if defined(_SAPP_MACOS) || defined(_SAPP_IOS)
-    // this is ARC compatible
-    #if defined(__cplusplus)
-        #define _SAPP_CLEAR_ARC_STRUCT(type, item) { item = type(); }
-    #else
-        #define _SAPP_CLEAR_ARC_STRUCT(type, item) { item = (type) { 0 }; }
-    #endif
-#else
-    #define _SAPP_CLEAR_ARC_STRUCT(type, item) { _sapp_clear(&item, sizeof(item)); }
-#endif
+#define _SAPP_PIXELFORMAT_DEPTH (43)
+#define _SAPP_PIXELFORMAT_DEPTH_STENCIL (44)
 
 // check if the config defines are alright
 #if defined(__APPLE__)
@@ -2099,6 +2123,18 @@ inline void sapp_run(const sapp_desc& desc) { return sapp_run(&desc); }
     #include <pthread.h>    /* only used a linker-guard, search for _sapp_linux_run() and see first comment */
     #include <time.h>
 #endif
+
+#if defined(_SAPP_APPLE)
+    // this is ARC compatible
+    #if defined(__cplusplus)
+        #define _SAPP_CLEAR_ARC_STRUCT(type, item) { item = type(); }
+    #else
+        #define _SAPP_CLEAR_ARC_STRUCT(type, item) { item = (type) { 0 }; }
+    #endif
+#else
+    #define _SAPP_CLEAR_ARC_STRUCT(type, item) { _sapp_clear(&item, sizeof(item)); }
+#endif
+
 
 // ███████ ██████   █████  ███    ███ ███████     ████████ ██ ███    ███ ██ ███    ██  ██████
 // ██      ██   ██ ██   ██ ████  ████ ██             ██    ██ ████  ████ ██ ████   ██ ██
@@ -2411,9 +2447,6 @@ typedef struct {
 #endif
 
 typedef struct {
-    bool textfield_created;
-    bool wants_show_keyboard;
-    bool wants_hide_keyboard;
     bool mouse_lock_requested;
     uint16_t mouse_buttons;
 } _sapp_emsc_t;
@@ -3563,6 +3596,7 @@ _SOKOL_PRIVATE void _sapp_macos_update_dimensions(void) {
     else {
         _sapp.dpi_scale = 1.0f;
     }
+    _sapp.macos.view.layer.contentsScale = _sapp.dpi_scale; // NOTE: needed because we set layerContentsPlacement to a non-scaling value in windowWillStartLiveResize.
     const NSRect bounds = [_sapp.macos.view bounds];
     _sapp.window_width = (int)roundf(bounds.size.width);
     _sapp.window_height = (int)roundf(bounds.size.height);
@@ -3880,6 +3914,20 @@ _SOKOL_PRIVATE void _sapp_macos_frame(void) {
     [_sapp.macos.window makeKeyAndOrderFront:nil];
     _sapp_macos_update_dimensions();
     [NSEvent setMouseCoalescingEnabled:NO];
+
+    // workaround for window not being focused during a long init callback
+    // for details see: https://github.com/floooh/sokol/pull/982
+    // also see: https://gitlab.gnome.org/GNOME/gtk/-/issues/2342
+    NSEvent *focusevent = [NSEvent otherEventWithType:NSEventTypeAppKitDefined
+        location:NSZeroPoint
+        modifierFlags:0x40
+        timestamp:0
+        windowNumber:0
+        context:nil
+        subtype:NSEventSubtypeApplicationActivated
+        data1:0
+        data2:0];
+    [NSApp postEvent:focusevent atStart:YES];
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender {
@@ -3917,6 +3965,24 @@ _SOKOL_PRIVATE void _sapp_macos_frame(void) {
         return NO;
     }
 }
+
+#if defined(SOKOL_METAL)
+- (void)windowWillStartLiveResize:(NSNotification *)notification {
+    // Work around the MTKView resizing glitch by "anchoring" the layer to the window corner opposite
+    // to the currently manipulated corner (or edge). This prevents the content stretching back and
+    // forth during resizing. This is a workaround for this issue: https://github.com/floooh/sokol/issues/700
+    // Can be removed if/when migrating to CAMetalLayer: https://github.com/floooh/sokol/issues/727
+    bool resizing_from_left = _sapp.mouse.x < _sapp.window_width/2;
+    bool resizing_from_top = _sapp.mouse.y < _sapp.window_height/2;
+    NSViewLayerContentsPlacement placement;
+    if (resizing_from_left) {
+        placement = resizing_from_top ? NSViewLayerContentsPlacementBottomRight : NSViewLayerContentsPlacementTopRight;
+    } else {
+        placement = resizing_from_top ? NSViewLayerContentsPlacementBottomLeft : NSViewLayerContentsPlacementTopLeft;
+    }
+    _sapp.macos.view.layerContentsPlacement = placement;
+}
+#endif
 
 - (void)windowDidResize:(NSNotification*)notification {
     _SOKOL_UNUSED(notification);
@@ -4030,7 +4096,7 @@ _SOKOL_PRIVATE void _sapp_macos_frame(void) {
 }
 #endif
 
-_SOKOL_PRIVATE void _sapp_macos_poll_input_events() {
+_SOKOL_PRIVATE void _sapp_macos_poll_input_events(void) {
     /*
 
     NOTE: late event polling temporarily out-commented to check if this
@@ -4648,13 +4714,6 @@ extern "C" {
 
 typedef void (*_sapp_html5_fetch_callback) (const sapp_html5_fetch_response*);
 
-/* this function is called from a JS event handler when the user hides
-    the onscreen keyboard pressing the 'dismiss keyboard key'
-*/
-EMSCRIPTEN_KEEPALIVE void _sapp_emsc_notify_keyboard_hidden(void) {
-    _sapp.onscreen_keyboard_shown = false;
-}
-
 EMSCRIPTEN_KEEPALIVE void _sapp_emsc_onpaste(const char* str) {
     if (_sapp.clipboard.enabled) {
         _sapp_strcpy(str, _sapp.clipboard.buffer, _sapp.clipboard.buf_size);
@@ -4744,27 +4803,6 @@ EMSCRIPTEN_KEEPALIVE void _sapp_emsc_invoke_fetch_cb(int index, int success, int
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-
-/* Javascript helper functions for mobile virtual keyboard input */
-EM_JS(void, sapp_js_create_textfield, (void), {
-    const _sapp_inp = document.createElement("input");
-    _sapp_inp.type = "text";
-    _sapp_inp.id = "_sokol_app_input_element";
-    _sapp_inp.autocapitalize = "none";
-    _sapp_inp.addEventListener("focusout", function(_sapp_event) {
-        __sapp_emsc_notify_keyboard_hidden()
-
-    });
-    document.body.append(_sapp_inp);
-});
-
-EM_JS(void, sapp_js_focus_textfield, (void), {
-    document.getElementById("_sokol_app_input_element").focus();
-});
-
-EM_JS(void, sapp_js_unfocus_textfield, (void), {
-    document.getElementById("_sokol_app_input_element").blur();
-});
 
 EM_JS(void, sapp_js_add_beforeunload_listener, (void), {
     Module.sokol_beforeunload = (event) => {
@@ -4900,45 +4938,6 @@ EM_JS(void, sapp_js_remove_dragndrop_listeners, (const char* canvas_name_cstr), 
     canvas.removeEventListener('dragover',  Module.sokol_dragover);
     canvas.removeEventListener('drop',      Module.sokol_drop);
 });
-
-/* called from the emscripten event handler to update the keyboard visibility
-    state, this must happen from an JS input event handler, otherwise
-    the request will be ignored by the browser
-*/
-_SOKOL_PRIVATE void _sapp_emsc_update_keyboard_state(void) {
-    if (_sapp.emsc.wants_show_keyboard) {
-        /* create input text field on demand */
-        if (!_sapp.emsc.textfield_created) {
-            _sapp.emsc.textfield_created = true;
-            sapp_js_create_textfield();
-        }
-        /* focus the text input field, this will bring up the keyboard */
-        _sapp.onscreen_keyboard_shown = true;
-        _sapp.emsc.wants_show_keyboard = false;
-        sapp_js_focus_textfield();
-    }
-    if (_sapp.emsc.wants_hide_keyboard) {
-        /* unfocus the text input field */
-        if (_sapp.emsc.textfield_created) {
-            _sapp.onscreen_keyboard_shown = false;
-            _sapp.emsc.wants_hide_keyboard = false;
-            sapp_js_unfocus_textfield();
-        }
-    }
-}
-
-/* actually showing the onscreen keyboard must be initiated from a JS
-    input event handler, so we'll just keep track of the desired
-    state, and the actual state change will happen with the next input event
-*/
-_SOKOL_PRIVATE void _sapp_emsc_show_keyboard(bool show) {
-    if (show) {
-        _sapp.emsc.wants_show_keyboard = true;
-    }
-    else {
-        _sapp.emsc.wants_hide_keyboard = true;
-    }
-}
 
 EM_JS(void, sapp_js_init, (const char* c_str_target), {
     // lookup and store canvas object by name
@@ -5165,6 +5164,7 @@ _SOKOL_PRIVATE EM_BOOL _sapp_emsc_size_changed(int event_type, const EmscriptenU
 
 _SOKOL_PRIVATE EM_BOOL _sapp_emsc_mouse_cb(int emsc_type, const EmscriptenMouseEvent* emsc_event, void* user_data) {
     _SOKOL_UNUSED(user_data);
+    bool consume_event = !_sapp.desc.html5_bubble_mouse_events;
     _sapp.emsc.mouse_buttons = emsc_event->buttons;
     if (_sapp.mouse.locked) {
         _sapp.mouse.dx = (float) emsc_event->movementX;
@@ -5225,20 +5225,20 @@ _SOKOL_PRIVATE EM_BOOL _sapp_emsc_mouse_cb(int emsc_type, const EmscriptenMouseE
             } else {
                 _sapp.event.mouse_button = SAPP_MOUSEBUTTON_INVALID;
             }
-            _sapp_call_event(&_sapp.event);
+            consume_event |= _sapp_call_event(&_sapp.event);
         }
         // mouse lock can only be activated in mouse button events (not in move, enter or leave)
         if (is_button_event) {
             _sapp_emsc_update_mouse_lock_state();
         }
     }
-    _sapp_emsc_update_keyboard_state();
-    return true;
+    return consume_event;
 }
 
 _SOKOL_PRIVATE EM_BOOL _sapp_emsc_wheel_cb(int emsc_type, const EmscriptenWheelEvent* emsc_event, void* user_data) {
     _SOKOL_UNUSED(emsc_type);
     _SOKOL_UNUSED(user_data);
+    bool consume_event = !_sapp.desc.html5_bubble_wheel_events;
     _sapp.emsc.mouse_buttons = emsc_event->mouse.buttons;
     if (_sapp_events_enabled()) {
         _sapp_init_event(SAPP_EVENTTYPE_MOUSE_SCROLL);
@@ -5253,11 +5253,10 @@ _SOKOL_PRIVATE EM_BOOL _sapp_emsc_wheel_cb(int emsc_type, const EmscriptenWheelE
         }
         _sapp.event.scroll_x = scale * (float)emsc_event->deltaX;
         _sapp.event.scroll_y = scale * (float)emsc_event->deltaY;
-        _sapp_call_event(&_sapp.event);
+        consume_event |= _sapp_call_event(&_sapp.event);
     }
-    _sapp_emsc_update_keyboard_state();
     _sapp_emsc_update_mouse_lock_state();
-    return true;
+    return consume_event;
 }
 
 static struct {
@@ -5381,9 +5380,15 @@ _SOKOL_PRIVATE sapp_keycode _sapp_emsc_translate_key(const char* str) {
     return SAPP_KEYCODE_INVALID;
 }
 
+// returns true if the key code is a 'character key', this is used to decide
+// if a key event needs to bubble up to create a char event
+_SOKOL_PRIVATE bool _sapp_emsc_is_char_key(sapp_keycode key_code) {
+    return key_code < SAPP_KEYCODE_WORLD_1;
+}
+
 _SOKOL_PRIVATE EM_BOOL _sapp_emsc_key_cb(int emsc_type, const EmscriptenKeyboardEvent* emsc_event, void* user_data) {
     _SOKOL_UNUSED(user_data);
-    bool retval = true;
+    bool consume_event = false;
     if (_sapp_events_enabled()) {
         sapp_event_type type;
         switch (emsc_type) {
@@ -5406,14 +5411,10 @@ _SOKOL_PRIVATE EM_BOOL _sapp_emsc_key_cb(int emsc_type, const EmscriptenKeyboard
             _sapp.event.key_repeat = emsc_event->repeat;
             _sapp.event.modifiers = _sapp_emsc_key_event_mods(emsc_event);
             if (type == SAPP_EVENTTYPE_CHAR) {
-                // FIXME: this doesn't appear to work on Android Chrome
+                // NOTE: charCode doesn't appear to be supported on Android Chrome
                 _sapp.event.char_code = emsc_event->charCode;
-                /* workaround to make Cmd+V work on Safari */
-                if ((emsc_event->metaKey) && (emsc_event->charCode == 118)) {
-                    retval = false;
-                }
-            }
-            else {
+                consume_event |= !_sapp.desc.html5_bubble_char_events;
+            } else {
                 if (0 != emsc_event->code[0]) {
                     // This code path is for desktop browsers which send untranslated 'physical' key code strings
                     // (which is what we actually want for key events)
@@ -5437,91 +5438,27 @@ _SOKOL_PRIVATE EM_BOOL _sapp_emsc_key_cb(int emsc_type, const EmscriptenKeyboard
                 {
                     send_keyup_followup = true;
                 }
-                // only forward keys to the browser (can further be suppressed by sapp_consume_event())
-                switch (_sapp.event.key_code) {
-                    case SAPP_KEYCODE_WORLD_1:
-                    case SAPP_KEYCODE_WORLD_2:
-                    case SAPP_KEYCODE_ESCAPE:
-                    case SAPP_KEYCODE_ENTER:
-                    case SAPP_KEYCODE_TAB:
-                    case SAPP_KEYCODE_BACKSPACE:
-                    case SAPP_KEYCODE_INSERT:
-                    case SAPP_KEYCODE_DELETE:
-                    case SAPP_KEYCODE_RIGHT:
-                    case SAPP_KEYCODE_LEFT:
-                    case SAPP_KEYCODE_DOWN:
-                    case SAPP_KEYCODE_UP:
-                    case SAPP_KEYCODE_PAGE_UP:
-                    case SAPP_KEYCODE_PAGE_DOWN:
-                    case SAPP_KEYCODE_HOME:
-                    case SAPP_KEYCODE_END:
-                    case SAPP_KEYCODE_CAPS_LOCK:
-                    case SAPP_KEYCODE_SCROLL_LOCK:
-                    case SAPP_KEYCODE_NUM_LOCK:
-                    case SAPP_KEYCODE_PRINT_SCREEN:
-                    case SAPP_KEYCODE_PAUSE:
-                    case SAPP_KEYCODE_F1:
-                    case SAPP_KEYCODE_F2:
-                    case SAPP_KEYCODE_F3:
-                    case SAPP_KEYCODE_F4:
-                    case SAPP_KEYCODE_F5:
-                    case SAPP_KEYCODE_F6:
-                    case SAPP_KEYCODE_F7:
-                    case SAPP_KEYCODE_F8:
-                    case SAPP_KEYCODE_F9:
-                    case SAPP_KEYCODE_F10:
-                    case SAPP_KEYCODE_F11:
-                    case SAPP_KEYCODE_F12:
-                    case SAPP_KEYCODE_F13:
-                    case SAPP_KEYCODE_F14:
-                    case SAPP_KEYCODE_F15:
-                    case SAPP_KEYCODE_F16:
-                    case SAPP_KEYCODE_F17:
-                    case SAPP_KEYCODE_F18:
-                    case SAPP_KEYCODE_F19:
-                    case SAPP_KEYCODE_F20:
-                    case SAPP_KEYCODE_F21:
-                    case SAPP_KEYCODE_F22:
-                    case SAPP_KEYCODE_F23:
-                    case SAPP_KEYCODE_F24:
-                    case SAPP_KEYCODE_F25:
-                    case SAPP_KEYCODE_LEFT_SHIFT:
-                    case SAPP_KEYCODE_LEFT_CONTROL:
-                    case SAPP_KEYCODE_LEFT_ALT:
-                    case SAPP_KEYCODE_LEFT_SUPER:
-                    case SAPP_KEYCODE_RIGHT_SHIFT:
-                    case SAPP_KEYCODE_RIGHT_CONTROL:
-                    case SAPP_KEYCODE_RIGHT_ALT:
-                    case SAPP_KEYCODE_RIGHT_SUPER:
-                    case SAPP_KEYCODE_MENU:
-                        /* consume the event */
-                        break;
-                    default:
-                        /* forward key to browser */
-                        retval = false;
-                        break;
+
+                // 'character key events' will always need to bubble up, otherwise the browser
+                // wouldn't be able to generate character events.
+                if (!_sapp_emsc_is_char_key(_sapp.event.key_code)) {
+                    consume_event |= !_sapp.desc.html5_bubble_key_events;
                 }
             }
-            if (_sapp_call_event(&_sapp.event)) {
-                // event was consumed via sapp_consume_event()
-                retval = true;
-            }
+            consume_event |= _sapp_call_event(&_sapp.event);
             if (send_keyup_followup) {
                 _sapp.event.type = SAPP_EVENTTYPE_KEY_UP;
-                if (_sapp_call_event(&_sapp.event)) {
-                    retval = true;
-                }
+                consume_event |= _sapp_call_event(&_sapp.event);
             }
         }
     }
-    _sapp_emsc_update_keyboard_state();
     _sapp_emsc_update_mouse_lock_state();
-    return retval;
+    return consume_event;
 }
 
 _SOKOL_PRIVATE EM_BOOL _sapp_emsc_touch_cb(int emsc_type, const EmscriptenTouchEvent* emsc_event, void* user_data) {
     _SOKOL_UNUSED(user_data);
-    bool retval = true;
+    bool consume_event = !_sapp.desc.html5_bubble_touch_events;
     if (_sapp_events_enabled()) {
         sapp_event_type type;
         switch (emsc_type) {
@@ -5539,7 +5476,6 @@ _SOKOL_PRIVATE EM_BOOL _sapp_emsc_touch_cb(int emsc_type, const EmscriptenTouchE
                 break;
             default:
                 type = SAPP_EVENTTYPE_INVALID;
-                retval = false;
                 break;
         }
         if (type != SAPP_EVENTTYPE_INVALID) {
@@ -5557,11 +5493,10 @@ _SOKOL_PRIVATE EM_BOOL _sapp_emsc_touch_cb(int emsc_type, const EmscriptenTouchE
                 dst->pos_y = src->targetY * _sapp.dpi_scale;
                 dst->changed = src->isChanged;
             }
-            _sapp_call_event(&_sapp.event);
+            consume_event |= _sapp_call_event(&_sapp.event);
         }
     }
-    _sapp_emsc_update_keyboard_state();
-    return retval;
+    return consume_event;
 }
 
 _SOKOL_PRIVATE EM_BOOL _sapp_emsc_focus_cb(int emsc_type, const EmscriptenFocusEvent* emsc_event, void* user_data) {
@@ -5777,7 +5712,7 @@ _SOKOL_PRIVATE void _sapp_emsc_wgpu_request_adapter_cb(WGPURequestAdapterStatus 
 
     WGPUDeviceDescriptor dev_desc;
     _sapp_clear(&dev_desc, sizeof(dev_desc));
-    dev_desc.requiredFeaturesCount = cur_feature_index;
+    dev_desc.requiredFeatureCount = cur_feature_index;
     dev_desc.requiredFeatures = requiredFeatures,
     wgpuAdapterRequestDevice(adapter, &dev_desc, _sapp_emsc_wgpu_request_device_cb, 0);
 }
@@ -5804,6 +5739,9 @@ _SOKOL_PRIVATE void _sapp_emsc_wgpu_frame(void) {
 #endif // SOKOL_WGPU
 
 _SOKOL_PRIVATE void _sapp_emsc_register_eventhandlers(void) {
+    // NOTE: HTML canvas doesn't receive input focus, this is why key event handlers are added
+    // to the window object (this could be worked around by adding a "tab index" to the
+    // canvas)
     emscripten_set_mousedown_callback(_sapp.html5_canvas_selector, 0, true, _sapp_emsc_mouse_cb);
     emscripten_set_mouseup_callback(_sapp.html5_canvas_selector, 0, true, _sapp_emsc_mouse_cb);
     emscripten_set_mousemove_callback(_sapp.html5_canvas_selector, 0, true, _sapp_emsc_mouse_cb);
@@ -5834,7 +5772,7 @@ _SOKOL_PRIVATE void _sapp_emsc_register_eventhandlers(void) {
     #endif
 }
 
-_SOKOL_PRIVATE void _sapp_emsc_unregister_eventhandlers() {
+_SOKOL_PRIVATE void _sapp_emsc_unregister_eventhandlers(void) {
     emscripten_set_mousedown_callback(_sapp.html5_canvas_selector, 0, true, 0);
     emscripten_set_mouseup_callback(_sapp.html5_canvas_selector, 0, true, 0);
     emscripten_set_mousemove_callback(_sapp.html5_canvas_selector, 0, true, 0);
@@ -5852,6 +5790,9 @@ _SOKOL_PRIVATE void _sapp_emsc_unregister_eventhandlers() {
     emscripten_set_pointerlockerror_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, 0, true, 0);
     emscripten_set_focus_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, 0, true, 0);
     emscripten_set_blur_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, 0, true, 0);
+    if (!_sapp.desc.html5_canvas_resize) {
+        emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, 0, true, 0);
+    }
     sapp_js_remove_beforeunload_listener();
     if (_sapp.clipboard.enabled) {
         sapp_js_remove_clipboard_listener();
@@ -8301,8 +8242,8 @@ _SOKOL_PRIVATE bool _sapp_android_touch_event(const AInputEvent* e) {
     for (int32_t i = 0; i < _sapp.event.num_touches; i++) {
         sapp_touchpoint* dst = &_sapp.event.touches[i];
         dst->identifier = (uintptr_t)AMotionEvent_getPointerId(e, (size_t)i);
-        dst->pos_x = (AMotionEvent_getRawX(e, (size_t)i) / _sapp.window_width) * _sapp.framebuffer_width;
-        dst->pos_y = (AMotionEvent_getRawY(e, (size_t)i) / _sapp.window_height) * _sapp.framebuffer_height;
+        dst->pos_x = (AMotionEvent_getX(e, (size_t)i) / _sapp.window_width) * _sapp.framebuffer_width;
+        dst->pos_y = (AMotionEvent_getY(e, (size_t)i) / _sapp.window_height) * _sapp.framebuffer_height;
         dst->android_tooltype = (sapp_android_tooltype) AMotionEvent_getToolType(e, (size_t)i);
         if (action == AMOTION_EVENT_ACTION_POINTER_DOWN ||
             action == AMOTION_EVENT_ACTION_POINTER_UP) {
@@ -9692,7 +9633,7 @@ _SOKOL_PRIVATE void* _sapp_glx_getprocaddr(const char* procname)
     }
 }
 
-_SOKOL_PRIVATE void _sapp_glx_init() {
+_SOKOL_PRIVATE void _sapp_glx_init(void) {
     const char* sonames[] = { "libGL.so.1", "libGL.so", 0 };
     for (int i = 0; sonames[i]; i++) {
         _sapp.glx.libgl = dlopen(sonames[i], RTLD_LAZY|RTLD_GLOBAL);
@@ -9767,7 +9708,7 @@ _SOKOL_PRIVATE int _sapp_glx_attrib(GLXFBConfig fbconfig, int attrib) {
     return value;
 }
 
-_SOKOL_PRIVATE GLXFBConfig _sapp_glx_choosefbconfig() {
+_SOKOL_PRIVATE GLXFBConfig _sapp_glx_choosefbconfig(void) {
     GLXFBConfig* native_configs;
     _sapp_gl_fbconfig* usable_configs;
     const _sapp_gl_fbconfig* closest;
@@ -11309,8 +11250,6 @@ SOKOL_API_IMPL const void* sapp_egl_get_context(void) {
 SOKOL_API_IMPL void sapp_show_keyboard(bool show) {
     #if defined(_SAPP_IOS)
     _sapp_ios_show_keyboard(show);
-    #elif defined(_SAPP_EMSCRIPTEN)
-    _sapp_emsc_show_keyboard(show);
     #elif defined(_SAPP_ANDROID)
     _sapp_android_show_keyboard(show);
     #else
