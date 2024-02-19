@@ -569,13 +569,17 @@ pub extern fn sapp_metal_get_device() ?*const anyopaque;
 pub fn metalGetDevice() ?*const anyopaque {
     return sapp_metal_get_device();
 }
-pub extern fn sapp_metal_get_renderpass_descriptor() ?*const anyopaque;
-pub fn metalGetRenderpassDescriptor() ?*const anyopaque {
-    return sapp_metal_get_renderpass_descriptor();
+pub extern fn sapp_metal_get_current_drawable() ?*const anyopaque;
+pub fn metalGetCurrentDrawable() ?*const anyopaque {
+    return sapp_metal_get_current_drawable();
 }
-pub extern fn sapp_metal_get_drawable() ?*const anyopaque;
-pub fn metalGetDrawable() ?*const anyopaque {
-    return sapp_metal_get_drawable();
+pub extern fn sapp_metal_get_depth_stencil_texture() ?*const anyopaque;
+pub fn metalGetDepthStencilTexture() ?*const anyopaque {
+    return sapp_metal_get_depth_stencil_texture();
+}
+pub extern fn sapp_metal_get_msaa_color_texture() ?*const anyopaque;
+pub fn metalGetMsaaColorTexture() ?*const anyopaque {
+    return sapp_metal_get_msaa_color_texture();
 }
 pub extern fn sapp_macos_get_window() ?*const anyopaque;
 pub fn macosGetWindow() ?*const anyopaque {
@@ -597,9 +601,13 @@ pub extern fn sapp_d3d11_get_swap_chain() ?*const anyopaque;
 pub fn d3d11GetSwapChain() ?*const anyopaque {
     return sapp_d3d11_get_swap_chain();
 }
-pub extern fn sapp_d3d11_get_render_target_view() ?*const anyopaque;
-pub fn d3d11GetRenderTargetView() ?*const anyopaque {
-    return sapp_d3d11_get_render_target_view();
+pub extern fn sapp_d3d11_get_render_view() ?*const anyopaque;
+pub fn d3d11GetRenderView() ?*const anyopaque {
+    return sapp_d3d11_get_render_view();
+}
+pub extern fn sapp_d3d11_get_resolve_view() ?*const anyopaque;
+pub fn d3d11GetResolveView() ?*const anyopaque {
+    return sapp_d3d11_get_resolve_view();
 }
 pub extern fn sapp_d3d11_get_depth_stencil_view() ?*const anyopaque;
 pub fn d3d11GetDepthStencilView() ?*const anyopaque {
@@ -624,6 +632,10 @@ pub fn wgpuGetResolveView() ?*const anyopaque {
 pub extern fn sapp_wgpu_get_depth_stencil_view() ?*const anyopaque;
 pub fn wgpuGetDepthStencilView() ?*const anyopaque {
     return sapp_wgpu_get_depth_stencil_view();
+}
+pub extern fn sapp_gl_get_framebuffer() u32;
+pub fn glGetFramebuffer() u32 {
+    return sapp_gl_get_framebuffer();
 }
 pub extern fn sapp_android_get_native_activity() ?*const anyopaque;
 pub fn androidGetNativeActivity() ?*const anyopaque {

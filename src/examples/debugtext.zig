@@ -7,7 +7,7 @@ const sokol = @import("sokol");
 const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
-const sgapp = sokol.app_gfx_glue;
+const sglue = sokol.glue;
 const sdtx = sokol.debugtext;
 
 // font indices
@@ -22,7 +22,7 @@ var pass_action: sg.PassAction = .{};
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context(),
+        .environment = sglue.environment(),
         .logger = .{ .func = slog.func },
     });
 
@@ -70,7 +70,7 @@ export fn frame() void {
     printFont(ORIC, "Oric Atmos:\n", 0xff, 0x98, 0x00);
 
     // do the actual rendering
-    sg.beginDefaultPass(pass_action, sapp.width(), sapp.height());
+    sg.beginPass(.{ .action = pass_action, .swapchain = sglue.swapchain() });
     sdtx.draw();
     sg.endPass();
     sg.commit();

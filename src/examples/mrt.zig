@@ -14,7 +14,7 @@ const sokol = @import("sokol");
 const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
-const sgapp = sokol.app_gfx_glue;
+const sglue = sokol.glue;
 const vec2 = @import("math.zig").Vec2;
 const vec3 = @import("math.zig").Vec3;
 const mat4 = @import("math.zig").Mat4;
@@ -25,8 +25,8 @@ const offscreen_sample_count = 1;
 const state = struct {
     const offscreen = struct {
         var pass_action: sg.PassAction = .{};
-        var pass_desc: sg.PassDesc = .{};
-        var pass: sg.Pass = .{};
+        var attachments_desc: sg.AttachmentsDesc = .{};
+        var attachments: sg.Attachments = .{};
         var pip: sg.Pipeline = .{};
         var bind: sg.Bindings = .{};
     };
@@ -48,7 +48,7 @@ const state = struct {
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context(),
+        .environment = sglue.environment(),
         .logger = .{ .func = slog.func },
     });
 
@@ -71,8 +71,7 @@ export fn init() void {
         .clear_value = .{ .r = 0, .g = 0, .b = 0.25, .a = 1 },
     };
 
-    // setup the offscreen render pass and render target images,
-    // this will also be called when the window resizes
+    // setup the offscreen render pass resources this will also be called when the window resizes
     createOffscreenPass(sapp.width(), sapp.height());
 
     // create vertex buffer for a cube
@@ -171,7 +170,7 @@ export fn init() void {
     // offscreen render target textures
     state.fsq.bind.vertex_buffers[0] = quad_vbuf;
     inline for (.{ 0, 1, 2 }) |i| {
-        state.fsq.bind.fs.images[i] = state.offscreen.pass_desc.color_attachments[i].image;
+        state.fsq.bind.fs.images[i] = state.offscreen.attachments_desc.colors[i].image;
     }
     state.fsq.bind.fs.samplers[0] = smp;
 
@@ -204,7 +203,7 @@ export fn frame() void {
     };
 
     // render cube into MRT offscreen render targets
-    sg.beginPass(state.offscreen.pass, state.offscreen.pass_action);
+    sg.beginPass(.{ .action = state.offscreen.pass_action, .attachments = state.offscreen.attachments });
     sg.applyPipeline(state.offscreen.pip);
     sg.applyBindings(state.offscreen.bind);
     sg.applyUniforms(.VS, shd.SLOT_offscreen_params, sg.asRange(&offscreen_params));
@@ -213,7 +212,7 @@ export fn frame() void {
 
     // render fullscreen quad with the composed offscreen-render images,
     // 3 a small debug view quads at the bottom of the screen
-    sg.beginDefaultPass(state.default.pass_action, sapp.width(), sapp.height());
+    sg.beginPass(.{ .action = state.default.pass_action, .swapchain = sglue.swapchain() });
     sg.applyPipeline(state.fsq.pip);
     sg.applyBindings(state.fsq.bind);
     sg.applyUniforms(.VS, shd.SLOT_fsq_params, sg.asRange(&fsq_params));
@@ -221,7 +220,7 @@ export fn frame() void {
     sg.applyPipeline(state.dbg.pip);
     inline for (.{ 0, 1, 2 }) |i| {
         sg.applyViewport(i * 100, 0, 100, 100, false);
-        state.dbg.bind.fs.images[0] = state.offscreen.pass_desc.color_attachments[i].image;
+        state.dbg.bind.fs.images[0] = state.offscreen.attachments_desc.colors[i].image;
         sg.applyBindings(state.dbg.bind);
         sg.draw(0, 4, 1);
     }
@@ -267,11 +266,11 @@ fn computeMVP(rx: f32, ry: f32) mat4 {
 // helper function to create or re-create render target images and pass object for offscreen rendering
 fn createOffscreenPass(width: i32, height: i32) void {
     // destroy previous resources (can be called with invalid ids)
-    sg.destroyPass(state.offscreen.pass);
-    for (state.offscreen.pass_desc.color_attachments) |att| {
+    sg.destroyAttachments(state.offscreen.attachments);
+    for (state.offscreen.attachments_desc.colors) |att| {
         sg.destroyImage(att.image);
     }
-    sg.destroyImage(state.offscreen.pass_desc.depth_stencil_attachment.image);
+    sg.destroyImage(state.offscreen.attachments_desc.depth_stencil.image);
 
     // create offscreen render target images and pass
     const color_img_desc: sg.ImageDesc = .{
@@ -284,13 +283,13 @@ fn createOffscreenPass(width: i32, height: i32) void {
     depth_img_desc.pixel_format = .DEPTH;
 
     inline for (.{ 0, 1, 2 }) |i| {
-        state.offscreen.pass_desc.color_attachments[i].image = sg.makeImage(color_img_desc);
+        state.offscreen.attachments_desc.colors[i].image = sg.makeImage(color_img_desc);
     }
-    state.offscreen.pass_desc.depth_stencil_attachment.image = sg.makeImage(depth_img_desc);
-    state.offscreen.pass = sg.makePass(state.offscreen.pass_desc);
+    state.offscreen.attachments_desc.depth_stencil.image = sg.makeImage(depth_img_desc);
+    state.offscreen.attachments = sg.makeAttachments(state.offscreen.attachments_desc);
 
     // update the fullscreen-quad texture bindings
     inline for (.{ 0, 1, 2 }) |i| {
-        state.fsq.bind.fs.images[i] = state.offscreen.pass_desc.color_attachments[i].image;
+        state.fsq.bind.fs.images[i] = state.offscreen.attachments_desc.colors[i].image;
     }
 }

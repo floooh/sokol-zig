@@ -10,7 +10,7 @@ const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
 const sgl = sokol.gl;
-const sgapp = sokol.app_gfx_glue;
+const sglue = sokol.glue;
 const math = @import("std").math;
 
 const Rgb = struct { r: f32, g: f32, b: f32 };
@@ -39,7 +39,7 @@ const palette = [16]Rgb{
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context(),
+        .environment = sglue.environment(),
         .logger = .{ .func = slog.func },
     });
     sgl.setup(.{
@@ -86,7 +86,7 @@ export fn frame() void {
     }
     sgl.end();
 
-    sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
+    sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
     sgl.draw();
     sg.endPass();
     sg.commit();

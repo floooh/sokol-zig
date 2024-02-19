@@ -7,7 +7,7 @@ const sokol = @import("sokol");
 const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
-const sgapp = sokol.app_gfx_glue;
+const sglue = sokol.glue;
 const sdtx = sokol.debugtext;
 
 // use font-slot 1 for the user-defined font, there's no particular
@@ -45,7 +45,7 @@ const state = struct {
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context(),
+        .environment = sglue.environment(),
         .logger = .{ .func = slog.func },
     });
 
@@ -85,7 +85,7 @@ export fn frame() void {
         sdtx.putc(c);
     }
 
-    sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
+    sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
     sdtx.draw();
     sg.endPass();
     sg.commit();

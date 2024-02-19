@@ -7,7 +7,7 @@ const sokol = @import("sokol");
 const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
-const sgapp = sokol.app_gfx_glue;
+const sglue = sokol.glue;
 
 const state = struct {
     var bind: sg.Bindings = .{};
@@ -16,7 +16,7 @@ const state = struct {
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context(),
+        .environment = sglue.environment(),
         .logger = .{ .func = slog.func },
     });
 
@@ -40,7 +40,7 @@ export fn init() void {
 
 export fn frame() void {
     // default pass-action clears to grey
-    sg.beginDefaultPass(.{}, sapp.width(), sapp.height());
+    sg.beginPass(.{ .swapchain = sglue.swapchain() });
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
     sg.draw(0, 3, 1);

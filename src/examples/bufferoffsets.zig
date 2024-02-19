@@ -8,7 +8,7 @@ const sokol = @import("sokol");
 const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
-const sgapp = sokol.app_gfx_glue;
+const sglue = sokol.glue;
 const shd = @import("shaders/bufferoffsets.glsl.zig");
 
 const state = struct {
@@ -21,7 +21,7 @@ const Vertex = extern struct { x: f32, y: f32, r: f32, g: f32, b: f32 };
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context(),
+        .environment = sglue.environment(),
         .logger = .{ .func = slog.func },
     });
 
@@ -65,7 +65,7 @@ export fn init() void {
 }
 
 export fn frame() void {
-    sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
+    sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
     sg.applyPipeline(state.pip);
 
     // render the triangle

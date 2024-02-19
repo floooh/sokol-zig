@@ -7,7 +7,7 @@ const sokol = @import("sokol");
 const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
-const sgapp = sokol.app_gfx_glue;
+const sglue = sokol.glue;
 const stm = sokol.time;
 const sdtx = @import("sokol").debugtext;
 
@@ -36,7 +36,7 @@ export fn init() void {
     // setup sokol.time and sokol.gfx
     stm.setup();
     sg.setup(.{
-        .context = sgapp.context(),
+        .environment = sglue.environment(),
         .logger = .{ .func = slog.func },
     });
 
@@ -76,7 +76,7 @@ export fn frame() void {
     fmt.format(writer, "using std.fmt directly ({d})\n", .{state.frame_count}) catch unreachable;
 
     // render the frame via sokol.gfx
-    sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
+    sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
     sdtx.draw();
     sg.endPass();
     sg.commit();

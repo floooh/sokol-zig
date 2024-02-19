@@ -6,7 +6,7 @@ const sokol = @import("sokol");
 const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
-const sgapp = sokol.app_gfx_glue;
+const sglue = sokol.glue;
 const vec3 = @import("math.zig").Vec3;
 const mat4 = @import("math.zig").Mat4;
 const shd = @import("shaders/blend.glsl.zig");
@@ -25,7 +25,7 @@ const state = struct {
 export fn init() void {
     sg.setup(.{
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
-        .context = sgapp.context(),
+        .environment = sglue.environment(),
         .logger = .{ .func = slog.func },
     });
 
@@ -35,7 +35,7 @@ export fn init() void {
 
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
         .data = sg.asRange(&[_]f32{
-            // pos               color
+            // pos           color
             -1.0, -1.0, 0.0, 1.0, 0.0, 0.0, 0.5,
             1.0,  -1.0, 0.0, 0.0, 1.0, 0.0, 0.5,
             -1.0, 1.0,  0.0, 0.0, 0.0, 1.0, 0.5,
@@ -79,7 +79,7 @@ export fn init() void {
 export fn frame() void {
     const time: f32 = @floatCast(sapp.frameDuration() * 60.0);
 
-    sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
+    sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
 
     // draw background
     state.tick += 1.0 * time;
