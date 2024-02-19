@@ -72,7 +72,7 @@ export fn init() void {
     };
 
     // setup the offscreen render pass resources this will also be called when the window resizes
-    createOffscreenPass(sapp.width(), sapp.height());
+    createOffscreenAttachments(sapp.width(), sapp.height());
 
     // create vertex buffer for a cube
     const cube_vbuf = sg.makeBuffer(.{
@@ -234,7 +234,7 @@ export fn cleanup() void {
 
 export fn event(ev: [*c]const sapp.Event) void {
     if (ev.*.type == .RESIZED) {
-        createOffscreenPass(ev.*.framebuffer_width, ev.*.framebuffer_height);
+        createOffscreenAttachments(ev.*.framebuffer_width, ev.*.framebuffer_height);
     }
 }
 
@@ -264,7 +264,7 @@ fn computeMVP(rx: f32, ry: f32) mat4 {
 }
 
 // helper function to create or re-create render target images and pass object for offscreen rendering
-fn createOffscreenPass(width: i32, height: i32) void {
+fn createOffscreenAttachments(width: i32, height: i32) void {
     // destroy previous resources (can be called with invalid ids)
     sg.destroyAttachments(state.offscreen.attachments);
     for (state.offscreen.attachments_desc.colors) |att| {
