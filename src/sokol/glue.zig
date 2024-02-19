@@ -2,7 +2,6 @@
 
 const builtin = @import("builtin");
 const sg = @import("gfx.zig");
-const sapp = @import("app.zig");
 
 // helper function to convert a C string to a Zig string slice
 fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
