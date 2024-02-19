@@ -301,6 +301,8 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.Run {
     try emcc_cmd.append(emcc_path);
     if (options.optimize == .Debug) {
         try emcc_cmd.append("-Og");
+        try emcc_cmd.append("-sSAFE_HEAP=1");
+        try emcc_cmd.append("-sSTACK_OVERFLOW_CHECK=1");
     } else {
         try emcc_cmd.append("-sASSERTIONS=0");
         if (options.optimize == .ReleaseSmall) {
