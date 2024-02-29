@@ -8,7 +8,7 @@ const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
 const sgl = sokol.gl;
-const sgapp = sokol.app_gfx_glue;
+const sglue = sokol.glue;
 const math = @import("std").math;
 
 const state = struct {
@@ -31,7 +31,7 @@ const state = struct {
 export fn init() void {
     // setup sokol-gfx
     sg.setup(.{
-        .context = sgapp.context(),
+        .environment = sglue.environment(),
         .logger = .{ .func = slog.func },
     });
     // setup sokol-gl
@@ -111,7 +111,7 @@ export fn frame() void {
     drawTexCube(dt);
     sgl.viewportf(0, 0, dw, dh, true);
 
-    sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
+    sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
     sgl.draw();
     sg.endPass();
     sg.commit();

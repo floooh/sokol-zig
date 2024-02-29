@@ -41,10 +41,7 @@ pub const Shader = extern struct {
 pub const Pipeline = extern struct {
     id: u32 = 0,
 };
-pub const Pass = extern struct {
-    id: u32 = 0,
-};
-pub const Context = extern struct {
+pub const Attachments = extern struct {
     id: u32 = 0,
 };
 pub const Range = extern struct {
@@ -176,7 +173,7 @@ pub const Limits = extern struct {
     max_image_size_array: i32 = 0,
     max_image_array_layers: i32 = 0,
     max_vertex_attrs: i32 = 0,
-    gl_max_vertex_uniform_vectors: i32 = 0,
+    gl_max_vertex_uniform_components: i32 = 0,
     gl_max_combined_texture_image_units: i32 = 0,
 };
 pub const ResourceState = enum(i32) {
@@ -429,10 +426,45 @@ pub const StencilAttachmentAction = extern struct {
     clear_value: u8 = 0,
 };
 pub const PassAction = extern struct {
-    _start_canary: u32 = 0,
     colors: [4]ColorAttachmentAction = [_]ColorAttachmentAction{.{}} ** 4,
     depth: DepthAttachmentAction = .{},
     stencil: StencilAttachmentAction = .{},
+};
+pub const MetalSwapchain = extern struct {
+    current_drawable: ?*const anyopaque = null,
+    depth_stencil_texture: ?*const anyopaque = null,
+    msaa_color_texture: ?*const anyopaque = null,
+};
+pub const D3d11Swapchain = extern struct {
+    render_view: ?*const anyopaque = null,
+    resolve_view: ?*const anyopaque = null,
+    depth_stencil_view: ?*const anyopaque = null,
+};
+pub const WgpuSwapchain = extern struct {
+    render_view: ?*const anyopaque = null,
+    resolve_view: ?*const anyopaque = null,
+    depth_stencil_view: ?*const anyopaque = null,
+};
+pub const GlSwapchain = extern struct {
+    framebuffer: u32 = 0,
+};
+pub const Swapchain = extern struct {
+    width: i32 = 0,
+    height: i32 = 0,
+    sample_count: i32 = 0,
+    color_format: PixelFormat = .DEFAULT,
+    depth_format: PixelFormat = .DEFAULT,
+    metal: MetalSwapchain = .{},
+    d3d11: D3d11Swapchain = .{},
+    wgpu: WgpuSwapchain = .{},
+    gl: GlSwapchain = .{},
+};
+pub const Pass = extern struct {
+    _start_canary: u32 = 0,
+    action: PassAction = .{},
+    attachments: Attachments = .{},
+    swapchain: Swapchain = .{},
+    label: [*c]const u8 = null,
     _end_canary: u32 = 0,
 };
 pub const StageBindings = extern struct {
@@ -624,23 +656,22 @@ pub const PipelineDesc = extern struct {
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
 };
-pub const PassAttachmentDesc = extern struct {
+pub const AttachmentDesc = extern struct {
     image: Image = .{},
     mip_level: i32 = 0,
     slice: i32 = 0,
 };
-pub const PassDesc = extern struct {
+pub const AttachmentsDesc = extern struct {
     _start_canary: u32 = 0,
-    color_attachments: [4]PassAttachmentDesc = [_]PassAttachmentDesc{.{}} ** 4,
-    resolve_attachments: [4]PassAttachmentDesc = [_]PassAttachmentDesc{.{}} ** 4,
-    depth_stencil_attachment: PassAttachmentDesc = .{},
+    colors: [4]AttachmentDesc = [_]AttachmentDesc{.{}} ** 4,
+    resolves: [4]AttachmentDesc = [_]AttachmentDesc{.{}} ** 4,
+    depth_stencil: AttachmentDesc = .{},
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
 };
 pub const SlotInfo = extern struct {
     state: ResourceState = .INITIAL,
     res_id: u32 = 0,
-    ctx_id: u32 = 0,
 };
 pub const BufferInfo = extern struct {
     slot: SlotInfo = .{},
@@ -666,7 +697,7 @@ pub const ShaderInfo = extern struct {
 pub const PipelineInfo = extern struct {
     slot: SlotInfo = .{},
 };
-pub const PassInfo = extern struct {
+pub const AttachmentsInfo = extern struct {
     slot: SlotInfo = .{},
 };
 pub const FrameStatsGl = extern struct {
@@ -865,13 +896,7 @@ pub const LogItem = enum(i32) {
     WGPU_SHADER_CREATE_BINDGROUP_LAYOUT_FAILED,
     WGPU_CREATE_PIPELINE_LAYOUT_FAILED,
     WGPU_CREATE_RENDER_PIPELINE_FAILED,
-    WGPU_PASS_CREATE_TEXTURE_VIEW_FAILED,
-    UNINIT_BUFFER_ACTIVE_CONTEXT_MISMATCH,
-    UNINIT_IMAGE_ACTIVE_CONTEXT_MISMATCH,
-    UNINIT_SAMPLER_ACTIVE_CONTEXT_MISMATCH,
-    UNINIT_SHADER_ACTIVE_CONTEXT_MISMATCH,
-    UNINIT_PIPELINE_ACTIVE_CONTEXT_MISMATCH,
-    UNINIT_PASS_ACTIVE_CONTEXT_MISMATCH,
+    WGPU_ATTACHMENTS_CREATE_TEXTURE_VIEW_FAILED,
     IDENTICAL_COMMIT_LISTENER,
     COMMIT_LISTENER_ARRAY_FULL,
     TRACE_HOOKS_NOT_ENABLED,
@@ -880,31 +905,32 @@ pub const LogItem = enum(i32) {
     DEALLOC_SAMPLER_INVALID_STATE,
     DEALLOC_SHADER_INVALID_STATE,
     DEALLOC_PIPELINE_INVALID_STATE,
-    DEALLOC_PASS_INVALID_STATE,
+    DEALLOC_ATTACHMENTS_INVALID_STATE,
     INIT_BUFFER_INVALID_STATE,
     INIT_IMAGE_INVALID_STATE,
     INIT_SAMPLER_INVALID_STATE,
     INIT_SHADER_INVALID_STATE,
     INIT_PIPELINE_INVALID_STATE,
-    INIT_PASS_INVALID_STATE,
+    INIT_ATTACHMENTS_INVALID_STATE,
     UNINIT_BUFFER_INVALID_STATE,
     UNINIT_IMAGE_INVALID_STATE,
     UNINIT_SAMPLER_INVALID_STATE,
     UNINIT_SHADER_INVALID_STATE,
     UNINIT_PIPELINE_INVALID_STATE,
-    UNINIT_PASS_INVALID_STATE,
+    UNINIT_ATTACHMENTS_INVALID_STATE,
     FAIL_BUFFER_INVALID_STATE,
     FAIL_IMAGE_INVALID_STATE,
     FAIL_SAMPLER_INVALID_STATE,
     FAIL_SHADER_INVALID_STATE,
     FAIL_PIPELINE_INVALID_STATE,
-    FAIL_PASS_INVALID_STATE,
+    FAIL_ATTACHMENTS_INVALID_STATE,
     BUFFER_POOL_EXHAUSTED,
     IMAGE_POOL_EXHAUSTED,
     SAMPLER_POOL_EXHAUSTED,
     SHADER_POOL_EXHAUSTED,
     PIPELINE_POOL_EXHAUSTED,
     PASS_POOL_EXHAUSTED,
+    BEGINPASS_ATTACHMENT_INVALID,
     DRAW_WITHOUT_BINDINGS,
     VALIDATE_BUFFERDESC_CANARY,
     VALIDATE_BUFFERDESC_SIZE,
@@ -964,46 +990,78 @@ pub const LogItem = enum(i32) {
     VALIDATE_PIPELINEDESC_NO_ATTRS,
     VALIDATE_PIPELINEDESC_LAYOUT_STRIDE4,
     VALIDATE_PIPELINEDESC_ATTR_SEMANTICS,
-    VALIDATE_PASSDESC_CANARY,
-    VALIDATE_PASSDESC_NO_ATTACHMENTS,
-    VALIDATE_PASSDESC_NO_CONT_COLOR_ATTS,
-    VALIDATE_PASSDESC_IMAGE,
-    VALIDATE_PASSDESC_MIPLEVEL,
-    VALIDATE_PASSDESC_FACE,
-    VALIDATE_PASSDESC_LAYER,
-    VALIDATE_PASSDESC_SLICE,
-    VALIDATE_PASSDESC_IMAGE_NO_RT,
-    VALIDATE_PASSDESC_COLOR_INV_PIXELFORMAT,
-    VALIDATE_PASSDESC_DEPTH_INV_PIXELFORMAT,
-    VALIDATE_PASSDESC_IMAGE_SIZES,
-    VALIDATE_PASSDESC_IMAGE_SAMPLE_COUNTS,
-    VALIDATE_PASSDESC_RESOLVE_COLOR_IMAGE_MSAA,
-    VALIDATE_PASSDESC_RESOLVE_IMAGE,
-    VALIDATE_PASSDESC_RESOLVE_SAMPLE_COUNT,
-    VALIDATE_PASSDESC_RESOLVE_MIPLEVEL,
-    VALIDATE_PASSDESC_RESOLVE_FACE,
-    VALIDATE_PASSDESC_RESOLVE_LAYER,
-    VALIDATE_PASSDESC_RESOLVE_SLICE,
-    VALIDATE_PASSDESC_RESOLVE_IMAGE_NO_RT,
-    VALIDATE_PASSDESC_RESOLVE_IMAGE_SIZES,
-    VALIDATE_PASSDESC_RESOLVE_IMAGE_FORMAT,
-    VALIDATE_PASSDESC_DEPTH_IMAGE,
-    VALIDATE_PASSDESC_DEPTH_MIPLEVEL,
-    VALIDATE_PASSDESC_DEPTH_FACE,
-    VALIDATE_PASSDESC_DEPTH_LAYER,
-    VALIDATE_PASSDESC_DEPTH_SLICE,
-    VALIDATE_PASSDESC_DEPTH_IMAGE_NO_RT,
-    VALIDATE_PASSDESC_DEPTH_IMAGE_SIZES,
-    VALIDATE_PASSDESC_DEPTH_IMAGE_SAMPLE_COUNT,
-    VALIDATE_BEGINPASS_PASS,
+    VALIDATE_ATTACHMENTSDESC_CANARY,
+    VALIDATE_ATTACHMENTSDESC_NO_ATTACHMENTS,
+    VALIDATE_ATTACHMENTSDESC_NO_CONT_COLOR_ATTS,
+    VALIDATE_ATTACHMENTSDESC_IMAGE,
+    VALIDATE_ATTACHMENTSDESC_MIPLEVEL,
+    VALIDATE_ATTACHMENTSDESC_FACE,
+    VALIDATE_ATTACHMENTSDESC_LAYER,
+    VALIDATE_ATTACHMENTSDESC_SLICE,
+    VALIDATE_ATTACHMENTSDESC_IMAGE_NO_RT,
+    VALIDATE_ATTACHMENTSDESC_COLOR_INV_PIXELFORMAT,
+    VALIDATE_ATTACHMENTSDESC_DEPTH_INV_PIXELFORMAT,
+    VALIDATE_ATTACHMENTSDESC_IMAGE_SIZES,
+    VALIDATE_ATTACHMENTSDESC_IMAGE_SAMPLE_COUNTS,
+    VALIDATE_ATTACHMENTSDESC_RESOLVE_COLOR_IMAGE_MSAA,
+    VALIDATE_ATTACHMENTSDESC_RESOLVE_IMAGE,
+    VALIDATE_ATTACHMENTSDESC_RESOLVE_SAMPLE_COUNT,
+    VALIDATE_ATTACHMENTSDESC_RESOLVE_MIPLEVEL,
+    VALIDATE_ATTACHMENTSDESC_RESOLVE_FACE,
+    VALIDATE_ATTACHMENTSDESC_RESOLVE_LAYER,
+    VALIDATE_ATTACHMENTSDESC_RESOLVE_SLICE,
+    VALIDATE_ATTACHMENTSDESC_RESOLVE_IMAGE_NO_RT,
+    VALIDATE_ATTACHMENTSDESC_RESOLVE_IMAGE_SIZES,
+    VALIDATE_ATTACHMENTSDESC_RESOLVE_IMAGE_FORMAT,
+    VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE,
+    VALIDATE_ATTACHMENTSDESC_DEPTH_MIPLEVEL,
+    VALIDATE_ATTACHMENTSDESC_DEPTH_FACE,
+    VALIDATE_ATTACHMENTSDESC_DEPTH_LAYER,
+    VALIDATE_ATTACHMENTSDESC_DEPTH_SLICE,
+    VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_NO_RT,
+    VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_SIZES,
+    VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_SAMPLE_COUNT,
+    VALIDATE_BEGINPASS_CANARY,
+    VALIDATE_BEGINPASS_ATTACHMENTS_EXISTS,
+    VALIDATE_BEGINPASS_ATTACHMENTS_VALID,
     VALIDATE_BEGINPASS_COLOR_ATTACHMENT_IMAGE,
     VALIDATE_BEGINPASS_RESOLVE_ATTACHMENT_IMAGE,
     VALIDATE_BEGINPASS_DEPTHSTENCIL_ATTACHMENT_IMAGE,
+    VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_WIDTH,
+    VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_WIDTH_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_HEIGHT,
+    VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_HEIGHT_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_SAMPLECOUNT,
+    VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_SAMPLECOUNT_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_COLORFORMAT,
+    VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_COLORFORMAT_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_DEPTHFORMAT_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_METAL_EXPECT_CURRENTDRAWABLE,
+    VALIDATE_BEGINPASS_SWAPCHAIN_METAL_EXPECT_CURRENTDRAWABLE_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_METAL_EXPECT_DEPTHSTENCILTEXTURE,
+    VALIDATE_BEGINPASS_SWAPCHAIN_METAL_EXPECT_DEPTHSTENCILTEXTURE_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_METAL_EXPECT_MSAACOLORTEXTURE,
+    VALIDATE_BEGINPASS_SWAPCHAIN_METAL_EXPECT_MSAACOLORTEXTURE_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_D3D11_EXPECT_RENDERVIEW,
+    VALIDATE_BEGINPASS_SWAPCHAIN_D3D11_EXPECT_RENDERVIEW_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_D3D11_EXPECT_RESOLVEVIEW,
+    VALIDATE_BEGINPASS_SWAPCHAIN_D3D11_EXPECT_RESOLVEVIEW_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_D3D11_EXPECT_DEPTHSTENCILVIEW,
+    VALIDATE_BEGINPASS_SWAPCHAIN_D3D11_EXPECT_DEPTHSTENCILVIEW_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_WGPU_EXPECT_RENDERVIEW,
+    VALIDATE_BEGINPASS_SWAPCHAIN_WGPU_EXPECT_RENDERVIEW_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_WGPU_EXPECT_RESOLVEVIEW,
+    VALIDATE_BEGINPASS_SWAPCHAIN_WGPU_EXPECT_RESOLVEVIEW_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_WGPU_EXPECT_DEPTHSTENCILVIEW,
+    VALIDATE_BEGINPASS_SWAPCHAIN_WGPU_EXPECT_DEPTHSTENCILVIEW_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_GL_EXPECT_FRAMEBUFFER_NOTSET,
     VALIDATE_APIP_PIPELINE_VALID_ID,
     VALIDATE_APIP_PIPELINE_EXISTS,
     VALIDATE_APIP_PIPELINE_VALID,
     VALIDATE_APIP_SHADER_EXISTS,
     VALIDATE_APIP_SHADER_VALID,
+    VALIDATE_APIP_CURPASS_ATTACHMENTS_EXISTS,
+    VALIDATE_APIP_CURPASS_ATTACHMENTS_VALID,
     VALIDATE_APIP_ATT_COUNT,
     VALIDATE_APIP_COLOR_FORMAT,
     VALIDATE_APIP_DEPTH_FORMAT,
@@ -1060,46 +1118,26 @@ pub const LogItem = enum(i32) {
     VALIDATE_UPDIMG_ONCE,
     VALIDATION_FAILED,
 };
-pub const MetalContextDesc = extern struct {
-    device: ?*const anyopaque = null,
-    renderpass_descriptor_cb: ?*const fn () callconv(.C) ?*const anyopaque = null,
-    renderpass_descriptor_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    drawable_cb: ?*const fn () callconv(.C) ?*const anyopaque = null,
-    drawable_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    user_data: ?*anyopaque = null,
+pub const EnvironmentDefaults = extern struct {
+    color_format: PixelFormat = .DEFAULT,
+    depth_format: PixelFormat = .DEFAULT,
+    sample_count: i32 = 0,
 };
-pub const D3d11ContextDesc = extern struct {
+pub const MetalEnvironment = extern struct {
+    device: ?*const anyopaque = null,
+};
+pub const D3d11Environment = extern struct {
     device: ?*const anyopaque = null,
     device_context: ?*const anyopaque = null,
-    render_target_view_cb: ?*const fn () callconv(.C) ?*const anyopaque = null,
-    render_target_view_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    depth_stencil_view_cb: ?*const fn () callconv(.C) ?*const anyopaque = null,
-    depth_stencil_view_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    user_data: ?*anyopaque = null,
 };
-pub const WgpuContextDesc = extern struct {
+pub const WgpuEnvironment = extern struct {
     device: ?*const anyopaque = null,
-    render_view_cb: ?*const fn () callconv(.C) ?*const anyopaque = null,
-    render_view_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    resolve_view_cb: ?*const fn () callconv(.C) ?*const anyopaque = null,
-    resolve_view_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    depth_stencil_view_cb: ?*const fn () callconv(.C) ?*const anyopaque = null,
-    depth_stencil_view_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) ?*const anyopaque = null,
-    user_data: ?*anyopaque = null,
 };
-pub const GlContextDesc = extern struct {
-    default_framebuffer_cb: ?*const fn () callconv(.C) u32 = null,
-    default_framebuffer_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) u32 = null,
-    user_data: ?*anyopaque = null,
-};
-pub const ContextDesc = extern struct {
-    color_format: i32 = 0,
-    depth_format: i32 = 0,
-    sample_count: i32 = 0,
-    metal: MetalContextDesc = .{},
-    d3d11: D3d11ContextDesc = .{},
-    wgpu: WgpuContextDesc = .{},
-    gl: GlContextDesc = .{},
+pub const Environment = extern struct {
+    defaults: EnvironmentDefaults = .{},
+    metal: MetalEnvironment = .{},
+    d3d11: D3d11Environment = .{},
+    wgpu: WgpuEnvironment = .{},
 };
 pub const CommitListener = extern struct {
     func: ?*const fn (?*anyopaque) callconv(.C) void = null,
@@ -1121,17 +1159,17 @@ pub const Desc = extern struct {
     sampler_pool_size: i32 = 0,
     shader_pool_size: i32 = 0,
     pipeline_pool_size: i32 = 0,
-    pass_pool_size: i32 = 0,
-    context_pool_size: i32 = 0,
+    attachments_pool_size: i32 = 0,
     uniform_buffer_size: i32 = 0,
     max_commit_listeners: i32 = 0,
     disable_validation: bool = false,
     mtl_force_managed_storage_mode: bool = false,
+    mtl_use_command_buffer_with_retained_references: bool = false,
     wgpu_disable_bindgroups_cache: bool = false,
     wgpu_bindgroups_cache_size: i32 = 0,
     allocator: Allocator = .{},
     logger: Logger = .{},
-    context: ContextDesc = .{},
+    environment: Environment = .{},
     _end_canary: u32 = 0,
 };
 pub extern fn sg_setup([*c]const Desc) void;
@@ -1186,9 +1224,9 @@ pub extern fn sg_make_pipeline([*c]const PipelineDesc) Pipeline;
 pub fn makePipeline(desc: PipelineDesc) Pipeline {
     return sg_make_pipeline(&desc);
 }
-pub extern fn sg_make_pass([*c]const PassDesc) Pass;
-pub fn makePass(desc: PassDesc) Pass {
-    return sg_make_pass(&desc);
+pub extern fn sg_make_attachments([*c]const AttachmentsDesc) Attachments;
+pub fn makeAttachments(desc: AttachmentsDesc) Attachments {
+    return sg_make_attachments(&desc);
 }
 pub extern fn sg_destroy_buffer(Buffer) void;
 pub fn destroyBuffer(buf: Buffer) void {
@@ -1210,9 +1248,9 @@ pub extern fn sg_destroy_pipeline(Pipeline) void;
 pub fn destroyPipeline(pip: Pipeline) void {
     sg_destroy_pipeline(pip);
 }
-pub extern fn sg_destroy_pass(Pass) void;
-pub fn destroyPass(pass: Pass) void {
-    sg_destroy_pass(pass);
+pub extern fn sg_destroy_attachments(Attachments) void;
+pub fn destroyAttachments(atts: Attachments) void {
+    sg_destroy_attachments(atts);
 }
 pub extern fn sg_update_buffer(Buffer, [*c]const Range) void;
 pub fn updateBuffer(buf: Buffer, data: Range) void {
@@ -1234,17 +1272,9 @@ pub extern fn sg_query_buffer_will_overflow(Buffer, usize) bool;
 pub fn queryBufferWillOverflow(buf: Buffer, size: usize) bool {
     return sg_query_buffer_will_overflow(buf, size);
 }
-pub extern fn sg_begin_default_pass([*c]const PassAction, i32, i32) void;
-pub fn beginDefaultPass(pass_action: PassAction, width: i32, height: i32) void {
-    sg_begin_default_pass(&pass_action, width, height);
-}
-pub extern fn sg_begin_default_passf([*c]const PassAction, f32, f32) void;
-pub fn beginDefaultPassf(pass_action: PassAction, width: f32, height: f32) void {
-    sg_begin_default_passf(&pass_action, width, height);
-}
-pub extern fn sg_begin_pass(Pass, [*c]const PassAction) void;
-pub fn beginPass(pass: Pass, pass_action: PassAction) void {
-    sg_begin_pass(pass, &pass_action);
+pub extern fn sg_begin_pass([*c]const Pass) void;
+pub fn beginPass(pass: Pass) void {
+    sg_begin_pass(&pass);
 }
 pub extern fn sg_apply_viewport(i32, i32, i32, i32, bool) void;
 pub fn applyViewport(x: i32, y: i32, width: i32, height: i32, origin_top_left: bool) void {
@@ -1334,9 +1364,9 @@ pub extern fn sg_query_pipeline_state(Pipeline) ResourceState;
 pub fn queryPipelineState(pip: Pipeline) ResourceState {
     return sg_query_pipeline_state(pip);
 }
-pub extern fn sg_query_pass_state(Pass) ResourceState;
-pub fn queryPassState(pass: Pass) ResourceState {
-    return sg_query_pass_state(pass);
+pub extern fn sg_query_attachments_state(Attachments) ResourceState;
+pub fn queryAttachmentsState(atts: Attachments) ResourceState {
+    return sg_query_attachments_state(atts);
 }
 pub extern fn sg_query_buffer_info(Buffer) BufferInfo;
 pub fn queryBufferInfo(buf: Buffer) BufferInfo {
@@ -1358,9 +1388,9 @@ pub extern fn sg_query_pipeline_info(Pipeline) PipelineInfo;
 pub fn queryPipelineInfo(pip: Pipeline) PipelineInfo {
     return sg_query_pipeline_info(pip);
 }
-pub extern fn sg_query_pass_info(Pass) PassInfo;
-pub fn queryPassInfo(pass: Pass) PassInfo {
-    return sg_query_pass_info(pass);
+pub extern fn sg_query_attachments_info(Attachments) AttachmentsInfo;
+pub fn queryAttachmentsInfo(atts: Attachments) AttachmentsInfo {
+    return sg_query_attachments_info(atts);
 }
 pub extern fn sg_query_buffer_desc(Buffer) BufferDesc;
 pub fn queryBufferDesc(buf: Buffer) BufferDesc {
@@ -1382,9 +1412,9 @@ pub extern fn sg_query_pipeline_desc(Pipeline) PipelineDesc;
 pub fn queryPipelineDesc(pip: Pipeline) PipelineDesc {
     return sg_query_pipeline_desc(pip);
 }
-pub extern fn sg_query_pass_desc(Pass) PassDesc;
-pub fn queryPassDesc(pass: Pass) PassDesc {
-    return sg_query_pass_desc(pass);
+pub extern fn sg_query_attachments_desc(Attachments) AttachmentsDesc;
+pub fn queryAttachmentsDesc(atts: Attachments) AttachmentsDesc {
+    return sg_query_attachments_desc(atts);
 }
 pub extern fn sg_query_buffer_defaults([*c]const BufferDesc) BufferDesc;
 pub fn queryBufferDefaults(desc: BufferDesc) BufferDesc {
@@ -1406,9 +1436,9 @@ pub extern fn sg_query_pipeline_defaults([*c]const PipelineDesc) PipelineDesc;
 pub fn queryPipelineDefaults(desc: PipelineDesc) PipelineDesc {
     return sg_query_pipeline_defaults(&desc);
 }
-pub extern fn sg_query_pass_defaults([*c]const PassDesc) PassDesc;
-pub fn queryPassDefaults(desc: PassDesc) PassDesc {
-    return sg_query_pass_defaults(&desc);
+pub extern fn sg_query_attachments_defaults([*c]const AttachmentsDesc) AttachmentsDesc;
+pub fn queryAttachmentsDefaults(desc: AttachmentsDesc) AttachmentsDesc {
+    return sg_query_attachments_defaults(&desc);
 }
 pub extern fn sg_alloc_buffer() Buffer;
 pub fn allocBuffer() Buffer {
@@ -1430,9 +1460,9 @@ pub extern fn sg_alloc_pipeline() Pipeline;
 pub fn allocPipeline() Pipeline {
     return sg_alloc_pipeline();
 }
-pub extern fn sg_alloc_pass() Pass;
-pub fn allocPass() Pass {
-    return sg_alloc_pass();
+pub extern fn sg_alloc_attachments() Attachments;
+pub fn allocAttachments() Attachments {
+    return sg_alloc_attachments();
 }
 pub extern fn sg_dealloc_buffer(Buffer) void;
 pub fn deallocBuffer(buf: Buffer) void {
@@ -1454,9 +1484,9 @@ pub extern fn sg_dealloc_pipeline(Pipeline) void;
 pub fn deallocPipeline(pip: Pipeline) void {
     sg_dealloc_pipeline(pip);
 }
-pub extern fn sg_dealloc_pass(Pass) void;
-pub fn deallocPass(pass: Pass) void {
-    sg_dealloc_pass(pass);
+pub extern fn sg_dealloc_attachments(Attachments) void;
+pub fn deallocAttachments(attachments: Attachments) void {
+    sg_dealloc_attachments(attachments);
 }
 pub extern fn sg_init_buffer(Buffer, [*c]const BufferDesc) void;
 pub fn initBuffer(buf: Buffer, desc: BufferDesc) void {
@@ -1478,9 +1508,9 @@ pub extern fn sg_init_pipeline(Pipeline, [*c]const PipelineDesc) void;
 pub fn initPipeline(pip: Pipeline, desc: PipelineDesc) void {
     sg_init_pipeline(pip, &desc);
 }
-pub extern fn sg_init_pass(Pass, [*c]const PassDesc) void;
-pub fn initPass(pass: Pass, desc: PassDesc) void {
-    sg_init_pass(pass, &desc);
+pub extern fn sg_init_attachments(Attachments, [*c]const AttachmentsDesc) void;
+pub fn initAttachments(attachments: Attachments, desc: AttachmentsDesc) void {
+    sg_init_attachments(attachments, &desc);
 }
 pub extern fn sg_uninit_buffer(Buffer) void;
 pub fn uninitBuffer(buf: Buffer) void {
@@ -1502,9 +1532,9 @@ pub extern fn sg_uninit_pipeline(Pipeline) void;
 pub fn uninitPipeline(pip: Pipeline) void {
     sg_uninit_pipeline(pip);
 }
-pub extern fn sg_uninit_pass(Pass) void;
-pub fn uninitPass(pass: Pass) void {
-    sg_uninit_pass(pass);
+pub extern fn sg_uninit_attachments(Attachments) void;
+pub fn uninitAttachments(atts: Attachments) void {
+    sg_uninit_attachments(atts);
 }
 pub extern fn sg_fail_buffer(Buffer) void;
 pub fn failBuffer(buf: Buffer) void {
@@ -1526,9 +1556,9 @@ pub extern fn sg_fail_pipeline(Pipeline) void;
 pub fn failPipeline(pip: Pipeline) void {
     sg_fail_pipeline(pip);
 }
-pub extern fn sg_fail_pass(Pass) void;
-pub fn failPass(pass: Pass) void {
-    sg_fail_pass(pass);
+pub extern fn sg_fail_attachments(Attachments) void;
+pub fn failAttachments(atts: Attachments) void {
+    sg_fail_attachments(atts);
 }
 pub extern fn sg_enable_frame_stats() void;
 pub fn enableFrameStats() void {
@@ -1545,18 +1575,6 @@ pub fn frameStatsEnabled() bool {
 pub extern fn sg_query_frame_stats() FrameStats;
 pub fn queryFrameStats() FrameStats {
     return sg_query_frame_stats();
-}
-pub extern fn sg_setup_context() Context;
-pub fn setupContext() Context {
-    return sg_setup_context();
-}
-pub extern fn sg_activate_context(Context) void;
-pub fn activateContext(ctx_id: Context) void {
-    sg_activate_context(ctx_id);
-}
-pub extern fn sg_discard_context(Context) void;
-pub fn discardContext(ctx_id: Context) void {
-    sg_discard_context(ctx_id);
 }
 pub const D3d11BufferInfo = extern struct {
     buf: ?*const anyopaque = null,
@@ -1582,7 +1600,7 @@ pub const D3d11PipelineInfo = extern struct {
     dss: ?*const anyopaque = null,
     bs: ?*const anyopaque = null,
 };
-pub const D3d11PassInfo = extern struct {
+pub const D3d11AttachmentsInfo = extern struct {
     color_rtv: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
     resolve_rtv: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
     dsv: ?*const anyopaque = null,
@@ -1626,7 +1644,7 @@ pub const WgpuShaderInfo = extern struct {
 pub const WgpuPipelineInfo = extern struct {
     pip: ?*const anyopaque = null,
 };
-pub const WgpuPassInfo = extern struct {
+pub const WgpuAttachmentsInfo = extern struct {
     color_view: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
     resolve_view: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
     ds_view: ?*const anyopaque = null,
@@ -1647,8 +1665,8 @@ pub const GlSamplerInfo = extern struct {
 pub const GlShaderInfo = extern struct {
     prog: u32 = 0,
 };
-pub const GlPassInfo = extern struct {
-    frame_buffer: u32 = 0,
+pub const GlAttachmentsInfo = extern struct {
+    framebuffer: u32 = 0,
     msaa_resolve_framebuffer: [4]u32 = [_]u32{0} ** 4,
 };
 pub extern fn sg_d3d11_device() ?*const anyopaque;
@@ -1679,9 +1697,9 @@ pub extern fn sg_d3d11_query_pipeline_info(Pipeline) D3d11PipelineInfo;
 pub fn d3d11QueryPipelineInfo(pip: Pipeline) D3d11PipelineInfo {
     return sg_d3d11_query_pipeline_info(pip);
 }
-pub extern fn sg_d3d11_query_pass_info(Pass) D3d11PassInfo;
-pub fn d3d11QueryPassInfo(pass: Pass) D3d11PassInfo {
-    return sg_d3d11_query_pass_info(pass);
+pub extern fn sg_d3d11_query_attachments_info(Attachments) D3d11AttachmentsInfo;
+pub fn d3d11QueryAttachmentsInfo(atts: Attachments) D3d11AttachmentsInfo {
+    return sg_d3d11_query_attachments_info(atts);
 }
 pub extern fn sg_mtl_device() ?*const anyopaque;
 pub fn mtlDevice() ?*const anyopaque {
@@ -1747,9 +1765,9 @@ pub extern fn sg_wgpu_query_pipeline_info(Pipeline) WgpuPipelineInfo;
 pub fn wgpuQueryPipelineInfo(pip: Pipeline) WgpuPipelineInfo {
     return sg_wgpu_query_pipeline_info(pip);
 }
-pub extern fn sg_wgpu_query_pass_info(Pass) WgpuPassInfo;
-pub fn wgpuQueryPassInfo(pass: Pass) WgpuPassInfo {
-    return sg_wgpu_query_pass_info(pass);
+pub extern fn sg_wgpu_query_attachments_info(Attachments) WgpuAttachmentsInfo;
+pub fn wgpuQueryAttachmentsInfo(atts: Attachments) WgpuAttachmentsInfo {
+    return sg_wgpu_query_attachments_info(atts);
 }
 pub extern fn sg_gl_query_buffer_info(Buffer) GlBufferInfo;
 pub fn glQueryBufferInfo(buf: Buffer) GlBufferInfo {
@@ -1767,7 +1785,7 @@ pub extern fn sg_gl_query_shader_info(Shader) GlShaderInfo;
 pub fn glQueryShaderInfo(shd: Shader) GlShaderInfo {
     return sg_gl_query_shader_info(shd);
 }
-pub extern fn sg_gl_query_pass_info(Pass) GlPassInfo;
-pub fn glQueryPassInfo(pass: Pass) GlPassInfo {
-    return sg_gl_query_pass_info(pass);
+pub extern fn sg_gl_query_attachments_info(Attachments) GlAttachmentsInfo;
+pub fn glQueryAttachmentsInfo(atts: Attachments) GlAttachmentsInfo {
+    return sg_gl_query_attachments_info(atts);
 }

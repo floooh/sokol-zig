@@ -7,14 +7,14 @@ const sokol = @import("sokol");
 const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
-const sgapp = sokol.app_gfx_glue;
+const sglue = sokol.glue;
 const print = @import("std").debug.print;
 
 var pass_action: sg.PassAction = .{};
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context(),
+        .environment = sglue.environment(),
         .logger = .{ .func = slog.func },
     });
     pass_action.colors[0] = .{
@@ -27,7 +27,7 @@ export fn init() void {
 export fn frame() void {
     const g = pass_action.colors[0].clear_value.g + 0.01;
     pass_action.colors[0].clear_value.g = if (g > 1.0) 0.0 else g;
-    sg.beginDefaultPass(pass_action, sapp.width(), sapp.height());
+    sg.beginPass(.{ .action = pass_action, .swapchain = sglue.swapchain() });
     sg.endPass();
     sg.commit();
 }
@@ -43,13 +43,9 @@ pub fn main() void {
         .cleanup_cb = cleanup,
         .width = 640,
         .height = 480,
-        .icon = .{
-            .sokol_default = true,
-        },
+        .icon = .{ .sokol_default = true },
         .window_title = "clear.zig",
-        .logger = .{
-            .func = slog.func,
-        },
+        .logger = .{ .func = slog.func },
         .win32_console_attach = true,
     });
 }

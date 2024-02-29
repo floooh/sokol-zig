@@ -7,7 +7,7 @@ const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
 const saudio = sokol.audio;
-const sgapp = sokol.app_gfx_glue;
+const sglue = sokol.glue;
 
 const NumSamples = 32;
 
@@ -20,7 +20,7 @@ const state = struct {
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context(),
+        .environment = sglue.environment(),
         .logger = .{ .func = slog.func },
     });
     saudio.setup(.{
@@ -46,8 +46,7 @@ export fn frame() void {
         }
         state.samples[state.sample_pos] = if (0 != (state.even_odd & 0x20)) 0.1 else -0.1;
     }
-
-    sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
+    sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
     sg.endPass();
     sg.commit();
 }

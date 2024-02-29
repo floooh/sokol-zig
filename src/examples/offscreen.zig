@@ -8,7 +8,7 @@ const sokol = @import("sokol");
 const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
-const sgapp = sokol.app_gfx_glue;
+const sglue = sokol.glue;
 const sshape = sokol.shape;
 const vec3 = @import("math.zig").Vec3;
 const mat4 = @import("math.zig").Mat4;
@@ -19,7 +19,7 @@ const offscreen_sample_count = 1;
 const state = struct {
     const offscreen = struct {
         var pass_action: sg.PassAction = .{};
-        var pass: sg.Pass = .{};
+        var attachments: sg.Attachments = .{};
         var pip: sg.Pipeline = .{};
         var bind: sg.Bindings = .{};
     };
@@ -36,7 +36,7 @@ const state = struct {
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context(),
+        .environment = sglue.environment(),
         .logger = .{ .func = slog.func },
     });
 
@@ -64,10 +64,10 @@ export fn init() void {
     img_desc.pixel_format = .DEPTH;
     const depth_img = sg.makeImage(img_desc);
 
-    var pass_desc: sg.PassDesc = .{};
-    pass_desc.color_attachments[0].image = color_img;
-    pass_desc.depth_stencil_attachment.image = depth_img;
-    state.offscreen.pass = sg.makePass(pass_desc);
+    var atts_desc: sg.AttachmentsDesc = .{};
+    atts_desc.colors[0].image = color_img;
+    atts_desc.depth_stencil.image = depth_img;
+    state.offscreen.attachments = sg.makeAttachments(atts_desc);
 
     // a donut shape which is rendered into the offscreen render target, and
     // a sphere shape which is rendered into the default framebuffer
@@ -149,7 +149,7 @@ export fn frame() void {
     const aspect = sapp.widthf() / sapp.heightf();
 
     // the offscreen pass, rendering a rotating untextured donut into a render target image
-    sg.beginPass(state.offscreen.pass, state.offscreen.pass_action);
+    sg.beginPass(.{ .action = state.offscreen.pass_action, .attachments = state.offscreen.attachments });
     sg.applyPipeline(state.offscreen.pip);
     sg.applyBindings(state.offscreen.bind);
     sg.applyUniforms(.VS, 0, sg.asRange(&computeVsParams(state.rx, state.ry, 1.0, 2.5)));
@@ -158,7 +158,7 @@ export fn frame() void {
 
     // and the display pass, rendering a rotating textured sphere, using the previously
     // rendered offscreen render target as texture
-    sg.beginDefaultPass(state.default.pass_action, sapp.width(), sapp.height());
+    sg.beginPass(.{ .action = state.default.pass_action, .swapchain = sglue.swapchain() });
     sg.applyPipeline(state.default.pip);
     sg.applyBindings(state.default.bind);
     sg.applyUniforms(.VS, 0, sg.asRange(&computeVsParams(-state.rx * 0.25, state.ry * 0.25, aspect, 2)));

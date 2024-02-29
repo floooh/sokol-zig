@@ -7,7 +7,7 @@ const sokol = @import("sokol");
 const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
-const sgapp = sokol.app_gfx_glue;
+const sglue = sokol.glue;
 const vec3 = @import("math.zig").Vec3;
 const mat4 = @import("math.zig").Mat4;
 const shd = @import("shaders/texcube.glsl.zig");
@@ -26,7 +26,7 @@ const Vertex = extern struct { x: f32, y: f32, z: f32, color: u32, u: i16, v: i1
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context(),
+        .environment = sglue.environment(),
         .logger = .{ .func = slog.func },
     });
 
@@ -131,7 +131,7 @@ export fn frame() void {
     state.ry += 2.0 * dt;
     const vs_params = computeVsParams(state.rx, state.ry);
 
-    sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
+    sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
     sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(&vs_params));

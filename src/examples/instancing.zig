@@ -8,7 +8,7 @@ const sokol = @import("sokol");
 const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
-const sgapp = sokol.app_gfx_glue;
+const sglue = sokol.glue;
 const vec3 = @import("math.zig").Vec3;
 const mat4 = @import("math.zig").Mat4;
 const shd = @import("shaders/instancing.glsl.zig");
@@ -31,7 +31,7 @@ const state = struct {
 
 export fn init() void {
     sg.setup(.{
-        .context = sgapp.context(),
+        .environment = sglue.environment(),
         .logger = .{ .func = slog.func },
     });
 
@@ -133,7 +133,7 @@ export fn frame() void {
     const vs_params = computeVsParams(1.0, state.ry);
 
     // and finally draw...
-    sg.beginDefaultPass(state.pass_action, sapp.width(), sapp.height());
+    sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
     sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(&vs_params));
