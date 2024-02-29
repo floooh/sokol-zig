@@ -30,14 +30,9 @@
 
     OVERVIEW
     ========
-    The sokol core headers should not depend on each other, but sometimes
-    it's useful to have a set of helper functions as "glue" between
-    two or more sokol headers.
-
-    This is what sokol_glue.h is for. Simply include the header after other
-    sokol headers (both for the implementation and declaration), and
-    depending on what headers have been included before, sokol_glue.h
-    will make available "glue functions".
+    sokol_glue.h provides glue helper functions between sokol_gfx.h and sokol_app.h,
+    so that sokol_gfx.h doesn't need to depend on sokol_app.h but can be
+    used with different window system glue libraries.
 
     PROVIDED FUNCTIONS
     ==================
@@ -100,6 +95,10 @@
 #endif
 #endif
 
+#ifndef SOKOL_GFX_INCLUDED
+#error "Please include sokol_gfx.h before sokol_glue.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -117,9 +116,14 @@ SOKOL_GLUE_API_DECL sg_swapchain sglue_swapchain(void);
 #define SOKOL_GLUE_IMPL_INCLUDED (1)
 #include <string.h> /* memset */
 
-#ifndef SOKOL_API_IMPL
-    #define SOKOL_API_IMPL
+#ifndef SOKOL_APP_INCLUDED
+#error "Please include sokol_app.h before the sokol_glue.h implementation"
 #endif
+
+#ifndef SOKOL_API_IMPL
+#define SOKOL_API_IMPL
+#endif
+
 
 SOKOL_API_IMPL sg_environment sglue_environment(void) {
     sg_environment env;
