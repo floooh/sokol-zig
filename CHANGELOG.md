@@ -4,6 +4,14 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 29-Feb-2024
+
+**BREAKING CHANGES**
+
+- The examples have been updated for the 'render pass cleanup' in sokol-gfx, please
+  see the [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md)
+  for details!
+
 ### 17-Jan-2024
 
 - Switched the master branch to support the Zig nightly versions, this is different from before
