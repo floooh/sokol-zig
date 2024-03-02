@@ -370,6 +370,8 @@ pub const Desc = extern struct {
     html5_bubble_wheel_events: bool = false,
     html5_bubble_key_events: bool = false,
     html5_bubble_char_events: bool = false,
+    html5_use_emsc_set_main_loop: bool = false,
+    html5_emsc_set_main_loop_simulate_infinite_loop: bool = false,
     ios_keyboard_resizes_canvas: bool = false,
 };
 pub const Html5FetchError = enum(i32) {
