@@ -239,7 +239,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
             lib.linkSystemLibrary("xkbcommon");
         }
         if (link_egl) {
-            lib.linkSystemLibrary("egl");
+            lib.linkSystemLibrary("EGL");
         }
     } else if (lib.rootModuleTarget().os.tag == .windows) {
         lib.linkSystemLibrary("kernel32");
