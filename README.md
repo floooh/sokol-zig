@@ -95,7 +95,7 @@ Add a build.zig.zon file to your project which has at least a `.sokol` dependenc
     .name = "my_project",
     .version = "0.1.0",
     .paths = .{
-        "src"
+        "src",
         "build.zig",
         "build.zig.zon",
     },
