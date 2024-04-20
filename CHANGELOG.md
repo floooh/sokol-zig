@@ -4,6 +4,12 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 20-Apr-2024
+
+- update the emsdk dependency to 3.1.57
+- some minor build.zig code cleanup
+- test with Zig 0.12.0 release
+
 ### 29-Feb-2024
 
 **BREAKING CHANGES**

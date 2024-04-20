@@ -25,7 +25,7 @@ pub fn build(b: *Build) !void {
     const emsdk = b.dependency("emsdk", .{});
 
     // a module for the actual bindings, and a static link library with the C code
-    const mod_sokol = b.addModule("sokol", .{ .root_source_file = .{ .path = "src/sokol/sokol.zig" } });
+    const mod_sokol = b.addModule("sokol", .{ .root_source_file = b.path("src/sokol/sokol.zig") });
     const lib_sokol = try buildLibSokol(b, .{
         .target = target,
         .optimize = optimize,
@@ -88,7 +88,7 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !
         // for native platforms, build into a regular executable
         const example = b.addExecutable(.{
             .name = name,
-            .root_source_file = .{ .path = main_src },
+            .root_source_file = b.path(main_src),
             .target = options.target,
             .optimize = options.optimize,
         });
@@ -99,7 +99,7 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !
         // for WASM, need to build the Zig code as static library, since linking happens via emcc
         const example = b.addStaticLibrary(.{
             .name = name,
-            .root_source_file = .{ .path = main_src },
+            .root_source_file = b.path(main_src),
             .target = options.target,
             .optimize = options.optimize,
         });
@@ -267,7 +267,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     };
     inline for (csources) |csrc| {
         lib.addCSourceFile(.{
-            .file = .{ .path = csrc_root ++ csrc },
+            .file = b.path(csrc_root ++ csrc),
             .flags = cflags,
         });
     }
@@ -287,6 +287,7 @@ pub const EmLinkOptions = struct {
     use_webgl2: bool = false,
     use_emmalloc: bool = false,
     use_filesystem: bool = true,
+    // FIXME: this should be a LazyPath?
     shell_file_path: ?[]const u8 = null,
     extra_args: []const []const u8 = &.{},
 };
