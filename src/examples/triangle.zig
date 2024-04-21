@@ -98,11 +98,11 @@ fn shaderDesc() sg.ShaderDesc {
                 \\}
             ;
         },
-        .GLCORE33 => {
+        .GLCORE => {
             desc.attrs[0].name = "position";
             desc.attrs[1].name = "color0";
             desc.vs.source =
-                \\ #version 330
+                \\ #version 410
                 \\ in vec4 position;
                 \\ in vec4 color0;
                 \\ out vec4 color;
@@ -112,7 +112,7 @@ fn shaderDesc() sg.ShaderDesc {
                 \\ }
             ;
             desc.fs.source =
-                \\ #version 330
+                \\ #version 410
                 \\ in vec4 color;
                 \\ out vec4 frag_color;
                 \\ void main() {
