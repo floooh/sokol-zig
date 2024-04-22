@@ -1334,7 +1334,7 @@ const fs_default_source_wgsl = [980]u8 {
 pub fn defaultShaderDesc(backend: sg.Backend) sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     desc.label = "default_shader";
-    switch(backend) {
+    switch (backend) {
         .GLCORE => {
             desc.attrs[0].name = "position";
             desc.attrs[1].name = "normal";
@@ -1449,7 +1449,7 @@ pub fn defaultShaderDesc(backend: sg.Backend) sg.ShaderDesc {
 pub fn offscreenShaderDesc(backend: sg.Backend) sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     desc.label = "offscreen_shader";
-    switch(backend) {
+    switch (backend) {
         .GLCORE => {
             desc.attrs[0].name = "position";
             desc.attrs[1].name = "normal";

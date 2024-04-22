@@ -601,7 +601,7 @@ const fs_source_wgsl = [376]u8 {
 pub fn instancingShaderDesc(backend: sg.Backend) sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     desc.label = "instancing_shader";
-    switch(backend) {
+    switch (backend) {
         .GLCORE => {
             desc.attrs[0].name = "pos";
             desc.attrs[1].name = "color0";

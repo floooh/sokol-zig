@@ -495,7 +495,7 @@ const fs_source_wgsl = [376]u8 {
 pub fn quadShaderDesc(backend: sg.Backend) sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     desc.label = "quad_shader";
-    switch(backend) {
+    switch (backend) {
         .GLCORE => {
             desc.attrs[0].name = "position";
             desc.attrs[1].name = "color0";

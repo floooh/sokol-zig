@@ -90,7 +90,7 @@ pub const OffscreenParams = extern struct {
 };
 pub const FsqParams = extern struct {
     offset: m.Vec2 align(16),
-    _pad_8: [8]u8 = undefined,
+    _pad_8: [8]u8 align(1) = undefined,
 };
 //
 //    #version 410
@@ -2021,7 +2021,7 @@ const fs_dbg_source_wgsl = [590]u8 {
 pub fn dbgShaderDesc(backend: sg.Backend) sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     desc.label = "dbg_shader";
-    switch(backend) {
+    switch (backend) {
         .GLCORE => {
             desc.attrs[0].name = "pos";
             desc.vs.source = &vs_dbg_source_glsl410;
@@ -2112,7 +2112,7 @@ pub fn dbgShaderDesc(backend: sg.Backend) sg.ShaderDesc {
 pub fn fsqShaderDesc(backend: sg.Backend) sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     desc.label = "fsq_shader";
-    switch(backend) {
+    switch (backend) {
         .GLCORE => {
             desc.attrs[0].name = "pos";
             desc.vs.source = &vs_fsq_source_glsl410;
@@ -2293,7 +2293,7 @@ pub fn fsqShaderDesc(backend: sg.Backend) sg.ShaderDesc {
 pub fn offscreenShaderDesc(backend: sg.Backend) sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     desc.label = "offscreen_shader";
-    switch(backend) {
+    switch (backend) {
         .GLCORE => {
             desc.attrs[0].name = "pos";
             desc.attrs[1].name = "bright0";

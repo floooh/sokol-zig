@@ -699,7 +699,7 @@ const fs_source_wgsl = [630]u8 {
 pub fn texcubeShaderDesc(backend: sg.Backend) sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     desc.label = "texcube_shader";
-    switch(backend) {
+    switch (backend) {
         .GLCORE => {
             desc.attrs[0].name = "pos";
             desc.attrs[1].name = "color0";

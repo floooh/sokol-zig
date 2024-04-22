@@ -29,8 +29,8 @@ pub const VsParams = extern struct {
 };
 pub const SbVertex = extern struct {
     pos: [3]f32 align(16),
-    _pad_12: [4]u8 = undefined,
-    color: [4]f32,
+    _pad_12: [4]u8 align(1) = undefined,
+    color: [4]f32 align(1),
 };
 //
 //    #version 410
@@ -647,7 +647,7 @@ const fs_source_wgsl = [376]u8 {
 pub fn vertexpullShaderDesc(backend: sg.Backend) sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     desc.label = "vertexpull_shader";
-    switch(backend) {
+    switch (backend) {
         .GLCORE => {
             desc.vs.source = &vs_source_glsl410;
             desc.vs.entry = "main";

@@ -30,8 +30,8 @@ pub const ATTR_vs_color0 = 3;
 pub const SLOT_vs_params = 0;
 pub const VsParams = extern struct {
     draw_mode: f32 align(16),
-    _pad_4: [12]u8 = undefined,
-    mvp: m.Mat4,
+    _pad_4: [12]u8 align(1) = undefined,
+    mvp: m.Mat4 align(1),
 };
 //
 //    #version 410
@@ -787,7 +787,7 @@ const fs_source_wgsl = [376]u8 {
 pub fn shapesShaderDesc(backend: sg.Backend) sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     desc.label = "shapes_shader";
-    switch(backend) {
+    switch (backend) {
         .GLCORE => {
             desc.attrs[0].name = "position";
             desc.attrs[1].name = "normal";

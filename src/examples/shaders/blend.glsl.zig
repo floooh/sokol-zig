@@ -37,7 +37,7 @@ pub const SLOT_bg_fs_params = 0;
 pub const SLOT_quad_vs_params = 0;
 pub const BgFsParams = extern struct {
     tick: f32 align(16),
-    _pad_4: [12]u8 = undefined,
+    _pad_4: [12]u8 align(1) = undefined,
 };
 pub const QuadVsParams = extern struct {
     mvp: m.Mat4 align(16),
@@ -1096,7 +1096,7 @@ const fs_quad_source_wgsl = [376]u8 {
 pub fn bgShaderDesc(backend: sg.Backend) sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     desc.label = "bg_shader";
-    switch(backend) {
+    switch (backend) {
         .GLCORE => {
             desc.attrs[0].name = "position";
             desc.vs.source = &vs_bg_source_glsl410;
@@ -1156,7 +1156,7 @@ pub fn bgShaderDesc(backend: sg.Backend) sg.ShaderDesc {
 pub fn quadShaderDesc(backend: sg.Backend) sg.ShaderDesc {
     var desc: sg.ShaderDesc = .{};
     desc.label = "quad_shader";
-    switch(backend) {
+    switch (backend) {
         .GLCORE => {
             desc.attrs[0].name = "position";
             desc.attrs[1].name = "color0";
