@@ -24,7 +24,7 @@
         #define SOKOL_WGPU
         #define SOKOL_DUMMY_BACKEND
 
-    I.e. for the GL 3.3 Core Profile it should look like this:
+    I.e. for the desktop GL it should look like this:
 
     #include ...
     #include ...
@@ -148,9 +148,8 @@
             sg_apply_pipeline(sg_pipeline pip)
 
     --- fill an sg_bindings struct with the resource bindings for the next
-        draw call (1..N vertex buffers, 0 or 1 index buffer, 0..N image objects and
-        0..N sampler objects on the vertex-shader- and fragment-shader-stage
-        and then call
+        draw call (0..N vertex buffers, 0 or 1 index buffer, 0..N image-objects,
+        samplers and storage-buffers), and call:
 
             sg_apply_bindings(const sg_bindings* bindings)
 
@@ -718,7 +717,9 @@
     the sg_make_shader() function requires the following information:
 
     - Shader code or shader binary blobs for the vertex- and fragment- shader-stage:
-        - for the desktop GL backend, source code must be provided in '#version 330' syntax
+        - for the desktop GL backend, source code can be provided in '#version 410' or
+          '#version 430', version 430 is required for storage buffer support, but note
+          that this is not available on macOS
         - for the GLES3 backend, source code must be provided in '#version 300 es' syntax
         - for the D3D11 backend, shaders can be provided as source or binary blobs, the
           source code should be in HLSL4.0 (for best compatibility) or alternatively
@@ -757,6 +758,12 @@
         - please also NOTE the documentation sections about UNIFORM DATA LAYOUT
           and CROSS-BACKEND COMMON UNIFORM DATA LAYOUT below!
 
+    - A description of each storage buffer used in the shader:
+        - a boolean 'readonly' flag, note that currently only
+          readonly storage buffers are supported
+        - note that storage buffers are not supported on all backends
+          and platforms
+
     - A description of each texture/image used in the shader:
         - the expected image type:
             - SG_IMAGETYPE_2D
@@ -773,7 +780,7 @@
           (currently it's not supported to fetch data from multisampled
           textures in shaders, but this is planned for a later time)
 
-    - A description of each sampler used in the shader:
+    - A description of each texture sampler used in the shader:
         - SG_SAMPLERTYPE_FILTERING,
         - SG_SAMPLERTYPE_NONFILTERING,
         - SG_SAMPLERTYPE_COMPARISON,
@@ -953,6 +960,126 @@
     The by far easiest way to tackle the common uniform block layout problem is
     to use the sokol-shdc shader cross-compiler tool!
 
+    ON STORAGE BUFFERS
+    ==================
+    Storage buffers can be used to pass large amounts of random access structured
+    data fromt the CPU side to the shaders. They are similar to data textures, but are
+    more convenient to use both on the CPU and shader side since they can be accessed
+    in shaders as as a 1-dimensional array of struct items.
+
+    Storage buffers are *NOT* supported on the following platform/backend combos:
+
+    - macOS+GL (because storage buffers require GL 4.3, while macOS only goes up to GL 4.1)
+    - all GLES3 platforms (WebGL2, iOS, Android - with the option that support on
+      Android may be added at a later point)
+
+    Currently only 'readonly' storage buffers are supported (meaning it's not possible
+    to write to storage buffers from shaders).
+
+    To use storage buffers, the following steps are required:
+
+        - write a shader which uses storage buffers (also see the example links below)
+        - create one or more storage buffers via sg_make_buffer() with the
+          buffer type SG_BUFFERTYPE_STORAGEBUFFER
+        - when creating a shader via sg_make_shader(), populate the sg_shader_desc
+          struct with binding info (when using sokol-shdc, this step will be taken care
+          of automatically)
+            - which storage buffer bind slots on the vertex- and fragment-stage
+              are occupied
+            - whether the storage buffer on that bind slot is readonly (this is currently required
+              to be true)
+        - when calling sg_apply_bindings(), apply the matching bind slots with the previously
+          created storage buffers
+        - ...and that's it.
+
+    For more details, see the following backend-agnostic sokol samples:
+
+    - simple vertex pulling from a storage buffer:
+        - C code: https://github.com/floooh/sokol-samples/blob/master/sapp/vertexpull-sapp.c
+        - shader: https://github.com/floooh/sokol-samples/blob/master/sapp/vertexpull-sapp.glsl
+    - instanced rendering via storage buffers (vertex- and instance-pulling):
+        - C code: https://github.com/floooh/sokol-samples/blob/master/sapp/instancing-pull-sapp.c
+        - shader: https://github.com/floooh/sokol-samples/blob/master/sapp/instancing-pull-sapp.glsl
+    - storage buffers both on the vertex- and fragment-stage:
+        - C code: https://github.com/floooh/sokol-samples/blob/master/sapp/sbuftex-sapp.c
+        - shader: https://github.com/floooh/sokol-samples/blob/master/sapp/sbuftex-sapp.glsl
+    - the Ozz animation sample rewritten to pull all rendering data from storage buffers:
+        - C code: https://github.com/floooh/sokol-samples/blob/master/sapp/ozz-storagebuffer-sapp.cc
+        - shader: https://github.com/floooh/sokol-samples/blob/master/sapp/ozz-storagebuffer-sapp.glsl
+
+    ...also see the following backend-specific vertex pulling samples (those also don't use sokol-shdc):
+
+    - D3D11: https://github.com/floooh/sokol-samples/blob/master/d3d11/vertexpulling-d3d11.c
+    - desktop GL: https://github.com/floooh/sokol-samples/blob/master/glfw/vertexpulling-glfw.c
+    - Metal: https://github.com/floooh/sokol-samples/blob/master/metal/vertexpulling-metal.c
+    - WebGPU: https://github.com/floooh/sokol-samples/blob/master/wgpu/vertexpulling-wgpu.c
+
+    Storage buffer shader authoring caveats when using sokol-shdc:
+
+        - declare a storage buffer interface block with `readonly buffer [name] { ... }`
+        - do NOT annotate storage buffers with `layout(...)`, sokol-shdc will take care of that
+        - declare a struct which describes a single array item in the storage buffer interface block
+        - only put a single flexible array member into the storage buffer interface block
+
+        E.g. a complete example in 'sokol-shdc GLSL':
+
+        ```glsl
+        // declare a struct:
+        struct sb_vertex {
+            vec3 pos;
+            vec4 color;
+        }
+        // declare a buffer interface block with a single flexible struct array:
+        readonly buffer vertices {
+            sb_vertex vtx[];
+        }
+        // in the shader function, access the storage buffer like this:
+        void main() {
+            vec3 pos = vtx[gl_VertexIndex].pos;
+            ...
+        }
+        ```
+
+    Backend-specific storage-buffer caveats (not relevant when using sokol-shdc):
+
+        D3D11:
+            - storage buffers are created as 'raw' Byte Address Buffers
+              (https://learn.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-intro#raw-views-of-buffers)
+            - in HLSL, use a ByteAddressBuffer to access the buffer content
+              (https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-object-byteaddressbuffer)
+            - in D3D11, storage buffers and textures share the same bind slots, sokol-gfx reserves
+              shader resource slots 0..15 for textures and 16..23 for storage buffers.
+            - e.g. in HLSL, storage buffer bindings start at register(t16) no matter the shader stage
+
+        Metal:
+            - in Metal there is no internal difference between vertex-, uniform- and
+              storage-buffers, all are bound to the same 'buffer bind slots' with the
+              following reserved ranges:
+                - vertex shader stage:
+                    - uniform buffers (internal): slots 0..3
+                    - vertex buffers: slots 4..11
+                    - storage buffers: slots 12..19
+                - fragment shader stage:
+                    - uniform buffers (internal): slots 0..3
+                    - storage buffers: slots 4..11
+            - this means in MSL, storage buffer bindings start at [[buffer(12)]] in the vertex
+              shaders, and at [[buffer(4)]] in fragment shaders
+
+        GL:
+            - the GL backend doesn't use name-lookup to find storage buffer bindings, this
+              means you must annotate buffers with `layout(std430, binding=N)` in GLSL
+            - ...where N is 0..7 in the vertex shader, and 8..15 in the fragment shader
+
+        WebGPU:
+            - in WGSL, use the following bind locations for the various shader resource types:
+            - vertex shader stage:
+                - textures `@group(1) @binding(0..15)`
+                - samplers `@group(1) @binding(16..31)`
+                - storage buffers `@group(1) @binding(32..47)`
+            - fragment shader stage:
+                - textures `@group(1) @binding(48..63)`
+                - samplers `@group(1) @binding(64..79)`
+                - storage buffers `@group(1) @binding(80..95)`
 
     TRACE HOOKS:
     ============
@@ -1334,12 +1461,14 @@
       offsets depending on resource type and shader stage.
         - Vertex shader textures must start at `@group(1) @binding(0)`
         - Vertex shader samplers must start at `@group(1) @binding(16)`
-        - Fragment shader textures must start at `@group(1) @binding(32)`
-        - Fragment shader samplers must start at `@group(1) @binding(48)`
+        - Vertex shader storage buffers must start at `@group(1) @binding(32)`
+        - Fragment shader textures must start at `@group(1) @binding(48)`
+        - Fragment shader samplers must start at `@group(1) @binding(64)`
+        - Fragment shader storage buffers must start at `@group(1) @binding(80)`
 
       Note that the actual number of allowed per-stage texture- and sampler-bindings
       in sokol-gfx is currently lower than the above ranges (currently only up to
-      12 textures and 8 samplers per shader stage are allowed).
+      12 textures, 8 samplers and 8 storage buffers are allowed per shader stage).
 
       If you use sokol-shdc to generate WGSL shader code, you don't need to worry
       about the above binding convention since sokol-shdc assigns bind slots
@@ -1516,7 +1645,7 @@ enum {
     SG_MAX_SHADERSTAGE_IMAGES = 12,
     SG_MAX_SHADERSTAGE_SAMPLERS = 8,
     SG_MAX_SHADERSTAGE_IMAGESAMPLERPAIRS = 12,
-    SG_MAX_SHADERSTAGE_STORAGE_BUFFERS = 8,
+    SG_MAX_SHADERSTAGE_STORAGEBUFFERS = 8,
     SG_MAX_SHADERSTAGE_UBS = 4,
     SG_MAX_UB_MEMBERS = 16,
     SG_MAX_VERTEX_ATTRIBUTES = 16,
@@ -1791,8 +1920,10 @@ typedef enum sg_usage {
 /*
     sg_buffer_type
 
-    This indicates whether a buffer contains vertex- or index-data,
-    used in the sg_buffer_desc.type member when creating a buffer.
+    Indicates whether a buffer will be bound as vertex-,
+    index- or storage-buffer.
+
+    Used in the sg_buffer_desc.type member when creating a buffer.
 
     The default value is SG_BUFFERTYPE_VERTEXBUFFER.
 */
@@ -1924,12 +2055,12 @@ typedef enum sg_cube_face {
     sg_shader_stage
 
     There are 2 shader stages: vertex- and fragment-shader-stage.
-    Each shader stage consists of:
+    Each shader stage
 
-    - one slot for a shader function (provided as source- or byte-code)
-    - SG_MAX_SHADERSTAGE_UBS slots for uniform blocks
-    - SG_MAX_SHADERSTAGE_IMAGES slots for images used as textures by
-      the shader function
+    - SG_MAX_SHADERSTAGE_UBS slots for applying uniform data
+    - SG_MAX_SHADERSTAGE_IMAGES slots for images used as textures
+    - SG_MAX_SHADERSTAGE_SAMPLERS slots for texture samplers
+    - SG_MAX_SHADERSTAGE_STORAGEBUFFERS slots for storage buffer bindings
 */
 typedef enum sg_shader_stage {
     SG_SHADERSTAGE_VS,
@@ -2575,7 +2706,7 @@ typedef struct sg_pass {
     - SG_MAX_VERTEX_BUFFERS
     - SG_MAX_SHADERSTAGE_IMAGES
     - SG_MAX_SHADERSTAGE_SAMPLERS
-    - SG_MAX_SHADERSTAGE_STORAGE_BUFFERS
+    - SG_MAX_SHADERSTAGE_STORAGEBUFFERS
 
     The optional buffer offsets can be used to put different unrelated
     chunks of vertex- and/or index-data into the same buffer objects.
@@ -2583,7 +2714,7 @@ typedef struct sg_pass {
 typedef struct sg_stage_bindings {
     sg_image images[SG_MAX_SHADERSTAGE_IMAGES];
     sg_sampler samplers[SG_MAX_SHADERSTAGE_SAMPLERS];
-    sg_buffer storage_buffers[SG_MAX_SHADERSTAGE_STORAGE_BUFFERS];
+    sg_buffer storage_buffers[SG_MAX_SHADERSTAGE_STORAGEBUFFERS];
 } sg_stage_bindings;
 
 typedef struct sg_bindings {
@@ -2610,11 +2741,7 @@ typedef struct sg_bindings {
     .usage:     SG_USAGE_IMMUTABLE
     .data.ptr   0       (*must* be valid for immutable buffers)
     .data.size  0       (*must* be > 0 for immutable buffers)
-    .label      0       (optional string label for trace hooks)
-
-    The label will be ignored by sokol_gfx.h, it is only useful
-    when hooking into sg_make_buffer() or sg_init_buffer() via
-    the sg_install_trace_hooks() function.
+    .label      0       (optional string label)
 
     For immutable buffers which are initialized with initial data,
     keep the .size item zero-initialized, and set the size together with the
@@ -2827,6 +2954,9 @@ typedef struct sg_sampler_desc {
             - the texture slot of the involved texture
             - the sampler slot of the involved sampler
             - for GLSL only: the name of the combined image-sampler object
+        - reflection info for each storage-buffer used by the shader:
+            - whether the storage buffer is readonly (currently this
+              must be true)
 
     For all GL backends, shader source-code must be provided. For D3D11 and Metal,
     either shader source-code or byte-code can be provided.
@@ -2885,7 +3015,7 @@ typedef struct sg_shader_stage_desc {
     const char* entry;
     const char* d3d11_target;
     sg_shader_uniform_block_desc uniform_blocks[SG_MAX_SHADERSTAGE_UBS];
-    sg_shader_storage_buffer_desc storage_buffers[SG_MAX_SHADERSTAGE_STORAGE_BUFFERS];
+    sg_shader_storage_buffer_desc storage_buffers[SG_MAX_SHADERSTAGE_STORAGEBUFFERS];
     sg_shader_image_desc images[SG_MAX_SHADERSTAGE_IMAGES];
     sg_shader_sampler_desc samplers[SG_MAX_SHADERSTAGE_SAMPLERS];
     sg_shader_image_sampler_pair_desc image_sampler_pairs[SG_MAX_SHADERSTAGE_IMAGESAMPLERPAIRS];
@@ -3229,9 +3359,9 @@ typedef struct sg_attachments_info {
 /*
     sg_frame_stats
 
-    Allows to track generic and backend-specific tracking stats about a
+    Allows to track generic and backend-specific stats about a
     render frame. Obtained by calling sg_query_frame_stats(). The returned
-    struct will contains information about the *previous* frame.
+    struct contains information about the *previous* frame.
 */
 typedef struct sg_frame_stats_gl {
     uint32_t num_bind_buffer;
@@ -3702,11 +3832,6 @@ typedef enum sg_log_item {
     The sg_desc struct contains configuration values for sokol_gfx,
     it is used as parameter to the sg_setup() call.
 
-    NOTE that all callback function pointers come in two versions, one without
-    a userdata pointer, and one with a userdata pointer. You would
-    either initialize one or the other depending on whether you pass data
-    to your callbacks.
-
     The default configuration is:
 
     .buffer_pool_size       128
@@ -3761,6 +3886,25 @@ typedef enum sg_log_item {
         .environment.d3d11.device_context
             a pointer to the ID3D11DeviceContext object
 
+    GL specific:
+        .environment.gl.major_version
+        .environment.gl.minor_version
+            The major and minor version of the desktop(!) GL context (e.g. only
+            relevant when SOKOL_GLCORE is defined). Only two combinations are
+            currently supported (but you are free to pass in a higher minor version,
+            sokol_gfx.h just won't make use of higher-version features):
+
+            .major_version = 4, .minor_version = 1
+                Storage buffers are not available. This is the highest GL version
+                supported on macOS.
+
+            .major_version = 4, .minor_version = 3
+                Storage buffers are available.
+
+            Keeping the major_version zero-initialized will use the following defaults:
+                - macOS: .major_version = 4, .minor_version = 1
+                - otherwise: .major_version = 4, .minor_version = 3
+
     WebGPU specific:
         .wgpu_disable_bindgroups_cache
             When this is true, the WebGPU backend will create and immediately
@@ -3800,7 +3944,7 @@ typedef struct sg_d3d11_environment {
 } sg_d3d11_environment;
 
 typedef struct sg_wgpu_environment {
-    const void* device;                    // WGPUDevice
+    const void* device;
 } sg_wgpu_environment;
 
 typedef struct sg_gl_environment {
@@ -3851,8 +3995,9 @@ typedef struct sg_allocator {
     that without logging function, sokol-gfx will be completely
     silent, e.g. it will not report errors, warnings and
     validation layer messages. For maximum error verbosity,
-    compile in debug mode (e.g. NDEBUG *not* defined) and install
-    a logger (for instance the standard logging function from sokol_log.h).
+    compile in debug mode (e.g. NDEBUG *not* defined) and provide a
+    compatible logger function in the sg_setup() call
+    (for instance the standard logging function from sokol_log.h).
 */
 typedef struct sg_logger {
     void (*func)(
@@ -4945,7 +5090,7 @@ typedef struct {
     int num_samplers;
     int num_image_samplers;
     _sg_shader_uniform_block_t uniform_blocks[SG_MAX_SHADERSTAGE_UBS];
-    _sg_shader_storage_buffer_t storage_buffers[SG_MAX_SHADERSTAGE_STORAGE_BUFFERS];
+    _sg_shader_storage_buffer_t storage_buffers[SG_MAX_SHADERSTAGE_STORAGEBUFFERS];
     _sg_shader_image_t images[SG_MAX_SHADERSTAGE_IMAGES];
     _sg_shader_sampler_t samplers[SG_MAX_SHADERSTAGE_SAMPLERS];
     _sg_shader_image_sampler_t image_samplers[SG_MAX_SHADERSTAGE_IMAGESAMPLERPAIRS];
@@ -5001,7 +5146,7 @@ _SOKOL_PRIVATE void _sg_shader_common_init(_sg_shader_common_t* cmn, const sg_sh
             stage->num_image_samplers++;
         }
         SOKOL_ASSERT(stage->num_storage_buffers == 0);
-        for (int sbuf_index = 0; sbuf_index < SG_MAX_SHADERSTAGE_STORAGE_BUFFERS; sbuf_index++) {
+        for (int sbuf_index = 0; sbuf_index < SG_MAX_SHADERSTAGE_STORAGEBUFFERS; sbuf_index++) {
             const sg_shader_storage_buffer_desc* sbuf_desc = &stage_desc->storage_buffers[sbuf_index];
             if (!sbuf_desc->used) {
                 break;
@@ -5141,7 +5286,7 @@ typedef _sg_dummy_attachments_t _sg_attachments_t;
 #elif defined(_SOKOL_ANY_GL)
 
 #define _SG_GL_TEXTURE_SAMPLER_CACHE_SIZE (SG_MAX_SHADERSTAGE_IMAGESAMPLERPAIRS * SG_NUM_SHADER_STAGES)
-#define _SG_GL_STORAGEBUFFER_STAGE_INDEX_PITCH (16)
+#define _SG_GL_STORAGEBUFFER_STAGE_INDEX_PITCH (SG_MAX_SHADERSTAGE_STORAGEBUFFERS)
 
 typedef struct {
     _sg_slot_t slot;
@@ -5283,7 +5428,7 @@ typedef struct {
     GLuint vertex_buffer;
     GLuint index_buffer;
     GLuint storage_buffer;  // general bind point
-    GLuint stage_storage_buffers[SG_NUM_SHADER_STAGES][SG_MAX_SHADERSTAGE_STORAGE_BUFFERS];
+    GLuint stage_storage_buffers[SG_NUM_SHADER_STAGES][SG_MAX_SHADERSTAGE_STORAGEBUFFERS];
     GLuint stored_vertex_buffer;
     GLuint stored_index_buffer;
     GLuint stored_storage_buffer;
@@ -5535,8 +5680,8 @@ typedef struct {
     sg_image cur_fs_image_ids[SG_MAX_SHADERSTAGE_IMAGES];
     sg_sampler cur_vs_sampler_ids[SG_MAX_SHADERSTAGE_SAMPLERS];
     sg_sampler cur_fs_sampler_ids[SG_MAX_SHADERSTAGE_SAMPLERS];
-    sg_buffer cur_vs_storagebuffer_ids[SG_MAX_SHADERSTAGE_STORAGE_BUFFERS];
-    sg_buffer cur_fs_storagebuffer_ids[SG_MAX_SHADERSTAGE_STORAGE_BUFFERS];
+    sg_buffer cur_vs_storagebuffer_ids[SG_MAX_SHADERSTAGE_STORAGEBUFFERS];
+    sg_buffer cur_fs_storagebuffer_ids[SG_MAX_SHADERSTAGE_STORAGEBUFFERS];
 } _sg_mtl_state_cache_t;
 
 typedef struct {
@@ -5564,7 +5709,7 @@ typedef struct {
 #define _SG_WGPU_NUM_BINDGROUPS (2) // 0: uniforms, 1: images and sampler on both shader stages
 #define _SG_WGPU_UNIFORM_BINDGROUP_INDEX (0)
 #define _SG_WGPU_IMAGE_SAMPLER_BINDGROUP_INDEX (1)
-#define _SG_WGPU_MAX_BINDGROUP_ENTRIES (SG_NUM_SHADER_STAGES * (SG_MAX_SHADERSTAGE_IMAGES + SG_MAX_SHADERSTAGE_SAMPLERS + SG_MAX_SHADERSTAGE_STORAGE_BUFFERS))
+#define _SG_WGPU_MAX_BINDGROUP_ENTRIES (SG_NUM_SHADER_STAGES * (SG_MAX_SHADERSTAGE_IMAGES + SG_MAX_SHADERSTAGE_SAMPLERS + SG_MAX_SHADERSTAGE_STORAGEBUFFERS))
 
 typedef struct {
     _sg_slot_t slot;
@@ -5749,10 +5894,10 @@ typedef struct {
     _sg_buffer_t* ib;
     _sg_image_t* vs_imgs[SG_MAX_SHADERSTAGE_IMAGES];
     _sg_sampler_t* vs_smps[SG_MAX_SHADERSTAGE_SAMPLERS];
-    _sg_buffer_t* vs_sbufs[SG_MAX_SHADERSTAGE_STORAGE_BUFFERS];
+    _sg_buffer_t* vs_sbufs[SG_MAX_SHADERSTAGE_STORAGEBUFFERS];
     _sg_image_t* fs_imgs[SG_MAX_SHADERSTAGE_IMAGES];
     _sg_sampler_t* fs_smps[SG_MAX_SHADERSTAGE_SAMPLERS];
-    _sg_buffer_t* fs_sbufs[SG_MAX_SHADERSTAGE_STORAGE_BUFFERS];
+    _sg_buffer_t* fs_sbufs[SG_MAX_SHADERSTAGE_STORAGEBUFFERS];
 } _sg_bindings_t;
 
 typedef struct {
@@ -7647,7 +7792,7 @@ _SOKOL_PRIVATE void _sg_gl_init_caps_gles3(void) {
 //-- state cache implementation ------------------------------------------------
 _SOKOL_PRIVATE GLuint _sg_gl_storagebuffer_bind_index(int stage, int slot) {
     SOKOL_ASSERT((stage >= 0) && (stage < SG_NUM_SHADER_STAGES));
-    SOKOL_ASSERT((slot >= 0) && (slot < SG_MAX_SHADERSTAGE_STORAGE_BUFFERS));
+    SOKOL_ASSERT((slot >= 0) && (slot < SG_MAX_SHADERSTAGE_STORAGEBUFFERS));
     return (GLuint) (stage * _SG_GL_STORAGEBUFFER_STAGE_INDEX_PITCH + slot);
 }
 
@@ -7670,7 +7815,7 @@ _SOKOL_PRIVATE void _sg_gl_cache_clear_buffer_bindings(bool force) {
         _sg_stats_add(gl.num_bind_buffer, 1);
     }
     for (int stage = 0; stage < SG_NUM_SHADER_STAGES; stage++) {
-        for (int i = 0; i < SG_MAX_SHADERSTAGE_STORAGE_BUFFERS; i++) {
+        for (int i = 0; i < SG_MAX_SHADERSTAGE_STORAGEBUFFERS; i++) {
             if (force || (_sg.gl.cache.stage_storage_buffers[stage][i] != 0)) {
                 const GLuint bind_index = _sg_gl_storagebuffer_bind_index(stage, i);
                 if (_sg.features.storage_buffer) {
@@ -7712,7 +7857,7 @@ _SOKOL_PRIVATE void _sg_gl_cache_bind_buffer(GLenum target, GLuint buffer) {
 
 _SOKOL_PRIVATE void _sg_gl_cache_bind_storage_buffer(int stage, int slot, GLuint buffer) {
     SOKOL_ASSERT((stage >= 0) && (stage < SG_NUM_SHADER_STAGES));
-    SOKOL_ASSERT((slot >= 0) && (slot < SG_MAX_SHADERSTAGE_STORAGE_BUFFERS));
+    SOKOL_ASSERT((slot >= 0) && (slot < SG_MAX_SHADERSTAGE_STORAGEBUFFERS));
     if (_sg.gl.cache.stage_storage_buffers[stage][slot] != buffer) {
         _sg.gl.cache.stage_storage_buffers[stage][slot] = buffer;
         _sg.gl.cache.storage_buffer = buffer; // not a bug
@@ -7778,7 +7923,7 @@ _SOKOL_PRIVATE void _sg_gl_cache_invalidate_buffer(GLuint buf) {
         _sg_stats_add(gl.num_bind_buffer, 1);
     }
     for (int stage = 0; stage < SG_NUM_SHADER_STAGES; stage++) {
-        for (int i = 0; i < SG_MAX_SHADERSTAGE_STORAGE_BUFFERS; i++) {
+        for (int i = 0; i < SG_MAX_SHADERSTAGE_STORAGEBUFFERS; i++) {
             if (buf == _sg.gl.cache.stage_storage_buffers[stage][i]) {
                 _sg.gl.cache.stage_storage_buffers[stage][i] = 0;
                 _sg.gl.cache.storage_buffer = 0; // not a bug!
@@ -10724,8 +10869,8 @@ _SOKOL_PRIVATE sg_resource_state _sg_d3d11_create_pipeline(_sg_pipeline_t* pip, 
             _SG_ERROR(D3D11_CREATE_INPUT_LAYOUT_FAILED);
             return SG_RESOURCESTATE_FAILED;
         }
+        _sg_d3d11_setlabel(pip->d3d11.il, desc->label);
     }
-    _sg_d3d11_setlabel(pip->d3d11.il, desc->label);
 
     // create rasterizer state
     D3D11_RASTERIZER_DESC rs_desc;
@@ -13843,20 +13988,20 @@ _SOKOL_PRIVATE void _sg_wgpu_init_bindgroups_cache_key(_sg_wgpu_bindgroups_cache
     SOKOL_ASSERT(bnd->pip);
     SOKOL_ASSERT(bnd->num_vs_imgs <= SG_MAX_SHADERSTAGE_IMAGES);
     SOKOL_ASSERT(bnd->num_vs_smps <= SG_MAX_SHADERSTAGE_SAMPLERS);
-    SOKOL_ASSERT(bnd->num_vs_sbufs <= SG_MAX_SHADERSTAGE_STORAGE_BUFFERS);
+    SOKOL_ASSERT(bnd->num_vs_sbufs <= SG_MAX_SHADERSTAGE_STORAGEBUFFERS);
     SOKOL_ASSERT(bnd->num_fs_imgs <= SG_MAX_SHADERSTAGE_IMAGES);
     SOKOL_ASSERT(bnd->num_fs_smps <= SG_MAX_SHADERSTAGE_SAMPLERS);
-    SOKOL_ASSERT(bnd->num_fs_sbufs <= SG_MAX_SHADERSTAGE_STORAGE_BUFFERS);
+    SOKOL_ASSERT(bnd->num_fs_sbufs <= SG_MAX_SHADERSTAGE_STORAGEBUFFERS);
 
     _sg_clear(key->items, sizeof(key->items));
     key->items[0] = bnd->pip->slot.id;
     const int vs_imgs_offset = 1;
     const int vs_smps_offset = vs_imgs_offset + SG_MAX_SHADERSTAGE_IMAGES;
     const int vs_sbufs_offset = vs_smps_offset + SG_MAX_SHADERSTAGE_SAMPLERS;
-    const int fs_imgs_offset = vs_sbufs_offset + SG_MAX_SHADERSTAGE_STORAGE_BUFFERS;
+    const int fs_imgs_offset = vs_sbufs_offset + SG_MAX_SHADERSTAGE_STORAGEBUFFERS;
     const int fs_smps_offset = fs_imgs_offset + SG_MAX_SHADERSTAGE_IMAGES;
     const int fs_sbufs_offset = fs_smps_offset + SG_MAX_SHADERSTAGE_SAMPLERS;
-    SOKOL_ASSERT((fs_sbufs_offset + SG_MAX_SHADERSTAGE_STORAGE_BUFFERS) == _SG_WGPU_BINDGROUPSCACHE_NUM_ITEMS);
+    SOKOL_ASSERT((fs_sbufs_offset + SG_MAX_SHADERSTAGE_STORAGEBUFFERS) == _SG_WGPU_BINDGROUPSCACHE_NUM_ITEMS);
     for (int i = 0; i < bnd->num_vs_imgs; i++) {
         SOKOL_ASSERT(bnd->vs_imgs[i]);
         key->items[vs_imgs_offset + i] = bnd->vs_imgs[i]->slot.id;
@@ -13944,7 +14089,7 @@ _SOKOL_PRIVATE _sg_wgpu_bindgroup_t* _sg_wgpu_create_bindgroup(_sg_bindings_t* b
         WGPUBindGroupEntry* wgpu_entry = &wgpu_entries[bge_index++];
         wgpu_entry->binding = _sg_wgpu_storagebuffer_binding(SG_SHADERSTAGE_FS, i);
         wgpu_entry->buffer = bnd->fs_sbufs[i]->wgpu.buf;
-        wgpu_entry->size = (uint64_t) bnd->vs_sbufs[i]->cmn.size;
+        wgpu_entry->size = (uint64_t) bnd->fs_sbufs[i]->cmn.size;
     }
     WGPUBindGroupDescriptor bg_desc;
     _sg_clear(&bg_desc, sizeof(bg_desc));
@@ -16149,7 +16294,7 @@ _SOKOL_PRIVATE bool _sg_validate_shader_desc(const sg_shader_desc* desc) {
                 }
             }
             bool storage_buffers_continuous = true;
-            for (int sbuf_index = 0; sbuf_index < SG_MAX_SHADERSTAGE_STORAGE_BUFFERS; sbuf_index++) {
+            for (int sbuf_index = 0; sbuf_index < SG_MAX_SHADERSTAGE_STORAGEBUFFERS; sbuf_index++) {
                 const sg_shader_storage_buffer_desc* sbuf_desc = &stage_desc->storage_buffers[sbuf_index];
                 if (sbuf_desc->used) {
                     _SG_VALIDATE(storage_buffers_continuous, VALIDATE_SHADERDESC_NO_CONT_STORAGEBUFFERS);
@@ -16651,7 +16796,7 @@ _SOKOL_PRIVATE bool _sg_validate_apply_bindings(const sg_bindings* bindings) {
         }
 
         // has expected vertex shader storage buffers
-        for (int i = 0; i < SG_MAX_SHADERSTAGE_STORAGE_BUFFERS; i++) {
+        for (int i = 0; i < SG_MAX_SHADERSTAGE_STORAGEBUFFERS; i++) {
             const _sg_shader_stage_t* stage = &pip->shader->cmn.stage[SG_SHADERSTAGE_VS];
             if (stage->storage_buffers[i].used) {
                 _SG_VALIDATE(bindings->vs.storage_buffers[i].id != SG_INVALID_ID, VALIDATE_ABND_VS_EXPECTED_STORAGEBUFFER_BINDING);
@@ -16724,7 +16869,7 @@ _SOKOL_PRIVATE bool _sg_validate_apply_bindings(const sg_bindings* bindings) {
         }
 
         // has expected fragment shader storage buffers
-        for (int i = 0; i < SG_MAX_SHADERSTAGE_STORAGE_BUFFERS; i++) {
+        for (int i = 0; i < SG_MAX_SHADERSTAGE_STORAGEBUFFERS; i++) {
             const _sg_shader_stage_t* stage = &pip->shader->cmn.stage[SG_SHADERSTAGE_FS];
             if (stage->storage_buffers[i].used) {
                 _SG_VALIDATE(bindings->fs.storage_buffers[i].id != SG_INVALID_ID, VALIDATE_ABND_FS_EXPECTED_STORAGEBUFFER_BINDING);
@@ -18279,7 +18424,7 @@ SOKOL_API_IMPL void sg_apply_bindings(const sg_bindings* bindings) {
         }
     }
 
-    for (int i = 0; i < SG_MAX_SHADERSTAGE_STORAGE_BUFFERS; i++, bnd.num_vs_sbufs++) {
+    for (int i = 0; i < SG_MAX_SHADERSTAGE_STORAGEBUFFERS; i++, bnd.num_vs_sbufs++) {
         if (bindings->vs.storage_buffers[i].id) {
             bnd.vs_sbufs[i] = _sg_lookup_buffer(&_sg.pools, bindings->vs.storage_buffers[i].id);
             if (bnd.vs_sbufs[i]) {
@@ -18318,7 +18463,7 @@ SOKOL_API_IMPL void sg_apply_bindings(const sg_bindings* bindings) {
         }
     }
 
-    for (int i = 0; i < SG_MAX_SHADERSTAGE_STORAGE_BUFFERS; i++, bnd.num_fs_sbufs++) {
+    for (int i = 0; i < SG_MAX_SHADERSTAGE_STORAGEBUFFERS; i++, bnd.num_fs_sbufs++) {
         if (bindings->fs.storage_buffers[i].id) {
             bnd.fs_sbufs[i] = _sg_lookup_buffer(&_sg.pools, bindings->fs.storage_buffers[i].id);
             if (bnd.fs_sbufs[i]) {
