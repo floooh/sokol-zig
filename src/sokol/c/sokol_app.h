@@ -7333,9 +7333,6 @@ _SOKOL_PRIVATE void _sapp_win32_timing_measure(void) {
     #if defined(SOKOL_NOAPI)
         _sapp_timing_measure(&_sapp.timing);
     #endif
-    #if defined(SOKOL_NOAPI)
-        _sapp_timing_measure(&_sapp.timing);
-    #endif
 }
 
 _SOKOL_PRIVATE LRESULT CALLBACK _sapp_win32_wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
