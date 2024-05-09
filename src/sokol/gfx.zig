@@ -1156,16 +1156,11 @@ pub const D3d11Environment = extern struct {
 pub const WgpuEnvironment = extern struct {
     device: ?*const anyopaque = null,
 };
-pub const GlEnvironment = extern struct {
-    major_version: i32 = 0,
-    minor_version: i32 = 0,
-};
 pub const Environment = extern struct {
     defaults: EnvironmentDefaults = .{},
     metal: MetalEnvironment = .{},
     d3d11: D3d11Environment = .{},
     wgpu: WgpuEnvironment = .{},
-    gl: GlEnvironment = .{},
 };
 pub const CommitListener = extern struct {
     func: ?*const fn (?*anyopaque) callconv(.C) void = null,
