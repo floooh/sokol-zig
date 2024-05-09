@@ -56,6 +56,7 @@ pub const max_vertex_buffers = 8;
 pub const max_shaderstage_images = 12;
 pub const max_shaderstage_samplers = 8;
 pub const max_shaderstage_imagesamplerpairs = 12;
+pub const max_shaderstage_storagebuffers = 8;
 pub const max_shaderstage_ubs = 4;
 pub const max_ub_members = 16;
 pub const max_vertex_attributes = 16;
@@ -68,7 +69,7 @@ pub const Color = extern struct {
     a: f32 = 0.0,
 };
 pub const Backend = enum(i32) {
-    GLCORE33,
+    GLCORE,
     GLES3,
     D3D11,
     METAL_IOS,
@@ -165,6 +166,7 @@ pub const Features = extern struct {
     image_clamp_to_border: bool = false,
     mrt_independent_blend_state: bool = false,
     mrt_independent_write_mask: bool = false,
+    storage_buffer: bool = false,
 };
 pub const Limits = extern struct {
     max_image_size_2d: i32 = 0,
@@ -194,6 +196,7 @@ pub const BufferType = enum(i32) {
     DEFAULT,
     VERTEXBUFFER,
     INDEXBUFFER,
+    STORAGEBUFFER,
     NUM,
 };
 pub const IndexType = enum(i32) {
@@ -470,6 +473,7 @@ pub const Pass = extern struct {
 pub const StageBindings = extern struct {
     images: [12]Image = [_]Image{.{}} ** 12,
     samplers: [8]Sampler = [_]Sampler{.{}} ** 8,
+    storage_buffers: [8]Buffer = [_]Buffer{.{}} ** 8,
 };
 pub const Bindings = extern struct {
     _start_canary: u32 = 0,
@@ -554,6 +558,10 @@ pub const ShaderUniformBlockDesc = extern struct {
     layout: UniformLayout = .DEFAULT,
     uniforms: [16]ShaderUniformDesc = [_]ShaderUniformDesc{.{}} ** 16,
 };
+pub const ShaderStorageBufferDesc = extern struct {
+    used: bool = false,
+    readonly: bool = false,
+};
 pub const ShaderImageDesc = extern struct {
     used: bool = false,
     multisampled: bool = false,
@@ -576,6 +584,7 @@ pub const ShaderStageDesc = extern struct {
     entry: [*c]const u8 = null,
     d3d11_target: [*c]const u8 = null,
     uniform_blocks: [4]ShaderUniformBlockDesc = [_]ShaderUniformBlockDesc{.{}} ** 4,
+    storage_buffers: [8]ShaderStorageBufferDesc = [_]ShaderStorageBufferDesc{.{}} ** 8,
     images: [12]ShaderImageDesc = [_]ShaderImageDesc{.{}} ** 12,
     samplers: [8]ShaderSamplerDesc = [_]ShaderSamplerDesc{.{}} ** 8,
     image_sampler_pairs: [12]ShaderImageSamplerPairDesc = [_]ShaderImageSamplerPairDesc{.{}} ** 12,
@@ -774,6 +783,7 @@ pub const FrameStatsMetalBindings = extern struct {
     num_set_vertex_buffer: u32 = 0,
     num_set_vertex_texture: u32 = 0,
     num_set_vertex_sampler_state: u32 = 0,
+    num_set_fragment_buffer: u32 = 0,
     num_set_fragment_texture: u32 = 0,
     num_set_fragment_sampler_state: u32 = 0,
 };
@@ -847,6 +857,7 @@ pub const LogItem = enum(i32) {
     GL_FRAMEBUFFER_STATUS_INCOMPLETE_MULTISAMPLE,
     GL_FRAMEBUFFER_STATUS_UNKNOWN,
     D3D11_CREATE_BUFFER_FAILED,
+    D3D11_CREATE_BUFFER_SRV_FAILED,
     D3D11_CREATE_DEPTH_TEXTURE_UNSUPPORTED_PIXEL_FORMAT,
     D3D11_CREATE_DEPTH_TEXTURE_FAILED,
     D3D11_CREATE_2D_TEXTURE_UNSUPPORTED_PIXEL_FORMAT,
@@ -893,6 +904,7 @@ pub const LogItem = enum(i32) {
     WGPU_CREATE_SHADER_MODULE_FAILED,
     WGPU_SHADER_TOO_MANY_IMAGES,
     WGPU_SHADER_TOO_MANY_SAMPLERS,
+    WGPU_SHADER_TOO_MANY_STORAGEBUFFERS,
     WGPU_SHADER_CREATE_BINDGROUP_LAYOUT_FAILED,
     WGPU_CREATE_PIPELINE_LAYOUT_FAILED,
     WGPU_CREATE_RENDER_PIPELINE_FAILED,
@@ -937,6 +949,8 @@ pub const LogItem = enum(i32) {
     VALIDATE_BUFFERDESC_DATA,
     VALIDATE_BUFFERDESC_DATA_SIZE,
     VALIDATE_BUFFERDESC_NO_DATA,
+    VALIDATE_BUFFERDESC_STORAGEBUFFER_SUPPORTED,
+    VALIDATE_BUFFERDESC_STORAGEBUFFER_SIZE_MULTIPLE_4,
     VALIDATE_IMAGEDATA_NODATA,
     VALIDATE_IMAGEDATA_DATA_SIZE,
     VALIDATE_IMAGEDESC_CANARY,
@@ -970,6 +984,8 @@ pub const LogItem = enum(i32) {
     VALIDATE_SHADERDESC_UB_SIZE_MISMATCH,
     VALIDATE_SHADERDESC_UB_ARRAY_COUNT,
     VALIDATE_SHADERDESC_UB_STD140_ARRAY_TYPE,
+    VALIDATE_SHADERDESC_NO_CONT_STORAGEBUFFERS,
+    VALIDATE_SHADERDESC_STORAGEBUFFER_READONLY,
     VALIDATE_SHADERDESC_NO_CONT_IMAGES,
     VALIDATE_SHADERDESC_NO_CONT_SAMPLERS,
     VALIDATE_SHADERDESC_IMAGE_SAMPLER_PAIR_IMAGE_SLOT_OUT_OF_RANGE,
@@ -983,11 +999,10 @@ pub const LogItem = enum(i32) {
     VALIDATE_SHADERDESC_IMAGE_NOT_REFERENCED_BY_IMAGE_SAMPLER_PAIRS,
     VALIDATE_SHADERDESC_SAMPLER_NOT_REFERENCED_BY_IMAGE_SAMPLER_PAIRS,
     VALIDATE_SHADERDESC_NO_CONT_IMAGE_SAMPLER_PAIRS,
-    VALIDATE_SHADERDESC_ATTR_SEMANTICS,
     VALIDATE_SHADERDESC_ATTR_STRING_TOO_LONG,
     VALIDATE_PIPELINEDESC_CANARY,
     VALIDATE_PIPELINEDESC_SHADER,
-    VALIDATE_PIPELINEDESC_NO_ATTRS,
+    VALIDATE_PIPELINEDESC_NO_CONT_ATTRS,
     VALIDATE_PIPELINEDESC_LAYOUT_STRIDE4,
     VALIDATE_PIPELINEDESC_ATTR_SEMANTICS,
     VALIDATE_ATTACHMENTSDESC_CANARY,
@@ -1091,6 +1106,10 @@ pub const LogItem = enum(i32) {
     VALIDATE_ABND_VS_EXPECTED_NONFILTERING_SAMPLER,
     VALIDATE_ABND_VS_UNEXPECTED_SAMPLER_BINDING,
     VALIDATE_ABND_VS_SMP_EXISTS,
+    VALIDATE_ABND_VS_EXPECTED_STORAGEBUFFER_BINDING,
+    VALIDATE_ABND_VS_STORAGEBUFFER_EXISTS,
+    VALIDATE_ABND_VS_STORAGEBUFFER_BINDING_BUFFERTYPE,
+    VALIDATE_ABND_VS_UNEXPECTED_STORAGEBUFFER_BINDING,
     VALIDATE_ABND_FS_EXPECTED_IMAGE_BINDING,
     VALIDATE_ABND_FS_IMG_EXISTS,
     VALIDATE_ABND_FS_IMAGE_TYPE_MISMATCH,
@@ -1104,6 +1123,10 @@ pub const LogItem = enum(i32) {
     VALIDATE_ABND_FS_EXPECTED_NONFILTERING_SAMPLER,
     VALIDATE_ABND_FS_UNEXPECTED_SAMPLER_BINDING,
     VALIDATE_ABND_FS_SMP_EXISTS,
+    VALIDATE_ABND_FS_EXPECTED_STORAGEBUFFER_BINDING,
+    VALIDATE_ABND_FS_STORAGEBUFFER_EXISTS,
+    VALIDATE_ABND_FS_STORAGEBUFFER_BINDING_BUFFERTYPE,
+    VALIDATE_ABND_FS_UNEXPECTED_STORAGEBUFFER_BINDING,
     VALIDATE_AUB_NO_PIPELINE,
     VALIDATE_AUB_NO_UB_AT_SLOT,
     VALIDATE_AUB_SIZE,

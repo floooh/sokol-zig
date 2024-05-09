@@ -58,6 +58,7 @@ pub fn build(b: *Build) !void {
         "debugtext-print",
         "debugtext-userfont",
         "shapes",
+        "vertexpull",
     };
     inline for (examples) |example| {
         try buildExample(b, example, .{
@@ -70,7 +71,7 @@ pub fn build(b: *Build) !void {
     }
 
     // a manually invoked build step to recompile shaders via sokol-shdc
-    buildShaders(b);
+    buildShaders(b, target);
 }
 
 // build one of the examples
@@ -181,7 +182,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     const backend_cflags = switch (backend) {
         .d3d11 => "-DSOKOL_D3D11",
         .metal => "-DSOKOL_METAL",
-        .gl => "-DSOKOL_GLCORE33",
+        .gl => "-DSOKOL_GLCORE",
         .gles3 => "-DSOKOL_GLES3",
         .wgpu => "-DSOKOL_WGPU",
         else => @panic("unknown sokol backend"),
@@ -415,7 +416,7 @@ fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
 // TODO: install sokol-shdc via package manager
-fn buildShaders(b: *Build) void {
+fn buildShaders(b: *Build, target: Build.ResolvedTarget) void {
     const sokol_tools_bin_dir = "../sokol-tools-bin/bin/";
     const shaders_dir = "src/examples/shaders/";
     const shaders = .{
@@ -429,6 +430,7 @@ fn buildShaders(b: *Build) void {
         "shapes.glsl",
         "texcube.glsl",
         "blend.glsl",
+        "vertexpull.glsl",
     };
     const optional_shdc: ?[:0]const u8 = comptime switch (builtin.os.tag) {
         .windows => "win32/sokol-shdc.exe",
@@ -442,6 +444,8 @@ fn buildShaders(b: *Build) void {
     }
     const shdc_path = sokol_tools_bin_dir ++ optional_shdc.?;
     const shdc_step = b.step("shaders", "Compile shaders (needs ../sokol-tools-bin)");
+    const glsl = if (target.result.isDarwin()) "glsl410" else "glsl430";
+    const slang = glsl ++ ":metal_macos:hlsl5:glsl300es:wgsl";
     inline for (shaders) |shader| {
         const cmd = b.addSystemCommand(&.{
             shdc_path,
@@ -450,7 +454,7 @@ fn buildShaders(b: *Build) void {
             "-o",
             shaders_dir ++ shader ++ ".zig",
             "-l",
-            "glsl330:metal_macos:hlsl4:glsl300es:wgsl",
+            slang,
             "-f",
             "sokol_zig",
         });

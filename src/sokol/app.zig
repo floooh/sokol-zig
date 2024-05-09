@@ -639,6 +639,14 @@ pub extern fn sapp_gl_get_framebuffer() u32;
 pub fn glGetFramebuffer() u32 {
     return sapp_gl_get_framebuffer();
 }
+pub extern fn sapp_gl_get_major_version() i32;
+pub fn glGetMajorVersion() i32 {
+    return sapp_gl_get_major_version();
+}
+pub extern fn sapp_gl_get_minor_version() i32;
+pub fn glGetMinorVersion() i32 {
+    return sapp_gl_get_minor_version();
+}
 pub extern fn sapp_android_get_native_activity() ?*const anyopaque;
 pub fn androidGetNativeActivity() ?*const anyopaque {
     return sapp_android_get_native_activity();
