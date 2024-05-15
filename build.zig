@@ -378,7 +378,7 @@ pub fn emRunStep(b: *Build, options: EmRunOptions) *Build.Step.Run {
     return emrun;
 }
 
-// helper function to extract emsdk path from the emsdk package dependency
+// helper function to build a LazyPath from the emsdk root and provided path components
 fn emSdkLazyPath(b: *Build, emsdk: *Build.Dependency, subPaths: []const []const u8) Build.LazyPath {
     return emsdk.path(b.pathJoin(subPaths));
 }
