@@ -172,9 +172,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
             lib.step.dependOn(&emsdk_setup.step);
         }
         // add the Emscripten system include seach path
-        const emsdk_sysroot = b.pathJoin(&.{ emSdkPath(b, options.emsdk.?), "upstream", "emscripten", "cache", "sysroot" });
-        const include_path = b.pathJoin(&.{ emsdk_sysroot, "include" });
-        lib.addSystemIncludePath(.{ .path = include_path });
+        lib.addSystemIncludePath(emSdkLazyPath(b, options.emsdk.?, &.{ "upstream", "emscripten", "cache", "sysroot", "include" }));
     }
 
     // resolve .auto backend into specific backend by platform
@@ -293,7 +291,7 @@ pub const EmLinkOptions = struct {
     extra_args: []const []const u8 = &.{},
 };
 pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.Run {
-    const emcc_path = b.findProgram(&.{"emcc"}, &.{}) catch b.pathJoin(&.{ emSdkPath(b, options.emsdk), "upstream", "emscripten", "emcc" });
+    const emcc_path = b.findProgram(&.{"emcc"}, &.{}) catch emSdkLazyPath(b, options.emsdk, &.{ "upstream", "emscripten", "emcc" }).getPath(b);
 
     // create a separate output directory zig-out/web
     try std.fs.cwd().makePath(b.fmt("{s}/web", .{b.install_path}));
@@ -375,14 +373,14 @@ pub const EmRunOptions = struct {
     emsdk: *Build.Dependency,
 };
 pub fn emRunStep(b: *Build, options: EmRunOptions) *Build.Step.Run {
-    const emrun_path = b.findProgram(&.{"emrun"}, &.{}) catch b.pathJoin(&.{ emSdkPath(b, options.emsdk), "upstream", "emscripten", "emrun" });
+    const emrun_path = b.findProgram(&.{"emrun"}, &.{}) catch emSdkLazyPath(b, options.emsdk, &.{ "upstream", "emscripten", "emrun" }).getPath(b);
     const emrun = b.addSystemCommand(&.{ emrun_path, b.fmt("{s}/web/{s}.html", .{ b.install_path, options.name }) });
     return emrun;
 }
 
 // helper function to extract emsdk path from the emsdk package dependency
-fn emSdkPath(b: *Build, emsdk: *Build.Dependency) []const u8 {
-    return emsdk.path("").getPath(b);
+fn emSdkLazyPath(b: *Build, emsdk: *Build.Dependency, subPaths: []const []const u8) Build.LazyPath {
+    return emsdk.path(b.pathJoin(subPaths));
 }
 
 // One-time setup of the Emscripten SDK (runs 'emsdk install + activate'). If the
@@ -391,17 +389,16 @@ fn emSdkPath(b: *Build, emsdk: *Build.Dependency) []const u8 {
 // if the emsdk was already setup, null will be returned.
 // NOTE: ideally this would go into a separate emsdk-zig package
 fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
-    const emsdk_path = emSdkPath(b, emsdk);
-    const dot_emsc_path = b.pathJoin(&.{ emsdk_path, ".emscripten" });
+    const dot_emsc_path = emSdkLazyPath(b, emsdk, &.{".emscripten"}).getPath(b);
     const dot_emsc_exists = !std.meta.isError(std.fs.accessAbsolute(dot_emsc_path, .{}));
     if (!dot_emsc_exists) {
         var cmd = std.ArrayList([]const u8).init(b.allocator);
         defer cmd.deinit();
-        if (builtin.os.tag == .windows)
-            try cmd.append(b.pathJoin(&.{ emsdk_path, "emsdk.bat" }))
-        else {
+        if (builtin.os.tag == .windows) {
+            try cmd.append(emSdkLazyPath(b, emsdk, &.{"emsdk.bat"}).getPath(b));
+        } else {
             try cmd.append("bash"); // or try chmod
-            try cmd.append(b.pathJoin(&.{ emsdk_path, "emsdk" }));
+            try cmd.append(emSdkLazyPath(b, emsdk, &.{"emsdk"}).getPath(b));
         }
         const emsdk_install = b.addSystemCommand(cmd.items);
         emsdk_install.addArgs(&.{ "install", "latest" });
