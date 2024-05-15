@@ -263,6 +263,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         "sokol_debugtext.c",
         "sokol_shape.c",
         "sokol_glue.c",
+        "sokol_fetch.c",
     };
     inline for (csources) |csrc| {
         lib.addCSourceFile(.{
