@@ -153,7 +153,7 @@ pub const LibSokolOptions = struct {
     use_x11: bool = true,
     use_wayland: bool = false,
     emsdk: ?*Build.Dependency = null,
-    cimgui: ?*Build.Dependency = null,
+    with_sokol_imgui: bool = false,
 };
 pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     const lib = b.addStaticLibrary(.{
@@ -273,9 +273,9 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         });
     }
 
-    // optional Dear ImGui support by passing in an external cimgui dependency
-    if (options.cimgui) |cimgui| {
-        lib.addIncludePath(cimgui.path("."));
+    // optional Dear ImGui support, the called is required to also
+    // add the cimgui include path to the returned compile step
+    if (options.with_sokol_imgui) {
         lib.addCSourceFile(.{
             .file = b.path(csrc_root ++ "sokol_imgui.c"),
             .flags = cflags,
