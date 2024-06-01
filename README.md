@@ -234,3 +234,35 @@ This list might grow longer over time!
   target, for instance using `std.fs` functions will most likely fail
   to compile (the sokol-zig bindings might add more sokol headers
   in the future to fill some of the gaps)
+
+## Dear ImGui support
+
+The sokol-zig bindings come with sokol_imgui.h (exposed as the Zig package
+`sokol.imgui`), but integration into a project's build.zig requires some extra
+steps, mainly because I didn't want to add a
+[cimgui](https://github.com/cimgui/cimgui) dependency to the sokol-zig package
+(especially since cimgui uses git submodule which are not supported by the Zig
+package manager).
+
+The main steps to create Dear ImGui apps with sokol-zig are:
+
+1. 'bring your own cimgui'
+2. tell the sokol dependency that it needs to include sokol_imgui.h into
+  the compiled C library:
+    ```zig
+    const dep_sokol = b.dependency("sokol", .{
+        .target = target,
+        .optimize = optimize,
+        .with_sokol_imgui = true,
+    });
+    ```
+3. inject the path to the cimgui directory into the sokol dependency so
+  that C compilation works (this needs to find the `cimgui.h` header)
+
+    ```zig
+    dep_sokol.artifact("sokol_clib").addIncludePath(cimgui_root);
+    ```
+
+Also see the following example project:
+
+https://github.com/floooh/sokol-zig-imgui-sample/

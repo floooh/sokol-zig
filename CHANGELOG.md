@@ -4,6 +4,11 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 01-Jun-2024
+
+- added bindings for sokol_imgui.h (please read the section `## Dear ImGui support`
+  in the readme, and also check out this [example project](https://github.com/floooh/sokol-zig-imgui-sample))
+
 ### 20-Apr-2024
 
 - update the emsdk dependency to 3.1.57
