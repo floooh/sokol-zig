@@ -13,6 +13,7 @@ Related projects:
 
 - [pacman.zig](https://github.com/floooh/pacman.zig)
 - [kc85.zig](https://github.com/floooh/kc85.zig)
+- [Dear ImGui sample project](https://github.com/floooh/sokol-zig-imgui-sample)
 
 ## Building the samples
 
