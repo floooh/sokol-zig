@@ -4,6 +4,16 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 01-Jun-2024
+
+- added bindings for sokol_imgui.h (please read the section `## Dear ImGui support`
+  in the readme, and also check out this [example project](https://github.com/floooh/sokol-zig-imgui-sample))
+- the sokol C library name has been renamed from `sokol` to `sokol_clib`, and
+  is now exposed to the outside world via `installArtifact()` (this allows a user of
+  the sokol dependency to lookup the CompileStep for the sokol C library via
+  `dep_sokol.artifact("sokol_clib"))` which is important to inject a cimgui
+  header search path (e.g. via `dep_sokol.artifact("sokol_clib").addIncludePath(cimgui_root);`)
+
 ### 20-Apr-2024
 
 - update the emsdk dependency to 3.1.57
