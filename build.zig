@@ -308,57 +308,44 @@ pub const EmLinkOptions = struct {
     shell_file_path: ?[]const u8 = null,
     extra_args: []const []const u8 = &.{},
 };
-pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.Run {
+pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
     const emcc_path = b.findProgram(&.{"emcc"}, &.{}) catch emSdkLazyPath(b, options.emsdk, &.{ "upstream", "emscripten", "emcc" }).getPath(b);
-
-    // create a separate output directory zig-out/web
-    try std.fs.cwd().makePath(b.fmt("{s}/web", .{b.install_path}));
-
-    var emcc_cmd = std.ArrayList([]const u8).init(b.allocator);
-    defer emcc_cmd.deinit();
-
-    try emcc_cmd.append(emcc_path);
+    const emcc = b.addSystemCommand(&.{emcc_path});
+    emcc.setName("emcc"); // hide emcc path
     if (options.optimize == .Debug) {
-        try emcc_cmd.append("-Og");
-        try emcc_cmd.append("-sSAFE_HEAP=1");
-        try emcc_cmd.append("-sSTACK_OVERFLOW_CHECK=1");
+        emcc.addArgs(&.{ "-Og", "-sSAFE_HEAP=1", "-sSTACK_OVERFLOW_CHECK=1" });
     } else {
-        try emcc_cmd.append("-sASSERTIONS=0");
+        emcc.addArg("-sASSERTIONS=0");
         if (options.optimize == .ReleaseSmall) {
-            try emcc_cmd.append("-Oz");
+            emcc.addArg("-Oz");
         } else {
-            try emcc_cmd.append("-O3");
+            emcc.addArg("-O3");
         }
         if (options.release_use_lto) {
-            try emcc_cmd.append("-flto");
+            emcc.addArg("-flto");
         }
         if (options.release_use_closure) {
-            try emcc_cmd.append("--closure");
-            try emcc_cmd.append("1");
+            emcc.addArgs(&.{ "--closure", "1" });
         }
     }
     if (options.use_webgpu) {
-        try emcc_cmd.append("-sUSE_WEBGPU=1");
+        emcc.addArg("-sUSE_WEBGPU=1");
     }
     if (options.use_webgl2) {
-        try emcc_cmd.append("-sUSE_WEBGL2=1");
+        emcc.addArg("-sUSE_WEBGL2=1");
     }
     if (!options.use_filesystem) {
-        try emcc_cmd.append("-sNO_FILESYSTEM=1");
+        emcc.addArg("-sNO_FILESYSTEM=1");
     }
     if (options.use_emmalloc) {
-        try emcc_cmd.append("-sMALLOC='emmalloc'");
+        emcc.addArg("-sMALLOC='emmalloc'");
     }
     if (options.shell_file_path) |shell_file_path| {
-        try emcc_cmd.append(b.fmt("--shell-file={s}", .{shell_file_path}));
+        emcc.addArg(b.fmt("--shell-file={s}", .{shell_file_path}));
     }
-    try emcc_cmd.append(b.fmt("-o{s}/web/{s}.html", .{ b.install_path, options.lib_main.name }));
     for (options.extra_args) |arg| {
-        try emcc_cmd.append(arg);
+        emcc.addArg(arg);
     }
-
-    const emcc = b.addSystemCommand(emcc_cmd.items);
-    emcc.setName("emcc"); // hide emcc path
 
     // add the main lib, and then scan for library dependencies and add those too
     emcc.addArtifactArg(options.lib_main);
@@ -378,10 +365,20 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.Run {
             }
         }
     }
+    emcc.addArg("-o");
+    const out_file = emcc.addOutputFileArg(b.fmt("{s}.html", .{options.lib_main.name}));
+
+    // the emcc linker creates 3 output files (.html, .wasm and .js)
+    const install = b.addInstallDirectory(.{
+        .source_dir = out_file.dirname(),
+        .install_dir = .prefix,
+        .install_subdir = "web",
+    });
+    install.step.dependOn(&emcc.step);
 
     // get the emcc step to run on 'zig build'
-    b.getInstallStep().dependOn(&emcc.step);
-    return emcc;
+    b.getInstallStep().dependOn(&install.step);
+    return install;
 }
 
 // build a run step which uses the emsdk emrun command to run a build target in the browser
@@ -401,26 +398,31 @@ fn emSdkLazyPath(b: *Build, emsdk: *Build.Dependency, subPaths: []const []const 
     return emsdk.path(b.pathJoin(subPaths));
 }
 
+fn createEmsdkStep(b: *Build, emsdk: *Build.Dependency) *Build.Step.Run {
+    if (builtin.os.tag == .windows) {
+        return b.addSystemCommand(&.{emSdkLazyPath(b, emsdk, &.{"emsdk.bat"}).getPath(b)});
+    } else {
+        const step = b.addSystemCommand(&.{"bash"});
+        step.addArg(emSdkLazyPath(b, emsdk, &.{"emsdk"}).getPath(b));
+        return step;
+    }
+}
+
 // One-time setup of the Emscripten SDK (runs 'emsdk install + activate'). If the
 // SDK had to be setup, a run step will be returned which should be added
 // as dependency to the sokol library (since this needs the emsdk in place),
 // if the emsdk was already setup, null will be returned.
 // NOTE: ideally this would go into a separate emsdk-zig package
+// NOTE 2: the file exists check is a bit hacky, it would be cleaner
+// to build an on-the-fly helper tool which takes care of the SDK
+// setup and just does nothing if it already happened
 fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
     const dot_emsc_path = emSdkLazyPath(b, emsdk, &.{".emscripten"}).getPath(b);
     const dot_emsc_exists = !std.meta.isError(std.fs.accessAbsolute(dot_emsc_path, .{}));
     if (!dot_emsc_exists) {
-        var cmd = std.ArrayList([]const u8).init(b.allocator);
-        defer cmd.deinit();
-        if (builtin.os.tag == .windows) {
-            try cmd.append(emSdkLazyPath(b, emsdk, &.{"emsdk.bat"}).getPath(b));
-        } else {
-            try cmd.append("bash"); // or try chmod
-            try cmd.append(emSdkLazyPath(b, emsdk, &.{"emsdk"}).getPath(b));
-        }
-        const emsdk_install = b.addSystemCommand(cmd.items);
+        const emsdk_install = createEmsdkStep(b, emsdk);
         emsdk_install.addArgs(&.{ "install", "latest" });
-        const emsdk_activate = b.addSystemCommand(cmd.items);
+        const emsdk_activate = createEmsdkStep(b, emsdk);
         emsdk_activate.addArgs(&.{ "activate", "latest" });
         emsdk_activate.step.dependOn(&emsdk_install.step);
         return emsdk_activate;
