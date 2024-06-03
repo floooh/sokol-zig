@@ -48,7 +48,7 @@ zig build run-debugtext-userfont
 zig build run-shapes
 ```
 
-(also run ```zig build --help``` to inspect the build targets)
+(also run ```zig build -l``` to get a list of build targets)
 
 By default, the backend 3D API will be selected based on the target platform:
 

@@ -11,8 +11,8 @@
     },
     .dependencies = .{
         .emsdk = .{
-            .url = "git+https://github.com/emscripten-core/emsdk#176dec4875db4d74c2038d7e8af3395be38d222c",
-            .hash = "122034cf4aca9f97fea3c34f3e9fe92e56f08e2160efe3c95d7ec89260e621426a81",
+            .url = "git+https://github.com/emscripten-core/emsdk#3.1.61",
+            .hash = "12200ba39d83227f5de08287b043b011a2eb855cdb077f4b165edce30564ba73400e",
         },
     },
 }

@@ -4,6 +4,14 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 03-Jun-2024
+
+- the Emscripten SDK dependency has been updated to 3.1.61
+- the Emscripten specific parts of build.zig have been updated to be more
+  'idiomatic' now. This also has the nice side effect that the dirty check for
+  the Emscripten linker step now works as expected (e.g. the step will do
+  nothing if the output is uptodate)
+
 ### 01-Jun-2024
 
 - added bindings for sokol_imgui.h (please read the section `## Dear ImGui support`

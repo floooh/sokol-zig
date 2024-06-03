@@ -416,6 +416,9 @@ fn createEmsdkStep(b: *Build, emsdk: *Build.Dependency) *Build.Step.Run {
 // NOTE 2: the file exists check is a bit hacky, it would be cleaner
 // to build an on-the-fly helper tool which takes care of the SDK
 // setup and just does nothing if it already happened
+// NOTE 3: this code works just fine when the SDK version is updated in build.zig.zon
+// since this will be cloned into a new zig cache directory which doesn't have
+// an .emscripten file yet until the one-time setup.
 fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
     const dot_emsc_path = emSdkLazyPath(b, emsdk, &.{".emscripten"}).getPath(b);
     const dot_emsc_exists = !std.meta.isError(std.fs.accessAbsolute(dot_emsc_path, .{}));
