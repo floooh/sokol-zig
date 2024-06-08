@@ -169,7 +169,7 @@ export fn init() void {
     // resource bindings to render the fullscreen quad (composed from the
     // offscreen render target textures
     state.fsq.bind.vertex_buffers[0] = quad_vbuf;
-    inline for (.{ 0, 1, 2 }) |i| {
+    for (0..3) |i| {
         state.fsq.bind.fs.images[i] = state.offscreen.attachments_desc.colors[i].image;
     }
     state.fsq.bind.fs.samplers[0] = smp;
@@ -218,7 +218,7 @@ export fn frame() void {
     sg.applyUniforms(.VS, shd.SLOT_fsq_params, sg.asRange(&fsq_params));
     sg.draw(0, 4, 1);
     sg.applyPipeline(state.dbg.pip);
-    inline for (.{ 0, 1, 2 }) |i| {
+    inline for (0..3) |i| {
         sg.applyViewport(i * 100, 0, 100, 100, false);
         state.dbg.bind.fs.images[0] = state.offscreen.attachments_desc.colors[i].image;
         sg.applyBindings(state.dbg.bind);
@@ -282,14 +282,14 @@ fn createOffscreenAttachments(width: i32, height: i32) void {
     var depth_img_desc = color_img_desc;
     depth_img_desc.pixel_format = .DEPTH;
 
-    inline for (.{ 0, 1, 2 }) |i| {
+    for (0..3) |i| {
         state.offscreen.attachments_desc.colors[i].image = sg.makeImage(color_img_desc);
     }
     state.offscreen.attachments_desc.depth_stencil.image = sg.makeImage(depth_img_desc);
     state.offscreen.attachments = sg.makeAttachments(state.offscreen.attachments_desc);
 
     // update the fullscreen-quad texture bindings
-    inline for (.{ 0, 1, 2 }) |i| {
+    for (0..3) |i| {
         state.fsq.bind.fs.images[i] = state.offscreen.attachments_desc.colors[i].image;
     }
 }
