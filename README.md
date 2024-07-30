@@ -109,10 +109,13 @@ Add a build.zig.zon file to your project which has at least a `.sokol` dependenc
 }
 ```
 
-For the `[commit-sha]` just pick the latest from here: https://github.com/floooh/sokol-zig/commits/master
+The easiest way to populate the `sokol` dependency is to run this on the cmdline:
 
-To find out the `[content-hash]`, just omit the `.hash` line, and run `zig build`, this will then output
-the expected hash on the terminal. Copy-paste this into the build.zig.zon file.
+```
+zig fetch --save=sokol git+https://github.com/floooh/sokol-zig.git
+```
+
+This will automatically use the latest sokol-zig commit.
 
 For a native-only project, a `build.zig` file looks entirely vanilla:
 
