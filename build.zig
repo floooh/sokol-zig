@@ -119,8 +119,7 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !
             .use_webgl2 = backend != .wgpu,
             .use_emmalloc = true,
             .use_filesystem = false,
-            // NOTE: when sokol-zig is used as package, this path needs to be absolute!
-            .shell_file_path = "src/sokol/web/shell.html",
+            .shell_file_path = b.path("src/sokol/web/shell.html"),
         });
         // ...and a special run step to run the build result via emrun
         run = emRunStep(b, .{ .name = name, .emsdk = options.emsdk });
@@ -304,8 +303,7 @@ pub const EmLinkOptions = struct {
     use_webgl2: bool = false,
     use_emmalloc: bool = false,
     use_filesystem: bool = true,
-    // FIXME: this should be a LazyPath?
-    shell_file_path: ?[]const u8 = null,
+    shell_file_path: ?Build.LazyPath,
     extra_args: []const []const u8 = &.{},
 };
 pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
@@ -341,7 +339,7 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
         emcc.addArg("-sMALLOC='emmalloc'");
     }
     if (options.shell_file_path) |shell_file_path| {
-        emcc.addArg(b.fmt("--shell-file={s}", .{shell_file_path}));
+        emcc.addPrefixedFileArg("--shell-file=", shell_file_path);
     }
     for (options.extra_args) |arg| {
         emcc.addArg(arg);
