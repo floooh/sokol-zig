@@ -206,7 +206,7 @@ fn buildWeb(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMode, dep
         .use_webgl2 = true,
         .use_emmalloc = true,
         .use_filesystem = false,
-        .shell_file_path = dep_sokol.path("src/sokol/web/shell.html").getPath(b),
+        .shell_file_path = dep_sokol.path("src/sokol/web/shell.html"),
     });
     // ...and a special run step to start the web build output via 'emrun'
     const run = sokol.emRunStep(b, .{ .name = "pacman", .emsdk = emsdk });

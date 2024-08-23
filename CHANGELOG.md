@@ -4,6 +4,14 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 23-Aug-2024
+
+Important change for WASM/web builds: Merged PR #77, this changes the
+Emscripten link step option `.shell_file_path` from an absolute path string to
+a Zig build system `LazyPath`. This requires a small change in build.zig
+when creating the Emscripten link step via `emLinkStep()`. See the
+updated code example in the readme for details (just remove a `.getPath(b)`).
+
 ### 03-Jun-2024
 
 - the Emscripten SDK dependency has been updated to 3.1.61
