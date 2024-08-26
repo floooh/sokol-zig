@@ -26,14 +26,14 @@ pub const Pipeline = extern struct {
 pub const Context = extern struct {
     id: u32 = 0,
 };
-pub const Error = enum(i32) {
-    NO_ERROR = 0,
-    VERTICES_FULL,
-    UNIFORMS_FULL,
-    COMMANDS_FULL,
-    STACK_OVERFLOW,
-    STACK_UNDERFLOW,
-    NO_CONTEXT,
+pub const Error = extern struct {
+    any: bool = false,
+    vertices_full: bool = false,
+    uniforms_full: bool = false,
+    commands_full: bool = false,
+    stack_overflow: bool = false,
+    stack_underflow: bool = false,
+    no_context: bool = false,
 };
 pub const ContextDesc = extern struct {
     max_vertices: i32 = 0,
@@ -102,6 +102,14 @@ pub fn getContext() Context {
 pub extern fn sgl_default_context() Context;
 pub fn defaultContext() Context {
     return sgl_default_context();
+}
+pub extern fn sgl_num_vertices() i32;
+pub fn numVertices() i32 {
+    return sgl_num_vertices();
+}
+pub extern fn sgl_num_commands() i32;
+pub fn numCommands() i32 {
+    return sgl_num_commands();
 }
 pub extern fn sgl_draw() void;
 pub fn draw() void {
