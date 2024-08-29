@@ -12,7 +12,7 @@ Support for stable Zig versions is in branches (e.g. `zig-0.12.0`), those versio
 Related projects:
 
 - [pacman.zig](https://github.com/floooh/pacman.zig)
-- [kc85.zig](https://github.com/floooh/kc85.zig)
+- [chipz emulators](https://github.com/floooh/chipz)
 - [Dear ImGui sample project](https://github.com/floooh/sokol-zig-imgui-sample)
 
 ## Building the samples
@@ -109,7 +109,7 @@ Add a build.zig.zon file to your project which has at least a `.sokol` dependenc
 }
 ```
 
-The easiest way to populate the `sokol` dependency is to run this on the cmdline:
+The easiest way to populate or update the `sokol` dependency is to run this on the cmdline:
 
 ```
 zig fetch --save=sokol git+https://github.com/floooh/sokol-zig.git
@@ -216,8 +216,6 @@ fn buildWeb(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMode, dep
 ```
 
 ## wasm32-emscripten caveats
-
-This list might grow longer over time!
 
 - Zig allocators use the `@returnAddress` builtin, which isn't supported in the Emscripten
   runtime out of the box (you'll get a runtime error in the browser's Javascript console
