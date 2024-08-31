@@ -11,8 +11,8 @@ in Zig's `builtin.Type`. Since only a small code area in the bindings is affecte
 function) I decided to implement a fix that works both for zig 0.13.0 and the current
 HEAD version.
 
-E.g. if you're on Zig 0.13.0, can safely update and if you are on the Zig HEAD
-version you definitely should update.
+E.g. if you're on Zig 0.13.0, you can safely update and if you are on the Zig HEAD
+version you definitely need to update.
 
 More details in PR: https://github.com/floooh/sokol/pull/1100
 
