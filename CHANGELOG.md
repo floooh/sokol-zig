@@ -4,6 +4,18 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 31-Aug-2024
+
+Fix for a [breaking naming convention change](https://github.com/ziglang/zig/commit/0fe3fd01ddc2cd49c6a2b939577d16b9d2c65ea9)
+in Zig's `builtin.Type`. Since only a small code area in the bindings is affected (the `asRange` helper
+function) I decided to implement a fix that works both for zig 0.13.0 and the current
+HEAD version.
+
+E.g. if you're on Zig 0.13.0, can safely update and if you are on the Zig HEAD
+version you definitely should update.
+
+More details in PR: https://github.com/floooh/sokol/pull/1100
+
 ### 23-Aug-2024
 
 Important change for WASM/web builds: Merged PR #77, this changes the
