@@ -10,20 +10,39 @@ fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
 // helper function to convert "anything" to a Range struct
 pub fn asRange(val: anytype) Range {
     const type_info = @typeInfo(@TypeOf(val));
-    switch (type_info) {
-        .Pointer => {
-            switch (type_info.Pointer.size) {
-                .One => return .{ .ptr = val, .size = @sizeOf(type_info.Pointer.child) },
-                .Slice => return .{ .ptr = val.ptr, .size = @sizeOf(type_info.Pointer.child) * val.len },
-                else => @compileError("FIXME: Pointer type!"),
-            }
-        },
-        .Struct, .Array => {
-            @compileError("Structs and arrays must be passed as pointers to asRange");
-        },
-        else => {
-            @compileError("Cannot convert to range!");
-        },
+    // FIXME: naming convention change between 0.13 and 0.14-dev
+    if (@hasField(@TypeOf(type_info), "Pointer")) {
+        switch (type_info) {
+            .Pointer => {
+                switch (type_info.Pointer.size) {
+                    .One => return .{ .ptr = val, .size = @sizeOf(type_info.Pointer.child) },
+                    .Slice => return .{ .ptr = val.ptr, .size = @sizeOf(type_info.Pointer.child) * val.len },
+                    else => @compileError("FIXME: Pointer type!"),
+                }
+            },
+            .Struct, .Array => {
+                @compileError("Structs and arrays must be passed as pointers to asRange");
+            },
+            else => {
+                @compileError("Cannot convert to range!");
+            },
+        }
+    } else {
+        switch (type_info) {
+            .pointer => {
+                switch (type_info.pointer.size) {
+                    .One => return .{ .ptr = val, .size = @sizeOf(type_info.pointer.child) },
+                    .Slice => return .{ .ptr = val.ptr, .size = @sizeOf(type_info.pointer.child) * val.len },
+                    else => @compileError("FIXME: Pointer type!"),
+                }
+            },
+            .@"struct", .array => {
+                @compileError("Structs and arrays must be passed as pointers to asRange");
+            },
+            else => {
+                @compileError("Cannot convert to range!");
+            },
+        }
     }
 }
 
