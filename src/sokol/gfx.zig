@@ -1208,6 +1208,7 @@ pub const Desc = extern struct {
     uniform_buffer_size: i32 = 0,
     max_commit_listeners: i32 = 0,
     disable_validation: bool = false,
+    d3d11_shader_debugging: bool = false,
     mtl_force_managed_storage_mode: bool = false,
     mtl_use_command_buffer_with_retained_references: bool = false,
     wgpu_disable_bindgroups_cache: bool = false,
