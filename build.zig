@@ -121,6 +121,7 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !
             .use_emmalloc = true,
             .use_filesystem = false,
             .shell_file_path = b.path("src/sokol/web/shell.html"),
+            .extra_args = &.{"-sSTACK_SIZE=512KB"},
         });
         // ...and a special run step to run the build result via emrun
         run = emRunStep(b, .{ .name = name, .emsdk = options.emsdk });
