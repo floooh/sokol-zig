@@ -140,8 +140,8 @@ export fn init() void {
         },
         .color_count = 3,
     };
-    offscreen_pip_desc.layout.attrs[shd.ATTR_vs_offscreen_pos].format = .FLOAT3;
-    offscreen_pip_desc.layout.attrs[shd.ATTR_vs_offscreen_bright0].format = .FLOAT;
+    offscreen_pip_desc.layout.attrs[shd.ATTR_offscreen_pos].format = .FLOAT3;
+    offscreen_pip_desc.layout.attrs[shd.ATTR_offscreen_bright0].format = .FLOAT;
     state.offscreen.pip = sg.makePipeline(offscreen_pip_desc);
 
     // a vertex buffer to render a fullscreen quad
@@ -155,7 +155,7 @@ export fn init() void {
         .shader = sg.makeShader(shd.fsqShaderDesc(sg.queryBackend())),
         .primitive_type = .TRIANGLE_STRIP,
     };
-    fsq_pip_desc.layout.attrs[shd.ATTR_vs_fsq_pos].format = .FLOAT2;
+    fsq_pip_desc.layout.attrs[shd.ATTR_fsq_pos].format = .FLOAT2;
     state.fsq.pip = sg.makePipeline(fsq_pip_desc);
 
     // a sampler to sample the offscreen render target as texture
@@ -170,22 +170,22 @@ export fn init() void {
     // offscreen render target textures
     state.fsq.bind.vertex_buffers[0] = quad_vbuf;
     for (0..3) |i| {
-        state.fsq.bind.fs.images[i] = state.offscreen.attachments_desc.colors[i].image;
+        state.fsq.bind.images[i] = state.offscreen.attachments_desc.colors[i].image;
     }
-    state.fsq.bind.fs.samplers[0] = smp;
+    state.fsq.bind.samplers[shd.SMP_smp] = smp;
 
     // shader, pipeline and resource bindings to render debug visualization quads
     var dbg_pip_desc: sg.PipelineDesc = .{
         .shader = sg.makeShader(shd.dbgShaderDesc(sg.queryBackend())),
         .primitive_type = .TRIANGLE_STRIP,
     };
-    dbg_pip_desc.layout.attrs[shd.ATTR_vs_dbg_pos].format = .FLOAT2;
+    dbg_pip_desc.layout.attrs[shd.ATTR_dbg_pos].format = .FLOAT2;
     state.dbg.pip = sg.makePipeline(dbg_pip_desc);
 
     // resource bindings to render the debug visualization
     // (the required images will be filled in during rendering)
     state.dbg.bind.vertex_buffers[0] = quad_vbuf;
-    state.dbg.bind.fs.samplers[0] = smp;
+    state.dbg.bind.samplers[shd.SMP_smp] = smp;
 }
 
 export fn frame() void {
@@ -206,7 +206,7 @@ export fn frame() void {
     sg.beginPass(.{ .action = state.offscreen.pass_action, .attachments = state.offscreen.attachments });
     sg.applyPipeline(state.offscreen.pip);
     sg.applyBindings(state.offscreen.bind);
-    sg.applyUniforms(.VS, shd.SLOT_offscreen_params, sg.asRange(&offscreen_params));
+    sg.applyUniforms(shd.UB_offscreen_params, sg.asRange(&offscreen_params));
     sg.draw(0, 36, 1);
     sg.endPass();
 
@@ -215,12 +215,12 @@ export fn frame() void {
     sg.beginPass(.{ .action = state.default.pass_action, .swapchain = sglue.swapchain() });
     sg.applyPipeline(state.fsq.pip);
     sg.applyBindings(state.fsq.bind);
-    sg.applyUniforms(.VS, shd.SLOT_fsq_params, sg.asRange(&fsq_params));
+    sg.applyUniforms(shd.UB_fsq_params, sg.asRange(&fsq_params));
     sg.draw(0, 4, 1);
     sg.applyPipeline(state.dbg.pip);
     inline for (0..3) |i| {
         sg.applyViewport(i * 100, 0, 100, 100, false);
-        state.dbg.bind.fs.images[0] = state.offscreen.attachments_desc.colors[i].image;
+        state.dbg.bind.images[shd.IMG_tex] = state.offscreen.attachments_desc.colors[i].image;
         sg.applyBindings(state.dbg.bind);
         sg.draw(0, 4, 1);
     }
@@ -290,6 +290,6 @@ fn createOffscreenAttachments(width: i32, height: i32) void {
 
     // update the fullscreen-quad texture bindings
     for (0..3) |i| {
-        state.fsq.bind.fs.images[i] = state.offscreen.attachments_desc.colors[i].image;
+        state.fsq.bind.images[i] = state.offscreen.attachments_desc.colors[i].image;
     }
 }

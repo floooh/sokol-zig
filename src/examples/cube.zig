@@ -86,8 +86,8 @@ export fn init() void {
         },
         .cull_mode = .BACK,
     };
-    pip_desc.layout.attrs[shd.ATTR_vs_position].format = .FLOAT3;
-    pip_desc.layout.attrs[shd.ATTR_vs_color0].format = .FLOAT4;
+    pip_desc.layout.attrs[shd.ATTR_cube_position].format = .FLOAT3;
+    pip_desc.layout.attrs[shd.ATTR_cube_color0].format = .FLOAT4;
     state.pip = sg.makePipeline(pip_desc);
 
     // framebuffer clear color
@@ -103,7 +103,7 @@ export fn frame() void {
     sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
-    sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(&vs_params));
+    sg.applyUniforms(shd.UB_vs_params, sg.asRange(&vs_params));
     sg.draw(0, 36, 1);
     sg.endPass();
     sg.commit();

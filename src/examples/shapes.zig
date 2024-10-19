@@ -68,10 +68,10 @@ export fn init() void {
         },
     };
     pip_desc.layout.buffers[0] = sshape.vertexBufferLayoutState();
-    pip_desc.layout.attrs[shd.ATTR_vs_position] = sshape.positionVertexAttrState();
-    pip_desc.layout.attrs[shd.ATTR_vs_normal] = sshape.normalVertexAttrState();
-    pip_desc.layout.attrs[shd.ATTR_vs_texcoord] = sshape.texcoordVertexAttrState();
-    pip_desc.layout.attrs[shd.ATTR_vs_color0] = sshape.colorVertexAttrState();
+    pip_desc.layout.attrs[shd.ATTR_shapes_position] = sshape.positionVertexAttrState();
+    pip_desc.layout.attrs[shd.ATTR_shapes_normal] = sshape.normalVertexAttrState();
+    pip_desc.layout.attrs[shd.ATTR_shapes_texcoord] = sshape.texcoordVertexAttrState();
+    pip_desc.layout.attrs[shd.ATTR_shapes_color0] = sshape.colorVertexAttrState();
     state.pip = sg.makePipeline(pip_desc);
 
     // generate shape geometries
@@ -155,7 +155,7 @@ export fn frame() void {
         // per-shape model-view-projection matrix
         const model = mat4.mul(mat4.translate(shape.pos), rm);
         state.vs_params.mvp = mat4.mul(view_proj, model);
-        sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(&state.vs_params));
+        sg.applyUniforms(shd.UB_vs_params, sg.asRange(&state.vs_params));
         sg.draw(shape.draw.base_element, shape.draw.num_elements, 1);
     }
     sdtx.draw();
