@@ -78,8 +78,8 @@ export fn init() void {
         },
     };
     // NOTE how the vertex components are pulled from different buffer bind slots
-    pip_desc.layout.attrs[shd.ATTR_vs_position] = .{ .format = .FLOAT3, .buffer_index = 0 };
-    pip_desc.layout.attrs[shd.ATTR_vs_color0] = .{ .format = .FLOAT4, .buffer_index = 1 };
+    pip_desc.layout.attrs[shd.ATTR_noninterleaved_position] = .{ .format = .FLOAT3, .buffer_index = 0 };
+    pip_desc.layout.attrs[shd.ATTR_noninterleaved_color0] = .{ .format = .FLOAT4, .buffer_index = 1 };
     state.pip = sg.makePipeline(pip_desc);
 
     // fill the resource bindings, note how the same vertex
@@ -103,7 +103,7 @@ export fn frame() void {
     sg.beginPass(.{ .swapchain = sglue.swapchain() });
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
-    sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(&vs_params));
+    sg.applyUniforms(shd.UB_vs_params, sg.asRange(&vs_params));
     sg.draw(0, 36, 1);
     sg.endPass();
     sg.commit();

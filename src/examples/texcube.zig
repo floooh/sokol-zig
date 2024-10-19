@@ -97,10 +97,10 @@ export fn init() void {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     });
-    state.bind.fs.images[shd.SLOT_tex] = sg.makeImage(img_desc);
+    state.bind.images[shd.IMG_tex] = sg.makeImage(img_desc);
 
     // ...and a sampler object with default attributes
-    state.bind.fs.samplers[shd.SLOT_smp] = sg.makeSampler(.{});
+    state.bind.samplers[shd.SMP_smp] = sg.makeSampler(.{});
 
     // shader and pipeline object
     var pip_desc: sg.PipelineDesc = .{
@@ -112,9 +112,9 @@ export fn init() void {
         },
         .cull_mode = .BACK,
     };
-    pip_desc.layout.attrs[shd.ATTR_vs_pos].format = .FLOAT3;
-    pip_desc.layout.attrs[shd.ATTR_vs_color0].format = .UBYTE4N;
-    pip_desc.layout.attrs[shd.ATTR_vs_texcoord0].format = .SHORT2N;
+    pip_desc.layout.attrs[shd.ATTR_texcube_pos].format = .FLOAT3;
+    pip_desc.layout.attrs[shd.ATTR_texcube_color0].format = .UBYTE4N;
+    pip_desc.layout.attrs[shd.ATTR_texcube_texcoord0].format = .SHORT2N;
     state.pip = sg.makePipeline(pip_desc);
 
     // pass action for clearing the frame buffer
@@ -134,7 +134,7 @@ export fn frame() void {
     sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
-    sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(&vs_params));
+    sg.applyUniforms(shd.UB_vs_params, sg.asRange(&vs_params));
     sg.draw(0, 36, 1);
     sg.endPass();
     sg.commit();
