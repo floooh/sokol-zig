@@ -437,9 +437,7 @@ fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
 // TODO: install sokol-shdc via package manager
 fn buildShaders(b: *Build, target: Build.ResolvedTarget) void {
-    //    const sokol_tools_bin_dir = "../sokol-tools-bin/bin/";
-    const sokol_tools_bin_dir = "../../../sokol-tools-bin/bin/";
-
+    const sokol_tools_bin_dir = "../sokol-tools-bin/bin/";
     const shaders_dir = "src/examples/shaders/";
     const shaders = .{
         "bufferoffsets.glsl",
