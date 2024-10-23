@@ -81,9 +81,9 @@ export fn init() void {
     // NOTE how the vertex layout is setup for instancing, with the instancing
     // data provided by buffer-slot 1:
     pip_desc.layout.buffers[1].step_func = .PER_INSTANCE;
-    pip_desc.layout.attrs[shd.ATTR_vs_pos] = .{ .format = .FLOAT3, .buffer_index = 0 }; // positions
-    pip_desc.layout.attrs[shd.ATTR_vs_color0] = .{ .format = .FLOAT4, .buffer_index = 0 }; // colors
-    pip_desc.layout.attrs[shd.ATTR_vs_inst_pos] = .{ .format = .FLOAT3, .buffer_index = 1 }; // instance positions
+    pip_desc.layout.attrs[shd.ATTR_instancing_pos] = .{ .format = .FLOAT3, .buffer_index = 0 }; // positions
+    pip_desc.layout.attrs[shd.ATTR_instancing_color0] = .{ .format = .FLOAT4, .buffer_index = 0 }; // colors
+    pip_desc.layout.attrs[shd.ATTR_instancing_inst_pos] = .{ .format = .FLOAT3, .buffer_index = 1 }; // instance positions
 
     state.pip = sg.makePipeline(pip_desc);
 }
@@ -136,7 +136,7 @@ export fn frame() void {
     sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
-    sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(&vs_params));
+    sg.applyUniforms(shd.UB_vs_params, sg.asRange(&vs_params));
     sg.draw(0, 24, state.cur_num_particles);
     sg.endPass();
     sg.commit();

@@ -44,8 +44,8 @@ export fn init() void {
         .index_type = .UINT16,
         .shader = sg.makeShader(shd.quadShaderDesc(sg.queryBackend())),
     };
-    pip_desc.layout.attrs[shd.ATTR_vs_position].format = .FLOAT3;
-    pip_desc.layout.attrs[shd.ATTR_vs_color0].format = .FLOAT4;
+    pip_desc.layout.attrs[shd.ATTR_quad_position].format = .FLOAT3;
+    pip_desc.layout.attrs[shd.ATTR_quad_color0].format = .FLOAT4;
     state.pip = sg.makePipeline(pip_desc);
 
     // clear to black

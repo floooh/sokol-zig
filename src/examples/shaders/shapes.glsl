@@ -2,15 +2,15 @@
 @ctype mat4 m.Mat4
 
 @vs vs
-uniform vs_params {
+layout(binding=0) uniform vs_params {
     float draw_mode;
     mat4 mvp;
 };
 
-layout(location=0) in vec4 position;
-layout(location=1) in vec3 normal;
-layout(location=2) in vec2 texcoord;
-layout(location=3) in vec4 color0;
+in vec4 position;
+in vec3 normal;
+in vec2 texcoord;
+in vec4 color0;
 
 out vec4 color;
 

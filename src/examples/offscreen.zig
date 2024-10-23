@@ -103,8 +103,8 @@ export fn init() void {
     };
     offscreen_pip_desc.colors[0].pixel_format = .RGBA8;
     offscreen_pip_desc.layout.buffers[0] = sshape.vertexBufferLayoutState();
-    offscreen_pip_desc.layout.attrs[shd.ATTR_vs_offscreen_position] = sshape.positionVertexAttrState();
-    offscreen_pip_desc.layout.attrs[shd.ATTR_vs_offscreen_normal] = sshape.normalVertexAttrState();
+    offscreen_pip_desc.layout.attrs[shd.ATTR_offscreen_position] = sshape.positionVertexAttrState();
+    offscreen_pip_desc.layout.attrs[shd.ATTR_offscreen_normal] = sshape.normalVertexAttrState();
     state.offscreen.pip = sg.makePipeline(offscreen_pip_desc);
 
     // shader and pipeline object for the default render pass
@@ -118,9 +118,9 @@ export fn init() void {
         },
     };
     default_pip_desc.layout.buffers[0] = sshape.vertexBufferLayoutState();
-    default_pip_desc.layout.attrs[shd.ATTR_vs_default_position] = sshape.positionVertexAttrState();
-    default_pip_desc.layout.attrs[shd.ATTR_vs_default_normal] = sshape.normalVertexAttrState();
-    default_pip_desc.layout.attrs[shd.ATTR_vs_default_texcoord0] = sshape.texcoordVertexAttrState();
+    default_pip_desc.layout.attrs[shd.ATTR_default_position] = sshape.positionVertexAttrState();
+    default_pip_desc.layout.attrs[shd.ATTR_default_normal] = sshape.normalVertexAttrState();
+    default_pip_desc.layout.attrs[shd.ATTR_default_texcoord0] = sshape.texcoordVertexAttrState();
     state.default.pip = sg.makePipeline(default_pip_desc);
 
     // a sampler object for sampling the render target texture
@@ -138,8 +138,8 @@ export fn init() void {
     // resource bindings to render a textured cube, using the offscreen render target as texture
     state.default.bind.vertex_buffers[0] = vbuf;
     state.default.bind.index_buffer = ibuf;
-    state.default.bind.fs.images[0] = color_img;
-    state.default.bind.fs.samplers[0] = smp;
+    state.default.bind.images[shd.IMG_tex] = color_img;
+    state.default.bind.samplers[shd.SMP_smp] = smp;
 }
 
 export fn frame() void {
@@ -152,7 +152,7 @@ export fn frame() void {
     sg.beginPass(.{ .action = state.offscreen.pass_action, .attachments = state.offscreen.attachments });
     sg.applyPipeline(state.offscreen.pip);
     sg.applyBindings(state.offscreen.bind);
-    sg.applyUniforms(.VS, 0, sg.asRange(&computeVsParams(state.rx, state.ry, 1.0, 2.5)));
+    sg.applyUniforms(shd.UB_vs_params, sg.asRange(&computeVsParams(state.rx, state.ry, 1.0, 2.5)));
     sg.draw(state.donut.base_element, state.donut.num_elements, 1);
     sg.endPass();
 
@@ -161,7 +161,7 @@ export fn frame() void {
     sg.beginPass(.{ .action = state.default.pass_action, .swapchain = sglue.swapchain() });
     sg.applyPipeline(state.default.pip);
     sg.applyBindings(state.default.bind);
-    sg.applyUniforms(.VS, 0, sg.asRange(&computeVsParams(-state.rx * 0.25, state.ry * 0.25, aspect, 2)));
+    sg.applyUniforms(shd.UB_vs_params, sg.asRange(&computeVsParams(-state.rx * 0.25, state.ry * 0.25, aspect, 2)));
     sg.draw(state.sphere.base_element, state.sphere.num_elements, 1);
     sg.endPass();
 
