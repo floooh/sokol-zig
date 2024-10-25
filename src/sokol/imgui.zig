@@ -79,12 +79,12 @@ pub extern fn simgui_query_image_desc(Image) ImageDesc;
 pub fn queryImageDesc(img: Image) ImageDesc {
     return simgui_query_image_desc(img);
 }
-pub extern fn simgui_imtextureid(Image) ?*anyopaque;
-pub fn imtextureid(img: Image) ?*anyopaque {
+pub extern fn simgui_imtextureid(Image) u64;
+pub fn imtextureid(img: Image) u64 {
     return simgui_imtextureid(img);
 }
-pub extern fn simgui_image_from_imtextureid(?*anyopaque) Image;
-pub fn imageFromImtextureid(im_texture_id: ?*anyopaque) Image {
+pub extern fn simgui_image_from_imtextureid(u64) Image;
+pub fn imageFromImtextureid(im_texture_id: u64) Image {
     return simgui_image_from_imtextureid(im_texture_id);
 }
 pub extern fn simgui_add_focus_event(bool) void;
