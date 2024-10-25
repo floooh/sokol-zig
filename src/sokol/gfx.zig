@@ -1354,8 +1354,8 @@ pub extern fn sg_apply_bindings([*c]const Bindings) void;
 pub fn applyBindings(bindings: Bindings) void {
     sg_apply_bindings(&bindings);
 }
-pub extern fn sg_apply_uniforms(i32, [*c]const Range) void;
-pub fn applyUniforms(ub_slot: i32, data: Range) void {
+pub extern fn sg_apply_uniforms(u32, [*c]const Range) void;
+pub fn applyUniforms(ub_slot: u32, data: Range) void {
     sg_apply_uniforms(ub_slot, &data);
 }
 pub extern fn sg_draw(u32, u32, u32) void;
