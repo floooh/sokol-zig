@@ -64,7 +64,7 @@
     Optionally define the following to force debug checks and validations
     even in release mode:
 
-    SOKOL_DEBUG         - by default this is defined if _DEBUG is defined
+    SOKOL_DEBUG - by default this is defined if _DEBUG is defined
 
     sokol_gfx DOES NOT:
     ===================
@@ -77,7 +77,7 @@
 
     - provide a unified shader language, instead 3D-API-specific shader
       source-code or shader-bytecode must be provided (for the "official"
-      offline shader cross-compiler, see here:
+      offline shader cross-compiler / code-generator, see here:
       https://github.com/floooh/sokol-tools/blob/master/docs/sokol-shdc.md)
 
 
@@ -148,7 +148,7 @@
             sg_apply_pipeline(sg_pipeline pip)
 
     --- fill an sg_bindings struct with the resource bindings for the next
-        draw call (0..N vertex buffers, 0 or 1 index buffer, 0..N image-objects,
+        draw call (0..N vertex buffers, 0 or 1 index buffer, 0..N images,
         samplers and storage-buffers), and call:
 
             sg_apply_bindings(const sg_bindings* bindings)
@@ -157,7 +157,7 @@
 
     --- optionally update shader uniform data with:
 
-            sg_apply_uniforms(sg_shader_stage stage, int ub_index, const sg_range* data)
+            sg_apply_uniforms(int ub_slot, const sg_range* data)
 
         Read the section 'UNIFORM DATA LAYOUT' to learn about the expected memory layout
         of the uniform data passed into sg_apply_uniforms().
@@ -443,8 +443,10 @@
 
     A frame must have at least one 'swapchain render pass' which renders into an
     externally provided swapchain provided as an sg_swapchain struct to the
-    sg_begin_pass() function. The sg_swapchain struct must contain the
-    following information:
+    sg_begin_pass() function. If you use sokol_gfx.h together with sokol_app.h,
+    just call the sglue_swapchain() helper function in sokol_glue.h to
+    provide the swapchain information. Otherwise the following information
+    must be provided:
 
         - the color pixel-format of the swapchain's render surface
         - an optional depth/stencil pixel format if the swapchain
@@ -686,8 +688,8 @@
     sokol-gfx doesn't come with an integrated shader cross-compiler, instead
     backend-specific shader sources or binary blobs need to be provided when
     creating a shader object, along with information about the shader resource
-    binding interface needed in the sokol-gfx validation layer and to properly
-    bind shader resources on the CPU-side to be consumable by the GPU-side.
+    binding interface needed to bind sokol-gfx resources to the proper
+    shader inputs.
 
     The easiest way to provide all this shader creation data is to use the
     sokol-shdc shader compiler tool to compile shaders from a common
@@ -728,7 +730,7 @@
           load 'd3dcompiler_47.dll'
         - for the Metal backends, shaders can be provided as source or binary blobs, the
           MSL version should be in 'metal-1.1' (other versions may work but are not tested)
-        - for the WebGPU backend, shader must be provided as WGSL source code
+        - for the WebGPU backend, shaders must be provided as WGSL source code
         - optionally the following shader-code related attributes can be provided:
             - an entry function name (only on D3D11 or Metal, but not OpenGL)
             - on D3D11 only, a compilation target (default is "vs_4_0" and "ps_4_0")
@@ -741,17 +743,24 @@
           bound by their attribute location defined in the shader via `@location(N)`
         - GLSL: vertex attribute names can be optionally provided, in that case their
           location will be looked up by name, otherwise, the vertex attribute location
-          can be defined with 'layout(location = N)', PLEASE NOTE that the name-lookup method
-          may be removed at some point
+          can be defined with 'layout(location = N)'
         - D3D11: a 'semantic name' and 'semantic index' must be provided for each vertex
           attribute, e.g. if the vertex attribute is defined as 'TEXCOORD1' in the shader,
           the semantic name would be 'TEXCOORD', and the semantic index would be '1'
 
+      NOTE that vertex attributes currently must not have gaps. This requirement
+      may be relaxed in the future.
+
     - Information about each uniform block used in the shader:
-        - The size of the uniform block in number of bytes.
-        - A memory layout hint (currently 'native' or 'std140') where 'native' defines a
+        - the shader stage of the uniform block (vertex or fragment)
+        - the size of the uniform block in number of bytes
+        - a memory layout hint (currently 'native' or 'std140') where 'native' defines a
           backend-specific memory layout which shouldn't be used for cross-platform code.
           Only std140 guarantees a backend-agnostic memory layout.
+        - a backend-specific bind slot:
+            - D3D11/HLSL: the buffer register N (`register(bN)`) where N is 0..7
+            - Metal/MSL: the buffer bind slot N (`[[buffer(N)]]`) where N is 0..7
+            - WebGPU: the binding N in `@group(0) @binding(N)` where N is 0..15
         - For GLSL only: a description of the internal uniform block layout, which maps
           member types and their offsets on the CPU side to uniform variable names
           in the GLSL shader
@@ -759,12 +768,20 @@
           and CROSS-BACKEND COMMON UNIFORM DATA LAYOUT below!
 
     - A description of each storage buffer used in the shader:
+        - the shader stage of the storage buffer
         - a boolean 'readonly' flag, note that currently only
           readonly storage buffers are supported
+        - a backend-specific bind slot:
+            - D3D11/HLSL: the texture register N (`register(tN)`) where N is 0..23
+              (in HLSL, storage buffers and texture share the same bind space)
+            - Metal/MSL: the buffer bind slot N (`[[buffer(N)]]`) where N is 8..15
+            - WebGPU/WGSL: the binding N in `@group(0) @binding(N)` where N is 0..127
+            - GL/GLSL: the buffer binding N in `layout(binding=N)` where N is 0..16
         - note that storage buffers are not supported on all backends
           and platforms
 
     - A description of each texture/image used in the shader:
+        - the shader stage of the texture (vertex or fragment)
         - the expected image type:
             - SG_IMAGETYPE_2D
             - SG_IMAGETYPE_CUBE
@@ -779,11 +796,22 @@
         - a flag whether the texture is expected to be multisampled
           (currently it's not supported to fetch data from multisampled
           textures in shaders, but this is planned for a later time)
+        - a backend-specific bind slot:
+            - D3D11/HLSL: the texture register N (`register(tN)`) where N is 0..23
+              (in HLSL, storage buffers and texture share the same bind space)
+            - Metal/MSL: the texture bind slot N (`[[texture(N)]]`) where N is 0..15
+            - WebGPU/WGSL: the binding N in `@group(0) @binding(N)` where N is 0..127
 
-    - A description of each texture sampler used in the shader:
-        - SG_SAMPLERTYPE_FILTERING,
-        - SG_SAMPLERTYPE_NONFILTERING,
-        - SG_SAMPLERTYPE_COMPARISON,
+    - A description of each sampler used in the shader:
+        - the shader stage of the sampler (vertex or fragment)
+        - the expected sampler type:
+            - SG_SAMPLERTYPE_FILTERING,
+            - SG_SAMPLERTYPE_NONFILTERING,
+            - SG_SAMPLERTYPE_COMPARISON,
+        - a backend-specific bind slot:
+            - D3D11/HLSL: the sampler register N (`register(sN)`) where N is 0..15
+            - Metal/MSL: the sampler bind slot N (`[[sampler(N)]]`) where N is 0..15
+            - WebGPU/WGSL: the binding N in `@group(0) @binding(N)` where N is 0..127
 
     - An array of 'image-sampler-pairs' used by the shader to sample textures,
       for D3D11, Metal and WebGPU this is used for validation purposes to check
@@ -801,6 +829,28 @@
         - SG_IMAGESAMPLETYPE_SINT => SG_SAMPLERTYPE_NONFILTERING
         - SG_IMAGESAMPLETYPE_UINT => SG_SAMPLERTYPE_NONFILTERING
         - SG_IMAGESAMPLETYPE_DEPTH => SG_SAMPLERTYPE_COMPARISON
+
+    Backend-specific bindslot ranges (not relevant when using sokol-shdc):
+
+        - D3D11/HLSL:
+            - separate bindslot space per shader stage
+            - uniform blocks (as cbuffer): `register(b0..b7)`
+            - textures and storage buffers: `register(t0..t23)`
+            - samplers: `register(s0..s15)`
+        - Metal/MSL:
+            - separate bindslot space per shader stage
+            - uniform blocks: `[[buffer(0..7)]]`
+            - storage buffers: `[[buffer(8..15)]]`
+            - textures: `[[texture(0..15)]]`
+            - samplers: `[[sampler(0..15)]]`
+        - WebGPU/WGSL:
+            - common bindslot space across shader stages
+            - uniform blocks: `@group(0) @binding(0..15)`
+            - textures, samplers and storage buffers: `@group(1) @binding(0..127)`
+        - GL/GLSL:
+            - uniforms and image-samplers are bound by name
+            - storage buffers: `layout(std430, binding=0..7)` (common
+              bindslot space across shader stages)
 
     For example code of how to create backend-specific shader objects,
     please refer to the following samples:
@@ -1016,8 +1066,8 @@
 
     Storage buffer shader authoring caveats when using sokol-shdc:
 
-        - declare a storage buffer interface block with `readonly buffer [name] { ... }`
-        - do NOT annotate storage buffers with `layout(...)`, sokol-shdc will take care of that
+        - declare a storage buffer interface block with `layout(binding=N) readonly buffer [name] { ... }`
+          (where 'N' is the index in `sg_bindings.storage_buffers[N]`)
         - declare a struct which describes a single array item in the storage buffer interface block
         - only put a single flexible array member into the storage buffer interface block
 
@@ -1030,7 +1080,7 @@
             vec4 color;
         }
         // declare a buffer interface block with a single flexible struct array:
-        readonly buffer vertices {
+        layout(binding=0) readonly buffer vertices {
             sb_vertex vtx[];
         }
         // in the shader function, access the storage buffer like this:
@@ -1047,23 +1097,22 @@
               (https://learn.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-resources-intro#raw-views-of-buffers)
             - in HLSL, use a ByteAddressBuffer to access the buffer content
               (https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-object-byteaddressbuffer)
-            - in D3D11, storage buffers and textures share the same bind slots, sokol-gfx reserves
-              shader resource slots 0..15 for textures and 16..23 for storage buffers.
-            - e.g. in HLSL, storage buffer bindings start at register(t16) no matter the shader stage
+            - in D3D11, storage buffers and textures share the same bind slots (declared as
+              `register(tN)` in HLSL), where N must be in the range 0..23)
 
         Metal:
             - in Metal there is no internal difference between vertex-, uniform- and
               storage-buffers, all are bound to the same 'buffer bind slots' with the
               following reserved ranges:
                 - vertex shader stage:
-                    - uniform buffers (internal): slots 0..3
-                    - vertex buffers: slots 4..11
-                    - storage buffers: slots 12..19
+                    - uniform buffers: slots 0..7
+                    - storage buffers: slots 8..15
+                    - vertex buffers: slots 15..23
                 - fragment shader stage:
-                    - uniform buffers (internal): slots 0..3
-                    - storage buffers: slots 4..11
-            - this means in MSL, storage buffer bindings start at [[buffer(12)]] in the vertex
-              shaders, and at [[buffer(4)]] in fragment shaders
+                    - uniform buffers: slots 0..7
+                    - storage buffers: slots 8..15
+            - this means in MSL, storage buffer bindings start at [[buffer(8)]] both in
+              the vertex and fragment stage
 
         GL:
             - the GL backend doesn't use name-lookup to find storage buffer bindings, this
@@ -1071,15 +1120,10 @@
             - ...where N is 0..7 in the vertex shader, and 8..15 in the fragment shader
 
         WebGPU:
-            - in WGSL, use the following bind locations for the various shader resource types:
-            - vertex shader stage:
-                - textures `@group(1) @binding(0..15)`
-                - samplers `@group(1) @binding(16..31)`
-                - storage buffers `@group(1) @binding(32..47)`
-            - fragment shader stage:
-                - textures `@group(1) @binding(48..63)`
-                - samplers `@group(1) @binding(64..79)`
-                - storage buffers `@group(1) @binding(80..95)`
+            - in WGSL, textures, samplers and storage buffers all use a shared
+              bindspace across all shader stages on bindgroup 1:
+
+              `@group(1) @binding(0..127)
 
     TRACE HOOKS:
     ============
@@ -1452,33 +1496,30 @@
     - when writing WGSL shader code by hand, a specific bind-slot convention
       must be used:
 
-      All uniform block structs must use `@group(0)`, with up to
-      4 uniform blocks per shader stage.
-        - Vertex shader uniform block bindings must start at `@group(0) @binding(0)`
-        - Fragment shader uniform blocks bindings must start at `@group(0) @binding(4)`
+      All uniform block structs must use `@group(0)` and bindings in the
+      range 0..127:
 
-      All textures and samplers must use `@group(1)` and start at specific
-      offsets depending on resource type and shader stage.
-        - Vertex shader textures must start at `@group(1) @binding(0)`
-        - Vertex shader samplers must start at `@group(1) @binding(16)`
-        - Vertex shader storage buffers must start at `@group(1) @binding(32)`
-        - Fragment shader textures must start at `@group(1) @binding(48)`
-        - Fragment shader samplers must start at `@group(1) @binding(64)`
-        - Fragment shader storage buffers must start at `@group(1) @binding(80)`
+        @group(0) @binding(0..7)
 
-      Note that the actual number of allowed per-stage texture- and sampler-bindings
-      in sokol-gfx is currently lower than the above ranges (currently only up to
-      12 textures, 8 samplers and 8 storage buffers are allowed per shader stage).
+      All textures, samplers and storage buffers must use `@group(1)` and
+      bindings must be in the range 0..127:
+
+        @group(1) @binding(0..127)
+
+      Note that the number of texture, sampler and storage buffer bindings
+      is still limited despite the large bind range:
+
+        - up to 16 textures and sampler across all shader stages
+        - up to 8 storage buffers across all shader stages
 
       If you use sokol-shdc to generate WGSL shader code, you don't need to worry
-      about the above binding convention since sokol-shdc assigns bind slots
-      automatically.
+      about the above binding conventions since sokol-shdc.
 
     - The sokol-gfx WebGPU backend uses the sg_desc.uniform_buffer_size item
       to allocate a single per-frame uniform buffer which must be big enough
       to hold all data written by sg_apply_uniforms() during a single frame,
       including a worst-case 256-byte alignment (e.g. each sg_apply_uniform
-      call will cost 256 bytes of uniform buffer size). The default size
+      call will cost at least 256 bytes of uniform buffer size). The default size
       is 4 MB, which is enough for 16384 sg_apply_uniform() calls per
       frame (assuming the uniform data 'payload' is less than 256 bytes
       per call). These rules are the same as for the Metal backend, so if
@@ -1500,7 +1541,7 @@
         .wgpu.num_bindgroup_cache_vs_hash_key_mismatch
 
       The value to pay attention to is `.wgpu.num_bindgroup_cache_collisions`,
-      if this number if consistently higher than a few percent of the
+      if this number is consistently higher than a few percent of the
       .wgpu.num_set_bindgroup value, it might be a good idea to bump the
       bindgroups cache size to the next power-of-2.
 
@@ -1586,14 +1627,14 @@ extern "C" {
     Resource id typedefs:
 
     sg_buffer:      vertex- and index-buffers
-    sg_image:       images used as textures and render targets
-    sg_sampler      sampler object describing how a texture is sampled in a shader
+    sg_image:       images used as textures and render-pass attachments
+    sg_sampler      sampler objects describing how a texture is sampled in a shader
     sg_shader:      vertex- and fragment-shaders and shader interface information
     sg_pipeline:    associated shader and vertex-layouts, and render states
     sg_attachments: a baked collection of render pass attachment images
 
     Instead of pointers, resource creation functions return a 32-bit
-    number which uniquely identifies the resource object.
+    handle which uniquely identifies the resource object.
 
     The 32-bit resource id is split into a 16-bit pool index in the lower bits,
     and a 16-bit 'generation counter' in the upper bits. The index allows fast
@@ -1636,7 +1677,7 @@ typedef struct sg_range {
 #define SG_RANGE_REF(x) &(sg_range){ &x, sizeof(x) }
 #endif
 
-//  various compile-time constants
+// various compile-time constants in the public API
 enum {
     SG_INVALID_ID = 0,
     SG_NUM_INFLIGHT_FRAMES = 2,
@@ -1700,13 +1741,12 @@ typedef enum sg_backend {
 
         - sample: the pixelformat can be sampled as texture at least with
                   nearest filtering
-        - filter: the pixelformat can be samples as texture with linear
+        - filter: the pixelformat can be sampled as texture with linear
                   filtering
-        - render: the pixelformat can be used for render targets
-        - blend:  blending is supported when using the pixelformat for
-                  render targets
-        - msaa:   multisample-antialiasing is supported when using the
-                  pixelformat for render targets
+        - render: the pixelformat can be used as render-pass attachment
+        - blend:  blending is supported when used as render-pass attachment
+        - msaa:   multisample-antialiasing is supported when used
+                  as render-pass attachment
         - depth:  the pixelformat can be used for depth-stencil attachments
         - compressed: this is a block-compressed format
         - bytes_per_pixel: the numbers of bytes in a pixel (0 for compressed formats)
@@ -1809,27 +1849,25 @@ typedef enum sg_pixel_format {
 } sg_pixel_format;
 
 /*
-    Runtime information about a pixel format, returned
-    by sg_query_pixelformat().
+    Runtime information about a pixel format, returned by sg_query_pixelformat().
 */
 typedef struct sg_pixelformat_info {
     bool sample;            // pixel format can be sampled in shaders at least with nearest filtering
     bool filter;            // pixel format can be sampled with linear filtering
-    bool render;            // pixel format can be used as render target
-    bool blend;             // alpha-blending is supported
-    bool msaa;              // pixel format can be used as MSAA render target
+    bool render;            // pixel format can be used as render-pass attachment
+    bool blend;             // pixel format supports alpha-blending when used as render-pass attachment
+    bool msaa;              // pixel format supports MSAA when used as render-pass attachment
     bool depth;             // pixel format is a depth format
     bool compressed;        // true if this is a hardware-compressed format
     int bytes_per_pixel;    // NOTE: this is 0 for compressed formats, use sg_query_row_pitch() / sg_query_surface_pitch() as alternative
 } sg_pixelformat_info;
 
 /*
-    Runtime information about available optional features,
-    returned by sg_query_features()
+    Runtime information about available optional features, returned by sg_query_features()
 */
 typedef struct sg_features {
-    bool origin_top_left;               // framebuffer and texture origin is in top left corner
-    bool image_clamp_to_border;         // border color and clamp-to-border UV-wrap mode is supported
+    bool origin_top_left;               // framebuffer- and texture-origin is in top left corner
+    bool image_clamp_to_border;         // border color and clamp-to-border uv-wrap mode is supported
     bool mrt_independent_blend_state;   // multiple-render-target rendering can use per-render-target blend state
     bool mrt_independent_write_mask;    // multiple-render-target rendering can use per-render-target color write masks
     bool storage_buffer;                // storage buffers are supported
@@ -1943,6 +1981,7 @@ typedef enum sg_buffer_type {
 
     Indicates whether indexed rendering (fetching vertex-indices from an
     index buffer) is used, and if yes, the index data type (16- or 32-bits).
+
     This is used in the sg_pipeline_desc.index_type member when creating a
     pipeline object.
 
@@ -1982,7 +2021,7 @@ typedef enum sg_image_type {
     sg_image_sample_type
 
     The basic data type of a texture sample as expected by a shader.
-    Must be provided in sg_shader_image_desc and used by the validation
+    Must be provided in sg_shader_image and used by the validation
     layer in sg_apply_bindings() to check if the provided image object
     is compatible with what the shader expects. Apart from the sokol-gfx
     validation layer, WebGPU is the only backend API which actually requires
@@ -2187,7 +2226,8 @@ typedef enum sg_vertex_step {
 
     The data type of a uniform block member. This is used to
     describe the internal layout of uniform blocks when creating
-    a shader object.
+    a shader object. This is only required for the GL backend, all
+    other backends will ignore the interior layout of uniform blocks.
 */
 typedef enum sg_uniform_type {
     SG_UNIFORMTYPE_INVALID,
@@ -2208,7 +2248,7 @@ typedef enum sg_uniform_type {
     sg_uniform_layout
 
     A hint for the interior memory layout of uniform blocks. This is
-    only really relevant for the GL backend where the internal layout
+    only relevant for the GL backend where the internal layout
     of uniform blocks must be known to sokol-gfx. For all other backends the
     internal memory layout of uniform blocks doesn't matter, sokol-gfx
     will just pass uniform data as a single memory blob to the
@@ -2288,6 +2328,8 @@ typedef enum sg_face_winding {
     in pipeline objects, and for texture samplers which perform a comparison
     instead of regular sampling operation.
 
+    Used in the following structs:
+
     sg_pipeline_desc
         .depth
             .compare
@@ -2301,7 +2343,7 @@ typedef enum sg_face_winding {
     The default compare func for depth- and stencil-tests is
     SG_COMPAREFUNC_ALWAYS.
 
-    The default compare func for sampler is SG_COMPAREFUNC_NEVER.
+    The default compare func for samplers is SG_COMPAREFUNC_NEVER.
 */
 typedef enum sg_compare_func {
     _SG_COMPAREFUNC_DEFAULT,    // value 0 reserved for default-init
@@ -2322,7 +2364,7 @@ typedef enum sg_compare_func {
 
     The operation performed on a currently stored stencil-value when a
     comparison test passes or fails. This is used when creating a pipeline
-    object in the members:
+    object in the following sg_pipeline_desc struct items:
 
     sg_pipeline_desc
         .stencil
@@ -2393,8 +2435,8 @@ typedef enum sg_blend_factor {
     sg_blend_op
 
     Describes how the source and destination values are combined in the
-    fragment blending operation. It is used in the following members when
-    creating a pipeline object:
+    fragment blending operation. It is used in the following struct items
+    when creating a pipeline object:
 
     sg_pipeline_desc
         .colors[i]
@@ -2476,7 +2518,7 @@ typedef enum sg_load_action {
 /*
     sg_store_action
 
-    Defines the store action that be performed at the end of a render pass:
+    Defines the store action that should be performed at the end of a render pass:
 
     SG_STOREACTION_STORE:       store the rendered content to the color attachment image
     SG_STOREACTION_DONTCARE:    allows the GPU to discard the rendered content
@@ -2495,11 +2537,11 @@ typedef enum sg_store_action {
     The sg_pass_action struct defines the actions to be performed
     at the start and end of a render pass.
 
-    - at the start of the pass: whether the render targets should be cleared,
+    - at the start of the pass: whether the render attachments should be cleared,
       loaded with their previous content, or start in an undefined state
     - for clear operations: the clear value (color, depth, or stencil values)
     - at the end of the pass: whether the rendering result should be
-      stored back into the render target or discarded
+      stored back into the render attachment or discarded
 */
 typedef struct sg_color_attachment_action {
     sg_load_action load_action;         // default: SG_LOADACTION_CLEAR
@@ -2547,8 +2589,9 @@ typedef struct sg_pass_action {
     Additionally the following backend API specific objects must be passed in
     as 'type erased' void pointers:
 
-    GL: on all GL backends, a GL framebuffer object must be provided. This
-    can be zero for the default framebuffer.
+    GL:
+        - on all GL backends, a GL framebuffer object must be provided. This
+          can be zero for the default framebuffer.
 
     D3D11:
         - an ID3D11RenderTargetView for the rendering surface, without
@@ -2566,7 +2609,7 @@ typedef struct sg_pass_action {
         - when MSAA rendering is used, another WGPUTextureView
           which serves as MSAA resolve target and will be displayed
 
-    Metal (NOTE that the rolves of provided surfaces is slightly different
+    Metal (NOTE that the roles of provided surfaces is slightly different
     than on D3D11 or WebGPU in case of MSAA vs non-MSAA rendering):
 
         - A current CAMetalDrawable (NOT an MTLDrawable!) which will be presented.
@@ -2578,7 +2621,7 @@ typedef struct sg_pass_action {
           CAMetalDrawable.
 
     NOTE that for Metal you must use an ObjC __bridge cast to
-    properly tunnel the ObjC object handle through a C void*, e.g.:
+    properly tunnel the ObjC object id through a C void*, e.g.:
 
         swapchain.metal.current_drawable = (__bridge const void*) [mtkView currentDrawable];
 
@@ -2630,7 +2673,7 @@ typedef struct sg_swapchain {
     function.
 
     For an offscreen rendering pass, an sg_pass_action struct and sg_attachments
-    object must be provided, and for swapchain passes, and sg_pass_action and
+    object must be provided, and for swapchain passes, an sg_pass_action and
     an sg_swapchain struct. It is an error to provide both an sg_attachments
     handle and an initialized sg_swapchain struct in the same sg_begin_pass().
 
@@ -2666,9 +2709,14 @@ typedef struct sg_pass {
 /*
     sg_bindings
 
-    The sg_bindings structure defines the resource binding slots
-    of the sokol_gfx render pipeline, used as argument to the
-    sg_apply_bindings() function.
+    The sg_bindings structure defines the buffers, images and
+    samplers resource bindings for the next draw call.
+
+    To update the resource bindings, call sg_apply_bindings() with
+    a pointer to a populated sg_bindings struct. Note that
+    sg_apply_bindings() must be called after sg_apply_pipeline()
+    and that bindings are not preserved across sg_apply_pipeline()
+    calls, even when the new pipeline uses the same 'bindings layout'.
 
     A resource binding struct contains:
 
@@ -2676,19 +2724,68 @@ typedef struct sg_pass {
     - 0..N vertex buffer offsets
     - 0..1 index buffers
     - 0..1 index buffer offsets
-    - 0..N vertex shader stage images
-    - 0..N vertex shader stage samplers
-    - 0..N vertex shader storage buffers
-    - 0..N fragment shader stage images
-    - 0..N fragment shader stage samplers
-    - 0..N fragment shader storage buffers
+    - 0..N images
+    - 0..N samplers
+    - 0..N storage buffers
 
-    For the max number of bindings, see the constant definitions:
+    Where 'N' is defined in the following constants:
 
     - SG_MAX_VERTEXBUFFER_BINDSLOTS
-    - SG_MAX_SHADERSTAGE_IMAGES
-    - SG_MAX_SHADERSTAGE_SAMPLERS
-    - SG_MAX_SHADERSTAGE_STORAGEBUFFERS
+    - SG_MAX_IMAGE_BINDLOTS
+    - SG_MAX_SAMPLER_BINDSLOTS
+    - SG_MAX_STORAGEBUFFER_BINDGLOTS
+
+    When using sokol-shdc for shader authoring, the `layout(binding=N)`
+    annotation in the shader code directly maps to the slot index for that
+    resource type in the bindings struct, for instance the following vertex-
+    and fragment-shader interface for sokol-shdc:
+
+        @vs vs
+        layout(binding=0) uniform vs_params { ... };
+        layout(binding=0) readonly buffer ssbo { ... };
+        layout(binding=0) uniform texture2D vs_tex;
+        layout(binding=0) uniform sampler vs_smp;
+        ...
+        @end
+
+        @fs fs
+        layout(binding=1) uniform fs_params { ... };
+        layout(binding=1) uniform texture2D fs_tex;
+        layout(binding=1) uniform sampler fs_smp;
+        ...
+        @end
+
+    ...would map to the following sg_bindings struct:
+
+        const sg_bindings bnd = {
+            .vertex_buffers[0] = ...,
+            .images[0] = vs_tex,
+            .images[1] = fs_tex,
+            .samplers[0] = vs_smp,
+            .samplers[1] = fs_smp,
+            .storage_buffers[0] = ssbo,
+        };
+
+    ...alternatively you can use code-generated slot indices:
+
+        const sg_bindings bnd = {
+            .vertex_buffers[0] = ...,
+            .images[IMG_vs_tex] = vs_tex,
+            .images[IMG_fs_tex] = fs_tex,
+            .samplers[SMP_vs_smp] = vs_smp,
+            .samplers[SMP_fs_smp] = fs_smp,
+            .storage_buffers[SBUF_ssbo] = ssbo,
+        };
+
+    Resource bindslots for a specific shader/pipeline may have gaps, and an
+    sg_bindings struct may have populated bind slots which are not used by a
+    specific shader. This allows to use the same sg_bindings struct across
+    different shader variants.
+
+    When not using sokol-shdc, the bindslot indices in the sg_bindings
+    struct need to match the per-resource reflection info slot indices
+    in the sg_shader_desc struct (for details about that see the
+    sg_shader_desc struct documentation).
 
     The optional buffer offsets can be used to put different unrelated
     chunks of vertex- and/or index-data into the same buffer objects.
@@ -2903,42 +3000,101 @@ typedef struct sg_sampler_desc {
 /*
     sg_shader_desc
 
-    FIXME: UPDATE!
+    Used as parameter of sg_make_shader() to create a shader object which
+    communicates shader source or bytecode and shader interface
+    reflection information to sokol-gfx.
 
-    The structure sg_shader_desc defines all creation parameters for shader
-    programs, used as input to the sg_make_shader() function:
+    If you use sokol-shdc you can ignore the following information since
+    the sg_shader_desc struct will be code generated.
 
-    - reflection information for vertex attributes (vertex shader inputs):
-        - vertex attribute name (only optionally used by GLES3 and GL)
-        - a semantic name and index (required for D3D11)
-    - for each shader-stage (vertex and fragment):
+    Otherwise you need to provide the following information to the
+    sg_make_shader() call:
+
+    - a vertex- and fragment-shader function:
         - the shader source or bytecode
-        - an optional entry function name
-        - an optional compile target (only for D3D11 when source is provided,
-          defaults are "vs_4_0" and "ps_4_0")
-        - reflection info for each uniform block used by the shader stage:
-            - the size of the uniform block in bytes
-            - a memory layout hint (native vs std140, only required for GL backends)
-            - reflection info for each uniform block member (only required for GL backends):
-                - member name
-                - member type (SG_UNIFORMTYPE_xxx)
-                - if the member is an array, the number of array items
-        - reflection info for textures used in the shader stage:
-            - the image type (SG_IMAGETYPE_xxx)
-            - the image-sample type (SG_IMAGESAMPLETYPE_xxx, default is SG_IMAGESAMPLETYPE_FLOAT)
-            - whether the shader expects a multisampled texture
-        - reflection info for samplers used in the shader stage:
-            - the sampler type (SG_SAMPLERTYPE_xxx)
-        - reflection info for each image-sampler-pair used by the shader:
-            - the texture slot of the involved texture
-            - the sampler slot of the involved sampler
-            - for GLSL only: the name of the combined image-sampler object
-        - reflection info for each storage-buffer used by the shader:
-            - whether the storage buffer is readonly (currently this
-              must be true)
+        - an optional entry point name
+        - for D3D11: an optional compile target when source code is provided
+          (the defaults are "vs_4_0" and "ps_4_0")
+
+    - vertex attributes required by some backends:
+        - for the GL backend: optional vertex attribute names
+          used for name lookup
+        - for the D3D11 backend: semantic names and indices
+
+    - reflection information for each uniform block used by the shader:
+        - the shader stage the uniform block appears in (SG_SHADERSTAGE_*)
+        - the size in bytes of the uniform block
+        - backend-specific bindslots:
+            - HLSL: the constant buffer register `register(b0..7)`
+            - MSL: the buffer attribute `[[buffer(0..7)]]`
+            - WGSL: the binding in `@group(0) @binding(0..15)`
+        - GLSL only: a description of the uniform block interior
+            - the memory layout standard (SG_UNIFORMLAYOUT_*)
+            - for each member in the uniform block:
+                - the member type (SG_UNIFORM_*)
+                - if the member is an array, the array count
+                - the member name
+
+    - reflection information for each texture used by the shader:
+        - the shader stage the texture appears in (SG_SHADERSTAGE_*)
+        - the image type (SG_IMAGETYPE_*)
+        - the image-sample type (SG_IMAGESAMPLETYPE_*)
+        - whether the texture is multisampled
+        - backend specific bindslots:
+            - HLSL: the texture register `register(t0..23)`
+            - MSL: the texture attribute `[[texture(0..15)]]`
+            - WGSL: the binding in `@group(1) @binding(0..127)`
+
+    - reflection information for each sampler used by the shader:
+        - the shader stage the sampler appears in (SG_SHADERSTAGE_*)
+        - the sampler type (SG_SAMPLERTYPE_*)
+        - backend specific bindslots:
+            - HLSL: the sampler register `register(s0..15)`
+            - MSL: the sampler attribute `[[sampler(0..15)]]`
+            - WGSL: the binding in `@group(0) @binding(0..127)`
+
+    - reflection information for each storage buffer used by the shader:
+        - the shader stage the storage buffer appears in (SG_SHADERSTAGE_*)
+        - whether the storage buffer is readonly (currently this must
+          always be true)
+        - backend specific bindslots:
+            - HLSL: the texture(sic) register `register(t0..23)`
+            - MSL: the buffer attribute `[[buffer(8..15)]]`
+            - WGSL: the binding in `@group(1) @binding(0..127)`
+            - GL: the binding in `layout(binding=0..16)`
+
+    - reflection information for each combined image-sampler object
+      used by the shader:
+        - the shader stage (SG_SHADERSTAGE_*)
+        - the texture's array index in the sg_shader_desc.images[] array
+        - the sampler's array index in the sg_shader_desc.samplers[] array
+        - GLSL only: the name of the combined image-sampler object
+
+    The number and order of items in the sg_shader_desc.attrs[]
+    array corresponds to the items in sg_pipeline_desc.layout.attrs.
+
+        - sg_shader_desc.attrs[N] => sg_pipeline_desc.layout.attrs[N]
+
+    NOTE that vertex attribute indices currently cannot have gaps.
+
+    The items index in the sg_shader_desc.uniform_blocks[] array corresponds
+    to the ub_slot arg in sg_apply_uniforms():
+
+        - sg_shader_desc.uniform_blocks[N] => sg_apply_uniforms(N, ...)
+
+    The items in the shader_desc images, samplers and storage_buffers
+    arrays correspond to the same array items in the sg_bindings struct:
+
+        - sg_shader_desc.images[N] => sg_bindings.images[N]
+        - sg_shader_desc.samplers[N] => sg_bindings.samplers[N]
+        - sg_shader_desc.storage_buffers[N] => sg_bindings.storage_buffers[N]
 
     For all GL backends, shader source-code must be provided. For D3D11 and Metal,
     either shader source-code or byte-code can be provided.
+
+    NOTE that the uniform block, image, sampler and storage_buffer arrays
+    can have gaps. This allows to use the same sg_bindings struct for
+    different related shader variants.
 
     For D3D11, if source code is provided, the d3dcompiler_47.dll will be loaded
     on demand. If this fails, shader creation will fail. When compiling HLSL
@@ -2952,6 +3108,13 @@ typedef enum sg_shader_stage {
     SG_SHADERSTAGE_FRAGMENT,
 } sg_shader_stage;
 
+typedef struct sg_shader_function {
+    const char* source;
+    sg_range bytecode;
+    const char* entry;
+    const char* d3d11_target;   // default: "vs_4_0" or "ps_4_0"
+} sg_shader_function;
+
 typedef struct sg_shader_vertex_attr {
     const char* glsl_name;      // [optional] GLSL attribute name
     const char* hlsl_sem_name;  // HLSL semantic name
@@ -2960,18 +3123,17 @@ typedef struct sg_shader_vertex_attr {
 
 typedef struct sg_glsl_shader_uniform {
     sg_uniform_type type;
-    uint32_t offset;            // offset into uniform block struct
-    uint16_t array_count;       // 0 for scalars, or >1 for arrays
+    uint16_t array_count;       // 0 or 1 for scalars, >1 for arrays
     const char* glsl_name;      // glsl name binding is required on GL 4.1 and WebGL2
 } sg_glsl_shader_uniform;
 
 typedef struct sg_shader_uniform_block {
     sg_shader_stage stage;
-    sg_uniform_layout layout;       // FIXME: still needed with explicit offsets?
     uint32_t size;
-    uint8_t hlsl_register_b_n;      // HLSL register(bn)
-    uint8_t msl_buffer_n;           // MSL [[buffer(n)]]
+    uint8_t hlsl_register_b_n;  // HLSL register(bn)
+    uint8_t msl_buffer_n;       // MSL [[buffer(n)]]
     uint8_t wgsl_group0_binding_n; // WGSL @group(0) @binding(n)
+    sg_uniform_layout layout;
     sg_glsl_shader_uniform glsl_uniforms[SG_MAX_UNIFORMBLOCK_MEMBERS];
 } sg_shader_uniform_block;
 
@@ -3009,13 +3171,6 @@ typedef struct sg_shader_image_sampler_pair {
     const char* glsl_name;          // glsl name binding required because of GL 4.1 and WebGL2
 } sg_shader_image_sampler_pair;
 
-typedef struct sg_shader_function {
-    const char* source;
-    sg_range bytecode;
-    const char* entry;
-    const char* d3d11_target;
-} sg_shader_function;
-
 typedef struct sg_shader_desc {
     uint32_t _start_canary;
     sg_shader_function vertex_func;
@@ -3051,7 +3206,7 @@ typedef struct sg_shader_desc {
 
     The default configuration is as follows:
 
-    .shader:            0 (must be initialized with a valid sg_shader id!)
+    .shader:                0 (must be initialized with a valid sg_shader id!)
     .layout:
         .buffers[]:         vertex buffer layouts
             .stride:        0 (if no stride is given it will be computed)
@@ -3518,7 +3673,8 @@ typedef struct sg_frame_stats {
     sg_log_item
 
     An enum with a unique item for each log message, warning, error
-    and validation layer message.
+    and validation layer message. Note that these messages are only
+    visible when a logger function is installed in the sg_setup() call.
 */
 #define _SG_LOG_ITEMS \
     _SG_LOGITEM_XMACRO(OK, "Ok") \
@@ -3585,6 +3741,7 @@ typedef struct sg_frame_stats {
     _SG_LOGITEM_XMACRO(WGPU_CREATE_PIPELINE_LAYOUT_FAILED, "wgpuDeviceCreatePipelineLayout() failed") \
     _SG_LOGITEM_XMACRO(WGPU_CREATE_RENDER_PIPELINE_FAILED, "wgpuDeviceCreateRenderPipeline() failed") \
     _SG_LOGITEM_XMACRO(WGPU_ATTACHMENTS_CREATE_TEXTURE_VIEW_FAILED, "wgpuTextureCreateView() failed in create attachments") \
+    _SG_LOGITEM_XMACRO(DRAW_REQUIRED_BINDINGS_OR_UNIFORMS_MISSING, "call to sg_apply_bindings() and/or sg_apply_uniforms() missing after sg_apply_pipeline()") \
     _SG_LOGITEM_XMACRO(IDENTICAL_COMMIT_LISTENER, "attempting to add identical commit listener") \
     _SG_LOGITEM_XMACRO(COMMIT_LISTENER_ARRAY_FULL, "commit listener array full") \
     _SG_LOGITEM_XMACRO(TRACE_HOOKS_NOT_ENABLED, "sg_install_trace_hooks() called, but SOKOL_TRACE_HOOKS is not defined") \
@@ -3653,37 +3810,37 @@ typedef struct sg_frame_stats {
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_NO_BYTECODE_SIZE, "shader byte code length (in bytes) required") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_NO_CONT_UB_MEMBERS, "uniform block members must occupy continuous slots") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_UB_SIZE_IS_ZERO, "bound uniform block size cannot be zero") \
-    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_UB_METAL_BUFFER_SLOT_OUT_OF_RANGE, "uniform block 'msl_buffer_n' is out of range") \
+    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_UB_METAL_BUFFER_SLOT_OUT_OF_RANGE, "uniform block 'msl_buffer_n' is out of range (must be 0..7)") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_UB_METAL_BUFFER_SLOT_COLLISION, "uniform block 'msl_buffer_n' must be unique across uniform blocks and storage buffers in same shader stage") \
-    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_UB_HLSL_REGISTER_B_OUT_OF_RANGE, "uniform block 'hlsl_register_b_n' is out of range") \
+    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_UB_HLSL_REGISTER_B_OUT_OF_RANGE, "uniform block 'hlsl_register_b_n' is out of range (must be 0..7)") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_UB_HLSL_REGISTER_B_COLLISION, "uniform block 'hlsl_register_b_n' must be unique across uniform blocks in same shader stage") \
-    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_UB_WGSL_GROUP0_BINDING_OUT_OF_RANGE, "uniform block 'wgsl_group0_binding_n' is out of range") \
+    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_UB_WGSL_GROUP0_BINDING_OUT_OF_RANGE, "uniform block 'wgsl_group0_binding_n' is out of range (must be 0..15)") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_UB_WGSL_GROUP0_BINDING_COLLISION, "uniform block 'wgsl_group0_binding_n' must be unique across all uniform blocks") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_NO_UB_MEMBERS, "GL backend requires uniform block member declarations") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_UB_UNIFORM_GLSL_NAME, "uniform block member 'glsl_name' missing") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_UB_SIZE_MISMATCH, "size of uniform block members doesn't match uniform block size") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_UB_ARRAY_COUNT, "uniform array count must be >= 1") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_UB_STD140_ARRAY_TYPE, "uniform arrays only allowed for FLOAT4, INT4, MAT4 in std140 layout") \
-    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_STORAGEBUFFER_METAL_BUFFER_SLOT_OUT_OF_RANGE, "storage buffer 'msl_buffer_n' is out of range") \
+    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_STORAGEBUFFER_METAL_BUFFER_SLOT_OUT_OF_RANGE, "storage buffer 'msl_buffer_n' is out of range (must be 8..15)") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_STORAGEBUFFER_METAL_BUFFER_SLOT_COLLISION, "storage buffer 'msl_buffer_n' must be unique across uniform blocks and storage buffer in same shader stage") \
-    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_STORAGEBUFFER_HLSL_REGISTER_T_OUT_OF_RANGE, "storage buffer 'hlsl_register_t_n' is out of range") \
+    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_STORAGEBUFFER_HLSL_REGISTER_T_OUT_OF_RANGE, "storage buffer 'hlsl_register_t_n' is out of range (must be 0..23)") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_STORAGEBUFFER_HLSL_REGISTER_T_COLLISION, "storage_buffer 'hlsl_register_t_n' must be unique across storage buffers and images in same shader stage") \
-    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_STORAGEBUFFER_GLSL_BINDING_OUT_OF_RANGE, "storage buffer 'glsl_binding_n' is out of range") \
+    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_STORAGEBUFFER_GLSL_BINDING_OUT_OF_RANGE, "storage buffer 'glsl_binding_n' is out of range (must be 0..15)") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_STORAGEBUFFER_GLSL_BINDING_COLLISION, "storage buffer 'glsl_binding_n' must be unique across shader stages") \
-    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_STORAGEBUFFER_WGSL_GROUP1_BINDING_OUT_OF_RANGE, "storage buffer 'wgsl_group1_binding_n' is out of range") \
+    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_STORAGEBUFFER_WGSL_GROUP1_BINDING_OUT_OF_RANGE, "storage buffer 'wgsl_group1_binding_n' is out of range (must be 0..127)") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_STORAGEBUFFER_WGSL_GROUP1_BINDING_COLLISION, "storage buffer 'wgsl_group1_binding_n' must be unique across all images, samplers and storage buffers") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_STORAGEBUFFER_READONLY, "shader stage storage buffers must be readonly (sg_shader_desc.vs|fs.storage_buffers[].readonly)") \
-    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_IMAGE_METAL_TEXTURE_SLOT_OUT_OF_RANGE, "image 'msl_texture_n' is out of range") \
+    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_IMAGE_METAL_TEXTURE_SLOT_OUT_OF_RANGE, "image 'msl_texture_n' is out of range (must be 0..15)") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_IMAGE_METAL_TEXTURE_SLOT_COLLISION, "image 'msl_texture_n' must be unique in same shader stage") \
-    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_IMAGE_HLSL_REGISTER_T_OUT_OF_RANGE, "image 'hlsl_register_t_n' is out of range") \
+    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_IMAGE_HLSL_REGISTER_T_OUT_OF_RANGE, "image 'hlsl_register_t_n' is out of range (must be 0..23)") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_IMAGE_HLSL_REGISTER_T_COLLISION, "image 'hlsl_register_t_n' must be unique across images and storage buffers in same shader stage") \
-    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_IMAGE_WGSL_GROUP1_BINDING_OUT_OF_RANGE, "image 'wgsl_group1_binding_n' is out of range") \
+    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_IMAGE_WGSL_GROUP1_BINDING_OUT_OF_RANGE, "image 'wgsl_group1_binding_n' is out of range (must be 0..127)") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_IMAGE_WGSL_GROUP1_BINDING_COLLISION, "image 'wgsl_group1_binding_n' must be unique across all images, samplers and storage buffers") \
-    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_SAMPLER_METAL_SAMPLER_SLOT_OUT_OF_RANGE, "sampler 'msl_sampler_n' is out of range") \
+    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_SAMPLER_METAL_SAMPLER_SLOT_OUT_OF_RANGE, "sampler 'msl_sampler_n' is out of range (must be 0..15)") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_SAMPLER_METAL_SAMPLER_SLOT_COLLISION, "sampler 'msl_sampler_n' must be unique in same shader stage") \
-    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_SAMPLER_HLSL_REGISTER_S_OUT_OF_RANGE, "sampler 'hlsl_register_s_n' is out of range") \
+    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_SAMPLER_HLSL_REGISTER_S_OUT_OF_RANGE, "sampler 'hlsl_register_s_n' is out of rang (must be 0..15)") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_SAMPLER_HLSL_REGISTER_S_COLLISION, "sampler 'hlsl_register_s_n' must be unique in same shader stage") \
-    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_SAMPLER_WGSL_GROUP1_BINDING_OUT_OF_RANGE, "sampler 'wgsl_group1_binding_n' is out of range") \
+    _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_SAMPLER_WGSL_GROUP1_BINDING_OUT_OF_RANGE, "sampler 'wgsl_group1_binding_n' is out of range (must be 0..127)") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_SAMPLER_WGSL_GROUP1_BINDING_COLLISION, "sampler 'wgsl_group1_binding_n' must be unique across all images, samplers and storage buffers") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_IMAGE_SAMPLER_PAIR_IMAGE_SLOT_OUT_OF_RANGE, "image-sampler-pair image slot index is out of range (sg_shader_desc.vs|fs.image_sampler_pairs[].image_slot)") \
     _SG_LOGITEM_XMACRO(VALIDATE_SHADERDESC_IMAGE_SAMPLER_PAIR_SAMPLER_SLOT_OUT_OF_RANGE, "image-sampler-pair image slot index is out of range (sg_shader_desc.vs|fs.image_sampler_pairs[].sampler_slot)") \
@@ -3779,7 +3936,7 @@ typedef struct sg_frame_stats {
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_PIPELINE, "sg_apply_bindings: must be called after sg_apply_pipeline") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_PIPELINE_EXISTS, "sg_apply_bindings: currently applied pipeline object no longer alive") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_PIPELINE_VALID, "sg_apply_bindings: currently applied pipeline object not in valid state") \
-    _SG_LOGITEM_XMACRO(VALIDATE_ABND_VBS, "sg_apply_bindings: number of vertex buffers doesn't match number of pipeline vertex layouts") \
+    _SG_LOGITEM_XMACRO(VALIDATE_ABND_EXPECTED_VB, "sg_apply_bindings: vertex buffer binding is missing or buffer handle is invalid") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_VB_EXISTS, "sg_apply_bindings: vertex buffer no longer alive") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_VB_TYPE, "sg_apply_bindings: buffer in vertex buffer slot is not a SG_BUFFERTYPE_VERTEXBUFFER") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_VB_OVERFLOW, "sg_apply_bindings: buffer in vertex buffer slot is overflown") \
@@ -3794,17 +3951,14 @@ typedef struct sg_frame_stats {
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_IMAGE_MSAA, "sg_apply_bindings: cannot bind image with sample_count>1") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_EXPECTED_FILTERABLE_IMAGE, "sg_apply_bindings: filterable image expected") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_EXPECTED_DEPTH_IMAGE, "sg_apply_bindings: depth image expected") \
-    _SG_LOGITEM_XMACRO(VALIDATE_ABND_UNEXPECTED_IMAGE_BINDING, "sg_apply_bindings: unexpected image binding") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_EXPECTED_SAMPLER_BINDING, "sg_apply_bindings: sampler binding is missing or the sampler handle is invalid") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_UNEXPECTED_SAMPLER_COMPARE_NEVER, "sg_apply_bindings: shader expects SG_SAMPLERTYPE_COMPARISON but sampler has SG_COMPAREFUNC_NEVER") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_EXPECTED_SAMPLER_COMPARE_NEVER, "sg_apply_bindings: shader expects SG_SAMPLERTYPE_FILTERING or SG_SAMPLERTYPE_NONFILTERING but sampler doesn't have SG_COMPAREFUNC_NEVER") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_EXPECTED_NONFILTERING_SAMPLER, "sg_apply_bindings: shader expected SG_SAMPLERTYPE_NONFILTERING, but sampler has SG_FILTER_LINEAR filters") \
-    _SG_LOGITEM_XMACRO(VALIDATE_ABND_UNEXPECTED_SAMPLER_BINDING, "sg_apply_bindings: unexpected sampler binding") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_SMP_EXISTS, "sg_apply_bindings: bound sampler no longer alive") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_EXPECTED_STORAGEBUFFER_BINDING, "sg_apply_bindings: storage buffer binding is missing or the buffer handle is invalid") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_STORAGEBUFFER_EXISTS, "sg_apply_bindings: bound storage buffer no longer alive") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_STORAGEBUFFER_BINDING_BUFFERTYPE, "sg_apply_bindings: buffer bound storage buffer slot is not of type storage buffer") \
-    _SG_LOGITEM_XMACRO(VALIDATE_ABND_UNEXPECTED_STORAGEBUFFER_BINDING, "sg_apply_bindings: unexpected storage buffer binding") \
     _SG_LOGITEM_XMACRO(VALIDATE_AUB_NO_PIPELINE, "sg_apply_uniforms: must be called after sg_apply_pipeline()") \
     _SG_LOGITEM_XMACRO(VALIDATE_AUB_NO_UB_AT_SLOT, "sg_apply_uniforms: no uniform block declaration at this shader stage UB slot") \
     _SG_LOGITEM_XMACRO(VALIDATE_AUB_SIZE, "sg_apply_uniforms: data size doesn't match declared uniform block size") \
@@ -3859,11 +4013,11 @@ typedef enum sg_log_item {
 
     Metal specific:
         (NOTE: All Objective-C object references are transferred through
-        a bridged (const void*) to sokol_gfx, which will use a unretained
-        bridged cast (__bridged id<xxx>) to retrieve the Objective-C
+        a bridged cast (__bridge const void*) to sokol_gfx, which will use an
+        unretained bridged cast (__bridge id<xxx>) to retrieve the Objective-C
         references back. Since the bridge cast is unretained, the caller
-        must hold a strong reference to the Objective-C object for the
-        duration of the sokol_gfx call!
+        must hold a strong reference to the Objective-C object until sg_setup()
+        returns.
 
         .mtl_force_managed_storage_mode
             when enabled, Metal buffers and texture resources are created in managed storage
@@ -5076,6 +5230,7 @@ typedef struct {
 } _sg_shader_image_sampler_t;
 
 typedef struct {
+    uint32_t required_bindings_and_uniforms;
     _sg_shader_uniform_block_t uniform_blocks[SG_MAX_UNIFORMBLOCK_BINDSLOTS];
     _sg_shader_storage_buffer_t storage_buffers[SG_MAX_STORAGEBUFFER_BINDSLOTS];
     _sg_shader_image_t images[SG_MAX_IMAGE_BINDSLOTS];
@@ -5088,14 +5243,17 @@ _SOKOL_PRIVATE void _sg_shader_common_init(_sg_shader_common_t* cmn, const sg_sh
         const sg_shader_uniform_block* src = &desc->uniform_blocks[i];
         _sg_shader_uniform_block_t* dst = &cmn->uniform_blocks[i];
         if (src->stage != SG_SHADERSTAGE_NONE) {
+            cmn->required_bindings_and_uniforms |= (1 << i);
             dst->stage = src->stage;
             dst->size = src->size;
         }
     }
+    const uint32_t required_bindings_flag = (1 << SG_MAX_UNIFORMBLOCK_BINDSLOTS);
     for (size_t i = 0; i < SG_MAX_STORAGEBUFFER_BINDSLOTS; i++) {
         const sg_shader_storage_buffer* src = &desc->storage_buffers[i];
         _sg_shader_storage_buffer_t* dst = &cmn->storage_buffers[i];
         if (src->stage != SG_SHADERSTAGE_NONE) {
+            cmn->required_bindings_and_uniforms |= required_bindings_flag;
             dst->stage = src->stage;
             dst->readonly = src->readonly;
         }
@@ -5104,6 +5262,7 @@ _SOKOL_PRIVATE void _sg_shader_common_init(_sg_shader_common_t* cmn, const sg_sh
         const sg_shader_image* src = &desc->images[i];
         _sg_shader_image_t* dst = &cmn->images[i];
         if (src->stage != SG_SHADERSTAGE_NONE) {
+            cmn->required_bindings_and_uniforms |= required_bindings_flag;
             dst->stage = src->stage;
             dst->image_type = src->image_type;
             dst->sample_type = src->sample_type;
@@ -5114,6 +5273,7 @@ _SOKOL_PRIVATE void _sg_shader_common_init(_sg_shader_common_t* cmn, const sg_sh
         const sg_shader_sampler* src = &desc->samplers[i];
         _sg_shader_sampler_t* dst = &cmn->samplers[i];
         if (src->stage != SG_SHADERSTAGE_NONE) {
+            cmn->required_bindings_and_uniforms |= required_bindings_flag;
             dst->stage = src->stage;
             dst->sampler_type = src->sampler_type;
         }
@@ -5136,6 +5296,7 @@ _SOKOL_PRIVATE void _sg_shader_common_init(_sg_shader_common_t* cmn, const sg_sh
 typedef struct {
     bool vertex_buffer_layout_active[SG_MAX_VERTEXBUFFER_BINDSLOTS];
     bool use_instanced_draw;
+    uint32_t required_bindings_and_uniforms;
     sg_shader shader_id;
     sg_vertex_layout_state layout;
     sg_depth_state depth;
@@ -5153,8 +5314,14 @@ typedef struct {
 
 _SOKOL_PRIVATE void _sg_pipeline_common_init(_sg_pipeline_common_t* cmn, const sg_pipeline_desc* desc) {
     SOKOL_ASSERT((desc->color_count >= 0) && (desc->color_count <= SG_MAX_COLOR_ATTACHMENTS));
+    const uint32_t required_bindings_flag = (1 << SG_MAX_UNIFORMBLOCK_BINDSLOTS);
     for (int i = 0; i < SG_MAX_VERTEXBUFFER_BINDSLOTS; i++) {
-        cmn->vertex_buffer_layout_active[i] = false;
+        const sg_vertex_attr_state* a_state = &desc->layout.attrs[i];
+        if (a_state->format != SG_VERTEXFORMAT_INVALID) {
+            SOKOL_ASSERT(a_state->buffer_index < SG_MAX_VERTEXBUFFER_BINDSLOTS);
+            cmn->vertex_buffer_layout_active[a_state->buffer_index] = true;
+            cmn->required_bindings_and_uniforms |= required_bindings_flag;
+        }
     }
     cmn->use_instanced_draw = false;
     cmn->shader_id = desc->shader;
@@ -5167,6 +5334,9 @@ _SOKOL_PRIVATE void _sg_pipeline_common_init(_sg_pipeline_common_t* cmn, const s
     }
     cmn->primitive_type = desc->primitive_type;
     cmn->index_type = desc->index_type;
+    if (cmn->index_type != SG_INDEXTYPE_NONE) {
+        cmn->required_bindings_and_uniforms |= required_bindings_flag;
+    }
     cmn->cull_mode = desc->cull_mode;
     cmn->face_winding = desc->face_winding;
     cmn->sample_count = desc->sample_count;
@@ -5646,7 +5816,8 @@ typedef struct {
 typedef _sg_mtl_attachments_t _sg_attachments_t;
 
 // resource binding state cache
-#define _SG_MTL_MAX_STAGE_UB_SBUF_BINDINGS (SG_MAX_UNIFORMBLOCK_BINDSLOTS + SG_MAX_STORAGEBUFFER_BINDSLOTS)
+#define _SG_MTL_MAX_STAGE_UB_BINDINGS (SG_MAX_UNIFORMBLOCK_BINDSLOTS)
+#define _SG_MTL_MAX_STAGE_UB_SBUF_BINDINGS (_SG_MTL_MAX_STAGE_UB_BINDINGS + SG_MAX_STORAGEBUFFER_BINDSLOTS)
 #define _SG_MTL_MAX_STAGE_BUFFER_BINDINGS (_SG_MTL_MAX_STAGE_UB_SBUF_BINDINGS + SG_MAX_VERTEXBUFFER_BINDSLOTS)
 #define _SG_MTL_MAX_STAGE_IMAGE_BINDINGS (SG_MAX_IMAGE_BINDSLOTS)
 #define _SG_MTL_MAX_STAGE_SAMPLER_BINDINGS (SG_MAX_SAMPLER_BINDSLOTS)
@@ -5924,6 +6095,8 @@ typedef struct {
     } cur_pass;
     sg_pipeline cur_pipeline;
     bool next_draw_valid;
+    uint32_t required_bindings_and_uniforms;    // used to check that bindings and uniforms are applied after applying pipeline
+    uint32_t applied_bindings_and_uniforms;     // bits 0..7: uniform blocks, bit 8: bindings
     #if defined(SOKOL_DEBUG)
     sg_log_item validate_error;
     #endif
@@ -6653,15 +6826,8 @@ _SOKOL_PRIVATE void _sg_dummy_discard_shader(_sg_shader_t* shd) {
 
 _SOKOL_PRIVATE sg_resource_state _sg_dummy_create_pipeline(_sg_pipeline_t* pip, _sg_shader_t* shd, const sg_pipeline_desc* desc) {
     SOKOL_ASSERT(pip && desc);
+    _SOKOL_UNUSED(desc);
     pip->shader = shd;
-    for (int attr_index = 0; attr_index < SG_MAX_VERTEX_ATTRIBUTES; attr_index++) {
-        const sg_vertex_attr_state* a_state = &desc->layout.attrs[attr_index];
-        if (a_state->format == SG_VERTEXFORMAT_INVALID) {
-            break;
-        }
-        SOKOL_ASSERT(a_state->buffer_index < SG_MAX_VERTEXBUFFER_BINDSLOTS);
-        pip->cmn.vertex_buffer_layout_active[a_state->buffer_index] = true;
-    }
     return SG_RESOURCESTATE_VALID;
 }
 
@@ -8595,6 +8761,7 @@ _SOKOL_PRIVATE sg_resource_state _sg_gl_create_pipeline(_sg_pipeline_t* pip, _sg
     SOKOL_ASSERT((pip->shader == 0) && (pip->cmn.shader_id.id != SG_INVALID_ID));
     SOKOL_ASSERT(desc->shader.id == shd->slot.id);
     SOKOL_ASSERT(shd->gl.prog);
+    SOKOL_ASSERT(_sg.limits.max_vertex_attrs <= SG_MAX_VERTEX_ATTRIBUTES);
     pip->shader = shd;
     pip->gl.primitive_type = desc->primitive_type;
     pip->gl.depth = desc->depth;
@@ -8608,6 +8775,13 @@ _SOKOL_PRIVATE sg_resource_state _sg_gl_create_pipeline(_sg_pipeline_t* pip, _sg
     pip->gl.face_winding = desc->face_winding;
     pip->gl.sample_count = desc->sample_count;
     pip->gl.alpha_to_coverage_enabled = desc->alpha_to_coverage_enabled;
+
+    // NOTE: GLSL compilers may remove unused vertex attributes so we can't rely
+    // on the 'prepopulated' vertex_buffer_layout_active[] state and need to
+    // fill this array from scratch with the actual info after GLSL compilation
+    for (int i = 0; i < SG_MAX_VERTEXBUFFER_BINDSLOTS; i++) {
+        pip->cmn.vertex_buffer_layout_active[i] = false;
+    }
 
     // resolve vertex attributes
     for (int attr_index = 0; attr_index < SG_MAX_VERTEX_ATTRIBUTES; attr_index++) {
@@ -8626,8 +8800,8 @@ _SOKOL_PRIVATE sg_resource_state _sg_gl_create_pipeline(_sg_pipeline_t* pip, _sg
         if (!_sg_strempty(&shd->gl.attrs[attr_index].name)) {
             attr_loc = glGetAttribLocation(pip->shader->gl.prog, _sg_strptr(&shd->gl.attrs[attr_index].name));
         }
-        SOKOL_ASSERT(attr_loc < (GLint)_sg.limits.max_vertex_attrs);
         if (attr_loc != -1) {
+            SOKOL_ASSERT(attr_loc < (GLint)_sg.limits.max_vertex_attrs);
             _sg_gl_attr_t* gl_attr = &pip->gl.attrs[attr_loc];
             SOKOL_ASSERT(gl_attr->vb_index == -1);
             gl_attr->vb_index = (int8_t) a_state->buffer_index;
@@ -8645,7 +8819,7 @@ _SOKOL_PRIVATE sg_resource_state _sg_gl_create_pipeline(_sg_pipeline_t* pip, _sg
             gl_attr->normalized = _sg_gl_vertexformat_normalized(a_state->format);
             pip->cmn.vertex_buffer_layout_active[a_state->buffer_index] = true;
         } else {
-            _SG_ERROR(GL_VERTEX_ATTRIBUTE_NOT_FOUND_IN_SHADER);
+            _SG_WARN(GL_VERTEX_ATTRIBUTE_NOT_FOUND_IN_SHADER);
             _SG_LOGMSG(GL_VERTEX_ATTRIBUTE_NOT_FOUND_IN_SHADER, _sg_strptr(&shd->gl.attrs[attr_index].name));
         }
     }
@@ -10881,6 +11055,7 @@ _SOKOL_PRIVATE sg_resource_state _sg_d3d11_create_pipeline(_sg_pipeline_t* pip, 
             break;
         }
         SOKOL_ASSERT(a_state->buffer_index < SG_MAX_VERTEXBUFFER_BINDSLOTS);
+        SOKOL_ASSERT(pip->cmn.vertex_buffer_layout_active[a_state->buffer_index]);
         const sg_vertex_buffer_layout_state* l_state = &desc->layout.buffers[a_state->buffer_index];
         const sg_vertex_step step_func = l_state->step_func;
         const int step_rate = l_state->step_rate;
@@ -10895,7 +11070,6 @@ _SOKOL_PRIVATE sg_resource_state _sg_d3d11_create_pipeline(_sg_pipeline_t* pip, 
             d3d11_comp->InstanceDataStepRate = (UINT)step_rate;
             pip->cmn.use_instanced_draw = true;
         }
-        pip->cmn.vertex_buffer_layout_active[a_state->buffer_index] = true;
     }
     for (int layout_index = 0; layout_index < SG_MAX_VERTEXBUFFER_BINDSLOTS; layout_index++) {
         if (pip->cmn.vertex_buffer_layout_active[layout_index]) {
@@ -12672,10 +12846,10 @@ _SOKOL_PRIVATE sg_resource_state _sg_mtl_create_pipeline(_sg_pipeline_t* pip, _s
             break;
         }
         SOKOL_ASSERT(a_state->buffer_index < SG_MAX_VERTEXBUFFER_BINDSLOTS);
+        SOKOL_ASSERT(pip->cmn.vertex_buffer_layout_active[a_state->buffer_index]);
         vtx_desc.attributes[attr_index].format = _sg_mtl_vertex_format(a_state->format);
         vtx_desc.attributes[attr_index].offset = (NSUInteger)a_state->offset;
         vtx_desc.attributes[attr_index].bufferIndex = (NSUInteger)(a_state->buffer_index + SG_MAX_UNIFORMBLOCK_BINDSLOTS + SG_MAX_STORAGEBUFFER_BINDSLOTS);
-        pip->cmn.vertex_buffer_layout_active[a_state->buffer_index] = true;
     }
     for (NSUInteger layout_index = 0; layout_index < SG_MAX_VERTEXBUFFER_BINDSLOTS; layout_index++) {
         if (pip->cmn.vertex_buffer_layout_active[layout_index]) {
@@ -12835,6 +13009,23 @@ _SOKOL_PRIVATE _sg_image_t* _sg_mtl_attachments_ds_image(const _sg_attachments_t
     // NOTE: may return null
     SOKOL_ASSERT(atts);
     return atts->mtl.depth_stencil.image;
+}
+
+_SOKOL_PRIVATE void _sg_mtl_bind_uniform_buffers(void) {
+    SOKOL_ASSERT(nil != _sg.mtl.cmd_encoder);
+    // On Metal, uniform buffer bindings happen once in sg_begin_pass() and
+    // remain valid for the entire pass. Only binding offsets will be updated
+    // in sg_apply_uniforms()
+    for (size_t slot = 0; slot < SG_MAX_UNIFORMBLOCK_BINDSLOTS; slot++) {
+        [_sg.mtl.cmd_encoder
+            setVertexBuffer:_sg.mtl.uniform_buffers[_sg.mtl.cur_frame_rotate_index]
+            offset:0
+            atIndex:slot];
+        [_sg.mtl.cmd_encoder
+            setFragmentBuffer:_sg.mtl.uniform_buffers[_sg.mtl.cur_frame_rotate_index]
+            offset:0
+            atIndex:slot];
+    }
 }
 
 _SOKOL_PRIVATE void _sg_mtl_begin_pass(const sg_pass* pass) {
@@ -13031,6 +13222,9 @@ _SOKOL_PRIVATE void _sg_mtl_begin_pass(const sg_pass* pass) {
             _sg.mtl.cmd_encoder.label = [NSString stringWithUTF8String:pass->label];
         }
     #endif
+
+    // bind uniform buffers, those bindings remain valid for the entire pass
+    _sg_mtl_bind_uniform_buffers();
 }
 
 _SOKOL_PRIVATE void _sg_mtl_end_pass(void) {
@@ -13093,29 +13287,6 @@ _SOKOL_PRIVATE void _sg_mtl_apply_scissor_rect(int x, int y, int w, int h, bool 
     [_sg.mtl.cmd_encoder setScissorRect:r];
 }
 
-_SOKOL_PRIVATE void _sg_mtl_bind_uniform_buffers(_sg_shader_t* shd) {
-    SOKOL_ASSERT(nil != _sg.mtl.cmd_encoder);
-    // FIXME: it would be good if uniform buffer bindings would also
-    // go through the bindings cache in _sg_mtl_state_cache_t, but
-    // we'd need reserved slot id's for the 'raw' MTLBuffers
-    for (size_t slot = 0; slot < SG_MAX_UNIFORMBLOCK_BINDSLOTS; slot++) {
-        const sg_shader_stage stage = shd->cmn.uniform_blocks[slot].stage;
-        const NSUInteger mtl_slot = shd->mtl.ub_buffer_n[slot];
-        SOKOL_ASSERT(mtl_slot < _SG_MTL_MAX_STAGE_UB_SBUF_BINDINGS);
-        if (stage == SG_SHADERSTAGE_VERTEX) {
-            [_sg.mtl.cmd_encoder
-                setVertexBuffer:_sg.mtl.uniform_buffers[_sg.mtl.cur_frame_rotate_index]
-                offset:0
-                atIndex:mtl_slot];
-        } else if (stage == SG_SHADERSTAGE_FRAGMENT) {
-            [_sg.mtl.cmd_encoder
-                setFragmentBuffer:_sg.mtl.uniform_buffers[_sg.mtl.cur_frame_rotate_index]
-                offset:0
-                atIndex:mtl_slot];
-        }
-    }
-}
-
 _SOKOL_PRIVATE void _sg_mtl_apply_pipeline(_sg_pipeline_t* pip) {
     SOKOL_ASSERT(pip);
     SOKOL_ASSERT(pip->shader && (pip->cmn.shader_id.id == pip->shader->slot.id));
@@ -13141,7 +13312,6 @@ _SOKOL_PRIVATE void _sg_mtl_apply_pipeline(_sg_pipeline_t* pip) {
         SOKOL_ASSERT(pip->mtl.dss != _SG_MTL_INVALID_SLOT_INDEX);
         [_sg.mtl.cmd_encoder setDepthStencilState:_sg_mtl_id(pip->mtl.dss)];
         _sg_stats_add(metal.pipeline.num_set_depth_stencil_state, 1);
-        _sg_mtl_bind_uniform_buffers(pip->shader);
     }
 }
 
@@ -14964,7 +15134,7 @@ _SOKOL_PRIVATE sg_resource_state _sg_wgpu_create_pipeline(_sg_pipeline_t* pip, _
         }
         const int vb_idx = va_state->buffer_index;
         SOKOL_ASSERT(vb_idx < SG_MAX_VERTEXBUFFER_BINDSLOTS);
-        pip->cmn.vertex_buffer_layout_active[vb_idx] = true;
+        SOKOL_ASSERT(pip->cmn.vertex_buffer_layout_active[vb_idx]);
         const size_t wgpu_attr_idx = wgpu_vb_layouts[vb_idx].attributeCount;
         wgpu_vb_layouts[vb_idx].attributeCount += 1;
         wgpu_vtx_attrs[vb_idx][wgpu_attr_idx].format = _sg_wgpu_vertexformat(va_state->format);
@@ -16542,7 +16712,7 @@ _SOKOL_PRIVATE bool _sg_validate_shader_desc(const sg_shader_desc* desc) {
             }
             _SG_VALIDATE(ub_desc->size > 0, VALIDATE_SHADERDESC_UB_SIZE_IS_ZERO);
             #if defined(SOKOL_METAL)
-            _SG_VALIDATE(ub_desc->msl_buffer_n < _SG_MTL_MAX_STAGE_UB_SBUF_BINDINGS, VALIDATE_SHADERDESC_UB_METAL_BUFFER_SLOT_OUT_OF_RANGE);
+            _SG_VALIDATE(ub_desc->msl_buffer_n < _SG_MTL_MAX_STAGE_UB_BINDINGS, VALIDATE_SHADERDESC_UB_METAL_BUFFER_SLOT_OUT_OF_RANGE);
             _SG_VALIDATE(_sg_validate_slot_bits(msl_buf_bits, ub_desc->stage, ub_desc->msl_buffer_n), VALIDATE_SHADERDESC_UB_METAL_BUFFER_SLOT_COLLISION);
             msl_buf_bits = _sg_validate_set_slot_bit(msl_buf_bits, ub_desc->stage, ub_desc->msl_buffer_n);
             #elif defined(SOKOL_D3D11)
@@ -16595,7 +16765,7 @@ _SOKOL_PRIVATE bool _sg_validate_shader_desc(const sg_shader_desc* desc) {
             }
             _SG_VALIDATE(sbuf_desc->readonly, VALIDATE_SHADERDESC_STORAGEBUFFER_READONLY);
             #if defined(SOKOL_METAL)
-            _SG_VALIDATE(sbuf_desc->msl_buffer_n < _SG_MTL_MAX_STAGE_UB_SBUF_BINDINGS, VALIDATE_SHADERDESC_STORAGEBUFFER_METAL_BUFFER_SLOT_OUT_OF_RANGE);
+            _SG_VALIDATE((sbuf_desc->msl_buffer_n >= _SG_MTL_MAX_STAGE_UB_BINDINGS) && (sbuf_desc->msl_buffer_n < _SG_MTL_MAX_STAGE_UB_SBUF_BINDINGS), VALIDATE_SHADERDESC_STORAGEBUFFER_METAL_BUFFER_SLOT_OUT_OF_RANGE);
             _SG_VALIDATE(_sg_validate_slot_bits(msl_buf_bits, sbuf_desc->stage, sbuf_desc->msl_buffer_n), VALIDATE_SHADERDESC_STORAGEBUFFER_METAL_BUFFER_SLOT_COLLISION);
             msl_buf_bits = _sg_validate_set_slot_bit(msl_buf_bits, sbuf_desc->stage, sbuf_desc->msl_buffer_n);
             #elif defined(SOKOL_D3D11)
@@ -17028,18 +17198,17 @@ _SOKOL_PRIVATE bool _sg_validate_apply_bindings(const sg_bindings* bindings) {
 
         // has expected vertex buffers, and vertex buffers still exist
         for (size_t i = 0; i < SG_MAX_VERTEXBUFFER_BINDSLOTS; i++) {
-            if (bindings->vertex_buffers[i].id != SG_INVALID_ID) {
-                _SG_VALIDATE(pip->cmn.vertex_buffer_layout_active[i], VALIDATE_ABND_VBS);
+            if (pip->cmn.vertex_buffer_layout_active[i]) {
+                _SG_VALIDATE(bindings->vertex_buffers[i].id != SG_INVALID_ID, VALIDATE_ABND_EXPECTED_VB);
                 // buffers in vertex-buffer-slots must be of type SG_BUFFERTYPE_VERTEXBUFFER
-                const _sg_buffer_t* buf = _sg_lookup_buffer(&_sg.pools, bindings->vertex_buffers[i].id);
-                _SG_VALIDATE(buf != 0, VALIDATE_ABND_VB_EXISTS);
-                if (buf && buf->slot.state == SG_RESOURCESTATE_VALID) {
-                    _SG_VALIDATE(SG_BUFFERTYPE_VERTEXBUFFER == buf->cmn.type, VALIDATE_ABND_VB_TYPE);
-                    _SG_VALIDATE(!buf->cmn.append_overflow, VALIDATE_ABND_VB_OVERFLOW);
+                if (bindings->vertex_buffers[i].id != SG_INVALID_ID) {
+                    const _sg_buffer_t* buf = _sg_lookup_buffer(&_sg.pools, bindings->vertex_buffers[i].id);
+                    _SG_VALIDATE(buf != 0, VALIDATE_ABND_VB_EXISTS);
+                    if (buf && buf->slot.state == SG_RESOURCESTATE_VALID) {
+                        _SG_VALIDATE(SG_BUFFERTYPE_VERTEXBUFFER == buf->cmn.type, VALIDATE_ABND_VB_TYPE);
+                        _SG_VALIDATE(!buf->cmn.append_overflow, VALIDATE_ABND_VB_OVERFLOW);
+                    }
                 }
-            } else {
-                // vertex buffer provided in a slot which has no vertex layout in pipeline
-                _SG_VALIDATE(!pip->cmn.vertex_buffer_layout_active[i], VALIDATE_ABND_VBS);
             }
         }
 
@@ -17084,8 +17253,6 @@ _SOKOL_PRIVATE bool _sg_validate_apply_bindings(const sg_bindings* bindings) {
                         }
                     }
                 }
-            } else {
-                _SG_VALIDATE(bindings->images[i].id == SG_INVALID_ID, VALIDATE_ABND_UNEXPECTED_IMAGE_BINDING);
             }
         }
 
@@ -17110,8 +17277,6 @@ _SOKOL_PRIVATE bool _sg_validate_apply_bindings(const sg_bindings* bindings) {
                         }
                     }
                 }
-            } else {
-                _SG_VALIDATE(bindings->samplers[i].id == SG_INVALID_ID, VALIDATE_ABND_UNEXPECTED_SAMPLER_BINDING);
             }
         }
 
@@ -17126,8 +17291,6 @@ _SOKOL_PRIVATE bool _sg_validate_apply_bindings(const sg_bindings* bindings) {
                         _SG_VALIDATE(sbuf->cmn.type == SG_BUFFERTYPE_STORAGEBUFFER, VALIDATE_ABND_STORAGEBUFFER_BINDING_BUFFERTYPE);
                     }
                 }
-            } else {
-                _SG_VALIDATE(bindings->storage_buffers[i].id == SG_INVALID_ID, VALIDATE_ABND_UNEXPECTED_STORAGEBUFFER_BINDING);
             }
         }
         return _sg_validate_end();
@@ -18571,6 +18734,11 @@ SOKOL_API_IMPL void sg_apply_pipeline(sg_pipeline pip_id) {
     _sg.next_draw_valid = (SG_RESOURCESTATE_VALID == pip->slot.state);
     SOKOL_ASSERT(pip->shader && (pip->shader->slot.id == pip->cmn.shader_id.id));
     _sg_apply_pipeline(pip);
+
+    // set the expected bindings and uniform block flags
+    _sg.required_bindings_and_uniforms = pip->cmn.required_bindings_and_uniforms | pip->shader->cmn.required_bindings_and_uniforms;
+    _sg.applied_bindings_and_uniforms = 0;
+
     _SG_TRACE_ARGS(apply_pipeline, pip_id);
 }
 
@@ -18580,6 +18748,7 @@ SOKOL_API_IMPL void sg_apply_bindings(const sg_bindings* bindings) {
     SOKOL_ASSERT(bindings);
     SOKOL_ASSERT((bindings->_start_canary == 0) && (bindings->_end_canary==0));
     _sg_stats_add(num_apply_bindings, 1);
+    _sg.applied_bindings_and_uniforms |= (1 << SG_MAX_UNIFORMBLOCK_BINDSLOTS);
     if (!_sg_validate_apply_bindings(bindings)) {
         _sg.next_draw_valid = false;
         return;
@@ -18594,9 +18763,12 @@ SOKOL_API_IMPL void sg_apply_bindings(const sg_bindings* bindings) {
     if (0 == bnd.pip) {
         _sg.next_draw_valid = false;
     }
+    SOKOL_ASSERT(bnd.pip->shader && (bnd.pip->cmn.shader_id.id == bnd.pip->shader->slot.id));
+    const _sg_shader_t* shd = bnd.pip->shader;
 
     for (size_t i = 0; i < SG_MAX_VERTEXBUFFER_BINDSLOTS; i++) {
-        if (bindings->vertex_buffers[i].id) {
+        if (bnd.pip->cmn.vertex_buffer_layout_active[i]) {
+            SOKOL_ASSERT(bindings->vertex_buffers[i].id != SG_INVALID_ID);
             bnd.vbs[i] = _sg_lookup_buffer(&_sg.pools, bindings->vertex_buffers[i].id);
             bnd.vb_offsets[i] = bindings->vertex_buffer_offsets[i];
             if (bnd.vbs[i]) {
@@ -18620,7 +18792,8 @@ SOKOL_API_IMPL void sg_apply_bindings(const sg_bindings* bindings) {
     }
 
     for (int i = 0; i < SG_MAX_IMAGE_BINDSLOTS; i++) {
-        if (bindings->images[i].id) {
+        if (shd->cmn.images[i].stage != SG_SHADERSTAGE_NONE) {
+            SOKOL_ASSERT(bindings->images[i].id != SG_INVALID_ID);
             bnd.imgs[i] = _sg_lookup_image(&_sg.pools, bindings->images[i].id);
             if (bnd.imgs[i]) {
                 _sg.next_draw_valid &= (SG_RESOURCESTATE_VALID == bnd.imgs[i]->slot.state);
@@ -18631,7 +18804,8 @@ SOKOL_API_IMPL void sg_apply_bindings(const sg_bindings* bindings) {
     }
 
     for (size_t i = 0; i < SG_MAX_SAMPLER_BINDSLOTS; i++) {
-        if (bindings->samplers[i].id) {
+        if (shd->cmn.samplers[i].stage != SG_SHADERSTAGE_NONE) {
+            SOKOL_ASSERT(bindings->samplers[i].id != SG_INVALID_ID);
             bnd.smps[i] = _sg_lookup_sampler(&_sg.pools, bindings->samplers[i].id);
             if (bnd.smps[i]) {
                 _sg.next_draw_valid &= (SG_RESOURCESTATE_VALID == bnd.smps[i]->slot.state);
@@ -18642,7 +18816,8 @@ SOKOL_API_IMPL void sg_apply_bindings(const sg_bindings* bindings) {
     }
 
     for (size_t i = 0; i < SG_MAX_STORAGEBUFFER_BINDSLOTS; i++) {
-        if (bindings->storage_buffers[i].id) {
+        if (shd->cmn.storage_buffers[i].stage != SG_SHADERSTAGE_NONE) {
+            SOKOL_ASSERT(bindings->storage_buffers[i].id != SG_INVALID_ID);
             bnd.sbufs[i] = _sg_lookup_buffer(&_sg.pools, bindings->storage_buffers[i].id);
             if (bnd.sbufs[i]) {
                 _sg.next_draw_valid &= (SG_RESOURCESTATE_VALID == bnd.sbufs[i]->slot.state);
@@ -18665,6 +18840,7 @@ SOKOL_API_IMPL void sg_apply_uniforms(int ub_slot, const sg_range* data) {
     SOKOL_ASSERT(data && data->ptr && (data->size > 0));
     _sg_stats_add(num_apply_uniforms, 1);
     _sg_stats_add(size_apply_uniforms, (uint32_t)data->size);
+    _sg.applied_bindings_and_uniforms |= 1 << ub_slot;
     if (!_sg_validate_apply_uniforms(ub_slot, data)) {
         _sg.next_draw_valid = false;
         return;
@@ -18692,6 +18868,12 @@ SOKOL_API_IMPL void sg_draw(int base_element, int num_elements, int num_instance
     if (!_sg.next_draw_valid) {
         return;
     }
+    #if defined(SOKOL_DEBUG)
+    if (_sg.required_bindings_and_uniforms != _sg.applied_bindings_and_uniforms) {
+        _SG_ERROR(DRAW_REQUIRED_BINDINGS_OR_UNIFORMS_MISSING);
+        return;
+    }
+    #endif
     /* attempting to draw with zero elements or instances is not technically an
        error, but might be handled as an error in the backend API (e.g. on Metal)
     */

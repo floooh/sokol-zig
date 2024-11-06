@@ -559,6 +559,12 @@ pub const ShaderStage = enum(i32) {
     VERTEX,
     FRAGMENT,
 };
+pub const ShaderFunction = extern struct {
+    source: [*c]const u8 = null,
+    bytecode: Range = .{},
+    entry: [*c]const u8 = null,
+    d3d11_target: [*c]const u8 = null,
+};
 pub const ShaderVertexAttr = extern struct {
     glsl_name: [*c]const u8 = null,
     hlsl_sem_name: [*c]const u8 = null,
@@ -566,17 +572,16 @@ pub const ShaderVertexAttr = extern struct {
 };
 pub const GlslShaderUniform = extern struct {
     type: UniformType = .INVALID,
-    offset: u32 = 0,
     array_count: u16 = 0,
     glsl_name: [*c]const u8 = null,
 };
 pub const ShaderUniformBlock = extern struct {
     stage: ShaderStage = .NONE,
-    layout: UniformLayout = .DEFAULT,
     size: u32 = 0,
     hlsl_register_b_n: u8 = 0,
     msl_buffer_n: u8 = 0,
     wgsl_group0_binding_n: u8 = 0,
+    layout: UniformLayout = .DEFAULT,
     glsl_uniforms: [16]GlslShaderUniform = [_]GlslShaderUniform{.{}} ** 16,
 };
 pub const ShaderImage = extern struct {
@@ -608,12 +613,6 @@ pub const ShaderImageSamplerPair = extern struct {
     image_slot: u8 = 0,
     sampler_slot: u8 = 0,
     glsl_name: [*c]const u8 = null,
-};
-pub const ShaderFunction = extern struct {
-    source: [*c]const u8 = null,
-    bytecode: Range = .{},
-    entry: [*c]const u8 = null,
-    d3d11_target: [*c]const u8 = null,
 };
 pub const ShaderDesc = extern struct {
     _start_canary: u32 = 0,
@@ -937,6 +936,7 @@ pub const LogItem = enum(i32) {
     WGPU_CREATE_PIPELINE_LAYOUT_FAILED,
     WGPU_CREATE_RENDER_PIPELINE_FAILED,
     WGPU_ATTACHMENTS_CREATE_TEXTURE_VIEW_FAILED,
+    DRAW_REQUIRED_BINDINGS_OR_UNIFORMS_MISSING,
     IDENTICAL_COMMIT_LISTENER,
     COMMIT_LISTENER_ARRAY_FULL,
     TRACE_HOOKS_NOT_ENABLED,
@@ -1131,7 +1131,7 @@ pub const LogItem = enum(i32) {
     VALIDATE_ABND_PIPELINE,
     VALIDATE_ABND_PIPELINE_EXISTS,
     VALIDATE_ABND_PIPELINE_VALID,
-    VALIDATE_ABND_VBS,
+    VALIDATE_ABND_EXPECTED_VB,
     VALIDATE_ABND_VB_EXISTS,
     VALIDATE_ABND_VB_TYPE,
     VALIDATE_ABND_VB_OVERFLOW,
@@ -1146,17 +1146,14 @@ pub const LogItem = enum(i32) {
     VALIDATE_ABND_IMAGE_MSAA,
     VALIDATE_ABND_EXPECTED_FILTERABLE_IMAGE,
     VALIDATE_ABND_EXPECTED_DEPTH_IMAGE,
-    VALIDATE_ABND_UNEXPECTED_IMAGE_BINDING,
     VALIDATE_ABND_EXPECTED_SAMPLER_BINDING,
     VALIDATE_ABND_UNEXPECTED_SAMPLER_COMPARE_NEVER,
     VALIDATE_ABND_EXPECTED_SAMPLER_COMPARE_NEVER,
     VALIDATE_ABND_EXPECTED_NONFILTERING_SAMPLER,
-    VALIDATE_ABND_UNEXPECTED_SAMPLER_BINDING,
     VALIDATE_ABND_SMP_EXISTS,
     VALIDATE_ABND_EXPECTED_STORAGEBUFFER_BINDING,
     VALIDATE_ABND_STORAGEBUFFER_EXISTS,
     VALIDATE_ABND_STORAGEBUFFER_BINDING_BUFFERTYPE,
-    VALIDATE_ABND_UNEXPECTED_STORAGEBUFFER_BINDING,
     VALIDATE_AUB_NO_PIPELINE,
     VALIDATE_AUB_NO_UB_AT_SLOT,
     VALIDATE_AUB_SIZE,
