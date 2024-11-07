@@ -478,6 +478,7 @@ fn buildShaders(b: *Build, target: Build.ResolvedTarget) void {
             slang,
             "-f",
             "sokol_zig",
+            "--reflection",
         });
         shdc_step.dependOn(&cmd.step);
     }

@@ -59,8 +59,8 @@ export fn init() void {
         .shader = sg.makeShader(shd.bufferoffsetsShaderDesc(sg.queryBackend())),
         .index_type = .UINT16,
     };
-    pip_desc.layout.attrs[shd.ATTR_vs_position].format = .FLOAT2;
-    pip_desc.layout.attrs[shd.ATTR_vs_color0].format = .FLOAT3;
+    pip_desc.layout.attrs[shd.ATTR_bufferoffsets_position].format = .FLOAT2;
+    pip_desc.layout.attrs[shd.ATTR_bufferoffsets_color0].format = .FLOAT3;
     state.pip = sg.makePipeline(pip_desc);
 }
 

@@ -35,8 +35,8 @@ export fn init() void {
     var pip_desc: sg.PipelineDesc = .{
         .shader = sg.makeShader(shd.triangleShaderDesc(sg.queryBackend())),
     };
-    pip_desc.layout.attrs[0].format = .FLOAT3;
-    pip_desc.layout.attrs[1].format = .FLOAT4;
+    pip_desc.layout.attrs[shd.ATTR_triangle_position].format = .FLOAT3;
+    pip_desc.layout.attrs[shd.ATTR_triangle_color0].format = .FLOAT4;
     state.pip = sg.makePipeline(pip_desc);
 }
 

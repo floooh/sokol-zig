@@ -49,7 +49,7 @@ export fn init() void {
         .primitive_type = .TRIANGLE_STRIP,
     };
     pip_desc.layout.buffers[0].stride = 28;
-    pip_desc.layout.attrs[shd.ATTR_vs_bg_position].format = .FLOAT2;
+    pip_desc.layout.attrs[shd.ATTR_bg_position].format = .FLOAT2;
     state.bg_pip = sg.makePipeline(pip_desc);
 
     // lot of pipeline objects for rendering the blended quads
@@ -58,8 +58,8 @@ export fn init() void {
         .primitive_type = .TRIANGLE_STRIP,
         .blend_color = .{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 1.0 },
     };
-    pip_desc.layout.attrs[shd.ATTR_vs_quad_position].format = .FLOAT3;
-    pip_desc.layout.attrs[shd.ATTR_vs_quad_color0].format = .FLOAT4;
+    pip_desc.layout.attrs[shd.ATTR_quad_position].format = .FLOAT3;
+    pip_desc.layout.attrs[shd.ATTR_quad_color0].format = .FLOAT4;
     pip_desc.colors[0].blend = .{
         .enabled = true,
         .src_factor_alpha = .ONE,
@@ -86,7 +86,7 @@ export fn frame() void {
     const bg_fs_params: shd.BgFsParams = .{ .tick = state.tick };
     sg.applyPipeline(state.bg_pip);
     sg.applyBindings(state.bind);
-    sg.applyUniforms(.FS, shd.SLOT_bg_fs_params, sg.asRange(&bg_fs_params));
+    sg.applyUniforms(shd.UB_bg_fs_params, sg.asRange(&bg_fs_params));
     sg.draw(0, 4, 1);
 
     // draw the blended quads
@@ -113,7 +113,7 @@ export fn frame() void {
             };
             sg.applyPipeline(state.pip[src][dst]);
             sg.applyBindings(state.bind);
-            sg.applyUniforms(.VS, shd.SLOT_quad_vs_params, sg.asRange(&quad_vs_params));
+            sg.applyUniforms(shd.UB_quad_vs_params, sg.asRange(&quad_vs_params));
             sg.draw(0, 4, 1);
             r0 += 0.6;
         }

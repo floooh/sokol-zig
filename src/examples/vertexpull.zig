@@ -38,7 +38,7 @@ export fn init() void {
     state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0.75, .g = 0.5, .b = 0.25, .a = 1 } };
 
     // a storage buffer with the cube vertex data
-    state.bind.vs.storage_buffers[shd.SLOT_ssbo] = sg.makeBuffer(.{
+    state.bind.storage_buffers[shd.SBUF_ssbo] = sg.makeBuffer(.{
         .type = .STORAGEBUFFER,
         .data = sg.asRange(&[_]shd.SbVertex{
             .{ .pos = .{ -1.0, -1.0, -1.0 }, .color = .{ 1.0, 0.0, 0.0, 1.0 } },
@@ -106,7 +106,7 @@ export fn frame() void {
     if (sg.queryFeatures().storage_buffer) {
         sg.applyPipeline(state.pip);
         sg.applyBindings(state.bind);
-        sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(&vs_params));
+        sg.applyUniforms(shd.UB_vs_params, sg.asRange(&vs_params));
         sg.draw(0, 36, 1);
     }
     sg.endPass();
