@@ -187,6 +187,7 @@ pub const Features = extern struct {
     mrt_independent_blend_state: bool = false,
     mrt_independent_write_mask: bool = false,
     storage_buffer: bool = false,
+    msaa_image_bindings: bool = false,
 };
 pub const Limits = extern struct {
     max_image_size_2d: i32 = 0,
@@ -990,6 +991,7 @@ pub const LogItem = enum(i32) {
     VALIDATE_IMAGEDESC_NO_MSAA_RT_SUPPORT,
     VALIDATE_IMAGEDESC_MSAA_NUM_MIPMAPS,
     VALIDATE_IMAGEDESC_MSAA_3D_IMAGE,
+    VALIDATE_IMAGEDESC_MSAA_CUBE_IMAGE,
     VALIDATE_IMAGEDESC_DEPTH_3D_IMAGE,
     VALIDATE_IMAGEDESC_RT_IMMUTABLE,
     VALIDATE_IMAGEDESC_RT_NO_DATA,
@@ -1143,6 +1145,7 @@ pub const LogItem = enum(i32) {
     VALIDATE_ABND_EXPECTED_IMAGE_BINDING,
     VALIDATE_ABND_IMG_EXISTS,
     VALIDATE_ABND_IMAGE_TYPE_MISMATCH,
+    VALIDATE_ABND_EXPECTED_MULTISAMPLED_IMAGE,
     VALIDATE_ABND_IMAGE_MSAA,
     VALIDATE_ABND_EXPECTED_FILTERABLE_IMAGE,
     VALIDATE_ABND_EXPECTED_DEPTH_IMAGE,
