@@ -6,8 +6,6 @@
         "src",
         "build.zig",
         "build.zig.zon",
-        "CHANGELOG.md",
-        "README.md",
     },
     .dependencies = .{
         .emsdk = .{
