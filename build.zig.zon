@@ -1,5 +1,5 @@
 .{
-    .name = "sokol-zig",
+    .name = "sokol",
     .version = "0.1.0",
     .minimum_zig_version = "0.12.0",
     .paths = .{
@@ -11,8 +11,8 @@
     },
     .dependencies = .{
         .emsdk = .{
-            .url = "git+https://github.com/emscripten-core/emsdk#3.1.61",
-            .hash = "12200ba39d83227f5de08287b043b011a2eb855cdb077f4b165edce30564ba73400e",
+            .url = "git+https://github.com/emscripten-core/emsdk#3.1.73",
+            .hash = "1220d2b37748757d43de92f0ef723b6a00c3cae4b6a9c582b607421704498a5cfd2b",
         },
     },
 }

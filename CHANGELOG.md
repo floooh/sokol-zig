@@ -4,6 +4,14 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 07-Dec-2024
+
+Some build.zig.zon cleanup:
+
+- change name from `sokol-zig` to `sokol`
+- remove readme and changelog from `.paths`
+- update emsdk dependency to emsdk 3.1.73
+
 ### 31-Aug-2024
 
 Fix for a [breaking naming convention change](https://github.com/ziglang/zig/commit/0fe3fd01ddc2cd49c6a2b939577d16b9d2c65ea9)
