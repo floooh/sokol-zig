@@ -20,6 +20,8 @@ pub fn build(b: *Build) !void {
     const opt_use_wayland = b.option(bool, "wayland", "Force Wayland (default: false, Linux only, not supported in main-line headers)") orelse false;
     const opt_use_egl = b.option(bool, "egl", "Force EGL (default: false, Linux only)") orelse false;
     const opt_with_sokol_imgui = b.option(bool, "with_sokol_imgui", "Add support for sokol_imgui.h bindings") orelse false;
+    const opt_sokol_imgui_cprefix = b.option([]const u8, "sokol_imgui_cprefix", "Override Dear ImGui C bindings prefix for sokol_imgui.h (see SOKOL_IMGUI_CPREFIX)");
+    const opt_cimgui_header_path = b.option([]const u8, "cimgui_header_path", "Override the Dear ImGui C bindings header name (default: cimgui.h)");
     const sokol_backend: SokolBackend = if (opt_use_gl) .gl else if (opt_use_gles3) .gles3 else if (opt_use_wgpu) .wgpu else .auto;
 
     const target = b.standardTargetOptions(.{});
@@ -36,6 +38,8 @@ pub fn build(b: *Build) !void {
         .use_x11 = opt_use_x11,
         .use_egl = opt_use_egl,
         .with_sokol_imgui = opt_with_sokol_imgui,
+        .sokol_imgui_cprefix = opt_sokol_imgui_cprefix,
+        .cimgui_header_path = opt_cimgui_header_path,
         .emsdk = emsdk,
     });
     mod_sokol.linkLibrary(lib_sokol);
@@ -157,6 +161,8 @@ pub const LibSokolOptions = struct {
     use_wayland: bool = false,
     emsdk: ?*Build.Dependency = null,
     with_sokol_imgui: bool = false,
+    sokol_imgui_cprefix: ?[]const u8 = null,
+    cimgui_header_path: ?[]const u8 = null,
 };
 pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     const lib = b.addStaticLibrary(.{
@@ -185,20 +191,21 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     }
 
     // resolve .auto backend into specific backend by platform
+    var cflags = try std.BoundedArray([]const u8, 64).init(0);
+    try cflags.append("-DIMPL");
     const backend = resolveSokolBackend(options.backend, lib.rootModuleTarget());
-    const backend_cflags = switch (backend) {
-        .d3d11 => "-DSOKOL_D3D11",
-        .metal => "-DSOKOL_METAL",
-        .gl => "-DSOKOL_GLCORE",
-        .gles3 => "-DSOKOL_GLES3",
-        .wgpu => "-DSOKOL_WGPU",
+    switch (backend) {
+        .d3d11 => try cflags.append("-DSOKOL_D3D11"),
+        .metal => try cflags.append("-DSOKOL_METAL"),
+        .gl => try cflags.append("-DSOKOL_GLCORE"),
+        .gles3 => try cflags.append("-DSOKOL_GLES3"),
+        .wgpu => try cflags.append("-DSOKOL_WGPU"),
         else => @panic("unknown sokol backend"),
-    };
+    }
 
     // platform specific compile and link options
-    var cflags: []const []const u8 = &.{ "-DIMPL", backend_cflags };
     if (lib.rootModuleTarget().isDarwin()) {
-        cflags = &.{ "-ObjC", "-DIMPL", backend_cflags };
+        try cflags.append("-ObjC");
         lib.linkFramework("Foundation");
         lib.linkFramework("AudioToolbox");
         if (.metal == backend) {
@@ -228,11 +235,10 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         lib.linkSystemLibrary("android");
         lib.linkSystemLibrary("log");
     } else if (lib.rootModuleTarget().os.tag == .linux) {
-        const egl_cflags = if (options.use_egl) "-DSOKOL_FORCE_EGL " else "";
-        const x11_cflags = if (!options.use_x11) "-DSOKOL_DISABLE_X11 " else "";
-        const wayland_cflags = if (!options.use_wayland) "-DSOKOL_DISABLE_WAYLAND" else "";
+        if (options.use_egl) try cflags.append("-DSOKOL_FORCE_EGL");
+        if (!options.use_x11) try cflags.append("-DSOKOL_DISABLE_X11");
+        if (!options.use_wayland) try cflags.append("-DSOKOL_DISABLE_WAYLAND");
         const link_egl = options.use_egl or options.use_wayland;
-        cflags = &.{ "-DIMPL", backend_cflags, egl_cflags, x11_cflags, wayland_cflags };
         lib.linkSystemLibrary("asound");
         lib.linkSystemLibrary("GL");
         if (options.use_x11) {
@@ -277,16 +283,22 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     inline for (csources) |csrc| {
         lib.addCSourceFile(.{
             .file = b.path(csrc_root ++ csrc),
-            .flags = cflags,
+            .flags = cflags.slice(),
         });
     }
 
     // optional Dear ImGui support, the called is required to also
     // add the cimgui include path to the returned compile step
     if (options.with_sokol_imgui) {
+        if (options.sokol_imgui_cprefix) |cprefix| {
+            try cflags.append(b.fmt("-DSOKOL_IMGUI_CPREFIX={s}", .{cprefix}));
+        }
+        if (options.cimgui_header_path) |cimgui_header_path| {
+            try cflags.append(b.fmt("-DCIMGUI_HEADER_PATH=\"{s}\"", .{cimgui_header_path}));
+        }
         lib.addCSourceFile(.{
             .file = b.path(csrc_root ++ "sokol_imgui.c"),
-            .flags = cflags,
+            .flags = cflags.slice(),
         });
     }
     return lib;

@@ -1,8 +1,11 @@
 #if defined(IMPL)
-#define SOKOL_IMGUI_IMPL
-// FIXME: no longer needed with dear_bindings, remove after transition period
+#ifndef CIMGUI_HEADER_PATH
+#define CIMGUI_HEADER_PATH "cimgui.h"
+#endif
+// NOTE: this is only needed for the old cimgui.h bindings
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui.h"
+#define SOKOL_IMGUI_IMPL
+#include CIMGUI_HEADER_PATH
 #endif
 #include "sokol_defines.h"
 #include "sokol_app.h"

@@ -4,6 +4,13 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 08-Dec-2024
+
+The sokol_imgui.h compilation is now more configurable by allowing to override
+the cimgui.h header path (default: `cimgui.h`) and the C API function prefix
+(default: `ig`), see the [sokol-zig-imgui-sample/build.zig](https://github.com/floooh/sokol-zig-imgui-sample/blob/main/build.zig)
+for an example.
+
 ### 07-Dec-2024
 
 Some build.zig.zon cleanup:
