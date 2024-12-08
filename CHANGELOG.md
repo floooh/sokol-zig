@@ -11,6 +11,10 @@ the cimgui.h header path (default: `cimgui.h`) and the C API function prefix
 (default: `ig`), see the [sokol-zig-imgui-sample/build.zig](https://github.com/floooh/sokol-zig-imgui-sample/blob/main/build.zig)
 for an example.
 
+> Narrator: this didn't quite work out because the idea was to remove the prefix
+alltogether for the TranslateC-generated Zig bindings, but then some Dear ImGui
+functions collide with Win32 OS functions (Set/GetCursorPos and SetWindowPos).
+
 ### 07-Dec-2024
 
 Some build.zig.zon cleanup:
