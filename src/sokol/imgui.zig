@@ -8,18 +8,9 @@ const sapp = @import("app.zig");
 fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
     return @import("std").mem.span(c_str);
 }
-pub const invalid_id = 0;
-pub const Image = extern struct {
-    id: u32 = 0,
-};
-pub const ImageDesc = extern struct {
-    image: sg.Image = .{},
-    sampler: sg.Sampler = .{},
-};
 pub const LogItem = enum(i32) {
     OK,
     MALLOC_FAILED,
-    IMAGE_POOL_EXHAUSTED,
 };
 pub const Allocator = extern struct {
     alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
@@ -32,7 +23,6 @@ pub const Logger = extern struct {
 };
 pub const Desc = extern struct {
     max_vertices: i32 = 0,
-    image_pool_size: i32 = 0,
     color_format: sg.PixelFormat = .DEFAULT,
     depth_format: sg.PixelFormat = .DEFAULT,
     sample_count: i32 = 0,
@@ -67,25 +57,21 @@ pub extern fn simgui_render() void;
 pub fn render() void {
     simgui_render();
 }
-pub extern fn simgui_make_image([*c]const ImageDesc) Image;
-pub fn makeImage(desc: ImageDesc) Image {
-    return simgui_make_image(&desc);
-}
-pub extern fn simgui_destroy_image(Image) void;
-pub fn destroyImage(img: Image) void {
-    simgui_destroy_image(img);
-}
-pub extern fn simgui_query_image_desc(Image) ImageDesc;
-pub fn queryImageDesc(img: Image) ImageDesc {
-    return simgui_query_image_desc(img);
-}
-pub extern fn simgui_imtextureid(Image) u64;
-pub fn imtextureid(img: Image) u64 {
+pub extern fn simgui_imtextureid(sg.Image) u64;
+pub fn imtextureid(img: sg.Image) u64 {
     return simgui_imtextureid(img);
 }
-pub extern fn simgui_image_from_imtextureid(u64) Image;
-pub fn imageFromImtextureid(im_texture_id: u64) Image {
-    return simgui_image_from_imtextureid(im_texture_id);
+pub extern fn simgui_imtextureid_with_sampler(sg.Image, sg.Sampler) u64;
+pub fn imtextureidWithSampler(img: sg.Image, smp: sg.Sampler) u64 {
+    return simgui_imtextureid_with_sampler(img, smp);
+}
+pub extern fn simgui_image_from_imtextureid(u64) sg.Image;
+pub fn imageFromImtextureid(imtex_id: u64) sg.Image {
+    return simgui_image_from_imtextureid(imtex_id);
+}
+pub extern fn simgui_sampler_from_imtextureid(u64) sg.Sampler;
+pub fn samplerFromImtextureid(imtex_id: u64) sg.Sampler {
+    return simgui_sampler_from_imtextureid(imtex_id);
 }
 pub extern fn simgui_add_focus_event(bool) void;
 pub fn addFocusEvent(focus: bool) void {

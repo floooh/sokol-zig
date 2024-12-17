@@ -1494,6 +1494,50 @@ pub extern fn sg_query_attachments_defaults([*c]const AttachmentsDesc) Attachmen
 pub fn queryAttachmentsDefaults(desc: AttachmentsDesc) AttachmentsDesc {
     return sg_query_attachments_defaults(&desc);
 }
+pub extern fn sg_query_buffer_size(Buffer) usize;
+pub fn queryBufferSize(buf: Buffer) usize {
+    return sg_query_buffer_size(buf);
+}
+pub extern fn sg_query_buffer_type(Buffer) BufferType;
+pub fn queryBufferType(buf: Buffer) BufferType {
+    return sg_query_buffer_type(buf);
+}
+pub extern fn sg_query_buffer_usage(Buffer) Usage;
+pub fn queryBufferUsage(buf: Buffer) Usage {
+    return sg_query_buffer_usage(buf);
+}
+pub extern fn sg_query_image_type(Image) ImageType;
+pub fn queryImageType(img: Image) ImageType {
+    return sg_query_image_type(img);
+}
+pub extern fn sg_query_image_width(Image) i32;
+pub fn queryImageWidth(img: Image) i32 {
+    return sg_query_image_width(img);
+}
+pub extern fn sg_query_image_height(Image) i32;
+pub fn queryImageHeight(img: Image) i32 {
+    return sg_query_image_height(img);
+}
+pub extern fn sg_query_image_num_slices(Image) i32;
+pub fn queryImageNumSlices(img: Image) i32 {
+    return sg_query_image_num_slices(img);
+}
+pub extern fn sg_query_image_num_mipmaps(Image) i32;
+pub fn queryImageNumMipmaps(img: Image) i32 {
+    return sg_query_image_num_mipmaps(img);
+}
+pub extern fn sg_query_image_pixelformat(Image) PixelFormat;
+pub fn queryImagePixelformat(img: Image) PixelFormat {
+    return sg_query_image_pixelformat(img);
+}
+pub extern fn sg_query_image_usage(Image) Usage;
+pub fn queryImageUsage(img: Image) Usage {
+    return sg_query_image_usage(img);
+}
+pub extern fn sg_query_image_sample_count(Image) i32;
+pub fn queryImageSampleCount(img: Image) i32 {
+    return sg_query_image_sample_count(img);
+}
 pub extern fn sg_alloc_buffer() Buffer;
 pub fn allocBuffer() Buffer {
     return sg_alloc_buffer();
