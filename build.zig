@@ -382,20 +382,9 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
             }
         }
     } else {
-        const it = options.lib_main.getCompileDependencies(false);
-        for (it) |item| {
-            for (item.root_module.link_objects.items) |link_object| {
-                switch (link_object) {
-                    .other_step => |compile_step| {
-                        switch (compile_step.kind) {
-                            .lib => {
-                                emcc.addArtifactArg(compile_step);
-                            },
-                            else => {},
-                        }
-                    },
-                    else => {},
-                }
+        for (options.lib_main.getCompileDependencies(false)) |item| {
+            if (item.kind == .lib) {
+                emcc.addArtifactArg(item);
             }
         }
     }
