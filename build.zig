@@ -361,19 +361,40 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
 
     // add the main lib, and then scan for library dependencies and add those too
     emcc.addArtifactArg(options.lib_main);
-    var it = options.lib_main.root_module.iterateDependencies(options.lib_main, false);
-    while (it.next()) |item| {
-        for (item.module.link_objects.items) |link_object| {
-            switch (link_object) {
-                .other_step => |compile_step| {
-                    switch (compile_step.kind) {
-                        .lib => {
-                            emcc.addArtifactArg(compile_step);
-                        },
-                        else => {},
-                    }
-                },
-                else => {},
+
+    // TODO: This is hack to support master and 0.13.0 zig versions. Remove after 0.14.0.
+    if (@tagName(@typeInfo(@TypeOf(options.lib_main.root_module)))[0] == 'p') {
+        const it = options.lib_main.getCompileDependencies(false);
+        for (it) |item| {
+            for (item.root_module.link_objects.items) |link_object| {
+                switch (link_object) {
+                    .other_step => |compile_step| {
+                        switch (compile_step.kind) {
+                            .lib => {
+                                emcc.addArtifactArg(compile_step);
+                            },
+                            else => {},
+                        }
+                    },
+                    else => {},
+                }
+            }
+        }
+    } else {
+        var it = options.lib_main.root_module.iterateDependencies(options.lib_main, false);
+        while (it.next()) |item| {
+            for (item.module.link_objects.items) |link_object| {
+                switch (link_object) {
+                    .other_step => |compile_step| {
+                        switch (compile_step.kind) {
+                            .lib => {
+                                emcc.addArtifactArg(compile_step);
+                            },
+                            else => {},
+                        }
+                    },
+                    else => {},
+                }
             }
         }
     }
