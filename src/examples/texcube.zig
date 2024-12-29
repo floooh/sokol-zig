@@ -38,38 +38,40 @@ export fn init() void {
     // The reason is that D3D11 cannot convert from non-normalized
     // formats to floating point inputs (only to integer inputs),
     // and WebGL2 / GLES2 don't support integer vertex shader inputs.
+    //
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
         .data = sg.asRange(&[_]Vertex{
-            // pos                         color              texcoords
-            .{ .x = -1.0, .y = -1.0, .z = -1.0, .color = 0xFF0000FF, .u = 0, .v = 0 },
-            .{ .x = 1.0, .y = -1.0, .z = -1.0, .color = 0xFF0000FF, .u = 32767, .v = 0 },
-            .{ .x = 1.0, .y = 1.0, .z = -1.0, .color = 0xFF0000FF, .u = 32767, .v = 32767 },
-            .{ .x = -1.0, .y = 1.0, .z = -1.0, .color = 0xFF0000FF, .u = 0, .v = 32767 },
+            // zig fmt: off
+            .{ .x = -1.0, .y = -1.0, .z = -1.0, .color = 0xFF0000FF, .u = 0,     .v = 0 },
+            .{ .x =  1.0, .y = -1.0, .z = -1.0, .color = 0xFF0000FF, .u = 32767, .v = 0 },
+            .{ .x =  1.0, .y =  1.0, .z = -1.0, .color = 0xFF0000FF, .u = 32767, .v = 32767 },
+            .{ .x = -1.0, .y =  1.0, .z = -1.0, .color = 0xFF0000FF, .u = 0,     .v = 32767 },
 
-            .{ .x = -1.0, .y = -1.0, .z = 1.0, .color = 0xFF00FF00, .u = 0, .v = 0 },
-            .{ .x = 1.0, .y = -1.0, .z = 1.0, .color = 0xFF00FF00, .u = 32767, .v = 0 },
-            .{ .x = 1.0, .y = 1.0, .z = 1.0, .color = 0xFF00FF00, .u = 32767, .v = 32767 },
-            .{ .x = -1.0, .y = 1.0, .z = 1.0, .color = 0xFF00FF00, .u = 0, .v = 32767 },
+            .{ .x = -1.0, .y = -1.0, .z =  1.0, .color = 0xFF00FF00, .u = 0,     .v = 0 },
+            .{ .x =  1.0, .y = -1.0, .z =  1.0, .color = 0xFF00FF00, .u = 32767, .v = 0 },
+            .{ .x =  1.0, .y =  1.0, .z =  1.0, .color = 0xFF00FF00, .u = 32767, .v = 32767 },
+            .{ .x = -1.0, .y =  1.0, .z =  1.0, .color = 0xFF00FF00, .u = 0,     .v = 32767 },
 
-            .{ .x = -1.0, .y = -1.0, .z = -1.0, .color = 0xFFFF0000, .u = 0, .v = 0 },
-            .{ .x = -1.0, .y = 1.0, .z = -1.0, .color = 0xFFFF0000, .u = 32767, .v = 0 },
-            .{ .x = -1.0, .y = 1.0, .z = 1.0, .color = 0xFFFF0000, .u = 32767, .v = 32767 },
-            .{ .x = -1.0, .y = -1.0, .z = 1.0, .color = 0xFFFF0000, .u = 0, .v = 32767 },
+            .{ .x = -1.0, .y = -1.0, .z = -1.0, .color = 0xFFFF0000, .u = 0,     .v = 0 },
+            .{ .x = -1.0, .y =  1.0, .z = -1.0, .color = 0xFFFF0000, .u = 32767, .v = 0 },
+            .{ .x = -1.0, .y =  1.0, .z =  1.0, .color = 0xFFFF0000, .u = 32767, .v = 32767 },
+            .{ .x = -1.0, .y = -1.0, .z =  1.0, .color = 0xFFFF0000, .u = 0,     .v = 32767 },
 
-            .{ .x = 1.0, .y = -1.0, .z = -1.0, .color = 0xFFFF007F, .u = 0, .v = 0 },
-            .{ .x = 1.0, .y = 1.0, .z = -1.0, .color = 0xFFFF007F, .u = 32767, .v = 0 },
-            .{ .x = 1.0, .y = 1.0, .z = 1.0, .color = 0xFFFF007F, .u = 32767, .v = 32767 },
-            .{ .x = 1.0, .y = -1.0, .z = 1.0, .color = 0xFFFF007F, .u = 0, .v = 32767 },
+            .{ .x =  1.0, .y = -1.0, .z = -1.0, .color = 0xFFFF007F, .u = 0,     .v = 0 },
+            .{ .x =  1.0, .y =  1.0, .z = -1.0, .color = 0xFFFF007F, .u = 32767, .v = 0 },
+            .{ .x =  1.0, .y =  1.0, .z =  1.0, .color = 0xFFFF007F, .u = 32767, .v = 32767 },
+            .{ .x =  1.0, .y = -1.0, .z =  1.0, .color = 0xFFFF007F, .u = 0,     .v = 32767 },
 
-            .{ .x = -1.0, .y = -1.0, .z = -1.0, .color = 0xFFFF7F00, .u = 0, .v = 0 },
-            .{ .x = -1.0, .y = -1.0, .z = 1.0, .color = 0xFFFF7F00, .u = 32767, .v = 0 },
-            .{ .x = 1.0, .y = -1.0, .z = 1.0, .color = 0xFFFF7F00, .u = 32767, .v = 32767 },
-            .{ .x = 1.0, .y = -1.0, .z = -1.0, .color = 0xFFFF7F00, .u = 0, .v = 32767 },
+            .{ .x = -1.0, .y = -1.0, .z = -1.0, .color = 0xFFFF7F00, .u = 0,     .v = 0 },
+            .{ .x = -1.0, .y = -1.0, .z =  1.0, .color = 0xFFFF7F00, .u = 32767, .v = 0 },
+            .{ .x =  1.0, .y = -1.0, .z =  1.0, .color = 0xFFFF7F00, .u = 32767, .v = 32767 },
+            .{ .x =  1.0, .y = -1.0, .z = -1.0, .color = 0xFFFF7F00, .u = 0,     .v = 32767 },
 
-            .{ .x = -1.0, .y = 1.0, .z = -1.0, .color = 0xFF007FFF, .u = 0, .v = 0 },
-            .{ .x = -1.0, .y = 1.0, .z = 1.0, .color = 0xFF007FFF, .u = 32767, .v = 0 },
-            .{ .x = 1.0, .y = 1.0, .z = 1.0, .color = 0xFF007FFF, .u = 32767, .v = 32767 },
-            .{ .x = 1.0, .y = 1.0, .z = -1.0, .color = 0xFF007FFF, .u = 0, .v = 32767 },
+            .{ .x = -1.0, .y =  1.0, .z = -1.0, .color = 0xFF007FFF, .u = 0,     .v = 0 },
+            .{ .x = -1.0, .y =  1.0, .z =  1.0, .color = 0xFF007FFF, .u = 32767, .v = 0 },
+            .{ .x =  1.0, .y =  1.0, .z =  1.0, .color = 0xFF007FFF, .u = 32767, .v = 32767 },
+            .{ .x =  1.0, .y =  1.0, .z = -1.0, .color = 0xFF007FFF, .u = 0,     .v = 32767 },
+            // zig fmt: on
         }),
     });
 
@@ -87,35 +89,41 @@ export fn init() void {
     });
 
     // create a small checker-board texture
-    var img_desc: sg.ImageDesc = .{
+    state.bind.images[shd.IMG_tex] = sg.makeImage(.{
         .width = 4,
         .height = 4,
-    };
-    img_desc.data.subimage[0][0] = sg.asRange(&[4 * 4]u32{
-        0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
-        0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
-        0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
-        0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
+        .data = init: {
+            var data = sg.ImageData{};
+            data.subimage[0][0] = sg.asRange(&[4 * 4]u32{
+                0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
+                0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
+                0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
+                0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
+            });
+            break :init data;
+        },
     });
-    state.bind.images[shd.IMG_tex] = sg.makeImage(img_desc);
 
     // ...and a sampler object with default attributes
     state.bind.samplers[shd.SMP_smp] = sg.makeSampler(.{});
 
     // shader and pipeline object
-    var pip_desc: sg.PipelineDesc = .{
+    state.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.texcubeShaderDesc(sg.queryBackend())),
+        .layout = init: {
+            var l = sg.VertexLayoutState{};
+            l.attrs[shd.ATTR_texcube_pos].format = .FLOAT3;
+            l.attrs[shd.ATTR_texcube_color0].format = .UBYTE4N;
+            l.attrs[shd.ATTR_texcube_texcoord0].format = .SHORT2N;
+            break :init l;
+        },
         .index_type = .UINT16,
         .depth = .{
             .compare = .LESS_EQUAL,
             .write_enabled = true,
         },
         .cull_mode = .BACK,
-    };
-    pip_desc.layout.attrs[shd.ATTR_texcube_pos].format = .FLOAT3;
-    pip_desc.layout.attrs[shd.ATTR_texcube_color0].format = .UBYTE4N;
-    pip_desc.layout.attrs[shd.ATTR_texcube_texcoord0].format = .SHORT2N;
-    state.pip = sg.makePipeline(pip_desc);
+    });
 
     // pass action for clearing the frame buffer
     state.pass_action.colors[0] = .{

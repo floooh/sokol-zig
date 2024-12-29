@@ -52,16 +52,24 @@ export fn init() void {
     // setup sokol.debugtext with a user-defined font as the only font
     // NOTE that the user font only provides pixel data for the
     // characters 0x20 to 0x9F (inclusive)
-    var sdtx_desc: sdtx.Desc = .{ .logger = .{ .func = slog.func } };
-    sdtx_desc.fonts[UserFont] = .{
-        .data = sdtx.asRange(&user_font),
-        .first_char = 0x20,
-        .last_char = 0x9F,
-    };
-    sdtx.setup(sdtx_desc);
+    sdtx.setup(.{
+        .fonts = init: {
+            var f = [_]sdtx.FontDesc{.{}} ** 8;
+            f[UserFont] = .{
+                .data = sdtx.asRange(&user_font),
+                .first_char = 0x20,
+                .last_char = 0x9F,
+            };
+            break :init f;
+        },
+        .logger = .{ .func = slog.func },
+    });
 
     // pass-action to clear background to blue-ish
-    state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0, .g = 0.125, .b = 0.25, .a = 1 } };
+    state.pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0, .g = 0.125, .b = 0.25, .a = 1 },
+    };
 }
 
 export fn frame() void {
@@ -73,8 +81,7 @@ export fn frame() void {
     sdtx.color3b(0xFF, 0x17, 0x44);
     sdtx.puts("Hello 8-bit ATARI font:\n\n");
     var line: u32 = 0;
-    var c: u8 = 0x20;
-    while (c < 0xA0) : (c += 1) {
+    for (0x20..0xA0) |c| {
         if ((c & 15) == 0) {
             sdtx.puts("\n\t");
             line += 1;
@@ -82,7 +89,7 @@ export fn frame() void {
         // color scrolling effect:
         const color = state.color_palette[(c + line + (state.frame_count / 2)) & 15];
         sdtx.color3b(color.r, color.g, color.b);
-        sdtx.putc(c);
+        sdtx.putc(@intCast(c));
     }
 
     sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });

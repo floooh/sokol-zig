@@ -77,18 +77,21 @@ export fn init() void {
     });
 
     // shader and pipeline object
-    var pip_desc: sg.PipelineDesc = .{
+    state.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.cubeShaderDesc(sg.queryBackend())),
+        .layout = init: {
+            var l = sg.VertexLayoutState{};
+            l.attrs[shd.ATTR_cube_position].format = .FLOAT3;
+            l.attrs[shd.ATTR_cube_color0].format = .FLOAT4;
+            break :init l;
+        },
         .index_type = .UINT16,
         .depth = .{
             .compare = .LESS_EQUAL,
             .write_enabled = true,
         },
         .cull_mode = .BACK,
-    };
-    pip_desc.layout.attrs[shd.ATTR_cube_position].format = .FLOAT3;
-    pip_desc.layout.attrs[shd.ATTR_cube_color0].format = .FLOAT4;
-    state.pip = sg.makePipeline(pip_desc);
+    });
 
     // framebuffer clear color
     state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0.25, .g = 0.5, .b = 0.75, .a = 1 } };

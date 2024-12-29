@@ -3,6 +3,7 @@
 //
 //  sokol_gl.h / sokol.sgl sample program.
 //------------------------------------------------------------------------------
+const std = @import("std");
 const sokol = @import("sokol");
 const slog = sokol.log;
 const sg = sokol.gfx;
@@ -42,24 +43,23 @@ export fn init() void {
     // a checkerboard texture
     const img_width = 8;
     const img_height = 8;
-    const pixels = init: {
-        var res: [img_width][img_height]u32 = undefined;
-        var y: usize = 0;
-        while (y < img_height) : (y += 1) {
-            var x: usize = 0;
-            while (x < img_width) : (x += 1) {
-                res[y][x] = if (0 == (y ^ x) & 1) 0xFF_00_00_00 else 0xFF_FF_FF_FF;
-            }
-        }
-        break :init res;
-    };
-    var img_desc: sg.ImageDesc = .{
+    state.img = sg.makeImage(.{
         .width = img_width,
         .height = img_height,
-    };
-    // FIXME: https://github.com/ziglang/zig/issues/6068
-    img_desc.data.subimage[0][0] = sg.asRange(&pixels);
-    state.img = sg.makeImage(img_desc);
+        .data = init: {
+            var data = sg.ImageData{};
+            data.subimage[0][0] = sg.asRange(&pixels: {
+                var res = std.mem.zeroes([img_width][img_height]u32);
+                for (0..img_height) |y| {
+                    for (0..img_width) |x| {
+                        res[y][x] = if (0 == (y ^ x) & 1) 0xFF_00_00_00 else 0xFF_FF_FF_FF;
+                    }
+                }
+                break :pixels res;
+            });
+            break :init data;
+        },
+    });
 
     // ...and a sampler
     state.smp = sg.makeSampler(.{

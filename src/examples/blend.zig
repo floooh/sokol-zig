@@ -2,6 +2,7 @@
 //  blend.zig
 //  Test/demonstrate blend modes.
 //------------------------------------------------------------------------------
+const std = @import("std");
 const sokol = @import("sokol");
 const slog = sokol.log;
 const sg = sokol.gfx;
@@ -44,34 +45,45 @@ export fn init() void {
     });
 
     // pipeline object for rendering the background
-    var pip_desc: sg.PipelineDesc = .{
+    state.bg_pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.bgShaderDesc(sg.queryBackend())),
+        .layout = init: {
+            var l = sg.VertexLayoutState{};
+            l.buffers[0].stride = 28;
+            l.attrs[shd.ATTR_bg_position].format = .FLOAT2;
+            break :init l;
+        },
         .primitive_type = .TRIANGLE_STRIP,
-    };
-    pip_desc.layout.buffers[0].stride = 28;
-    pip_desc.layout.attrs[shd.ATTR_bg_position].format = .FLOAT2;
-    state.bg_pip = sg.makePipeline(pip_desc);
+    });
 
     // lot of pipeline objects for rendering the blended quads
-    pip_desc = .{
-        .shader = sg.makeShader(shd.quadShaderDesc(sg.queryBackend())),
-        .primitive_type = .TRIANGLE_STRIP,
-        .blend_color = .{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 1.0 },
-    };
-    pip_desc.layout.attrs[shd.ATTR_quad_position].format = .FLOAT3;
-    pip_desc.layout.attrs[shd.ATTR_quad_color0].format = .FLOAT4;
-    pip_desc.colors[0].blend = .{
-        .enabled = true,
-        .src_factor_alpha = .ONE,
-        .dst_factor_alpha = .ZERO,
-    };
-    var src: usize = 0;
-    while (src < NUM_BLEND_FACTORS) : (src += 1) {
-        var dst: usize = 0;
-        while (dst < NUM_BLEND_FACTORS) : (dst += 1) {
-            pip_desc.colors[0].blend.src_factor_rgb = @enumFromInt(src + 1);
-            pip_desc.colors[0].blend.dst_factor_rgb = @enumFromInt(dst + 1);
-            state.pip[src][dst] = sg.makePipeline(pip_desc);
+    const shader = sg.makeShader(shd.quadShaderDesc(sg.queryBackend()));
+    for (0..NUM_BLEND_FACTORS) |src| {
+        for (0..NUM_BLEND_FACTORS) |dst| {
+            state.pip[src][dst] = sg.makePipeline(.{
+                .layout = init: {
+                    var l = sg.VertexLayoutState{};
+                    l.attrs[shd.ATTR_quad_position].format = .FLOAT3;
+                    l.attrs[shd.ATTR_quad_color0].format = .FLOAT4;
+                    break :init l;
+                },
+                .shader = shader,
+                .primitive_type = .TRIANGLE_STRIP,
+                .blend_color = .{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 1.0 },
+                .colors = init: {
+                    var c = [_]sg.ColorTargetState{.{}} ** 4;
+                    c[0] = .{
+                        .blend = .{
+                            .enabled = true,
+                            .src_factor_rgb = @enumFromInt(src + 1),
+                            .dst_factor_rgb = @enumFromInt(dst + 1),
+                            .src_factor_alpha = .ONE,
+                            .dst_factor_alpha = .ZERO,
+                        },
+                    };
+                    break :init c;
+                },
+            });
         }
     }
 }
@@ -96,10 +108,8 @@ export fn frame() void {
 
     state.r += 0.6 * time;
     var r0 = state.r;
-    var src: usize = 0;
-    while (src < NUM_BLEND_FACTORS) : (src += 1) {
-        var dst: usize = 0;
-        while (dst < NUM_BLEND_FACTORS) : (dst += 1) {
+    for (0..NUM_BLEND_FACTORS) |src| {
+        for (0..NUM_BLEND_FACTORS) |dst| {
             // compute model-view-proj matrix
             const shift = NUM_BLEND_FACTORS / 2;
             const t: vec3 = .{

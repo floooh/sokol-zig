@@ -33,18 +33,14 @@ export fn init() void {
 }
 
 export fn frame() void {
-    const num_frames = saudio.expect();
-    var i: i32 = 0;
-    while (i < num_frames) : ({
-        i += 1;
-        state.even_odd += 1;
-        state.sample_pos += 1;
-    }) {
+    for (0..@intCast(saudio.expect())) |_| {
         if (state.sample_pos == NumSamples) {
             state.sample_pos = 0;
             _ = saudio.push(&(state.samples[0]), NumSamples);
         }
         state.samples[state.sample_pos] = if (0 != (state.even_odd & 0x20)) 0.1 else -0.1;
+        state.even_odd += 1;
+        state.sample_pos += 1;
     }
     sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
     sg.endPass();

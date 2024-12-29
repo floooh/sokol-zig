@@ -94,10 +94,8 @@ pub const Mat4 = extern struct {
 
     pub fn mul(left: Mat4, right: Mat4) Mat4 {
         var res = Mat4.zero();
-        var col: usize = 0;
-        while (col < 4) : (col += 1) {
-            var row: usize = 0;
-            while (row < 4) : (row += 1) {
+        for (0..4) |col| {
+            for (0..4) |row| {
                 res.m[col][row] = left.m[0][row] * right.m[col][0] +
                     left.m[1][row] * right.m[col][1] +
                     left.m[2][row] * right.m[col][2] +

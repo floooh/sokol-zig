@@ -68,19 +68,22 @@ export fn init() void {
     });
 
     // shader and pipeline object
-    var pip_desc: sg.PipelineDesc = .{
+    state.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.noninterleavedShaderDesc(sg.queryBackend())),
+        // NOTE how the vertex components are pulled from different buffer bind slots
+        .layout = init: {
+            var l = sg.VertexLayoutState{};
+            l.attrs[shd.ATTR_noninterleaved_position] = .{ .format = .FLOAT3, .buffer_index = 0 };
+            l.attrs[shd.ATTR_noninterleaved_color0] = .{ .format = .FLOAT4, .buffer_index = 1 };
+            break :init l;
+        },
         .index_type = .UINT16,
         .cull_mode = .BACK,
         .depth = .{
             .compare = .LESS_EQUAL,
             .write_enabled = true,
         },
-    };
-    // NOTE how the vertex components are pulled from different buffer bind slots
-    pip_desc.layout.attrs[shd.ATTR_noninterleaved_position] = .{ .format = .FLOAT3, .buffer_index = 0 };
-    pip_desc.layout.attrs[shd.ATTR_noninterleaved_color0] = .{ .format = .FLOAT4, .buffer_index = 1 };
-    state.pip = sg.makePipeline(pip_desc);
+    });
 
     // fill the resource bindings, note how the same vertex
     // buffer is bound to the first two slots, and the vertex-buffer-offsets

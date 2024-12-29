@@ -58,21 +58,24 @@ export fn init() void {
     };
 
     // shader- and pipeline-object
-    var pip_desc: sg.PipelineDesc = .{
+    state.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.shapesShaderDesc(sg.queryBackend())),
+        .layout = init: {
+            var l = sg.VertexLayoutState{};
+            l.buffers[0] = sshape.vertexBufferLayoutState();
+            l.attrs[shd.ATTR_shapes_position] = sshape.positionVertexAttrState();
+            l.attrs[shd.ATTR_shapes_normal] = sshape.normalVertexAttrState();
+            l.attrs[shd.ATTR_shapes_texcoord] = sshape.texcoordVertexAttrState();
+            l.attrs[shd.ATTR_shapes_color0] = sshape.colorVertexAttrState();
+            break :init l;
+        },
         .index_type = .UINT16,
         .cull_mode = .NONE,
         .depth = .{
             .compare = .LESS_EQUAL,
             .write_enabled = true,
         },
-    };
-    pip_desc.layout.buffers[0] = sshape.vertexBufferLayoutState();
-    pip_desc.layout.attrs[shd.ATTR_shapes_position] = sshape.positionVertexAttrState();
-    pip_desc.layout.attrs[shd.ATTR_shapes_normal] = sshape.normalVertexAttrState();
-    pip_desc.layout.attrs[shd.ATTR_shapes_texcoord] = sshape.texcoordVertexAttrState();
-    pip_desc.layout.attrs[shd.ATTR_shapes_color0] = sshape.colorVertexAttrState();
-    state.pip = sg.makePipeline(pip_desc);
+    });
 
     // generate shape geometries
     var vertices: [6 * 1024]sshape.Vertex = undefined;

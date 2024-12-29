@@ -26,21 +26,25 @@ export fn init() void {
     });
 
     // clear to a blue-ish color
-    state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0.5, .g = 0.5, .b = 1, .a = 1 } };
+    state.pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0.5, .g = 0.5, .b = 1, .a = 1 },
+    };
 
     // a 2D triangle and quad in 1 vertex buffer and 1 index buffer
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
         .data = sg.asRange(&[_]Vertex{
+            // zig fmt: off
             // triangle vertices
-            .{ .x = 0.0, .y = 0.55, .r = 1.0, .g = 0.0, .b = 0.0 },
-            .{ .x = 0.25, .y = 0.05, .r = 0.0, .g = 1.0, .b = 0.0 },
+            .{ .x =  0.0,  .y = 0.55, .r = 1.0, .g = 0.0, .b = 0.0 },
+            .{ .x =  0.25, .y = 0.05, .r = 0.0, .g = 1.0, .b = 0.0 },
             .{ .x = -0.25, .y = 0.05, .r = 0.0, .g = 0.0, .b = 1.0 },
-
             // quad vertices
             .{ .x = -0.25, .y = -0.05, .r = 0.0, .g = 0.0, .b = 1.0 },
-            .{ .x = 0.25, .y = -0.05, .r = 0.0, .g = 1.0, .b = 0.0 },
-            .{ .x = 0.25, .y = -0.55, .r = 1.0, .g = 0.0, .b = 0.0 },
+            .{ .x =  0.25, .y = -0.05, .r = 0.0, .g = 1.0, .b = 0.0 },
+            .{ .x =  0.25, .y = -0.55, .r = 1.0, .g = 0.0, .b = 0.0 },
             .{ .x = -0.25, .y = -0.55, .r = 1.0, .g = 1.0, .b = 0.0 },
+            // zig fmt: on
         }),
     });
     state.bind.index_buffer = sg.makeBuffer(.{
@@ -55,13 +59,16 @@ export fn init() void {
     });
 
     // a shader and pipeline object
-    var pip_desc: sg.PipelineDesc = .{
+    state.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.bufferoffsetsShaderDesc(sg.queryBackend())),
+        .layout = init: {
+            var l = sg.VertexLayoutState{};
+            l.attrs[shd.ATTR_bufferoffsets_position].format = .FLOAT2;
+            l.attrs[shd.ATTR_bufferoffsets_color0].format = .FLOAT3;
+            break :init l;
+        },
         .index_type = .UINT16,
-    };
-    pip_desc.layout.attrs[shd.ATTR_bufferoffsets_position].format = .FLOAT2;
-    pip_desc.layout.attrs[shd.ATTR_bufferoffsets_color0].format = .FLOAT3;
-    state.pip = sg.makePipeline(pip_desc);
+    });
 }
 
 export fn frame() void {

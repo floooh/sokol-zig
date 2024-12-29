@@ -36,7 +36,10 @@ export fn init() void {
     });
 
     // pass action to clear frame buffer to black
-    state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0, .g = 0, .b = 0, .a = 1 } };
+    state.pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0, .g = 0, .b = 0, .a = 1 },
+    };
 
     // a vertex buffer for the static particle geometry, goes into vertex buffer slot 0
     const r = 0.05;
@@ -69,59 +72,55 @@ export fn init() void {
     });
 
     // shader and pipeline object
-    var pip_desc: sg.PipelineDesc = .{
+    // NOTE how the vertex layout is setup for instancing, with the instancing
+    // data provided by buffer-slot 1:
+    state.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.instancingShaderDesc(sg.queryBackend())),
+        .layout = init: {
+            var l = sg.VertexLayoutState{};
+            l.buffers[1].step_func = .PER_INSTANCE;
+            l.attrs[shd.ATTR_instancing_pos] = .{ .format = .FLOAT3, .buffer_index = 0 }; // positions
+            l.attrs[shd.ATTR_instancing_color0] = .{ .format = .FLOAT4, .buffer_index = 0 }; // colors
+            l.attrs[shd.ATTR_instancing_inst_pos] = .{ .format = .FLOAT3, .buffer_index = 1 }; // instance positions
+            break :init l;
+        },
         .index_type = .UINT16,
         .cull_mode = .BACK,
         .depth = .{
             .compare = .LESS_EQUAL,
             .write_enabled = true,
         },
-    };
-    // NOTE how the vertex layout is setup for instancing, with the instancing
-    // data provided by buffer-slot 1:
-    pip_desc.layout.buffers[1].step_func = .PER_INSTANCE;
-    pip_desc.layout.attrs[shd.ATTR_instancing_pos] = .{ .format = .FLOAT3, .buffer_index = 0 }; // positions
-    pip_desc.layout.attrs[shd.ATTR_instancing_color0] = .{ .format = .FLOAT4, .buffer_index = 0 }; // colors
-    pip_desc.layout.attrs[shd.ATTR_instancing_inst_pos] = .{ .format = .FLOAT3, .buffer_index = 1 }; // instance positions
-
-    state.pip = sg.makePipeline(pip_desc);
+    });
 }
 
 export fn frame() void {
     const frame_time: f32 = @floatCast(sapp.frameDuration());
 
     // emit new particles
-    {
-        var i: usize = 0;
-        while (i < num_particles_emitted_per_frame) : (i += 1) {
-            if (state.cur_num_particles < max_particles) {
-                state.pos[state.cur_num_particles] = vec3.zero();
-                state.vel[state.cur_num_particles] = .{
-                    .x = rand(-0.5, 0.5),
-                    .y = rand(2.0, 2.5),
-                    .z = rand(-0.5, 0.5),
-                };
-                state.cur_num_particles += 1;
-            } else {
-                break;
-            }
+    for (0..num_particles_emitted_per_frame) |_| {
+        if (state.cur_num_particles < max_particles) {
+            state.pos[state.cur_num_particles] = vec3.zero();
+            state.vel[state.cur_num_particles] = .{
+                .x = rand(-0.5, 0.5),
+                .y = rand(2.0, 2.5),
+                .z = rand(-0.5, 0.5),
+            };
+            state.cur_num_particles += 1;
+        } else {
+            break;
         }
     }
 
     // update particle positions
-    {
-        var i: usize = 0;
-        while (i < max_particles) : (i += 1) {
-            const vel = &state.vel[i];
-            const pos = &state.pos[i];
-            vel.y -= 1.0 * frame_time;
-            pos.* = vec3.add(pos.*, vec3.mul(vel.*, frame_time));
-            if (pos.y < -2.0) {
-                pos.y = -1.8;
-                vel.y = -vel.y;
-                vel.* = vec3.mul(vel.*, 0.8);
-            }
+    for (0..max_particles) |i| {
+        const vel = &state.vel[i];
+        const pos = &state.pos[i];
+        vel.y -= 1.0 * frame_time;
+        pos.* = vec3.add(pos.*, vec3.mul(vel.*, frame_time));
+        if (pos.y < -2.0) {
+            pos.y = -1.8;
+            vel.y = -vel.y;
+            vel.* = vec3.mul(vel.*, 0.8);
         }
     }
 
@@ -154,9 +153,7 @@ pub fn main() void {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .icon = .{
-            .sokol_default = true,
-        },
+        .icon = .{ .sokol_default = true },
         .window_title = "instancing.zig",
         .logger = .{ .func = slog.func },
     });

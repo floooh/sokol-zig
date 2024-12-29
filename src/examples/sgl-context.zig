@@ -109,7 +109,7 @@ export fn frame() void {
     sgl.defaults();
     sgl.matrixModeModelview();
     sgl.rotate(a, 0, 0, 1);
-    draw_quad();
+    drawQuad();
 
     // draw a rotating 3D cube, using the offscreen render target as texture
     sgl.setContext(sgl.defaultContext());
@@ -126,7 +126,7 @@ export fn frame() void {
     };
     sgl.matrixModeModelview();
     sgl.lookat(eye[0], eye[1], eye[2], 0, 0, 0, 0, 1, 0);
-    draw_cube();
+    drawCube();
 
     // do the actual offscreen and display rendering in sokol-gfx passes
     sg.beginPass(.{ .action = state.offscreen.pass_action, .attachments = state.offscreen.attachments });
@@ -157,7 +157,7 @@ pub fn main() void {
     });
 }
 
-fn draw_quad() void {
+fn drawQuad() void {
     sgl.beginQuads();
     sgl.v2fC3b(0.0, -1.0, 255, 0, 0);
     sgl.v2fC3b(1.0, 0.0, 0, 0, 255);
@@ -166,7 +166,7 @@ fn draw_quad() void {
     sgl.end();
 }
 
-fn draw_cube() void {
+fn drawCube() void {
     sgl.beginQuads();
     sgl.v3fT2f(-1.0, 1.0, -1.0, 0.0, 1.0);
     sgl.v3fT2f(1.0, 1.0, -1.0, 1.0, 1.0);

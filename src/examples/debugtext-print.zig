@@ -41,14 +41,22 @@ export fn init() void {
     });
 
     // setup sokol.debugtext with 3 builtin fonts
-    var sdtx_desc: sdtx.Desc = .{ .logger = .{ .func = slog.func } };
-    sdtx_desc.fonts[KC854] = sdtx.fontKc854();
-    sdtx_desc.fonts[C64] = sdtx.fontC64();
-    sdtx_desc.fonts[ORIC] = sdtx.fontOric();
-    sdtx.setup(sdtx_desc);
+    sdtx.setup(.{
+        .fonts = init: {
+            var f = [_]sdtx.FontDesc{.{}} ** 8;
+            f[KC854] = sdtx.fontKc854();
+            f[C64] = sdtx.fontC64();
+            f[ORIC] = sdtx.fontOric();
+            break :init f;
+        },
+        .logger = .{ .func = slog.func },
+    });
 
     // pass-action for clearing to blue-ish
-    state.pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0, .g = 0.125, .b = 0.25, .a = 1 } };
+    state.pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0, .g = 0.125, .b = 0.25, .a = 1 },
+    };
 }
 
 export fn frame() void {

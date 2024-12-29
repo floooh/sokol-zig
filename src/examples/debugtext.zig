@@ -27,16 +27,24 @@ export fn init() void {
     });
 
     // setup sokol-debugtext with all builtin fonts
-    var sdtx_desc: sdtx.Desc = .{ .logger = .{ .func = slog.func } };
-    sdtx_desc.fonts[KC853] = sdtx.fontKc853();
-    sdtx_desc.fonts[KC854] = sdtx.fontKc854();
-    sdtx_desc.fonts[Z1013] = sdtx.fontZ1013();
-    sdtx_desc.fonts[CPC] = sdtx.fontCpc();
-    sdtx_desc.fonts[C64] = sdtx.fontC64();
-    sdtx_desc.fonts[ORIC] = sdtx.fontOric();
-    sdtx.setup(sdtx_desc);
+    sdtx.setup(.{
+        .fonts = init: {
+            var f = [_]sdtx.FontDesc{.{}} ** 8;
+            f[KC853] = sdtx.fontKc853();
+            f[KC854] = sdtx.fontKc854();
+            f[Z1013] = sdtx.fontZ1013();
+            f[CPC] = sdtx.fontCpc();
+            f[C64] = sdtx.fontC64();
+            f[ORIC] = sdtx.fontOric();
+            break :init f;
+        },
+        .logger = .{ .func = slog.func },
+    });
 
-    pass_action.colors[0] = .{ .load_action = .CLEAR, .clear_value = .{ .r = 0, .g = 0.125, .b = 0.25, .a = 1 } };
+    pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0, .g = 0.125, .b = 0.25, .a = 1 },
+    };
 }
 
 // print all characters in a font
@@ -44,8 +52,7 @@ fn printFont(font_index: u32, title: [:0]const u8, r: u8, g: u8, b: u8) void {
     sdtx.font(font_index);
     sdtx.color3b(r, g, b);
     sdtx.puts(title);
-    var c: u16 = 32;
-    while (c < 256) : (c += 1) {
+    for (32..256) |c| {
         sdtx.putc(@intCast(c));
         if (((c + 1) & 63) == 0) {
             sdtx.crlf();

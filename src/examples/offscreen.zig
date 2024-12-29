@@ -53,7 +53,7 @@ export fn init() void {
     };
 
     // a render pass with one color- and one depth-attachment image
-    var img_desc: sg.ImageDesc = .{
+    var img_desc = sg.ImageDesc{
         .render_target = true,
         .width = 256,
         .height = 256,
@@ -64,7 +64,7 @@ export fn init() void {
     img_desc.pixel_format = .DEPTH;
     const depth_img = sg.makeImage(img_desc);
 
-    var atts_desc: sg.AttachmentsDesc = .{};
+    var atts_desc = sg.AttachmentsDesc{};
     atts_desc.colors[0].image = color_img;
     atts_desc.depth_stencil.image = depth_img;
     state.offscreen.attachments = sg.makeAttachments(atts_desc);
@@ -90,8 +90,15 @@ export fn init() void {
     const ibuf = sg.makeBuffer(sshape.indexBufferDesc(buf));
 
     // shader and pipeline object for offscreen rendering
-    var offscreen_pip_desc: sg.PipelineDesc = .{
+    state.offscreen.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.offscreenShaderDesc(sg.queryBackend())),
+        .layout = init: {
+            var l = sg.VertexLayoutState{};
+            l.buffers[0] = sshape.vertexBufferLayoutState();
+            l.attrs[shd.ATTR_offscreen_position] = sshape.positionVertexAttrState();
+            l.attrs[shd.ATTR_offscreen_normal] = sshape.normalVertexAttrState();
+            break :init l;
+        },
         .index_type = .UINT16,
         .cull_mode = .BACK,
         .sample_count = offscreen_sample_count,
@@ -100,28 +107,31 @@ export fn init() void {
             .compare = .LESS_EQUAL,
             .write_enabled = true,
         },
-    };
-    offscreen_pip_desc.colors[0].pixel_format = .RGBA8;
-    offscreen_pip_desc.layout.buffers[0] = sshape.vertexBufferLayoutState();
-    offscreen_pip_desc.layout.attrs[shd.ATTR_offscreen_position] = sshape.positionVertexAttrState();
-    offscreen_pip_desc.layout.attrs[shd.ATTR_offscreen_normal] = sshape.normalVertexAttrState();
-    state.offscreen.pip = sg.makePipeline(offscreen_pip_desc);
+        .colors = init: {
+            var c = [_]sg.ColorTargetState{.{}} ** 4;
+            c[0].pixel_format = .RGBA8;
+            break :init c;
+        },
+    });
 
     // shader and pipeline object for the default render pass
-    var default_pip_desc: sg.PipelineDesc = .{
+    state.default.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.defaultShaderDesc(sg.queryBackend())),
+        .layout = init: {
+            var l = sg.VertexLayoutState{};
+            l.buffers[0] = sshape.vertexBufferLayoutState();
+            l.attrs[shd.ATTR_default_position] = sshape.positionVertexAttrState();
+            l.attrs[shd.ATTR_default_normal] = sshape.normalVertexAttrState();
+            l.attrs[shd.ATTR_default_texcoord0] = sshape.texcoordVertexAttrState();
+            break :init l;
+        },
         .index_type = .UINT16,
         .cull_mode = .BACK,
         .depth = .{
             .compare = .LESS_EQUAL,
             .write_enabled = true,
         },
-    };
-    default_pip_desc.layout.buffers[0] = sshape.vertexBufferLayoutState();
-    default_pip_desc.layout.attrs[shd.ATTR_default_position] = sshape.positionVertexAttrState();
-    default_pip_desc.layout.attrs[shd.ATTR_default_normal] = sshape.normalVertexAttrState();
-    default_pip_desc.layout.attrs[shd.ATTR_default_texcoord0] = sshape.texcoordVertexAttrState();
-    state.default.pip = sg.makePipeline(default_pip_desc);
+    });
 
     // a sampler object for sampling the render target texture
     const smp = sg.makeSampler(.{

@@ -128,8 +128,14 @@ export fn init() void {
     state.offscreen.bind.index_buffer = cube_ibuf;
 
     // shader and pipeline state object for rendering cube into MRT render targets
-    var offscreen_pip_desc: sg.PipelineDesc = .{
+    state.offscreen.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.offscreenShaderDesc(sg.queryBackend())),
+        .layout = init: {
+            var l = sg.VertexLayoutState{};
+            l.attrs[shd.ATTR_offscreen_pos].format = .FLOAT3;
+            l.attrs[shd.ATTR_offscreen_bright0].format = .FLOAT;
+            break :init l;
+        },
         .index_type = .UINT16,
         .cull_mode = .BACK,
         .sample_count = offscreen_sample_count,
@@ -139,10 +145,7 @@ export fn init() void {
             .write_enabled = true,
         },
         .color_count = 3,
-    };
-    offscreen_pip_desc.layout.attrs[shd.ATTR_offscreen_pos].format = .FLOAT3;
-    offscreen_pip_desc.layout.attrs[shd.ATTR_offscreen_bright0].format = .FLOAT;
-    state.offscreen.pip = sg.makePipeline(offscreen_pip_desc);
+    });
 
     // a vertex buffer to render a fullscreen quad
     const quad_vbuf = sg.makeBuffer(.{
@@ -151,12 +154,15 @@ export fn init() void {
 
     // shader and pipeline object to render a fullscreen quad which composes
     // the 3 offscreen render targets into the default framebuffer
-    var fsq_pip_desc: sg.PipelineDesc = .{
+    state.fsq.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.fsqShaderDesc(sg.queryBackend())),
+        .layout = init: {
+            var l = sg.VertexLayoutState{};
+            l.attrs[shd.ATTR_fsq_pos].format = .FLOAT2;
+            break :init l;
+        },
         .primitive_type = .TRIANGLE_STRIP,
-    };
-    fsq_pip_desc.layout.attrs[shd.ATTR_fsq_pos].format = .FLOAT2;
-    state.fsq.pip = sg.makePipeline(fsq_pip_desc);
+    });
 
     // a sampler to sample the offscreen render target as texture
     const smp = sg.makeSampler(.{
@@ -169,18 +175,21 @@ export fn init() void {
     // resource bindings to render the fullscreen quad (composed from the
     // offscreen render target textures
     state.fsq.bind.vertex_buffers[0] = quad_vbuf;
-    for (0..3) |i| {
+    for (0..2) |i| {
         state.fsq.bind.images[i] = state.offscreen.attachments_desc.colors[i].image;
     }
     state.fsq.bind.samplers[shd.SMP_smp] = smp;
 
     // shader, pipeline and resource bindings to render debug visualization quads
-    var dbg_pip_desc: sg.PipelineDesc = .{
+    state.dbg.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.dbgShaderDesc(sg.queryBackend())),
+        .layout = init: {
+            var l = sg.VertexLayoutState{};
+            l.attrs[shd.ATTR_dbg_pos].format = .FLOAT2;
+            break :init l;
+        },
         .primitive_type = .TRIANGLE_STRIP,
-    };
-    dbg_pip_desc.layout.attrs[shd.ATTR_dbg_pos].format = .FLOAT2;
-    state.dbg.pip = sg.makePipeline(dbg_pip_desc);
+    });
 
     // resource bindings to render the debug visualization
     // (the required images will be filled in during rendering)

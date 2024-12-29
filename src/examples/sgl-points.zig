@@ -70,8 +70,7 @@ export fn frame() void {
     sgl.defaults();
     sgl.beginPoints();
     var psize: f32 = 5;
-    var i: usize = 0;
-    while (i < 300) : (i += 1) {
+    for (0..300) |i| {
         const a = sgl.asRadians(angle + @as(f32, @floatFromInt(i)));
         const color = computeColor(@as(f32, @floatFromInt((sapp.frameCount() + i) % 300)) / 300);
         const r = math.sin(a * 4.0);

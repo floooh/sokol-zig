@@ -32,12 +32,15 @@ export fn init() void {
     });
 
     // create a shader and pipeline object
-    var pip_desc: sg.PipelineDesc = .{
+    state.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.triangleShaderDesc(sg.queryBackend())),
-    };
-    pip_desc.layout.attrs[shd.ATTR_triangle_position].format = .FLOAT3;
-    pip_desc.layout.attrs[shd.ATTR_triangle_color0].format = .FLOAT4;
-    state.pip = sg.makePipeline(pip_desc);
+        .layout = init: {
+            var l = sg.VertexLayoutState{};
+            l.attrs[shd.ATTR_triangle_position].format = .FLOAT3;
+            l.attrs[shd.ATTR_triangle_color0].format = .FLOAT4;
+            break :init l;
+        },
+    });
 }
 
 export fn frame() void {
