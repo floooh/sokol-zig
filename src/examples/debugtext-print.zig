@@ -43,7 +43,7 @@ export fn init() void {
     // setup sokol.debugtext with 3 builtin fonts
     sdtx.setup(.{
         .fonts = init: {
-            var f = [_]sdtx.FontDesc{.{}} ** 8;
+            var f: [8]sdtx.FontDesc = @splat(.{});
             f[KC854] = sdtx.fontKc854();
             f[C64] = sdtx.fontC64();
             f[ORIC] = sdtx.fontOric();

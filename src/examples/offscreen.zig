@@ -108,7 +108,7 @@ export fn init() void {
             .write_enabled = true,
         },
         .colors = init: {
-            var c = [_]sg.ColorTargetState{.{}} ** 4;
+            var c: [4]sg.ColorTargetState = @splat(.{});
             c[0].pixel_format = .RGBA8;
             break :init c;
         },

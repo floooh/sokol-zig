@@ -54,7 +54,7 @@ export fn init() void {
     // characters 0x20 to 0x9F (inclusive)
     sdtx.setup(.{
         .fonts = init: {
-            var f = [_]sdtx.FontDesc{.{}} ** 8;
+            var f: [8]sdtx.FontDesc = @splat(.{});
             f[UserFont] = .{
                 .data = sdtx.asRange(&user_font),
                 .first_char = 0x20,

@@ -71,7 +71,7 @@ export fn init() void {
                 .primitive_type = .TRIANGLE_STRIP,
                 .blend_color = .{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 1.0 },
                 .colors = init: {
-                    var c = [_]sg.ColorTargetState{.{}} ** 4;
+                    var c: [4]sg.ColorTargetState = @splat(.{});
                     c[0] = .{
                         .blend = .{
                             .enabled = true,
