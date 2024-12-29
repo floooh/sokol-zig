@@ -10,7 +10,9 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
       - uses: actions/checkout@main
-      - uses: goto-bus-stop/setup-zig@v2
+      - uses: mlugg/setup-zig@v1
+        with:
+            version: master
       - name: prepare-linux
         if: runner.os == 'Linux'
         run: |
