@@ -215,6 +215,41 @@ fn buildWeb(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMode, dep
 }
 ```
 
+## Using sokol headers in C code
+
+The sokol-zig build.zig exposes a C library artifact called `sokol_clib`.
+
+You can lookup the build step for this library via:
+
+```zig
+    const dep_sokol = b.dependency("sokol", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const sokol_clib = dep_sokol.artifact("sokol_clib");
+```
+
+...once you have that library artifact, 'link' it to your compile step which contains
+your own C code:
+
+```zig
+    const my_clib = ...;
+    my_clib.linkLibrary(sokol_clib);
+```
+
+This makes the Sokol C headers available to your C code in a `sokol/` subdirectory:
+
+```c
+#include "sokol/sokol_app.h"
+#include "sokol/sokol_gfx.h"
+// etc...
+```
+
+Keep in mind that the implementation is already provided in the `sokol_clib`
+static link library (e.g. don't try to build the Sokol implementations yourself
+via the `SOKOL_IMPL` macro).
+
+
 ## wasm32-emscripten caveats
 
 - Zig allocators use the `@returnAddress` builtin, which isn't supported in the Emscripten
