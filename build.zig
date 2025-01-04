@@ -185,10 +185,8 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         .link_libc = true,
     });
 
-    // add a header search path to itself, this isn't needed for building the
-    // sokol C library, but allows other C code to find the sokol headers
-    // by adding a dependency to `sokol_clib`
-    lib.addIncludePath(b.path(csrc_root));
+    // make sokol headers available to users of `sokol_clib` via `#include "sokol/sokol_gfx.h"
+    lib.installHeadersDirectory(b.path("src/sokol/c"), "sokol", .{});
 
     // installArtifact allows us to find the lib_sokol compile step when
     // sokol is used as package manager dependency via 'dep_sokol.artifact("sokol_clib")'
