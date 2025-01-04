@@ -165,12 +165,30 @@ pub const LibSokolOptions = struct {
     cimgui_header_path: ?[]const u8 = null,
 };
 pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
+    const csrc_root = "src/sokol/c/";
+    const csources = [_][]const u8{
+        "sokol_log.c",
+        "sokol_app.c",
+        "sokol_gfx.c",
+        "sokol_time.c",
+        "sokol_audio.c",
+        "sokol_gl.c",
+        "sokol_debugtext.c",
+        "sokol_shape.c",
+        "sokol_glue.c",
+        "sokol_fetch.c",
+    };
     const lib = b.addStaticLibrary(.{
         .name = "sokol_clib",
         .target = options.target,
         .optimize = options.optimize,
         .link_libc = true,
     });
+
+    // add a header search path to itself, this isn't needed for building the
+    // sokol C library, but allows other C code to find the sokol headers
+    // by adding a dependency to `sokol_clib`
+    lib.addIncludePath(b.path(csrc_root));
 
     // installArtifact allows us to find the lib_sokol compile step when
     // sokol is used as package manager dependency via 'dep_sokol.artifact("sokol_clib")'
@@ -267,19 +285,6 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     }
 
     // finally add the C source files
-    const csrc_root = "src/sokol/c/";
-    const csources = [_][]const u8{
-        "sokol_log.c",
-        "sokol_app.c",
-        "sokol_gfx.c",
-        "sokol_time.c",
-        "sokol_audio.c",
-        "sokol_gl.c",
-        "sokol_debugtext.c",
-        "sokol_shape.c",
-        "sokol_glue.c",
-        "sokol_fetch.c",
-    };
     inline for (csources) |csrc| {
         lib.addCSourceFile(.{
             .file = b.path(csrc_root ++ csrc),
