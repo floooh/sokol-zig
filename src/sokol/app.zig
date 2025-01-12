@@ -1690,6 +1690,8 @@ pub const Logger = extern struct {
     user_data: ?*anyopaque = null,
 };
 
+/// sokol-app initialization options, used as return value of sokol_main()
+/// or sapp_run() argument
 pub const Desc = extern struct {
     init_cb: ?*const fn () callconv(.C) void = null,
     frame_cb: ?*const fn () callconv(.C) void = null,
@@ -1726,6 +1728,7 @@ pub const Desc = extern struct {
     html5_preserve_drawing_buffer: bool = false,
     html5_premultiplied_alpha: bool = false,
     html5_ask_leave_site: bool = false,
+    html5_update_document_title: bool = false,
     html5_bubble_mouse_events: bool = false,
     html5_bubble_touch_events: bool = false,
     html5_bubble_wheel_events: bool = false,
