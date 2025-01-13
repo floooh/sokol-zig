@@ -319,6 +319,7 @@ pub const EmLinkOptions = struct {
     use_webgpu: bool = false,
     use_webgl2: bool = false,
     use_emmalloc: bool = false,
+    use_offset_converter: bool = false, // needed for Zig allocators which use the @returnAddress builtin
     use_filesystem: bool = true,
     shell_file_path: ?Build.LazyPath,
     extra_args: []const []const u8 = &.{},
@@ -331,7 +332,6 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
         emcc.addArgs(&.{ "-Og", "-sSAFE_HEAP=1", "-sSTACK_OVERFLOW_CHECK=1" });
     } else {
         emcc.addArg("-sASSERTIONS=0");
-        emcc.addArg("-sUSE_OFFSET_CONVERTER");
         if (options.optimize == .ReleaseSmall) {
             emcc.addArg("-Oz");
         } else {
@@ -355,6 +355,9 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
     }
     if (options.use_emmalloc) {
         emcc.addArg("-sMALLOC='emmalloc'");
+    }
+    if (options.use_offset_converter) {
+        emcc.addArg("-sUSE_OFFSET_CONVERTER");
     }
     if (options.shell_file_path) |shell_file_path| {
         emcc.addPrefixedFileArg("--shell-file=", shell_file_path);
