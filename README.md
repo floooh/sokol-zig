@@ -261,6 +261,8 @@ via the `SOKOL_IMPL` macro).
   ```zig
       const link_step = try sokol.emLinkStep(b, .{
         // ...other settings here
+        .use_offset_converter = true,
+        // OR
         .extra_args = &.{"-sUSE_OFFSET_CONVERTER=1"},
     });
   ```
