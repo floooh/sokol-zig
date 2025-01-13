@@ -255,19 +255,15 @@ via the `SOKOL_IMPL` macro).
 - Zig allocators use the `@returnAddress` builtin, which isn't supported in the Emscripten
   runtime out of the box (you'll get a runtime error in the browser's Javascript console
   looking like this: `Cannot use convertFrameToPC (needed by __builtin_return_address) without -sUSE_OFFSET_CONVERTER`.
-  To make it work, do as the error message says, to add the `-sUSE_OFFSET_CONVERTER` arg to the
-  Emscripten linker step in your `build.zig` file:
+  To link with `-sUSE_OFFSET_CONVERTER`, simply set the `.use_offset_converter` option
+  in the Emscripten linker step in your build.zig:
 
   ```zig
       const link_step = try sokol.emLinkStep(b, .{
         // ...other settings here
         .use_offset_converter = true,
-        // OR
-        .extra_args = &.{"-sUSE_OFFSET_CONVERTER=1"},
     });
   ```
-
-  Also see the [kc85.zig build.zig](https://github.com/floooh/kc85.zig/blob/main/build.zig) as example!
 
 - the Zig stdlib only has limited support for the `wasm32-emscripten`
   target, for instance using `std.fs` functions will most likely fail
