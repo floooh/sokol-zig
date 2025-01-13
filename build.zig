@@ -331,6 +331,7 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
         emcc.addArgs(&.{ "-Og", "-sSAFE_HEAP=1", "-sSTACK_OVERFLOW_CHECK=1" });
     } else {
         emcc.addArg("-sASSERTIONS=0");
+        emcc.addArg("-sUSE_OFFSET_CONVERTER");
         if (options.optimize == .ReleaseSmall) {
             emcc.addArg("-Oz");
         } else {
