@@ -388,8 +388,8 @@ pub fn asRange(val: anytype) Range {
         switch (type_info) {
             .pointer => {
                 switch (type_info.pointer.size) {
-                    .One => return .{ .ptr = val, .size = @sizeOf(type_info.pointer.child) },
-                    .Slice => return .{ .ptr = val.ptr, .size = @sizeOf(type_info.pointer.child) * val.len },
+                    .one => return .{ .ptr = val, .size = @sizeOf(type_info.pointer.child) },
+                    .slice => return .{ .ptr = val.ptr, .size = @sizeOf(type_info.pointer.child) * val.len },
                     else => @compileError("FIXME: Pointer type!"),
                 }
             },
