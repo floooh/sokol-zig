@@ -209,6 +209,9 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     // resolve .auto backend into specific backend by platform
     var cflags = try std.BoundedArray([]const u8, 64).init(0);
     try cflags.append("-DIMPL");
+    if (options.optimize != .Debug) {
+        try cflags.append("-DNDEBUG");
+    }
     const backend = resolveSokolBackend(options.backend, lib.rootModuleTarget());
     switch (backend) {
         .d3d11 => try cflags.append("-DSOKOL_D3D11"),
