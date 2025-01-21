@@ -1281,7 +1281,7 @@ pub const max_iconimages = 8;
 /// The type of event that's passed to the event handler callback
 /// in the sapp_event.type field. These are not just "traditional"
 /// input events, but also notify the application about state changes
-/// or other user-invoked actions
+/// or other user-invoked actions.
 pub const EventType = enum(i32) {
     INVALID,
     KEY_DOWN,
@@ -1315,7 +1315,7 @@ pub const EventType = enum(i32) {
 /// The 'virtual keycode' of a KEY_DOWN or KEY_UP event in the
 /// struct field sapp_event.key_code.
 ///
-/// Note that the keycode values are identical with GLFW
+/// Note that the keycode values are identical with GLFW.
 pub const Keycode = enum(i32) {
     INVALID = 0,
     SPACE = 32,
@@ -1447,7 +1447,7 @@ pub const Keycode = enum(i32) {
 /// NOTE: the values must remain in sync with the corresponding
 /// Android SDK type, so don't change those.
 ///
-/// See https://developer.android.com/reference/android/view/MotionEvent#TOOL_TYPE_UNKNOW
+/// See https://developer.android.com/reference/android/view/MotionEvent#TOOL_TYPE_UNKNOWN
 pub const AndroidTooltype = enum(i32) {
     UNKNOWN = 0,
     FINGER = 1,
@@ -1461,7 +1461,7 @@ pub const AndroidTooltype = enum(i32) {
 /// TOUCHES_MOVED, TOUCHES_ENDED).
 ///
 /// Touch points are stored in the nested array sapp_event.touches[],
-/// and the number of touches is stored in sapp_event.num_touches
+/// and the number of touches is stored in sapp_event.num_touches.
 pub const Touchpoint = extern struct {
     identifier: usize = 0,
     pos_x: f32 = 0.0,
@@ -1473,7 +1473,7 @@ pub const Touchpoint = extern struct {
 /// sapp_mousebutton
 ///
 /// The currently pressed mouse button in the events MOUSE_DOWN
-/// and MOUSE_UP, stored in the struct field sapp_event.mouse_button
+/// and MOUSE_UP, stored in the struct field sapp_event.mouse_button.
 pub const Mousebutton = enum(i32) {
     LEFT = 0,
     RIGHT = 1,
@@ -1482,7 +1482,7 @@ pub const Mousebutton = enum(i32) {
 };
 
 /// These are currently pressed modifier keys (and mouse buttons) which are
-/// passed in the event struct field sapp_event.modifiers
+/// passed in the event struct field sapp_event.modifiers.
 pub const modifier_shift = 1;
 pub const modifier_ctrl = 2;
 pub const modifier_alt = 4;
@@ -1497,7 +1497,7 @@ pub const modifier_mmb = 1024;
 /// user callback function. Note that it depends on the event
 /// type what struct fields actually contain useful values, so you
 /// should first check the event type before reading other struct
-/// fields
+/// fields.
 pub const Event = extern struct {
     frame_count: u64 = 0,
     type: EventType = .INVALID,
@@ -1523,7 +1523,7 @@ pub const Event = extern struct {
 /// sg_range
 ///
 /// A general pointer/size-pair struct and constructor macros for passing binary blobs
-/// into sokol_app.h
+/// into sokol_app.h.
 pub const Range = extern struct {
     ptr: ?*const anyopaque = null,
     size: usize = 0,
@@ -1536,7 +1536,7 @@ pub const Range = extern struct {
 ///
 /// Note that the actual image pixel format depends on the use case:
 ///
-/// - window icon pixels are RGBA
+/// - window icon pixels are RGBA8
 pub const ImageDesc = extern struct {
     width: i32 = 0,
     height: i32 = 0,
@@ -1558,7 +1558,7 @@ pub const ImageDesc = extern struct {
 /// images[] array.
 ///
 /// If both the sokol_default flag is set to true, any image candidates
-/// will be ignored and the sokol_app.h default icon will be set
+/// will be ignored and the sokol_app.h default icon will be set.
 pub const IconDesc = extern struct {
     sokol_default: bool = false,
     images: [8]ImageDesc = [_]ImageDesc{.{}} ** 8,
@@ -1569,7 +1569,7 @@ pub const IconDesc = extern struct {
 /// Used in sapp_desc to provide custom memory-alloc and -free functions
 /// to sokol_app.h. If memory management should be overridden, both the
 /// alloc_fn and free_fn function must be provided (e.g. it's not valid to
-/// override one function but not the other)
+/// override one function but not the other).
 pub const Allocator = extern struct {
     alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
     free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
@@ -1684,14 +1684,14 @@ pub const LogItem = enum(i32) {
 /// without logging function, sokol-app will be completely silent, e.g. it will
 /// not report errors or warnings. For maximum error verbosity, compile in
 /// debug mode (e.g. NDEBUG *not* defined) and install a logger (for instance
-/// the standard logging function from sokol_log.h)
+/// the standard logging function from sokol_log.h).
 pub const Logger = extern struct {
     func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
 };
 
 /// sokol-app initialization options, used as return value of sokol_main()
-/// or sapp_run() argument
+/// or sapp_run() argument.
 pub const Desc = extern struct {
     init_cb: ?*const fn () callconv(.C) void = null,
     frame_cb: ?*const fn () callconv(.C) void = null,
@@ -1740,7 +1740,7 @@ pub const Desc = extern struct {
 };
 
 /// HTML5 specific: request and response structs for
-///   asynchronously loading dropped-file content
+///   asynchronously loading dropped-file content.
 pub const Html5FetchError = enum(i32) {
     FETCH_ERROR_NO_ERROR,
     FETCH_ERROR_BUFFER_TOO_SMALL,
@@ -1765,7 +1765,7 @@ pub const Html5FetchRequest = extern struct {
 
 /// sapp_mouse_cursor
 ///
-/// Predefined cursor image definitions, set with sapp_set_mouse_cursor(sapp_mouse_cursor cursor
+/// Predefined cursor image definitions, set with sapp_set_mouse_cursor(sapp_mouse_cursor cursor)
 pub const MouseCursor = enum(i32) {
     DEFAULT = 0,
     ARROW,

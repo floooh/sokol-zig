@@ -526,7 +526,7 @@ pub const LogItem = enum(i32) {
 /// saudio_logger
 ///
 /// Used in saudio_desc to provide a custom logging and error reporting
-/// callback to sokol-audio
+/// callback to sokol-audio.
 pub const Logger = extern struct {
     func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
@@ -537,7 +537,7 @@ pub const Logger = extern struct {
 /// Used in saudio_desc to provide custom memory-alloc and -free functions
 /// to sokol_audio.h. If memory management should be overridden, both the
 /// alloc_fn and free_fn function must be provided (e.g. it's not valid to
-/// override one function but not the other)
+/// override one function but not the other).
 pub const Allocator = extern struct {
     alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
     free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,

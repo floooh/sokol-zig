@@ -1663,7 +1663,7 @@ pub fn asRange(val: anytype) Range {
 /// its pool slot has been reused for a new object)
 ///
 /// The resource ids are wrapped into a strongly-typed struct so that
-/// trying to pass an incompatible resource id is a compile error
+/// trying to pass an incompatible resource id is a compile error.
 pub const Buffer = extern struct {
     id: u32 = 0,
 };
@@ -1692,13 +1692,13 @@ pub const Attachments = extern struct {
 /// sokol-gfx. When initialized from a value type (array or struct), you can
 /// use the SG_RANGE() macro to build an sg_range struct. For functions which
 /// take either a sg_range pointer, or a (C++) sg_range reference, use the
-/// SG_RANGE_REF macro as a solution which compiles both in C and C++
+/// SG_RANGE_REF macro as a solution which compiles both in C and C++.
 pub const Range = extern struct {
     ptr: ?*const anyopaque = null,
     size: usize = 0,
 };
 
-/// various compile-time constants in the public AP
+/// various compile-time constants in the public API
 pub const invalid_id = 0;
 pub const num_inflight_frames = 2;
 pub const max_color_attachments = 4;
@@ -1715,7 +1715,7 @@ pub const max_image_sampler_pairs = 16;
 
 /// sg_color
 ///
-/// An RGBA color value
+/// An RGBA color value.
 pub const Color = extern struct {
     r: f32 = 0.0,
     g: f32 = 0.0,
@@ -1726,7 +1726,7 @@ pub const Color = extern struct {
 /// sg_backend
 ///
 /// The active 3D-API backend, use the function sg_query_backend()
-/// to get the currently active backend
+/// to get the currently active backend.
 pub const Backend = enum(i32) {
     GLCORE,
     GLES3,
@@ -1777,7 +1777,7 @@ pub const Backend = enum(i32) {
 /// the default formats are:
 ///
 ///     - for the Metal, D3D11 and WebGPU backends: SG_PIXELFORMAT_BGRA8
-///     - for GL backends: SG_PIXELFORMAT_RGBA
+///     - for GL backends: SG_PIXELFORMAT_RGBA8
 pub const PixelFormat = enum(i32) {
     DEFAULT,
     NONE,
@@ -1854,7 +1854,7 @@ pub const PixelFormat = enum(i32) {
     NUM,
 };
 
-/// Runtime information about a pixel format, returned by sg_query_pixelformat()
+/// Runtime information about a pixel format, returned by sg_query_pixelformat().
 pub const PixelformatInfo = extern struct {
     sample: bool = false,
     filter: bool = false,
@@ -1866,7 +1866,7 @@ pub const PixelformatInfo = extern struct {
     bytes_per_pixel: i32 = 0,
 };
 
-/// Runtime information about available optional features, returned by sg_query_features(
+/// Runtime information about available optional features, returned by sg_query_features()
 pub const Features = extern struct {
     origin_top_left: bool = false,
     image_clamp_to_border: bool = false,
@@ -1876,7 +1876,7 @@ pub const Features = extern struct {
     msaa_image_bindings: bool = false,
 };
 
-/// Runtime information about resource limits, returned by sg_query_limit(
+/// Runtime information about resource limits, returned by sg_query_limit()
 pub const Limits = extern struct {
     max_image_size_2d: i32 = 0,
     max_image_size_cube: i32 = 0,
@@ -1903,7 +1903,7 @@ pub const Limits = extern struct {
 /// operations will silently be dropped.
 ///
 /// The special INVALID state is returned in sg_query_xxx_state() if no
-/// resource object exists for the provided resource id
+/// resource object exists for the provided resource id.
 pub const ResourceState = enum(i32) {
     INITIAL,
     ALLOC,
@@ -1943,7 +1943,7 @@ pub const ResourceState = enum(i32) {
 /// size is used for rendering, you only need to make sure that the data that
 /// *is* used is valid).
 ///
-/// The default usage is SG_USAGE_IMMUTABLE
+/// The default usage is SG_USAGE_IMMUTABLE.
 pub const Usage = enum(i32) {
     DEFAULT,
     IMMUTABLE,
@@ -1959,7 +1959,7 @@ pub const Usage = enum(i32) {
 ///
 /// Used in the sg_buffer_desc.type member when creating a buffer.
 ///
-/// The default value is SG_BUFFERTYPE_VERTEXBUFFER
+/// The default value is SG_BUFFERTYPE_VERTEXBUFFER.
 pub const BufferType = enum(i32) {
     DEFAULT,
     VERTEXBUFFER,
@@ -1976,7 +1976,7 @@ pub const BufferType = enum(i32) {
 /// This is used in the sg_pipeline_desc.index_type member when creating a
 /// pipeline object.
 ///
-/// The default index type is SG_INDEXTYPE_NONE
+/// The default index type is SG_INDEXTYPE_NONE.
 pub const IndexType = enum(i32) {
     DEFAULT,
     NONE,
@@ -1993,7 +1993,7 @@ pub const IndexType = enum(i32) {
 /// in the shader (both must match and will be checked in the validation layer
 /// when calling sg_apply_bindings).
 ///
-/// The default image type when creating an image is SG_IMAGETYPE_2D
+/// The default image type when creating an image is SG_IMAGETYPE_2D.
 pub const ImageType = enum(i32) {
     DEFAULT,
     _2D,
@@ -2022,7 +2022,7 @@ pub const ImageType = enum(i32) {
 /// - SG_PIXELFORMAT_RGBA32F
 ///
 /// (when using sokol-shdc, also check out the meta tags `@image_sample_type`
-/// and `@sampler_type`
+/// and `@sampler_type`)
 pub const ImageSampleType = enum(i32) {
     DEFAULT,
     FLOAT,
@@ -2046,7 +2046,7 @@ pub const ImageSampleType = enum(i32) {
 /// - SG_IMAGESAMPLETYPE_UNFILTERABLE_FLOAT => SG_SAMPLERTYPE_NONFILTERING
 /// - SG_IMAGESAMPLETYPE_SINT => SG_SAMPLERTYPE_NONFILTERING
 /// - SG_IMAGESAMPLETYPE_UINT => SG_SAMPLERTYPE_NONFILTERING
-/// - SG_IMAGESAMPLETYPE_DEPTH => SG_SAMPLERTYPE_COMPARISO
+/// - SG_IMAGESAMPLETYPE_DEPTH => SG_SAMPLERTYPE_COMPARISON
 pub const SamplerType = enum(i32) {
     DEFAULT,
     FILTERING,
@@ -2058,7 +2058,7 @@ pub const SamplerType = enum(i32) {
 /// sg_cube_face
 ///
 /// The cubemap faces. Use these as indices in the sg_image_desc.content
-/// array
+/// array.
 pub const CubeFace = enum(i32) {
     POS_X,
     NEG_X,
@@ -2075,7 +2075,7 @@ pub const CubeFace = enum(i32) {
 /// APIs. This is used in the sg_pipeline_desc.primitive_type member when
 /// creating a pipeline object.
 ///
-/// The default primitive type is SG_PRIMITIVETYPE_TRIANGLES
+/// The default primitive type is SG_PRIMITIVETYPE_TRIANGLES.
 pub const PrimitiveType = enum(i32) {
     DEFAULT,
     POINTS,
@@ -2092,7 +2092,7 @@ pub const PrimitiveType = enum(i32) {
 /// used in the sg_sampler_desc.min_filter, sg_sampler_desc.mag_filter
 /// and sg_sampler_desc.mipmap_filter members when creating a sampler object.
 ///
-/// For the default is SG_FILTER_NEAREST
+/// For the default is SG_FILTER_NEAREST.
 pub const Filter = enum(i32) {
     DEFAULT,
     NEAREST,
@@ -2114,7 +2114,7 @@ pub const Filter = enum(i32) {
 /// sg_features struct.
 ///
 /// Platforms which don't support SG_WRAP_CLAMP_TO_BORDER will silently fall back
-/// to SG_WRAP_CLAMP_TO_EDGE without a validation error
+/// to SG_WRAP_CLAMP_TO_EDGE without a validation error.
 pub const Wrap = enum(i32) {
     DEFAULT,
     REPEAT,
@@ -2129,7 +2129,7 @@ pub const Wrap = enum(i32) {
 /// The border color to use when sampling a texture, and the UV wrap
 /// mode is SG_WRAP_CLAMP_TO_BORDER.
 ///
-/// The default border color is SG_BORDERCOLOR_OPAQUE_BLAC
+/// The default border color is SG_BORDERCOLOR_OPAQUE_BLACK
 pub const BorderColor = enum(i32) {
     DEFAULT,
     TRANSPARENT_BLACK,
@@ -2141,7 +2141,7 @@ pub const BorderColor = enum(i32) {
 /// sg_vertex_format
 ///
 /// The data type of a vertex component. This is used to describe
-/// the layout of vertex data when creating a pipeline object
+/// the layout of vertex data when creating a pipeline object.
 pub const VertexFormat = enum(i32) {
     INVALID,
     FLOAT,
@@ -2172,7 +2172,7 @@ pub const VertexFormat = enum(i32) {
 /// instanced-rendering.
 ///
 /// The vertex-step is part of the vertex-layout definition
-/// when creating pipeline objects
+/// when creating pipeline objects.
 pub const VertexStep = enum(i32) {
     DEFAULT,
     PER_VERTEX,
@@ -2185,7 +2185,7 @@ pub const VertexStep = enum(i32) {
 /// The data type of a uniform block member. This is used to
 /// describe the internal layout of uniform blocks when creating
 /// a shader object. This is only required for the GL backend, all
-/// other backends will ignore the interior layout of uniform blocks
+/// other backends will ignore the interior layout of uniform blocks.
 pub const UniformType = enum(i32) {
     INVALID,
     FLOAT,
@@ -2231,7 +2231,7 @@ pub const UniformType = enum(i32) {
 ///     of 16.
 ///
 /// For more information search for 'UNIFORM DATA LAYOUT' in the documentation block
-/// at the start of the header
+/// at the start of the header.
 pub const UniformLayout = enum(i32) {
     DEFAULT,
     NATIVE,
@@ -2245,7 +2245,7 @@ pub const UniformLayout = enum(i32) {
 /// sg_pipeline_desc.cull_mode member when creating a
 /// pipeline object.
 ///
-/// The default cull mode is SG_CULLMODE_NON
+/// The default cull mode is SG_CULLMODE_NONE
 pub const CullMode = enum(i32) {
     DEFAULT,
     NONE,
@@ -2260,7 +2260,7 @@ pub const CullMode = enum(i32) {
 /// is used in the member sg_pipeline_desc.face_winding
 /// when creating a pipeline object.
 ///
-/// The default winding is SG_FACEWINDING_CW (clockwise
+/// The default winding is SG_FACEWINDING_CW (clockwise)
 pub const FaceWinding = enum(i32) {
     DEFAULT,
     CCW,
@@ -2289,7 +2289,7 @@ pub const FaceWinding = enum(i32) {
 /// The default compare func for depth- and stencil-tests is
 /// SG_COMPAREFUNC_ALWAYS.
 ///
-/// The default compare func for samplers is SG_COMPAREFUNC_NEVER
+/// The default compare func for samplers is SG_COMPAREFUNC_NEVER.
 pub const CompareFunc = enum(i32) {
     DEFAULT,
     NEVER,
@@ -2320,7 +2320,7 @@ pub const CompareFunc = enum(i32) {
 ///             .depth_fail_op
 ///             .pass_op
 ///
-/// The default value is SG_STENCILOP_KEEP
+/// The default value is SG_STENCILOP_KEEP.
 pub const StencilOp = enum(i32) {
     DEFAULT,
     KEEP,
@@ -2348,7 +2348,7 @@ pub const StencilOp = enum(i32) {
 ///             .dst_factor_alpha
 ///
 /// The default value is SG_BLENDFACTOR_ONE for source
-/// factors, and SG_BLENDFACTOR_ZERO for destination factors
+/// factors, and SG_BLENDFACTOR_ZERO for destination factors.
 pub const BlendFactor = enum(i32) {
     DEFAULT,
     ZERO,
@@ -2381,7 +2381,7 @@ pub const BlendFactor = enum(i32) {
 ///             .op_rgb
 ///             .op_alpha
 ///
-/// The default value is SG_BLENDOP_ADD
+/// The default value is SG_BLENDOP_ADD.
 pub const BlendOp = enum(i32) {
     DEFAULT,
     ADD,
@@ -2400,7 +2400,7 @@ pub const BlendOp = enum(i32) {
 ///
 /// NOTE: since the color mask value 0 is reserved for the default value
 /// (SG_COLORMASK_RGBA), use SG_COLORMASK_NONE if all color channels
-/// should be disabled
+/// should be disabled.
 pub const ColorMask = enum(i32) {
     DEFAULT = 0,
     NONE = 16,
@@ -2436,7 +2436,7 @@ pub const ColorMask = enum(i32) {
 ///
 /// If you want to override the default behaviour, it is important to not
 /// only set the clear color, but the 'action' field as well (as long as this
-/// is _SG_LOADACTION_DEFAULT, the value fields will be ignored)
+/// is _SG_LOADACTION_DEFAULT, the value fields will be ignored).
 pub const LoadAction = enum(i32) {
     DEFAULT,
     CLEAR,
@@ -2449,7 +2449,7 @@ pub const LoadAction = enum(i32) {
 /// Defines the store action that should be performed at the end of a render pass:
 ///
 /// SG_STOREACTION_STORE:       store the rendered content to the color attachment image
-/// SG_STOREACTION_DONTCARE:    allows the GPU to discard the rendered conten
+/// SG_STOREACTION_DONTCARE:    allows the GPU to discard the rendered content
 pub const StoreAction = enum(i32) {
     DEFAULT,
     STORE,
@@ -2465,7 +2465,7 @@ pub const StoreAction = enum(i32) {
 ///   loaded with their previous content, or start in an undefined state
 /// - for clear operations: the clear value (color, depth, or stencil values)
 /// - at the end of the pass: whether the rendering result should be
-///   stored back into the render attachment or discarde
+///   stored back into the render attachment or discarded
 pub const ColorAttachmentAction = extern struct {
     load_action: LoadAction = .DEFAULT,
     store_action: StoreAction = .DEFAULT,
@@ -2552,7 +2552,7 @@ pub const PassAction = extern struct {
 /// It's a good practice to write a helper function which returns an initialized
 /// sg_swapchain structs, which can then be plugged directly into
 /// sg_pass.swapchain. Look at the function sglue_swapchain() in the sokol_glue.h
-/// as an example
+/// as an example.
 pub const MetalSwapchain = extern struct {
     current_drawable: ?*const anyopaque = null,
     depth_stencil_texture: ?*const anyopaque = null,
@@ -2615,7 +2615,7 @@ pub const Swapchain = extern struct {
 ///     });
 ///
 /// You can also omit the .action object to get default pass action behaviour
-/// (clear to color=grey, depth=1 and stencil=0)
+/// (clear to color=grey, depth=1 and stencil=0).
 pub const Pass = extern struct {
     _start_canary: u32 = 0,
     action: PassAction = .{},
@@ -2706,7 +2706,7 @@ pub const Pass = extern struct {
 /// sg_shader_desc struct documentation).
 ///
 /// The optional buffer offsets can be used to put different unrelated
-/// chunks of vertex- and/or index-data into the same buffer objects
+/// chunks of vertex- and/or index-data into the same buffer objects.
 pub const Bindings = extern struct {
     _start_canary: u32 = 0,
     vertex_buffers: [8]Buffer = [_]Buffer{.{}} ** 8,
@@ -2765,7 +2765,7 @@ pub const Bindings = extern struct {
 /// initialized with content, and the .content member must be 0!
 ///
 /// Also you need to call sg_reset_state_cache() after calling native 3D-API
-/// functions, and before calling any sokol_gfx function
+/// functions, and before calling any sokol_gfx function.
 pub const BufferDesc = extern struct {
     _start_canary: u32 = 0,
     size: usize = 0,
@@ -2784,7 +2784,7 @@ pub const BufferDesc = extern struct {
 ///
 /// Defines the content of an image through a 2D array of sg_range structs.
 /// The first array dimension is the cubemap face, and the second array
-/// dimension the mipmap level
+/// dimension the mipmap level.
 pub const ImageData = extern struct {
     subimage: [6][16]Range = [_][16]Range{[_]Range{.{}} ** 16} ** 6,
 };
@@ -2842,7 +2842,7 @@ pub const ImageData = extern struct {
 /// injected texture in a shader you *must* provide a shader-resource-view.
 ///
 /// The same rules apply as for injecting native buffers (see sg_buffer_desc
-/// documentation for more details)
+/// documentation for more details).
 pub const ImageDesc = extern struct {
     _start_canary: u32 = 0,
     type: ImageType = .DEFAULT,
@@ -2880,7 +2880,7 @@ pub const ImageDesc = extern struct {
 /// .max_lod            FLT_MAX
 /// .border_color       SG_BORDERCOLOR_OPAQUE_BLACK
 /// .compare            SG_COMPAREFUNC_NEVER
-/// .max_anisotropy     1 (must be 1..16
+/// .max_anisotropy     1 (must be 1..16)
 pub const SamplerDesc = extern struct {
     _start_canary: u32 = 0,
     min_filter: Filter = .DEFAULT,
@@ -3004,7 +3004,7 @@ pub const SamplerDesc = extern struct {
 /// on demand. If this fails, shader creation will fail. When compiling HLSL
 /// source code, you can provide an optional target string via
 /// sg_shader_stage_desc.d3d11_target, the default target is "vs_4_0" for the
-/// vertex shader stage and "ps_4_0" for the pixel shader stage
+/// vertex shader stage and "ps_4_0" for the pixel shader stage.
 pub const ShaderStage = enum(i32) {
     NONE,
     VERTEX,
@@ -3154,7 +3154,7 @@ pub const ShaderDesc = extern struct {
 /// .sample_count:              sg_desc.context.sample_count
 /// .blend_color:               (sg_color) { 0.0f, 0.0f, 0.0f, 0.0f }
 /// .alpha_to_coverage_enabled: false
-/// .label  0       (optional string label for trace hooks
+/// .label  0       (optional string label for trace hooks)
 pub const VertexBufferLayoutState = extern struct {
     stride: i32 = 0,
     step_func: VertexStep = .DEFAULT,
@@ -3260,7 +3260,7 @@ pub const PipelineDesc = extern struct {
 /// (sample_count==1). The resolve attachment also must have the same pixel
 /// format as the color attachment.
 ///
-/// NOTE that MSAA depth-stencil attachments cannot be msaa-resolved
+/// NOTE that MSAA depth-stencil attachments cannot be msaa-resolved!
 pub const AttachmentDesc = extern struct {
     image: Image = .{},
     mip_level: i32 = 0,
@@ -3296,7 +3296,7 @@ pub const AttachmentsDesc = extern struct {
 /// sg_query_sampler_info()
 /// sg_query_shader_info()
 /// sg_query_pipeline_info()
-/// sg_query_pass_info(
+/// sg_query_pass_info()
 pub const SlotInfo = extern struct {
     state: ResourceState = .INITIAL,
     res_id: u32 = 0,
@@ -3339,7 +3339,7 @@ pub const AttachmentsInfo = extern struct {
 ///
 /// Allows to track generic and backend-specific stats about a
 /// render frame. Obtained by calling sg_query_frame_stats(). The returned
-/// struct contains information about the *previous* frame
+/// struct contains information about the *previous* frame.
 pub const FrameStatsGl = extern struct {
     num_bind_buffer: u32 = 0,
     num_active_texture: u32 = 0,
@@ -3875,7 +3875,7 @@ pub const LogItem = enum(i32) {
 /// helper function sglue_environment() in the sokol_glue.h header to
 /// initialize the sg_desc.environment nested struct. sglue_environment() returns
 /// a completely initialized sg_environment struct with information
-/// provided by sokol_app.h
+/// provided by sokol_app.h.
 pub const EnvironmentDefaults = extern struct {
     color_format: PixelFormat = .DEFAULT,
     depth_format: PixelFormat = .DEFAULT,
@@ -3908,7 +3908,7 @@ pub const Environment = extern struct {
 /// which will be called in sg_commit(). This is useful for libraries
 /// building on top of sokol-gfx to be notified about when a frame
 /// ends (instead of having to guess, or add a manual 'new-frame'
-/// function
+/// function.
 pub const CommitListener = extern struct {
     func: ?*const fn (?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
@@ -3919,7 +3919,7 @@ pub const CommitListener = extern struct {
 /// Used in sg_desc to provide custom memory-alloc and -free functions
 /// to sokol_gfx.h. If memory management should be overridden, both the
 /// alloc_fn and free_fn function must be provided (e.g. it's not valid to
-/// override one function but not the other)
+/// override one function but not the other).
 pub const Allocator = extern struct {
     alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
     free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
@@ -3934,7 +3934,7 @@ pub const Allocator = extern struct {
 /// validation layer messages. For maximum error verbosity,
 /// compile in debug mode (e.g. NDEBUG *not* defined) and provide a
 /// compatible logger function in the sg_setup() call
-/// (for instance the standard logging function from sokol_log.h)
+/// (for instance the standard logging function from sokol_log.h).
 pub const Logger = extern struct {
     func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
     user_data: ?*anyopaque = null,
@@ -3962,10 +3962,10 @@ pub const Desc = extern struct {
     _end_canary: u32 = 0,
 };
 
-/// setup and misc function
+/// setup and misc functions
 pub extern fn sg_setup([*c]const Desc) void;
 
-/// setup and misc function
+/// setup and misc functions
 pub fn setup(desc: Desc) void {
     sg_setup(&desc);
 }
@@ -4012,10 +4012,10 @@ pub fn removeCommitListener(listener: CommitListener) bool {
     return sg_remove_commit_listener(listener);
 }
 
-/// resource creation, destruction and updatin
+/// resource creation, destruction and updating
 pub extern fn sg_make_buffer([*c]const BufferDesc) Buffer;
 
-/// resource creation, destruction and updatin
+/// resource creation, destruction and updating
 pub fn makeBuffer(desc: BufferDesc) Buffer {
     return sg_make_buffer(&desc);
 }
@@ -4116,10 +4116,10 @@ pub fn queryBufferWillOverflow(buf: Buffer, size: usize) bool {
     return sg_query_buffer_will_overflow(buf, size);
 }
 
-/// rendering function
+/// rendering functions
 pub extern fn sg_begin_pass([*c]const Pass) void;
 
-/// rendering function
+/// rendering functions
 pub fn beginPass(pass: Pass) void {
     sg_begin_pass(&pass);
 }
@@ -4184,10 +4184,10 @@ pub fn commit() void {
     sg_commit();
 }
 
-/// getting informatio
+/// getting information
 pub extern fn sg_query_desc() Desc;
 
-/// getting informatio
+/// getting information
 pub fn queryDesc() Desc {
     return sg_query_desc();
 }
@@ -4228,10 +4228,10 @@ pub fn querySurfacePitch(fmt: PixelFormat, width: i32, height: i32, row_align_by
     return sg_query_surface_pitch(fmt, width, height, row_align_bytes);
 }
 
-/// get current state of a resource (INITIAL, ALLOC, VALID, FAILED, INVALID
+/// get current state of a resource (INITIAL, ALLOC, VALID, FAILED, INVALID)
 pub extern fn sg_query_buffer_state(Buffer) ResourceState;
 
-/// get current state of a resource (INITIAL, ALLOC, VALID, FAILED, INVALID
+/// get current state of a resource (INITIAL, ALLOC, VALID, FAILED, INVALID)
 pub fn queryBufferState(buf: Buffer) ResourceState {
     return sg_query_buffer_state(buf);
 }
@@ -4266,10 +4266,10 @@ pub fn queryAttachmentsState(atts: Attachments) ResourceState {
     return sg_query_attachments_state(atts);
 }
 
-/// get runtime information about a resourc
+/// get runtime information about a resource
 pub extern fn sg_query_buffer_info(Buffer) BufferInfo;
 
-/// get runtime information about a resourc
+/// get runtime information about a resource
 pub fn queryBufferInfo(buf: Buffer) BufferInfo {
     return sg_query_buffer_info(buf);
 }
@@ -4304,10 +4304,10 @@ pub fn queryAttachmentsInfo(atts: Attachments) AttachmentsInfo {
     return sg_query_attachments_info(atts);
 }
 
-/// get desc structs matching a specific resource (NOTE that not all creation attributes may be provided
+/// get desc structs matching a specific resource (NOTE that not all creation attributes may be provided)
 pub extern fn sg_query_buffer_desc(Buffer) BufferDesc;
 
-/// get desc structs matching a specific resource (NOTE that not all creation attributes may be provided
+/// get desc structs matching a specific resource (NOTE that not all creation attributes may be provided)
 pub fn queryBufferDesc(buf: Buffer) BufferDesc {
     return sg_query_buffer_desc(buf);
 }
@@ -4342,10 +4342,10 @@ pub fn queryAttachmentsDesc(atts: Attachments) AttachmentsDesc {
     return sg_query_attachments_desc(atts);
 }
 
-/// get resource creation desc struct with their default values replace
+/// get resource creation desc struct with their default values replaced
 pub extern fn sg_query_buffer_defaults([*c]const BufferDesc) BufferDesc;
 
-/// get resource creation desc struct with their default values replace
+/// get resource creation desc struct with their default values replaced
 pub fn queryBufferDefaults(desc: BufferDesc) BufferDesc {
     return sg_query_buffer_defaults(&desc);
 }
@@ -4380,10 +4380,10 @@ pub fn queryAttachmentsDefaults(desc: AttachmentsDesc) AttachmentsDesc {
     return sg_query_attachments_defaults(&desc);
 }
 
-/// assorted query function
+/// assorted query functions
 pub extern fn sg_query_buffer_size(Buffer) usize;
 
-/// assorted query function
+/// assorted query functions
 pub fn queryBufferSize(buf: Buffer) usize {
     return sg_query_buffer_size(buf);
 }
@@ -4448,10 +4448,10 @@ pub fn queryImageSampleCount(img: Image) i32 {
     return sg_query_image_sample_count(img);
 }
 
-/// separate resource allocation and initialization (for async setup
+/// separate resource allocation and initialization (for async setup)
 pub extern fn sg_alloc_buffer() Buffer;
 
-/// separate resource allocation and initialization (for async setup
+/// separate resource allocation and initialization (for async setup)
 pub fn allocBuffer() Buffer {
     return sg_alloc_buffer();
 }
@@ -4630,10 +4630,10 @@ pub fn failAttachments(atts: Attachments) void {
     sg_fail_attachments(atts);
 }
 
-/// frame stat
+/// frame stats
 pub extern fn sg_enable_frame_stats() void;
 
-/// frame stat
+/// frame stats
 pub fn enableFrameStats() void {
     sg_enable_frame_stats();
 }
@@ -4659,7 +4659,7 @@ pub fn queryFrameStats() FrameStats {
 /// Backend-specific structs and functions, these may come in handy for mixing
 ///   sokol-gfx rendering with 'native backend' rendering functions.
 ///
-///   This group of functions will be expanded as needed
+///   This group of functions will be expanded as needed.
 pub const D3d11BufferInfo = extern struct {
     buf: ?*const anyopaque = null,
 };
@@ -4774,242 +4774,242 @@ pub const GlAttachmentsInfo = extern struct {
     msaa_resolve_framebuffer: [4]u32 = [_]u32{0} ** 4,
 };
 
-/// D3D11: return ID3D11Devic
+/// D3D11: return ID3D11Device
 pub extern fn sg_d3d11_device() ?*const anyopaque;
 
-/// D3D11: return ID3D11Devic
+/// D3D11: return ID3D11Device
 pub fn d3d11Device() ?*const anyopaque {
     return sg_d3d11_device();
 }
 
-/// D3D11: return ID3D11DeviceContex
+/// D3D11: return ID3D11DeviceContext
 pub extern fn sg_d3d11_device_context() ?*const anyopaque;
 
-/// D3D11: return ID3D11DeviceContex
+/// D3D11: return ID3D11DeviceContext
 pub fn d3d11DeviceContext() ?*const anyopaque {
     return sg_d3d11_device_context();
 }
 
-/// D3D11: get internal buffer resource object
+/// D3D11: get internal buffer resource objects
 pub extern fn sg_d3d11_query_buffer_info(Buffer) D3d11BufferInfo;
 
-/// D3D11: get internal buffer resource object
+/// D3D11: get internal buffer resource objects
 pub fn d3d11QueryBufferInfo(buf: Buffer) D3d11BufferInfo {
     return sg_d3d11_query_buffer_info(buf);
 }
 
-/// D3D11: get internal image resource object
+/// D3D11: get internal image resource objects
 pub extern fn sg_d3d11_query_image_info(Image) D3d11ImageInfo;
 
-/// D3D11: get internal image resource object
+/// D3D11: get internal image resource objects
 pub fn d3d11QueryImageInfo(img: Image) D3d11ImageInfo {
     return sg_d3d11_query_image_info(img);
 }
 
-/// D3D11: get internal sampler resource object
+/// D3D11: get internal sampler resource objects
 pub extern fn sg_d3d11_query_sampler_info(Sampler) D3d11SamplerInfo;
 
-/// D3D11: get internal sampler resource object
+/// D3D11: get internal sampler resource objects
 pub fn d3d11QuerySamplerInfo(smp: Sampler) D3d11SamplerInfo {
     return sg_d3d11_query_sampler_info(smp);
 }
 
-/// D3D11: get internal shader resource object
+/// D3D11: get internal shader resource objects
 pub extern fn sg_d3d11_query_shader_info(Shader) D3d11ShaderInfo;
 
-/// D3D11: get internal shader resource object
+/// D3D11: get internal shader resource objects
 pub fn d3d11QueryShaderInfo(shd: Shader) D3d11ShaderInfo {
     return sg_d3d11_query_shader_info(shd);
 }
 
-/// D3D11: get internal pipeline resource object
+/// D3D11: get internal pipeline resource objects
 pub extern fn sg_d3d11_query_pipeline_info(Pipeline) D3d11PipelineInfo;
 
-/// D3D11: get internal pipeline resource object
+/// D3D11: get internal pipeline resource objects
 pub fn d3d11QueryPipelineInfo(pip: Pipeline) D3d11PipelineInfo {
     return sg_d3d11_query_pipeline_info(pip);
 }
 
-/// D3D11: get internal pass resource object
+/// D3D11: get internal pass resource objects
 pub extern fn sg_d3d11_query_attachments_info(Attachments) D3d11AttachmentsInfo;
 
-/// D3D11: get internal pass resource object
+/// D3D11: get internal pass resource objects
 pub fn d3d11QueryAttachmentsInfo(atts: Attachments) D3d11AttachmentsInfo {
     return sg_d3d11_query_attachments_info(atts);
 }
 
-/// Metal: return __bridge-casted MTLDevic
+/// Metal: return __bridge-casted MTLDevice
 pub extern fn sg_mtl_device() ?*const anyopaque;
 
-/// Metal: return __bridge-casted MTLDevic
+/// Metal: return __bridge-casted MTLDevice
 pub fn mtlDevice() ?*const anyopaque {
     return sg_mtl_device();
 }
 
-/// Metal: return __bridge-casted MTLRenderCommandEncoder in current pass (or zero if outside pass
+/// Metal: return __bridge-casted MTLRenderCommandEncoder in current pass (or zero if outside pass)
 pub extern fn sg_mtl_render_command_encoder() ?*const anyopaque;
 
-/// Metal: return __bridge-casted MTLRenderCommandEncoder in current pass (or zero if outside pass
+/// Metal: return __bridge-casted MTLRenderCommandEncoder in current pass (or zero if outside pass)
 pub fn mtlRenderCommandEncoder() ?*const anyopaque {
     return sg_mtl_render_command_encoder();
 }
 
-/// Metal: get internal __bridge-casted buffer resource object
+/// Metal: get internal __bridge-casted buffer resource objects
 pub extern fn sg_mtl_query_buffer_info(Buffer) MtlBufferInfo;
 
-/// Metal: get internal __bridge-casted buffer resource object
+/// Metal: get internal __bridge-casted buffer resource objects
 pub fn mtlQueryBufferInfo(buf: Buffer) MtlBufferInfo {
     return sg_mtl_query_buffer_info(buf);
 }
 
-/// Metal: get internal __bridge-casted image resource object
+/// Metal: get internal __bridge-casted image resource objects
 pub extern fn sg_mtl_query_image_info(Image) MtlImageInfo;
 
-/// Metal: get internal __bridge-casted image resource object
+/// Metal: get internal __bridge-casted image resource objects
 pub fn mtlQueryImageInfo(img: Image) MtlImageInfo {
     return sg_mtl_query_image_info(img);
 }
 
-/// Metal: get internal __bridge-casted sampler resource object
+/// Metal: get internal __bridge-casted sampler resource objects
 pub extern fn sg_mtl_query_sampler_info(Sampler) MtlSamplerInfo;
 
-/// Metal: get internal __bridge-casted sampler resource object
+/// Metal: get internal __bridge-casted sampler resource objects
 pub fn mtlQuerySamplerInfo(smp: Sampler) MtlSamplerInfo {
     return sg_mtl_query_sampler_info(smp);
 }
 
-/// Metal: get internal __bridge-casted shader resource object
+/// Metal: get internal __bridge-casted shader resource objects
 pub extern fn sg_mtl_query_shader_info(Shader) MtlShaderInfo;
 
-/// Metal: get internal __bridge-casted shader resource object
+/// Metal: get internal __bridge-casted shader resource objects
 pub fn mtlQueryShaderInfo(shd: Shader) MtlShaderInfo {
     return sg_mtl_query_shader_info(shd);
 }
 
-/// Metal: get internal __bridge-casted pipeline resource object
+/// Metal: get internal __bridge-casted pipeline resource objects
 pub extern fn sg_mtl_query_pipeline_info(Pipeline) MtlPipelineInfo;
 
-/// Metal: get internal __bridge-casted pipeline resource object
+/// Metal: get internal __bridge-casted pipeline resource objects
 pub fn mtlQueryPipelineInfo(pip: Pipeline) MtlPipelineInfo {
     return sg_mtl_query_pipeline_info(pip);
 }
 
-/// WebGPU: return WGPUDevice objec
+/// WebGPU: return WGPUDevice object
 pub extern fn sg_wgpu_device() ?*const anyopaque;
 
-/// WebGPU: return WGPUDevice objec
+/// WebGPU: return WGPUDevice object
 pub fn wgpuDevice() ?*const anyopaque {
     return sg_wgpu_device();
 }
 
-/// WebGPU: return WGPUQueue objec
+/// WebGPU: return WGPUQueue object
 pub extern fn sg_wgpu_queue() ?*const anyopaque;
 
-/// WebGPU: return WGPUQueue objec
+/// WebGPU: return WGPUQueue object
 pub fn wgpuQueue() ?*const anyopaque {
     return sg_wgpu_queue();
 }
 
-/// WebGPU: return this frame's WGPUCommandEncode
+/// WebGPU: return this frame's WGPUCommandEncoder
 pub extern fn sg_wgpu_command_encoder() ?*const anyopaque;
 
-/// WebGPU: return this frame's WGPUCommandEncode
+/// WebGPU: return this frame's WGPUCommandEncoder
 pub fn wgpuCommandEncoder() ?*const anyopaque {
     return sg_wgpu_command_encoder();
 }
 
-/// WebGPU: return WGPURenderPassEncoder of current pas
+/// WebGPU: return WGPURenderPassEncoder of current pass
 pub extern fn sg_wgpu_render_pass_encoder() ?*const anyopaque;
 
-/// WebGPU: return WGPURenderPassEncoder of current pas
+/// WebGPU: return WGPURenderPassEncoder of current pass
 pub fn wgpuRenderPassEncoder() ?*const anyopaque {
     return sg_wgpu_render_pass_encoder();
 }
 
-/// WebGPU: get internal buffer resource object
+/// WebGPU: get internal buffer resource objects
 pub extern fn sg_wgpu_query_buffer_info(Buffer) WgpuBufferInfo;
 
-/// WebGPU: get internal buffer resource object
+/// WebGPU: get internal buffer resource objects
 pub fn wgpuQueryBufferInfo(buf: Buffer) WgpuBufferInfo {
     return sg_wgpu_query_buffer_info(buf);
 }
 
-/// WebGPU: get internal image resource object
+/// WebGPU: get internal image resource objects
 pub extern fn sg_wgpu_query_image_info(Image) WgpuImageInfo;
 
-/// WebGPU: get internal image resource object
+/// WebGPU: get internal image resource objects
 pub fn wgpuQueryImageInfo(img: Image) WgpuImageInfo {
     return sg_wgpu_query_image_info(img);
 }
 
-/// WebGPU: get internal sampler resource object
+/// WebGPU: get internal sampler resource objects
 pub extern fn sg_wgpu_query_sampler_info(Sampler) WgpuSamplerInfo;
 
-/// WebGPU: get internal sampler resource object
+/// WebGPU: get internal sampler resource objects
 pub fn wgpuQuerySamplerInfo(smp: Sampler) WgpuSamplerInfo {
     return sg_wgpu_query_sampler_info(smp);
 }
 
-/// WebGPU: get internal shader resource object
+/// WebGPU: get internal shader resource objects
 pub extern fn sg_wgpu_query_shader_info(Shader) WgpuShaderInfo;
 
-/// WebGPU: get internal shader resource object
+/// WebGPU: get internal shader resource objects
 pub fn wgpuQueryShaderInfo(shd: Shader) WgpuShaderInfo {
     return sg_wgpu_query_shader_info(shd);
 }
 
-/// WebGPU: get internal pipeline resource object
+/// WebGPU: get internal pipeline resource objects
 pub extern fn sg_wgpu_query_pipeline_info(Pipeline) WgpuPipelineInfo;
 
-/// WebGPU: get internal pipeline resource object
+/// WebGPU: get internal pipeline resource objects
 pub fn wgpuQueryPipelineInfo(pip: Pipeline) WgpuPipelineInfo {
     return sg_wgpu_query_pipeline_info(pip);
 }
 
-/// WebGPU: get internal pass resource object
+/// WebGPU: get internal pass resource objects
 pub extern fn sg_wgpu_query_attachments_info(Attachments) WgpuAttachmentsInfo;
 
-/// WebGPU: get internal pass resource object
+/// WebGPU: get internal pass resource objects
 pub fn wgpuQueryAttachmentsInfo(atts: Attachments) WgpuAttachmentsInfo {
     return sg_wgpu_query_attachments_info(atts);
 }
 
-/// GL: get internal buffer resource object
+/// GL: get internal buffer resource objects
 pub extern fn sg_gl_query_buffer_info(Buffer) GlBufferInfo;
 
-/// GL: get internal buffer resource object
+/// GL: get internal buffer resource objects
 pub fn glQueryBufferInfo(buf: Buffer) GlBufferInfo {
     return sg_gl_query_buffer_info(buf);
 }
 
-/// GL: get internal image resource object
+/// GL: get internal image resource objects
 pub extern fn sg_gl_query_image_info(Image) GlImageInfo;
 
-/// GL: get internal image resource object
+/// GL: get internal image resource objects
 pub fn glQueryImageInfo(img: Image) GlImageInfo {
     return sg_gl_query_image_info(img);
 }
 
-/// GL: get internal sampler resource object
+/// GL: get internal sampler resource objects
 pub extern fn sg_gl_query_sampler_info(Sampler) GlSamplerInfo;
 
-/// GL: get internal sampler resource object
+/// GL: get internal sampler resource objects
 pub fn glQuerySamplerInfo(smp: Sampler) GlSamplerInfo {
     return sg_gl_query_sampler_info(smp);
 }
 
-/// GL: get internal shader resource object
+/// GL: get internal shader resource objects
 pub extern fn sg_gl_query_shader_info(Shader) GlShaderInfo;
 
-/// GL: get internal shader resource object
+/// GL: get internal shader resource objects
 pub fn glQueryShaderInfo(shd: Shader) GlShaderInfo {
     return sg_gl_query_shader_info(shd);
 }
 
-/// GL: get internal pass resource object
+/// GL: get internal pass resource objects
 pub extern fn sg_gl_query_attachments_info(Attachments) GlAttachmentsInfo;
 
-/// GL: get internal pass resource object
+/// GL: get internal pass resource objects
 pub fn glQueryAttachmentsInfo(atts: Attachments) GlAttachmentsInfo {
     return sg_gl_query_attachments_info(atts);
 }

@@ -406,7 +406,7 @@ pub fn asRange(val: anytype) Range {
 /// sshape_range is a pointer-size-pair struct used to pass memory
 /// blobs into sokol-shape. When initialized from a value type
 /// (array or struct), use the SSHAPE_RANGE() macro to build
-/// an sshape_range struct
+/// an sshape_range struct.
 pub const Range = extern struct {
     ptr: ?*const anyopaque = null,
     size: usize = 0,

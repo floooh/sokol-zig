@@ -112,7 +112,7 @@ fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
 ///     .logger = {
 ///         .func = slog_func
 ///     }
-/// })
+/// });
 pub extern fn slog_func([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) void;
 
 /// Plug this function into the 'logger.func' struct item when initializing any of the sokol
@@ -122,5 +122,5 @@ pub extern fn slog_func([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8,
 ///     .logger = {
 ///         .func = slog_func
 ///     }
-/// })
+/// });
 pub const func = slog_func;
