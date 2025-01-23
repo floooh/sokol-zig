@@ -774,7 +774,7 @@
 //           (in HLSL, storage buffers and texture share the same bind space)
 //         - Metal/MSL: the buffer bind slot N (`[[buffer(N)]]`) where N is 8..15
 //         - WebGPU/WGSL: the binding N in `@group(0) @binding(N)` where N is 0..127
-//         - GL/GLSL: the buffer binding N in `layout(binding=N)` where N is 0..16
+//         - GL/GLSL: the buffer binding N in `layout(binding=N)` where N is 0..7
 //     - note that storage buffers are not supported on all backends
 //       and platforms
 //
@@ -2965,7 +2965,7 @@ pub const SamplerDesc = extern struct {
 ///         - HLSL: the texture(sic) register `register(t0..23)`
 ///         - MSL: the buffer attribute `[[buffer(8..15)]]`
 ///         - WGSL: the binding in `@group(1) @binding(0..127)`
-///         - GL: the binding in `layout(binding=0..16)`
+///         - GL: the binding in `layout(binding=0..7)`
 ///
 /// - reflection information for each combined image-sampler object
 ///   used by the shader:
@@ -3494,6 +3494,7 @@ pub const LogItem = enum(i32) {
     GL_TEXTURE_FORMAT_NOT_SUPPORTED,
     GL_3D_TEXTURES_NOT_SUPPORTED,
     GL_ARRAY_TEXTURES_NOT_SUPPORTED,
+    GL_STORAGEBUFFER_GLSL_BINDING_OUT_OF_RANGE,
     GL_SHADER_COMPILATION_FAILED,
     GL_SHADER_LINKING_FAILED,
     GL_VERTEX_ATTRIBUTE_NOT_FOUND_IN_SHADER,
