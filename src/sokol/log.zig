@@ -106,7 +106,7 @@ fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
     return @import("std").mem.span(c_str);
 }
 /// Plug this function into the 'logger.func' struct item when initializing any of the sokol
-/// headers. For instance for sokol_audio.h it would loom like this:
+/// headers. For instance for sokol_audio.h it would look like this:
 ///
 /// saudio_setup(&(saudio_desc){
 ///     .logger = {
@@ -116,7 +116,7 @@ fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
 pub extern fn slog_func([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) void;
 
 /// Plug this function into the 'logger.func' struct item when initializing any of the sokol
-/// headers. For instance for sokol_audio.h it would loom like this:
+/// headers. For instance for sokol_audio.h it would look like this:
 ///
 /// saudio_setup(&(saudio_desc){
 ///     .logger = {
