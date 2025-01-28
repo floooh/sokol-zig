@@ -11,7 +11,8 @@ jobs:
             version: master
       - run: zig build-lib src/sokol/sokol.zig -femit-docs
       - name: Update pages artifact
-        uses: actions/upload-pages-artifact@v1
+        id: deployment
+        uses: actions/upload-pages-artifact@v3
         with:
           path: docs/
   deploy:
@@ -26,4 +27,4 @@ jobs:
     steps:
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v1
+      uses: actions/deploy-pages@v4
