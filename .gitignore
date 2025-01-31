@@ -1,4 +1,5 @@
 .vscode/
+docs
 zig-*/
 .zig-*/
 NUL
