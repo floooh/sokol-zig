@@ -3,3 +3,5 @@ docs
 zig-*/
 .zig-*/
 NUL
+*.a
+*.a.o

@@ -1,6 +1,9 @@
-on:
-  push:
-    branches: docs # changed this to master
+name: Update Docs
+on: workflow_dispatch
+# on:
+#   push:
+#     branches: master
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,14 +20,19 @@ jobs:
           path: docs/
   deploy:
     needs: build
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${\{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+      - uses: actions/checkout@main
+        with:
+          repository: floooh/sokol-zig-docs
+          ssh-key: ${{secrets.SOKOL_ZIG_DOCS_DEPLOY}}
+      - uses: actions/download-artifact@main
+        with:
+          name: sokol-zig-docs
+      - name: "commit and push"
+        run: |
+          git config user.email "none"
+          git config user.name "GH Action"
+          git add .
+          git commit -m "updated (${{ github.run_number }})"
+          git push
