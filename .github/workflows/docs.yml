@@ -1,4 +1,4 @@
-name: Update Docs
+name: Docs
 on: workflow_dispatch
 # on:
 #   push:
