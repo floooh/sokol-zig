@@ -13,6 +13,12 @@ jobs:
         with:
             version: master
       - run: zig build-lib src/sokol/sokol.zig -femit-docs
+      - name: rewrite-tar-file-only-sokol
+        working-directory: docs
+        run: |
+          mkdir sources && tar -xf sources.tar -C sources
+          cd sources && chmod -R 755 sokol && tar -cf sources.tar sokol
+          mv sources/sources.tar . && rm -rf sources
       - name: upload-artifact
         uses: actions/upload-artifact@main
         with:
