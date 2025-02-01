@@ -558,7 +558,7 @@ pub const Desc = extern struct {
 };
 
 /// setup sokol-audio
-pub extern fn saudio_setup([*c]const Desc) void;
+extern fn saudio_setup([*c]const Desc) void;
 
 /// setup sokol-audio
 pub fn setup(desc: Desc) void {
@@ -566,7 +566,7 @@ pub fn setup(desc: Desc) void {
 }
 
 /// shutdown sokol-audio
-pub extern fn saudio_shutdown() void;
+extern fn saudio_shutdown() void;
 
 /// shutdown sokol-audio
 pub fn shutdown() void {
@@ -574,7 +574,7 @@ pub fn shutdown() void {
 }
 
 /// true after setup if audio backend was successfully initialized
-pub extern fn saudio_isvalid() bool;
+extern fn saudio_isvalid() bool;
 
 /// true after setup if audio backend was successfully initialized
 pub fn isvalid() bool {
@@ -582,7 +582,7 @@ pub fn isvalid() bool {
 }
 
 /// return the saudio_desc.user_data pointer
-pub extern fn saudio_userdata() ?*anyopaque;
+extern fn saudio_userdata() ?*anyopaque;
 
 /// return the saudio_desc.user_data pointer
 pub fn userdata() ?*anyopaque {
@@ -590,7 +590,7 @@ pub fn userdata() ?*anyopaque {
 }
 
 /// return a copy of the original saudio_desc struct
-pub extern fn saudio_query_desc() Desc;
+extern fn saudio_query_desc() Desc;
 
 /// return a copy of the original saudio_desc struct
 pub fn queryDesc() Desc {
@@ -598,7 +598,7 @@ pub fn queryDesc() Desc {
 }
 
 /// actual sample rate
-pub extern fn saudio_sample_rate() i32;
+extern fn saudio_sample_rate() i32;
 
 /// actual sample rate
 pub fn sampleRate() i32 {
@@ -606,7 +606,7 @@ pub fn sampleRate() i32 {
 }
 
 /// return actual backend buffer size in number of frames
-pub extern fn saudio_buffer_frames() i32;
+extern fn saudio_buffer_frames() i32;
 
 /// return actual backend buffer size in number of frames
 pub fn bufferFrames() i32 {
@@ -614,7 +614,7 @@ pub fn bufferFrames() i32 {
 }
 
 /// actual number of channels
-pub extern fn saudio_channels() i32;
+extern fn saudio_channels() i32;
 
 /// actual number of channels
 pub fn channels() i32 {
@@ -622,7 +622,7 @@ pub fn channels() i32 {
 }
 
 /// return true if audio context is currently suspended (only in WebAudio backend, all other backends return false)
-pub extern fn saudio_suspended() bool;
+extern fn saudio_suspended() bool;
 
 /// return true if audio context is currently suspended (only in WebAudio backend, all other backends return false)
 pub fn suspended() bool {
@@ -630,7 +630,7 @@ pub fn suspended() bool {
 }
 
 /// get current number of frames to fill packet queue
-pub extern fn saudio_expect() i32;
+extern fn saudio_expect() i32;
 
 /// get current number of frames to fill packet queue
 pub fn expect() i32 {
@@ -638,7 +638,7 @@ pub fn expect() i32 {
 }
 
 /// push sample frames from main thread, returns number of frames actually pushed
-pub extern fn saudio_push([*c]const f32, i32) i32;
+extern fn saudio_push([*c]const f32, i32) i32;
 
 /// push sample frames from main thread, returns number of frames actually pushed
 pub fn push(frames: *const f32, num_frames: i32) i32 {

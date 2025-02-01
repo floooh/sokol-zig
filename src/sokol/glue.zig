@@ -85,13 +85,13 @@ const sg = @import("gfx.zig");
 fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
     return @import("std").mem.span(c_str);
 }
-pub extern fn sglue_environment() sg.Environment;
+extern fn sglue_environment() sg.Environment;
 
 pub fn environment() sg.Environment {
     return sglue_environment();
 }
 
-pub extern fn sglue_swapchain() sg.Swapchain;
+extern fn sglue_swapchain() sg.Swapchain;
 
 pub fn swapchain() sg.Swapchain {
     return sglue_swapchain();

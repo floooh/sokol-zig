@@ -1782,7 +1782,7 @@ pub const MouseCursor = enum(i32) {
 };
 
 /// returns true after sokol-app has been initialized
-pub extern fn sapp_isvalid() bool;
+extern fn sapp_isvalid() bool;
 
 /// returns true after sokol-app has been initialized
 pub fn isvalid() bool {
@@ -1790,7 +1790,7 @@ pub fn isvalid() bool {
 }
 
 /// returns the current framebuffer width in pixels
-pub extern fn sapp_width() i32;
+extern fn sapp_width() i32;
 
 /// returns the current framebuffer width in pixels
 pub fn width() i32 {
@@ -1798,7 +1798,7 @@ pub fn width() i32 {
 }
 
 /// same as sapp_width(), but returns float
-pub extern fn sapp_widthf() f32;
+extern fn sapp_widthf() f32;
 
 /// same as sapp_width(), but returns float
 pub fn widthf() f32 {
@@ -1806,7 +1806,7 @@ pub fn widthf() f32 {
 }
 
 /// returns the current framebuffer height in pixels
-pub extern fn sapp_height() i32;
+extern fn sapp_height() i32;
 
 /// returns the current framebuffer height in pixels
 pub fn height() i32 {
@@ -1814,7 +1814,7 @@ pub fn height() i32 {
 }
 
 /// same as sapp_height(), but returns float
-pub extern fn sapp_heightf() f32;
+extern fn sapp_heightf() f32;
 
 /// same as sapp_height(), but returns float
 pub fn heightf() f32 {
@@ -1822,7 +1822,7 @@ pub fn heightf() f32 {
 }
 
 /// get default framebuffer color pixel format
-pub extern fn sapp_color_format() i32;
+extern fn sapp_color_format() i32;
 
 /// get default framebuffer color pixel format
 pub fn colorFormat() i32 {
@@ -1830,7 +1830,7 @@ pub fn colorFormat() i32 {
 }
 
 /// get default framebuffer depth pixel format
-pub extern fn sapp_depth_format() i32;
+extern fn sapp_depth_format() i32;
 
 /// get default framebuffer depth pixel format
 pub fn depthFormat() i32 {
@@ -1838,7 +1838,7 @@ pub fn depthFormat() i32 {
 }
 
 /// get default framebuffer sample count
-pub extern fn sapp_sample_count() i32;
+extern fn sapp_sample_count() i32;
 
 /// get default framebuffer sample count
 pub fn sampleCount() i32 {
@@ -1846,7 +1846,7 @@ pub fn sampleCount() i32 {
 }
 
 /// returns true when high_dpi was requested and actually running in a high-dpi scenario
-pub extern fn sapp_high_dpi() bool;
+extern fn sapp_high_dpi() bool;
 
 /// returns true when high_dpi was requested and actually running in a high-dpi scenario
 pub fn highDpi() bool {
@@ -1854,7 +1854,7 @@ pub fn highDpi() bool {
 }
 
 /// returns the dpi scaling factor (window pixels to framebuffer pixels)
-pub extern fn sapp_dpi_scale() f32;
+extern fn sapp_dpi_scale() f32;
 
 /// returns the dpi scaling factor (window pixels to framebuffer pixels)
 pub fn dpiScale() f32 {
@@ -1862,7 +1862,7 @@ pub fn dpiScale() f32 {
 }
 
 /// show or hide the mobile device onscreen keyboard
-pub extern fn sapp_show_keyboard(bool) void;
+extern fn sapp_show_keyboard(bool) void;
 
 /// show or hide the mobile device onscreen keyboard
 pub fn showKeyboard(show: bool) void {
@@ -1870,7 +1870,7 @@ pub fn showKeyboard(show: bool) void {
 }
 
 /// return true if the mobile device onscreen keyboard is currently shown
-pub extern fn sapp_keyboard_shown() bool;
+extern fn sapp_keyboard_shown() bool;
 
 /// return true if the mobile device onscreen keyboard is currently shown
 pub fn keyboardShown() bool {
@@ -1878,7 +1878,7 @@ pub fn keyboardShown() bool {
 }
 
 /// query fullscreen mode
-pub extern fn sapp_is_fullscreen() bool;
+extern fn sapp_is_fullscreen() bool;
 
 /// query fullscreen mode
 pub fn isFullscreen() bool {
@@ -1886,7 +1886,7 @@ pub fn isFullscreen() bool {
 }
 
 /// toggle fullscreen mode
-pub extern fn sapp_toggle_fullscreen() void;
+extern fn sapp_toggle_fullscreen() void;
 
 /// toggle fullscreen mode
 pub fn toggleFullscreen() void {
@@ -1894,7 +1894,7 @@ pub fn toggleFullscreen() void {
 }
 
 /// show or hide the mouse cursor
-pub extern fn sapp_show_mouse(bool) void;
+extern fn sapp_show_mouse(bool) void;
 
 /// show or hide the mouse cursor
 pub fn showMouse(show: bool) void {
@@ -1902,7 +1902,7 @@ pub fn showMouse(show: bool) void {
 }
 
 /// show or hide the mouse cursor
-pub extern fn sapp_mouse_shown() bool;
+extern fn sapp_mouse_shown() bool;
 
 /// show or hide the mouse cursor
 pub fn mouseShown() bool {
@@ -1910,7 +1910,7 @@ pub fn mouseShown() bool {
 }
 
 /// enable/disable mouse-pointer-lock mode
-pub extern fn sapp_lock_mouse(bool) void;
+extern fn sapp_lock_mouse(bool) void;
 
 /// enable/disable mouse-pointer-lock mode
 pub fn lockMouse(lock: bool) void {
@@ -1918,7 +1918,7 @@ pub fn lockMouse(lock: bool) void {
 }
 
 /// return true if in mouse-pointer-lock mode (this may toggle a few frames later)
-pub extern fn sapp_mouse_locked() bool;
+extern fn sapp_mouse_locked() bool;
 
 /// return true if in mouse-pointer-lock mode (this may toggle a few frames later)
 pub fn mouseLocked() bool {
@@ -1926,7 +1926,7 @@ pub fn mouseLocked() bool {
 }
 
 /// set mouse cursor type
-pub extern fn sapp_set_mouse_cursor(MouseCursor) void;
+extern fn sapp_set_mouse_cursor(MouseCursor) void;
 
 /// set mouse cursor type
 pub fn setMouseCursor(cursor: MouseCursor) void {
@@ -1934,7 +1934,7 @@ pub fn setMouseCursor(cursor: MouseCursor) void {
 }
 
 /// get current mouse cursor type
-pub extern fn sapp_get_mouse_cursor() MouseCursor;
+extern fn sapp_get_mouse_cursor() MouseCursor;
 
 /// get current mouse cursor type
 pub fn getMouseCursor() MouseCursor {
@@ -1942,7 +1942,7 @@ pub fn getMouseCursor() MouseCursor {
 }
 
 /// return the userdata pointer optionally provided in sapp_desc
-pub extern fn sapp_userdata() ?*anyopaque;
+extern fn sapp_userdata() ?*anyopaque;
 
 /// return the userdata pointer optionally provided in sapp_desc
 pub fn userdata() ?*anyopaque {
@@ -1950,7 +1950,7 @@ pub fn userdata() ?*anyopaque {
 }
 
 /// return a copy of the sapp_desc structure
-pub extern fn sapp_query_desc() Desc;
+extern fn sapp_query_desc() Desc;
 
 /// return a copy of the sapp_desc structure
 pub fn queryDesc() Desc {
@@ -1958,7 +1958,7 @@ pub fn queryDesc() Desc {
 }
 
 /// initiate a "soft quit" (sends SAPP_EVENTTYPE_QUIT_REQUESTED)
-pub extern fn sapp_request_quit() void;
+extern fn sapp_request_quit() void;
 
 /// initiate a "soft quit" (sends SAPP_EVENTTYPE_QUIT_REQUESTED)
 pub fn requestQuit() void {
@@ -1966,7 +1966,7 @@ pub fn requestQuit() void {
 }
 
 /// cancel a pending quit (when SAPP_EVENTTYPE_QUIT_REQUESTED has been received)
-pub extern fn sapp_cancel_quit() void;
+extern fn sapp_cancel_quit() void;
 
 /// cancel a pending quit (when SAPP_EVENTTYPE_QUIT_REQUESTED has been received)
 pub fn cancelQuit() void {
@@ -1974,7 +1974,7 @@ pub fn cancelQuit() void {
 }
 
 /// initiate a "hard quit" (quit application without sending SAPP_EVENTTYPE_QUIT_REQUESTED)
-pub extern fn sapp_quit() void;
+extern fn sapp_quit() void;
 
 /// initiate a "hard quit" (quit application without sending SAPP_EVENTTYPE_QUIT_REQUESTED)
 pub fn quit() void {
@@ -1982,7 +1982,7 @@ pub fn quit() void {
 }
 
 /// call from inside event callback to consume the current event (don't forward to platform)
-pub extern fn sapp_consume_event() void;
+extern fn sapp_consume_event() void;
 
 /// call from inside event callback to consume the current event (don't forward to platform)
 pub fn consumeEvent() void {
@@ -1990,7 +1990,7 @@ pub fn consumeEvent() void {
 }
 
 /// get the current frame counter (for comparison with sapp_event.frame_count)
-pub extern fn sapp_frame_count() u64;
+extern fn sapp_frame_count() u64;
 
 /// get the current frame counter (for comparison with sapp_event.frame_count)
 pub fn frameCount() u64 {
@@ -1998,7 +1998,7 @@ pub fn frameCount() u64 {
 }
 
 /// get an averaged/smoothed frame duration in seconds
-pub extern fn sapp_frame_duration() f64;
+extern fn sapp_frame_duration() f64;
 
 /// get an averaged/smoothed frame duration in seconds
 pub fn frameDuration() f64 {
@@ -2006,7 +2006,7 @@ pub fn frameDuration() f64 {
 }
 
 /// write string into clipboard
-pub extern fn sapp_set_clipboard_string([*c]const u8) void;
+extern fn sapp_set_clipboard_string([*c]const u8) void;
 
 /// write string into clipboard
 pub fn setClipboardString(str: [:0]const u8) void {
@@ -2014,7 +2014,7 @@ pub fn setClipboardString(str: [:0]const u8) void {
 }
 
 /// read string from clipboard (usually during SAPP_EVENTTYPE_CLIPBOARD_PASTED)
-pub extern fn sapp_get_clipboard_string() [*c]const u8;
+extern fn sapp_get_clipboard_string() [*c]const u8;
 
 /// read string from clipboard (usually during SAPP_EVENTTYPE_CLIPBOARD_PASTED)
 pub fn getClipboardString() [:0]const u8 {
@@ -2022,7 +2022,7 @@ pub fn getClipboardString() [:0]const u8 {
 }
 
 /// set the window title (only on desktop platforms)
-pub extern fn sapp_set_window_title([*c]const u8) void;
+extern fn sapp_set_window_title([*c]const u8) void;
 
 /// set the window title (only on desktop platforms)
 pub fn setWindowTitle(str: [:0]const u8) void {
@@ -2030,7 +2030,7 @@ pub fn setWindowTitle(str: [:0]const u8) void {
 }
 
 /// set the window icon (only on Windows and Linux)
-pub extern fn sapp_set_icon([*c]const IconDesc) void;
+extern fn sapp_set_icon([*c]const IconDesc) void;
 
 /// set the window icon (only on Windows and Linux)
 pub fn setIcon(icon_desc: IconDesc) void {
@@ -2038,7 +2038,7 @@ pub fn setIcon(icon_desc: IconDesc) void {
 }
 
 /// gets the total number of dropped files (after an SAPP_EVENTTYPE_FILES_DROPPED event)
-pub extern fn sapp_get_num_dropped_files() i32;
+extern fn sapp_get_num_dropped_files() i32;
 
 /// gets the total number of dropped files (after an SAPP_EVENTTYPE_FILES_DROPPED event)
 pub fn getNumDroppedFiles() i32 {
@@ -2046,7 +2046,7 @@ pub fn getNumDroppedFiles() i32 {
 }
 
 /// gets the dropped file paths
-pub extern fn sapp_get_dropped_file_path(i32) [*c]const u8;
+extern fn sapp_get_dropped_file_path(i32) [*c]const u8;
 
 /// gets the dropped file paths
 pub fn getDroppedFilePath(index: i32) [:0]const u8 {
@@ -2054,7 +2054,7 @@ pub fn getDroppedFilePath(index: i32) [:0]const u8 {
 }
 
 /// special run-function for SOKOL_NO_ENTRY (in standard mode this is an empty stub)
-pub extern fn sapp_run([*c]const Desc) void;
+extern fn sapp_run([*c]const Desc) void;
 
 /// special run-function for SOKOL_NO_ENTRY (in standard mode this is an empty stub)
 pub fn run(desc: Desc) void {
@@ -2062,7 +2062,7 @@ pub fn run(desc: Desc) void {
 }
 
 /// EGL: get EGLDisplay object
-pub extern fn sapp_egl_get_display() ?*const anyopaque;
+extern fn sapp_egl_get_display() ?*const anyopaque;
 
 /// EGL: get EGLDisplay object
 pub fn eglGetDisplay() ?*const anyopaque {
@@ -2070,7 +2070,7 @@ pub fn eglGetDisplay() ?*const anyopaque {
 }
 
 /// EGL: get EGLContext object
-pub extern fn sapp_egl_get_context() ?*const anyopaque;
+extern fn sapp_egl_get_context() ?*const anyopaque;
 
 /// EGL: get EGLContext object
 pub fn eglGetContext() ?*const anyopaque {
@@ -2078,7 +2078,7 @@ pub fn eglGetContext() ?*const anyopaque {
 }
 
 /// HTML5: enable or disable the hardwired "Leave Site?" dialog box
-pub extern fn sapp_html5_ask_leave_site(bool) void;
+extern fn sapp_html5_ask_leave_site(bool) void;
 
 /// HTML5: enable or disable the hardwired "Leave Site?" dialog box
 pub fn html5AskLeaveSite(ask: bool) void {
@@ -2086,7 +2086,7 @@ pub fn html5AskLeaveSite(ask: bool) void {
 }
 
 /// HTML5: get byte size of a dropped file
-pub extern fn sapp_html5_get_dropped_file_size(i32) u32;
+extern fn sapp_html5_get_dropped_file_size(i32) u32;
 
 /// HTML5: get byte size of a dropped file
 pub fn html5GetDroppedFileSize(index: i32) u32 {
@@ -2094,7 +2094,7 @@ pub fn html5GetDroppedFileSize(index: i32) u32 {
 }
 
 /// HTML5: asynchronously load the content of a dropped file
-pub extern fn sapp_html5_fetch_dropped_file([*c]const Html5FetchRequest) void;
+extern fn sapp_html5_fetch_dropped_file([*c]const Html5FetchRequest) void;
 
 /// HTML5: asynchronously load the content of a dropped file
 pub fn html5FetchDroppedFile(request: Html5FetchRequest) void {
@@ -2102,7 +2102,7 @@ pub fn html5FetchDroppedFile(request: Html5FetchRequest) void {
 }
 
 /// Metal: get bridged pointer to Metal device object
-pub extern fn sapp_metal_get_device() ?*const anyopaque;
+extern fn sapp_metal_get_device() ?*const anyopaque;
 
 /// Metal: get bridged pointer to Metal device object
 pub fn metalGetDevice() ?*const anyopaque {
@@ -2110,7 +2110,7 @@ pub fn metalGetDevice() ?*const anyopaque {
 }
 
 /// Metal: get bridged pointer to MTKView's current drawable of type CAMetalDrawable
-pub extern fn sapp_metal_get_current_drawable() ?*const anyopaque;
+extern fn sapp_metal_get_current_drawable() ?*const anyopaque;
 
 /// Metal: get bridged pointer to MTKView's current drawable of type CAMetalDrawable
 pub fn metalGetCurrentDrawable() ?*const anyopaque {
@@ -2118,7 +2118,7 @@ pub fn metalGetCurrentDrawable() ?*const anyopaque {
 }
 
 /// Metal: get bridged pointer to MTKView's depth-stencil texture of type MTLTexture
-pub extern fn sapp_metal_get_depth_stencil_texture() ?*const anyopaque;
+extern fn sapp_metal_get_depth_stencil_texture() ?*const anyopaque;
 
 /// Metal: get bridged pointer to MTKView's depth-stencil texture of type MTLTexture
 pub fn metalGetDepthStencilTexture() ?*const anyopaque {
@@ -2126,7 +2126,7 @@ pub fn metalGetDepthStencilTexture() ?*const anyopaque {
 }
 
 /// Metal: get bridged pointer to MTKView's msaa-color-texture of type MTLTexture (may be null)
-pub extern fn sapp_metal_get_msaa_color_texture() ?*const anyopaque;
+extern fn sapp_metal_get_msaa_color_texture() ?*const anyopaque;
 
 /// Metal: get bridged pointer to MTKView's msaa-color-texture of type MTLTexture (may be null)
 pub fn metalGetMsaaColorTexture() ?*const anyopaque {
@@ -2134,7 +2134,7 @@ pub fn metalGetMsaaColorTexture() ?*const anyopaque {
 }
 
 /// macOS: get bridged pointer to macOS NSWindow
-pub extern fn sapp_macos_get_window() ?*const anyopaque;
+extern fn sapp_macos_get_window() ?*const anyopaque;
 
 /// macOS: get bridged pointer to macOS NSWindow
 pub fn macosGetWindow() ?*const anyopaque {
@@ -2142,7 +2142,7 @@ pub fn macosGetWindow() ?*const anyopaque {
 }
 
 /// iOS: get bridged pointer to iOS UIWindow
-pub extern fn sapp_ios_get_window() ?*const anyopaque;
+extern fn sapp_ios_get_window() ?*const anyopaque;
 
 /// iOS: get bridged pointer to iOS UIWindow
 pub fn iosGetWindow() ?*const anyopaque {
@@ -2150,7 +2150,7 @@ pub fn iosGetWindow() ?*const anyopaque {
 }
 
 /// D3D11: get pointer to ID3D11Device object
-pub extern fn sapp_d3d11_get_device() ?*const anyopaque;
+extern fn sapp_d3d11_get_device() ?*const anyopaque;
 
 /// D3D11: get pointer to ID3D11Device object
 pub fn d3d11GetDevice() ?*const anyopaque {
@@ -2158,7 +2158,7 @@ pub fn d3d11GetDevice() ?*const anyopaque {
 }
 
 /// D3D11: get pointer to ID3D11DeviceContext object
-pub extern fn sapp_d3d11_get_device_context() ?*const anyopaque;
+extern fn sapp_d3d11_get_device_context() ?*const anyopaque;
 
 /// D3D11: get pointer to ID3D11DeviceContext object
 pub fn d3d11GetDeviceContext() ?*const anyopaque {
@@ -2166,7 +2166,7 @@ pub fn d3d11GetDeviceContext() ?*const anyopaque {
 }
 
 /// D3D11: get pointer to IDXGISwapChain object
-pub extern fn sapp_d3d11_get_swap_chain() ?*const anyopaque;
+extern fn sapp_d3d11_get_swap_chain() ?*const anyopaque;
 
 /// D3D11: get pointer to IDXGISwapChain object
 pub fn d3d11GetSwapChain() ?*const anyopaque {
@@ -2174,7 +2174,7 @@ pub fn d3d11GetSwapChain() ?*const anyopaque {
 }
 
 /// D3D11: get pointer to ID3D11RenderTargetView object for rendering
-pub extern fn sapp_d3d11_get_render_view() ?*const anyopaque;
+extern fn sapp_d3d11_get_render_view() ?*const anyopaque;
 
 /// D3D11: get pointer to ID3D11RenderTargetView object for rendering
 pub fn d3d11GetRenderView() ?*const anyopaque {
@@ -2182,7 +2182,7 @@ pub fn d3d11GetRenderView() ?*const anyopaque {
 }
 
 /// D3D11: get pointer ID3D11RenderTargetView object for msaa-resolve (may return null)
-pub extern fn sapp_d3d11_get_resolve_view() ?*const anyopaque;
+extern fn sapp_d3d11_get_resolve_view() ?*const anyopaque;
 
 /// D3D11: get pointer ID3D11RenderTargetView object for msaa-resolve (may return null)
 pub fn d3d11GetResolveView() ?*const anyopaque {
@@ -2190,7 +2190,7 @@ pub fn d3d11GetResolveView() ?*const anyopaque {
 }
 
 /// D3D11: get pointer ID3D11DepthStencilView
-pub extern fn sapp_d3d11_get_depth_stencil_view() ?*const anyopaque;
+extern fn sapp_d3d11_get_depth_stencil_view() ?*const anyopaque;
 
 /// D3D11: get pointer ID3D11DepthStencilView
 pub fn d3d11GetDepthStencilView() ?*const anyopaque {
@@ -2198,7 +2198,7 @@ pub fn d3d11GetDepthStencilView() ?*const anyopaque {
 }
 
 /// Win32: get the HWND window handle
-pub extern fn sapp_win32_get_hwnd() ?*const anyopaque;
+extern fn sapp_win32_get_hwnd() ?*const anyopaque;
 
 /// Win32: get the HWND window handle
 pub fn win32GetHwnd() ?*const anyopaque {
@@ -2206,7 +2206,7 @@ pub fn win32GetHwnd() ?*const anyopaque {
 }
 
 /// WebGPU: get WGPUDevice handle
-pub extern fn sapp_wgpu_get_device() ?*const anyopaque;
+extern fn sapp_wgpu_get_device() ?*const anyopaque;
 
 /// WebGPU: get WGPUDevice handle
 pub fn wgpuGetDevice() ?*const anyopaque {
@@ -2214,7 +2214,7 @@ pub fn wgpuGetDevice() ?*const anyopaque {
 }
 
 /// WebGPU: get swapchain's WGPUTextureView handle for rendering
-pub extern fn sapp_wgpu_get_render_view() ?*const anyopaque;
+extern fn sapp_wgpu_get_render_view() ?*const anyopaque;
 
 /// WebGPU: get swapchain's WGPUTextureView handle for rendering
 pub fn wgpuGetRenderView() ?*const anyopaque {
@@ -2222,7 +2222,7 @@ pub fn wgpuGetRenderView() ?*const anyopaque {
 }
 
 /// WebGPU: get swapchain's MSAA-resolve WGPUTextureView (may return null)
-pub extern fn sapp_wgpu_get_resolve_view() ?*const anyopaque;
+extern fn sapp_wgpu_get_resolve_view() ?*const anyopaque;
 
 /// WebGPU: get swapchain's MSAA-resolve WGPUTextureView (may return null)
 pub fn wgpuGetResolveView() ?*const anyopaque {
@@ -2230,7 +2230,7 @@ pub fn wgpuGetResolveView() ?*const anyopaque {
 }
 
 /// WebGPU: get swapchain's WGPUTextureView for the depth-stencil surface
-pub extern fn sapp_wgpu_get_depth_stencil_view() ?*const anyopaque;
+extern fn sapp_wgpu_get_depth_stencil_view() ?*const anyopaque;
 
 /// WebGPU: get swapchain's WGPUTextureView for the depth-stencil surface
 pub fn wgpuGetDepthStencilView() ?*const anyopaque {
@@ -2238,7 +2238,7 @@ pub fn wgpuGetDepthStencilView() ?*const anyopaque {
 }
 
 /// GL: get framebuffer object
-pub extern fn sapp_gl_get_framebuffer() u32;
+extern fn sapp_gl_get_framebuffer() u32;
 
 /// GL: get framebuffer object
 pub fn glGetFramebuffer() u32 {
@@ -2246,7 +2246,7 @@ pub fn glGetFramebuffer() u32 {
 }
 
 /// GL: get major version (only valid for desktop GL)
-pub extern fn sapp_gl_get_major_version() i32;
+extern fn sapp_gl_get_major_version() i32;
 
 /// GL: get major version (only valid for desktop GL)
 pub fn glGetMajorVersion() i32 {
@@ -2254,7 +2254,7 @@ pub fn glGetMajorVersion() i32 {
 }
 
 /// GL: get minor version (only valid for desktop GL)
-pub extern fn sapp_gl_get_minor_version() i32;
+extern fn sapp_gl_get_minor_version() i32;
 
 /// GL: get minor version (only valid for desktop GL)
 pub fn glGetMinorVersion() i32 {
@@ -2262,7 +2262,7 @@ pub fn glGetMinorVersion() i32 {
 }
 
 /// Android: get native activity handle
-pub extern fn sapp_android_get_native_activity() ?*const anyopaque;
+extern fn sapp_android_get_native_activity() ?*const anyopaque;
 
 /// Android: get native activity handle
 pub fn androidGetNativeActivity() ?*const anyopaque {

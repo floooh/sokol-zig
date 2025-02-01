@@ -668,117 +668,117 @@ pub const Desc = extern struct {
 };
 
 /// initialization/shutdown
-pub extern fn sdtx_setup([*c]const Desc) void;
+extern fn sdtx_setup([*c]const Desc) void;
 
 /// initialization/shutdown
 pub fn setup(desc: Desc) void {
     sdtx_setup(&desc);
 }
 
-pub extern fn sdtx_shutdown() void;
+extern fn sdtx_shutdown() void;
 
 pub fn shutdown() void {
     sdtx_shutdown();
 }
 
 /// builtin font data (use to populate sdtx_desc.font[])
-pub extern fn sdtx_font_kc853() FontDesc;
+extern fn sdtx_font_kc853() FontDesc;
 
 /// builtin font data (use to populate sdtx_desc.font[])
 pub fn fontKc853() FontDesc {
     return sdtx_font_kc853();
 }
 
-pub extern fn sdtx_font_kc854() FontDesc;
+extern fn sdtx_font_kc854() FontDesc;
 
 pub fn fontKc854() FontDesc {
     return sdtx_font_kc854();
 }
 
-pub extern fn sdtx_font_z1013() FontDesc;
+extern fn sdtx_font_z1013() FontDesc;
 
 pub fn fontZ1013() FontDesc {
     return sdtx_font_z1013();
 }
 
-pub extern fn sdtx_font_cpc() FontDesc;
+extern fn sdtx_font_cpc() FontDesc;
 
 pub fn fontCpc() FontDesc {
     return sdtx_font_cpc();
 }
 
-pub extern fn sdtx_font_c64() FontDesc;
+extern fn sdtx_font_c64() FontDesc;
 
 pub fn fontC64() FontDesc {
     return sdtx_font_c64();
 }
 
-pub extern fn sdtx_font_oric() FontDesc;
+extern fn sdtx_font_oric() FontDesc;
 
 pub fn fontOric() FontDesc {
     return sdtx_font_oric();
 }
 
 /// context functions
-pub extern fn sdtx_make_context([*c]const ContextDesc) Context;
+extern fn sdtx_make_context([*c]const ContextDesc) Context;
 
 /// context functions
 pub fn makeContext(desc: ContextDesc) Context {
     return sdtx_make_context(&desc);
 }
 
-pub extern fn sdtx_destroy_context(Context) void;
+extern fn sdtx_destroy_context(Context) void;
 
 pub fn destroyContext(ctx: Context) void {
     sdtx_destroy_context(ctx);
 }
 
-pub extern fn sdtx_set_context(Context) void;
+extern fn sdtx_set_context(Context) void;
 
 pub fn setContext(ctx: Context) void {
     sdtx_set_context(ctx);
 }
 
-pub extern fn sdtx_get_context() Context;
+extern fn sdtx_get_context() Context;
 
 pub fn getContext() Context {
     return sdtx_get_context();
 }
 
-pub extern fn sdtx_default_context() Context;
+extern fn sdtx_default_context() Context;
 
 pub fn defaultContext() Context {
     return sdtx_default_context();
 }
 
 /// drawing functions (call inside sokol-gfx render pass)
-pub extern fn sdtx_draw() void;
+extern fn sdtx_draw() void;
 
 /// drawing functions (call inside sokol-gfx render pass)
 pub fn draw() void {
     sdtx_draw();
 }
 
-pub extern fn sdtx_context_draw(Context) void;
+extern fn sdtx_context_draw(Context) void;
 
 pub fn contextDraw(ctx: Context) void {
     sdtx_context_draw(ctx);
 }
 
-pub extern fn sdtx_draw_layer(i32) void;
+extern fn sdtx_draw_layer(i32) void;
 
 pub fn drawLayer(layer_id: i32) void {
     sdtx_draw_layer(layer_id);
 }
 
-pub extern fn sdtx_context_draw_layer(Context, i32) void;
+extern fn sdtx_context_draw_layer(Context, i32) void;
 
 pub fn contextDrawLayer(ctx: Context, layer_id: i32) void {
     sdtx_context_draw_layer(ctx, layer_id);
 }
 
 /// switch render layer
-pub extern fn sdtx_layer(i32) void;
+extern fn sdtx_layer(i32) void;
 
 /// switch render layer
 pub fn layer(layer_id: i32) void {
@@ -786,7 +786,7 @@ pub fn layer(layer_id: i32) void {
 }
 
 /// switch to a different font
-pub extern fn sdtx_font(u32) void;
+extern fn sdtx_font(u32) void;
 
 /// switch to a different font
 pub fn font(font_index: u32) void {
@@ -794,7 +794,7 @@ pub fn font(font_index: u32) void {
 }
 
 /// set a new virtual canvas size in screen pixels
-pub extern fn sdtx_canvas(f32, f32) void;
+extern fn sdtx_canvas(f32, f32) void;
 
 /// set a new virtual canvas size in screen pixels
 pub fn canvas(w: f32, h: f32) void {
@@ -802,7 +802,7 @@ pub fn canvas(w: f32, h: f32) void {
 }
 
 /// set a new origin in character grid coordinates
-pub extern fn sdtx_origin(f32, f32) void;
+extern fn sdtx_origin(f32, f32) void;
 
 /// set a new origin in character grid coordinates
 pub fn origin(x: f32, y: f32) void {
@@ -810,102 +810,102 @@ pub fn origin(x: f32, y: f32) void {
 }
 
 /// cursor movement functions (relative to origin in character grid coordinates)
-pub extern fn sdtx_home() void;
+extern fn sdtx_home() void;
 
 /// cursor movement functions (relative to origin in character grid coordinates)
 pub fn home() void {
     sdtx_home();
 }
 
-pub extern fn sdtx_pos(f32, f32) void;
+extern fn sdtx_pos(f32, f32) void;
 
 pub fn pos(x: f32, y: f32) void {
     sdtx_pos(x, y);
 }
 
-pub extern fn sdtx_pos_x(f32) void;
+extern fn sdtx_pos_x(f32) void;
 
 pub fn posX(x: f32) void {
     sdtx_pos_x(x);
 }
 
-pub extern fn sdtx_pos_y(f32) void;
+extern fn sdtx_pos_y(f32) void;
 
 pub fn posY(y: f32) void {
     sdtx_pos_y(y);
 }
 
-pub extern fn sdtx_move(f32, f32) void;
+extern fn sdtx_move(f32, f32) void;
 
 pub fn move(dx: f32, dy: f32) void {
     sdtx_move(dx, dy);
 }
 
-pub extern fn sdtx_move_x(f32) void;
+extern fn sdtx_move_x(f32) void;
 
 pub fn moveX(dx: f32) void {
     sdtx_move_x(dx);
 }
 
-pub extern fn sdtx_move_y(f32) void;
+extern fn sdtx_move_y(f32) void;
 
 pub fn moveY(dy: f32) void {
     sdtx_move_y(dy);
 }
 
-pub extern fn sdtx_crlf() void;
+extern fn sdtx_crlf() void;
 
 pub fn crlf() void {
     sdtx_crlf();
 }
 
 /// set the current text color
-pub extern fn sdtx_color3b(u8, u8, u8) void;
+extern fn sdtx_color3b(u8, u8, u8) void;
 
 /// set the current text color
 pub fn color3b(r: u8, g: u8, b: u8) void {
     sdtx_color3b(r, g, b);
 }
 
-pub extern fn sdtx_color3f(f32, f32, f32) void;
+extern fn sdtx_color3f(f32, f32, f32) void;
 
 pub fn color3f(r: f32, g: f32, b: f32) void {
     sdtx_color3f(r, g, b);
 }
 
-pub extern fn sdtx_color4b(u8, u8, u8, u8) void;
+extern fn sdtx_color4b(u8, u8, u8, u8) void;
 
 pub fn color4b(r: u8, g: u8, b: u8, a: u8) void {
     sdtx_color4b(r, g, b, a);
 }
 
-pub extern fn sdtx_color4f(f32, f32, f32, f32) void;
+extern fn sdtx_color4f(f32, f32, f32, f32) void;
 
 pub fn color4f(r: f32, g: f32, b: f32, a: f32) void {
     sdtx_color4f(r, g, b, a);
 }
 
-pub extern fn sdtx_color1i(u32) void;
+extern fn sdtx_color1i(u32) void;
 
 pub fn color1i(rgba: u32) void {
     sdtx_color1i(rgba);
 }
 
 /// text rendering
-pub extern fn sdtx_putc(u8) void;
+extern fn sdtx_putc(u8) void;
 
 /// text rendering
 pub fn putc(c: u8) void {
     sdtx_putc(c);
 }
 
-pub extern fn sdtx_puts([*c]const u8) void;
+extern fn sdtx_puts([*c]const u8) void;
 
 pub fn puts(str: [:0]const u8) void {
     sdtx_puts(@ptrCast(str));
 }
 
-pub extern fn sdtx_putr([*c]const u8, i32) void;
+extern fn sdtx_putr([*c]const u8, i32) void;
 
 pub fn putr(str: [:0]const u8, len: i32) void {
     sdtx_putr(@ptrCast(str), len);

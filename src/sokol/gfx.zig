@@ -3976,694 +3976,694 @@ pub const Desc = extern struct {
 };
 
 /// setup and misc functions
-pub extern fn sg_setup([*c]const Desc) void;
+extern fn sg_setup([*c]const Desc) void;
 
 /// setup and misc functions
 pub fn setup(desc: Desc) void {
     sg_setup(&desc);
 }
 
-pub extern fn sg_shutdown() void;
+extern fn sg_shutdown() void;
 
 pub fn shutdown() void {
     sg_shutdown();
 }
 
-pub extern fn sg_isvalid() bool;
+extern fn sg_isvalid() bool;
 
 pub fn isvalid() bool {
     return sg_isvalid();
 }
 
-pub extern fn sg_reset_state_cache() void;
+extern fn sg_reset_state_cache() void;
 
 pub fn resetStateCache() void {
     sg_reset_state_cache();
 }
 
-pub extern fn sg_push_debug_group([*c]const u8) void;
+extern fn sg_push_debug_group([*c]const u8) void;
 
 pub fn pushDebugGroup(name: [:0]const u8) void {
     sg_push_debug_group(@ptrCast(name));
 }
 
-pub extern fn sg_pop_debug_group() void;
+extern fn sg_pop_debug_group() void;
 
 pub fn popDebugGroup() void {
     sg_pop_debug_group();
 }
 
-pub extern fn sg_add_commit_listener(CommitListener) bool;
+extern fn sg_add_commit_listener(CommitListener) bool;
 
 pub fn addCommitListener(listener: CommitListener) bool {
     return sg_add_commit_listener(listener);
 }
 
-pub extern fn sg_remove_commit_listener(CommitListener) bool;
+extern fn sg_remove_commit_listener(CommitListener) bool;
 
 pub fn removeCommitListener(listener: CommitListener) bool {
     return sg_remove_commit_listener(listener);
 }
 
 /// resource creation, destruction and updating
-pub extern fn sg_make_buffer([*c]const BufferDesc) Buffer;
+extern fn sg_make_buffer([*c]const BufferDesc) Buffer;
 
 /// resource creation, destruction and updating
 pub fn makeBuffer(desc: BufferDesc) Buffer {
     return sg_make_buffer(&desc);
 }
 
-pub extern fn sg_make_image([*c]const ImageDesc) Image;
+extern fn sg_make_image([*c]const ImageDesc) Image;
 
 pub fn makeImage(desc: ImageDesc) Image {
     return sg_make_image(&desc);
 }
 
-pub extern fn sg_make_sampler([*c]const SamplerDesc) Sampler;
+extern fn sg_make_sampler([*c]const SamplerDesc) Sampler;
 
 pub fn makeSampler(desc: SamplerDesc) Sampler {
     return sg_make_sampler(&desc);
 }
 
-pub extern fn sg_make_shader([*c]const ShaderDesc) Shader;
+extern fn sg_make_shader([*c]const ShaderDesc) Shader;
 
 pub fn makeShader(desc: ShaderDesc) Shader {
     return sg_make_shader(&desc);
 }
 
-pub extern fn sg_make_pipeline([*c]const PipelineDesc) Pipeline;
+extern fn sg_make_pipeline([*c]const PipelineDesc) Pipeline;
 
 pub fn makePipeline(desc: PipelineDesc) Pipeline {
     return sg_make_pipeline(&desc);
 }
 
-pub extern fn sg_make_attachments([*c]const AttachmentsDesc) Attachments;
+extern fn sg_make_attachments([*c]const AttachmentsDesc) Attachments;
 
 pub fn makeAttachments(desc: AttachmentsDesc) Attachments {
     return sg_make_attachments(&desc);
 }
 
-pub extern fn sg_destroy_buffer(Buffer) void;
+extern fn sg_destroy_buffer(Buffer) void;
 
 pub fn destroyBuffer(buf: Buffer) void {
     sg_destroy_buffer(buf);
 }
 
-pub extern fn sg_destroy_image(Image) void;
+extern fn sg_destroy_image(Image) void;
 
 pub fn destroyImage(img: Image) void {
     sg_destroy_image(img);
 }
 
-pub extern fn sg_destroy_sampler(Sampler) void;
+extern fn sg_destroy_sampler(Sampler) void;
 
 pub fn destroySampler(smp: Sampler) void {
     sg_destroy_sampler(smp);
 }
 
-pub extern fn sg_destroy_shader(Shader) void;
+extern fn sg_destroy_shader(Shader) void;
 
 pub fn destroyShader(shd: Shader) void {
     sg_destroy_shader(shd);
 }
 
-pub extern fn sg_destroy_pipeline(Pipeline) void;
+extern fn sg_destroy_pipeline(Pipeline) void;
 
 pub fn destroyPipeline(pip: Pipeline) void {
     sg_destroy_pipeline(pip);
 }
 
-pub extern fn sg_destroy_attachments(Attachments) void;
+extern fn sg_destroy_attachments(Attachments) void;
 
 pub fn destroyAttachments(atts: Attachments) void {
     sg_destroy_attachments(atts);
 }
 
-pub extern fn sg_update_buffer(Buffer, [*c]const Range) void;
+extern fn sg_update_buffer(Buffer, [*c]const Range) void;
 
 pub fn updateBuffer(buf: Buffer, data: Range) void {
     sg_update_buffer(buf, &data);
 }
 
-pub extern fn sg_update_image(Image, [*c]const ImageData) void;
+extern fn sg_update_image(Image, [*c]const ImageData) void;
 
 pub fn updateImage(img: Image, data: ImageData) void {
     sg_update_image(img, &data);
 }
 
-pub extern fn sg_append_buffer(Buffer, [*c]const Range) i32;
+extern fn sg_append_buffer(Buffer, [*c]const Range) i32;
 
 pub fn appendBuffer(buf: Buffer, data: Range) i32 {
     return sg_append_buffer(buf, &data);
 }
 
-pub extern fn sg_query_buffer_overflow(Buffer) bool;
+extern fn sg_query_buffer_overflow(Buffer) bool;
 
 pub fn queryBufferOverflow(buf: Buffer) bool {
     return sg_query_buffer_overflow(buf);
 }
 
-pub extern fn sg_query_buffer_will_overflow(Buffer, usize) bool;
+extern fn sg_query_buffer_will_overflow(Buffer, usize) bool;
 
 pub fn queryBufferWillOverflow(buf: Buffer, size: usize) bool {
     return sg_query_buffer_will_overflow(buf, size);
 }
 
 /// rendering functions
-pub extern fn sg_begin_pass([*c]const Pass) void;
+extern fn sg_begin_pass([*c]const Pass) void;
 
 /// rendering functions
 pub fn beginPass(pass: Pass) void {
     sg_begin_pass(&pass);
 }
 
-pub extern fn sg_apply_viewport(i32, i32, i32, i32, bool) void;
+extern fn sg_apply_viewport(i32, i32, i32, i32, bool) void;
 
 pub fn applyViewport(x: i32, y: i32, width: i32, height: i32, origin_top_left: bool) void {
     sg_apply_viewport(x, y, width, height, origin_top_left);
 }
 
-pub extern fn sg_apply_viewportf(f32, f32, f32, f32, bool) void;
+extern fn sg_apply_viewportf(f32, f32, f32, f32, bool) void;
 
 pub fn applyViewportf(x: f32, y: f32, width: f32, height: f32, origin_top_left: bool) void {
     sg_apply_viewportf(x, y, width, height, origin_top_left);
 }
 
-pub extern fn sg_apply_scissor_rect(i32, i32, i32, i32, bool) void;
+extern fn sg_apply_scissor_rect(i32, i32, i32, i32, bool) void;
 
 pub fn applyScissorRect(x: i32, y: i32, width: i32, height: i32, origin_top_left: bool) void {
     sg_apply_scissor_rect(x, y, width, height, origin_top_left);
 }
 
-pub extern fn sg_apply_scissor_rectf(f32, f32, f32, f32, bool) void;
+extern fn sg_apply_scissor_rectf(f32, f32, f32, f32, bool) void;
 
 pub fn applyScissorRectf(x: f32, y: f32, width: f32, height: f32, origin_top_left: bool) void {
     sg_apply_scissor_rectf(x, y, width, height, origin_top_left);
 }
 
-pub extern fn sg_apply_pipeline(Pipeline) void;
+extern fn sg_apply_pipeline(Pipeline) void;
 
 pub fn applyPipeline(pip: Pipeline) void {
     sg_apply_pipeline(pip);
 }
 
-pub extern fn sg_apply_bindings([*c]const Bindings) void;
+extern fn sg_apply_bindings([*c]const Bindings) void;
 
 pub fn applyBindings(bindings: Bindings) void {
     sg_apply_bindings(&bindings);
 }
 
-pub extern fn sg_apply_uniforms(u32, [*c]const Range) void;
+extern fn sg_apply_uniforms(u32, [*c]const Range) void;
 
 pub fn applyUniforms(ub_slot: u32, data: Range) void {
     sg_apply_uniforms(ub_slot, &data);
 }
 
-pub extern fn sg_draw(u32, u32, u32) void;
+extern fn sg_draw(u32, u32, u32) void;
 
 pub fn draw(base_element: u32, num_elements: u32, num_instances: u32) void {
     sg_draw(base_element, num_elements, num_instances);
 }
 
-pub extern fn sg_end_pass() void;
+extern fn sg_end_pass() void;
 
 pub fn endPass() void {
     sg_end_pass();
 }
 
-pub extern fn sg_commit() void;
+extern fn sg_commit() void;
 
 pub fn commit() void {
     sg_commit();
 }
 
 /// getting information
-pub extern fn sg_query_desc() Desc;
+extern fn sg_query_desc() Desc;
 
 /// getting information
 pub fn queryDesc() Desc {
     return sg_query_desc();
 }
 
-pub extern fn sg_query_backend() Backend;
+extern fn sg_query_backend() Backend;
 
 pub fn queryBackend() Backend {
     return sg_query_backend();
 }
 
-pub extern fn sg_query_features() Features;
+extern fn sg_query_features() Features;
 
 pub fn queryFeatures() Features {
     return sg_query_features();
 }
 
-pub extern fn sg_query_limits() Limits;
+extern fn sg_query_limits() Limits;
 
 pub fn queryLimits() Limits {
     return sg_query_limits();
 }
 
-pub extern fn sg_query_pixelformat(PixelFormat) PixelformatInfo;
+extern fn sg_query_pixelformat(PixelFormat) PixelformatInfo;
 
 pub fn queryPixelformat(fmt: PixelFormat) PixelformatInfo {
     return sg_query_pixelformat(fmt);
 }
 
-pub extern fn sg_query_row_pitch(PixelFormat, i32, i32) i32;
+extern fn sg_query_row_pitch(PixelFormat, i32, i32) i32;
 
 pub fn queryRowPitch(fmt: PixelFormat, width: i32, row_align_bytes: i32) i32 {
     return sg_query_row_pitch(fmt, width, row_align_bytes);
 }
 
-pub extern fn sg_query_surface_pitch(PixelFormat, i32, i32, i32) i32;
+extern fn sg_query_surface_pitch(PixelFormat, i32, i32, i32) i32;
 
 pub fn querySurfacePitch(fmt: PixelFormat, width: i32, height: i32, row_align_bytes: i32) i32 {
     return sg_query_surface_pitch(fmt, width, height, row_align_bytes);
 }
 
 /// get current state of a resource (INITIAL, ALLOC, VALID, FAILED, INVALID)
-pub extern fn sg_query_buffer_state(Buffer) ResourceState;
+extern fn sg_query_buffer_state(Buffer) ResourceState;
 
 /// get current state of a resource (INITIAL, ALLOC, VALID, FAILED, INVALID)
 pub fn queryBufferState(buf: Buffer) ResourceState {
     return sg_query_buffer_state(buf);
 }
 
-pub extern fn sg_query_image_state(Image) ResourceState;
+extern fn sg_query_image_state(Image) ResourceState;
 
 pub fn queryImageState(img: Image) ResourceState {
     return sg_query_image_state(img);
 }
 
-pub extern fn sg_query_sampler_state(Sampler) ResourceState;
+extern fn sg_query_sampler_state(Sampler) ResourceState;
 
 pub fn querySamplerState(smp: Sampler) ResourceState {
     return sg_query_sampler_state(smp);
 }
 
-pub extern fn sg_query_shader_state(Shader) ResourceState;
+extern fn sg_query_shader_state(Shader) ResourceState;
 
 pub fn queryShaderState(shd: Shader) ResourceState {
     return sg_query_shader_state(shd);
 }
 
-pub extern fn sg_query_pipeline_state(Pipeline) ResourceState;
+extern fn sg_query_pipeline_state(Pipeline) ResourceState;
 
 pub fn queryPipelineState(pip: Pipeline) ResourceState {
     return sg_query_pipeline_state(pip);
 }
 
-pub extern fn sg_query_attachments_state(Attachments) ResourceState;
+extern fn sg_query_attachments_state(Attachments) ResourceState;
 
 pub fn queryAttachmentsState(atts: Attachments) ResourceState {
     return sg_query_attachments_state(atts);
 }
 
 /// get runtime information about a resource
-pub extern fn sg_query_buffer_info(Buffer) BufferInfo;
+extern fn sg_query_buffer_info(Buffer) BufferInfo;
 
 /// get runtime information about a resource
 pub fn queryBufferInfo(buf: Buffer) BufferInfo {
     return sg_query_buffer_info(buf);
 }
 
-pub extern fn sg_query_image_info(Image) ImageInfo;
+extern fn sg_query_image_info(Image) ImageInfo;
 
 pub fn queryImageInfo(img: Image) ImageInfo {
     return sg_query_image_info(img);
 }
 
-pub extern fn sg_query_sampler_info(Sampler) SamplerInfo;
+extern fn sg_query_sampler_info(Sampler) SamplerInfo;
 
 pub fn querySamplerInfo(smp: Sampler) SamplerInfo {
     return sg_query_sampler_info(smp);
 }
 
-pub extern fn sg_query_shader_info(Shader) ShaderInfo;
+extern fn sg_query_shader_info(Shader) ShaderInfo;
 
 pub fn queryShaderInfo(shd: Shader) ShaderInfo {
     return sg_query_shader_info(shd);
 }
 
-pub extern fn sg_query_pipeline_info(Pipeline) PipelineInfo;
+extern fn sg_query_pipeline_info(Pipeline) PipelineInfo;
 
 pub fn queryPipelineInfo(pip: Pipeline) PipelineInfo {
     return sg_query_pipeline_info(pip);
 }
 
-pub extern fn sg_query_attachments_info(Attachments) AttachmentsInfo;
+extern fn sg_query_attachments_info(Attachments) AttachmentsInfo;
 
 pub fn queryAttachmentsInfo(atts: Attachments) AttachmentsInfo {
     return sg_query_attachments_info(atts);
 }
 
 /// get desc structs matching a specific resource (NOTE that not all creation attributes may be provided)
-pub extern fn sg_query_buffer_desc(Buffer) BufferDesc;
+extern fn sg_query_buffer_desc(Buffer) BufferDesc;
 
 /// get desc structs matching a specific resource (NOTE that not all creation attributes may be provided)
 pub fn queryBufferDesc(buf: Buffer) BufferDesc {
     return sg_query_buffer_desc(buf);
 }
 
-pub extern fn sg_query_image_desc(Image) ImageDesc;
+extern fn sg_query_image_desc(Image) ImageDesc;
 
 pub fn queryImageDesc(img: Image) ImageDesc {
     return sg_query_image_desc(img);
 }
 
-pub extern fn sg_query_sampler_desc(Sampler) SamplerDesc;
+extern fn sg_query_sampler_desc(Sampler) SamplerDesc;
 
 pub fn querySamplerDesc(smp: Sampler) SamplerDesc {
     return sg_query_sampler_desc(smp);
 }
 
-pub extern fn sg_query_shader_desc(Shader) ShaderDesc;
+extern fn sg_query_shader_desc(Shader) ShaderDesc;
 
 pub fn queryShaderDesc(shd: Shader) ShaderDesc {
     return sg_query_shader_desc(shd);
 }
 
-pub extern fn sg_query_pipeline_desc(Pipeline) PipelineDesc;
+extern fn sg_query_pipeline_desc(Pipeline) PipelineDesc;
 
 pub fn queryPipelineDesc(pip: Pipeline) PipelineDesc {
     return sg_query_pipeline_desc(pip);
 }
 
-pub extern fn sg_query_attachments_desc(Attachments) AttachmentsDesc;
+extern fn sg_query_attachments_desc(Attachments) AttachmentsDesc;
 
 pub fn queryAttachmentsDesc(atts: Attachments) AttachmentsDesc {
     return sg_query_attachments_desc(atts);
 }
 
 /// get resource creation desc struct with their default values replaced
-pub extern fn sg_query_buffer_defaults([*c]const BufferDesc) BufferDesc;
+extern fn sg_query_buffer_defaults([*c]const BufferDesc) BufferDesc;
 
 /// get resource creation desc struct with their default values replaced
 pub fn queryBufferDefaults(desc: BufferDesc) BufferDesc {
     return sg_query_buffer_defaults(&desc);
 }
 
-pub extern fn sg_query_image_defaults([*c]const ImageDesc) ImageDesc;
+extern fn sg_query_image_defaults([*c]const ImageDesc) ImageDesc;
 
 pub fn queryImageDefaults(desc: ImageDesc) ImageDesc {
     return sg_query_image_defaults(&desc);
 }
 
-pub extern fn sg_query_sampler_defaults([*c]const SamplerDesc) SamplerDesc;
+extern fn sg_query_sampler_defaults([*c]const SamplerDesc) SamplerDesc;
 
 pub fn querySamplerDefaults(desc: SamplerDesc) SamplerDesc {
     return sg_query_sampler_defaults(&desc);
 }
 
-pub extern fn sg_query_shader_defaults([*c]const ShaderDesc) ShaderDesc;
+extern fn sg_query_shader_defaults([*c]const ShaderDesc) ShaderDesc;
 
 pub fn queryShaderDefaults(desc: ShaderDesc) ShaderDesc {
     return sg_query_shader_defaults(&desc);
 }
 
-pub extern fn sg_query_pipeline_defaults([*c]const PipelineDesc) PipelineDesc;
+extern fn sg_query_pipeline_defaults([*c]const PipelineDesc) PipelineDesc;
 
 pub fn queryPipelineDefaults(desc: PipelineDesc) PipelineDesc {
     return sg_query_pipeline_defaults(&desc);
 }
 
-pub extern fn sg_query_attachments_defaults([*c]const AttachmentsDesc) AttachmentsDesc;
+extern fn sg_query_attachments_defaults([*c]const AttachmentsDesc) AttachmentsDesc;
 
 pub fn queryAttachmentsDefaults(desc: AttachmentsDesc) AttachmentsDesc {
     return sg_query_attachments_defaults(&desc);
 }
 
 /// assorted query functions
-pub extern fn sg_query_buffer_size(Buffer) usize;
+extern fn sg_query_buffer_size(Buffer) usize;
 
 /// assorted query functions
 pub fn queryBufferSize(buf: Buffer) usize {
     return sg_query_buffer_size(buf);
 }
 
-pub extern fn sg_query_buffer_type(Buffer) BufferType;
+extern fn sg_query_buffer_type(Buffer) BufferType;
 
 pub fn queryBufferType(buf: Buffer) BufferType {
     return sg_query_buffer_type(buf);
 }
 
-pub extern fn sg_query_buffer_usage(Buffer) Usage;
+extern fn sg_query_buffer_usage(Buffer) Usage;
 
 pub fn queryBufferUsage(buf: Buffer) Usage {
     return sg_query_buffer_usage(buf);
 }
 
-pub extern fn sg_query_image_type(Image) ImageType;
+extern fn sg_query_image_type(Image) ImageType;
 
 pub fn queryImageType(img: Image) ImageType {
     return sg_query_image_type(img);
 }
 
-pub extern fn sg_query_image_width(Image) i32;
+extern fn sg_query_image_width(Image) i32;
 
 pub fn queryImageWidth(img: Image) i32 {
     return sg_query_image_width(img);
 }
 
-pub extern fn sg_query_image_height(Image) i32;
+extern fn sg_query_image_height(Image) i32;
 
 pub fn queryImageHeight(img: Image) i32 {
     return sg_query_image_height(img);
 }
 
-pub extern fn sg_query_image_num_slices(Image) i32;
+extern fn sg_query_image_num_slices(Image) i32;
 
 pub fn queryImageNumSlices(img: Image) i32 {
     return sg_query_image_num_slices(img);
 }
 
-pub extern fn sg_query_image_num_mipmaps(Image) i32;
+extern fn sg_query_image_num_mipmaps(Image) i32;
 
 pub fn queryImageNumMipmaps(img: Image) i32 {
     return sg_query_image_num_mipmaps(img);
 }
 
-pub extern fn sg_query_image_pixelformat(Image) PixelFormat;
+extern fn sg_query_image_pixelformat(Image) PixelFormat;
 
 pub fn queryImagePixelformat(img: Image) PixelFormat {
     return sg_query_image_pixelformat(img);
 }
 
-pub extern fn sg_query_image_usage(Image) Usage;
+extern fn sg_query_image_usage(Image) Usage;
 
 pub fn queryImageUsage(img: Image) Usage {
     return sg_query_image_usage(img);
 }
 
-pub extern fn sg_query_image_sample_count(Image) i32;
+extern fn sg_query_image_sample_count(Image) i32;
 
 pub fn queryImageSampleCount(img: Image) i32 {
     return sg_query_image_sample_count(img);
 }
 
 /// separate resource allocation and initialization (for async setup)
-pub extern fn sg_alloc_buffer() Buffer;
+extern fn sg_alloc_buffer() Buffer;
 
 /// separate resource allocation and initialization (for async setup)
 pub fn allocBuffer() Buffer {
     return sg_alloc_buffer();
 }
 
-pub extern fn sg_alloc_image() Image;
+extern fn sg_alloc_image() Image;
 
 pub fn allocImage() Image {
     return sg_alloc_image();
 }
 
-pub extern fn sg_alloc_sampler() Sampler;
+extern fn sg_alloc_sampler() Sampler;
 
 pub fn allocSampler() Sampler {
     return sg_alloc_sampler();
 }
 
-pub extern fn sg_alloc_shader() Shader;
+extern fn sg_alloc_shader() Shader;
 
 pub fn allocShader() Shader {
     return sg_alloc_shader();
 }
 
-pub extern fn sg_alloc_pipeline() Pipeline;
+extern fn sg_alloc_pipeline() Pipeline;
 
 pub fn allocPipeline() Pipeline {
     return sg_alloc_pipeline();
 }
 
-pub extern fn sg_alloc_attachments() Attachments;
+extern fn sg_alloc_attachments() Attachments;
 
 pub fn allocAttachments() Attachments {
     return sg_alloc_attachments();
 }
 
-pub extern fn sg_dealloc_buffer(Buffer) void;
+extern fn sg_dealloc_buffer(Buffer) void;
 
 pub fn deallocBuffer(buf: Buffer) void {
     sg_dealloc_buffer(buf);
 }
 
-pub extern fn sg_dealloc_image(Image) void;
+extern fn sg_dealloc_image(Image) void;
 
 pub fn deallocImage(img: Image) void {
     sg_dealloc_image(img);
 }
 
-pub extern fn sg_dealloc_sampler(Sampler) void;
+extern fn sg_dealloc_sampler(Sampler) void;
 
 pub fn deallocSampler(smp: Sampler) void {
     sg_dealloc_sampler(smp);
 }
 
-pub extern fn sg_dealloc_shader(Shader) void;
+extern fn sg_dealloc_shader(Shader) void;
 
 pub fn deallocShader(shd: Shader) void {
     sg_dealloc_shader(shd);
 }
 
-pub extern fn sg_dealloc_pipeline(Pipeline) void;
+extern fn sg_dealloc_pipeline(Pipeline) void;
 
 pub fn deallocPipeline(pip: Pipeline) void {
     sg_dealloc_pipeline(pip);
 }
 
-pub extern fn sg_dealloc_attachments(Attachments) void;
+extern fn sg_dealloc_attachments(Attachments) void;
 
 pub fn deallocAttachments(attachments: Attachments) void {
     sg_dealloc_attachments(attachments);
 }
 
-pub extern fn sg_init_buffer(Buffer, [*c]const BufferDesc) void;
+extern fn sg_init_buffer(Buffer, [*c]const BufferDesc) void;
 
 pub fn initBuffer(buf: Buffer, desc: BufferDesc) void {
     sg_init_buffer(buf, &desc);
 }
 
-pub extern fn sg_init_image(Image, [*c]const ImageDesc) void;
+extern fn sg_init_image(Image, [*c]const ImageDesc) void;
 
 pub fn initImage(img: Image, desc: ImageDesc) void {
     sg_init_image(img, &desc);
 }
 
-pub extern fn sg_init_sampler(Sampler, [*c]const SamplerDesc) void;
+extern fn sg_init_sampler(Sampler, [*c]const SamplerDesc) void;
 
 pub fn initSampler(smg: Sampler, desc: SamplerDesc) void {
     sg_init_sampler(smg, &desc);
 }
 
-pub extern fn sg_init_shader(Shader, [*c]const ShaderDesc) void;
+extern fn sg_init_shader(Shader, [*c]const ShaderDesc) void;
 
 pub fn initShader(shd: Shader, desc: ShaderDesc) void {
     sg_init_shader(shd, &desc);
 }
 
-pub extern fn sg_init_pipeline(Pipeline, [*c]const PipelineDesc) void;
+extern fn sg_init_pipeline(Pipeline, [*c]const PipelineDesc) void;
 
 pub fn initPipeline(pip: Pipeline, desc: PipelineDesc) void {
     sg_init_pipeline(pip, &desc);
 }
 
-pub extern fn sg_init_attachments(Attachments, [*c]const AttachmentsDesc) void;
+extern fn sg_init_attachments(Attachments, [*c]const AttachmentsDesc) void;
 
 pub fn initAttachments(attachments: Attachments, desc: AttachmentsDesc) void {
     sg_init_attachments(attachments, &desc);
 }
 
-pub extern fn sg_uninit_buffer(Buffer) void;
+extern fn sg_uninit_buffer(Buffer) void;
 
 pub fn uninitBuffer(buf: Buffer) void {
     sg_uninit_buffer(buf);
 }
 
-pub extern fn sg_uninit_image(Image) void;
+extern fn sg_uninit_image(Image) void;
 
 pub fn uninitImage(img: Image) void {
     sg_uninit_image(img);
 }
 
-pub extern fn sg_uninit_sampler(Sampler) void;
+extern fn sg_uninit_sampler(Sampler) void;
 
 pub fn uninitSampler(smp: Sampler) void {
     sg_uninit_sampler(smp);
 }
 
-pub extern fn sg_uninit_shader(Shader) void;
+extern fn sg_uninit_shader(Shader) void;
 
 pub fn uninitShader(shd: Shader) void {
     sg_uninit_shader(shd);
 }
 
-pub extern fn sg_uninit_pipeline(Pipeline) void;
+extern fn sg_uninit_pipeline(Pipeline) void;
 
 pub fn uninitPipeline(pip: Pipeline) void {
     sg_uninit_pipeline(pip);
 }
 
-pub extern fn sg_uninit_attachments(Attachments) void;
+extern fn sg_uninit_attachments(Attachments) void;
 
 pub fn uninitAttachments(atts: Attachments) void {
     sg_uninit_attachments(atts);
 }
 
-pub extern fn sg_fail_buffer(Buffer) void;
+extern fn sg_fail_buffer(Buffer) void;
 
 pub fn failBuffer(buf: Buffer) void {
     sg_fail_buffer(buf);
 }
 
-pub extern fn sg_fail_image(Image) void;
+extern fn sg_fail_image(Image) void;
 
 pub fn failImage(img: Image) void {
     sg_fail_image(img);
 }
 
-pub extern fn sg_fail_sampler(Sampler) void;
+extern fn sg_fail_sampler(Sampler) void;
 
 pub fn failSampler(smp: Sampler) void {
     sg_fail_sampler(smp);
 }
 
-pub extern fn sg_fail_shader(Shader) void;
+extern fn sg_fail_shader(Shader) void;
 
 pub fn failShader(shd: Shader) void {
     sg_fail_shader(shd);
 }
 
-pub extern fn sg_fail_pipeline(Pipeline) void;
+extern fn sg_fail_pipeline(Pipeline) void;
 
 pub fn failPipeline(pip: Pipeline) void {
     sg_fail_pipeline(pip);
 }
 
-pub extern fn sg_fail_attachments(Attachments) void;
+extern fn sg_fail_attachments(Attachments) void;
 
 pub fn failAttachments(atts: Attachments) void {
     sg_fail_attachments(atts);
 }
 
 /// frame stats
-pub extern fn sg_enable_frame_stats() void;
+extern fn sg_enable_frame_stats() void;
 
 /// frame stats
 pub fn enableFrameStats() void {
     sg_enable_frame_stats();
 }
 
-pub extern fn sg_disable_frame_stats() void;
+extern fn sg_disable_frame_stats() void;
 
 pub fn disableFrameStats() void {
     sg_disable_frame_stats();
 }
 
-pub extern fn sg_frame_stats_enabled() bool;
+extern fn sg_frame_stats_enabled() bool;
 
 pub fn frameStatsEnabled() bool {
     return sg_frame_stats_enabled();
 }
 
-pub extern fn sg_query_frame_stats() FrameStats;
+extern fn sg_query_frame_stats() FrameStats;
 
 pub fn queryFrameStats() FrameStats {
     return sg_query_frame_stats();
@@ -4788,7 +4788,7 @@ pub const GlAttachmentsInfo = extern struct {
 };
 
 /// D3D11: return ID3D11Device
-pub extern fn sg_d3d11_device() ?*const anyopaque;
+extern fn sg_d3d11_device() ?*const anyopaque;
 
 /// D3D11: return ID3D11Device
 pub fn d3d11Device() ?*const anyopaque {
@@ -4796,7 +4796,7 @@ pub fn d3d11Device() ?*const anyopaque {
 }
 
 /// D3D11: return ID3D11DeviceContext
-pub extern fn sg_d3d11_device_context() ?*const anyopaque;
+extern fn sg_d3d11_device_context() ?*const anyopaque;
 
 /// D3D11: return ID3D11DeviceContext
 pub fn d3d11DeviceContext() ?*const anyopaque {
@@ -4804,7 +4804,7 @@ pub fn d3d11DeviceContext() ?*const anyopaque {
 }
 
 /// D3D11: get internal buffer resource objects
-pub extern fn sg_d3d11_query_buffer_info(Buffer) D3d11BufferInfo;
+extern fn sg_d3d11_query_buffer_info(Buffer) D3d11BufferInfo;
 
 /// D3D11: get internal buffer resource objects
 pub fn d3d11QueryBufferInfo(buf: Buffer) D3d11BufferInfo {
@@ -4812,7 +4812,7 @@ pub fn d3d11QueryBufferInfo(buf: Buffer) D3d11BufferInfo {
 }
 
 /// D3D11: get internal image resource objects
-pub extern fn sg_d3d11_query_image_info(Image) D3d11ImageInfo;
+extern fn sg_d3d11_query_image_info(Image) D3d11ImageInfo;
 
 /// D3D11: get internal image resource objects
 pub fn d3d11QueryImageInfo(img: Image) D3d11ImageInfo {
@@ -4820,7 +4820,7 @@ pub fn d3d11QueryImageInfo(img: Image) D3d11ImageInfo {
 }
 
 /// D3D11: get internal sampler resource objects
-pub extern fn sg_d3d11_query_sampler_info(Sampler) D3d11SamplerInfo;
+extern fn sg_d3d11_query_sampler_info(Sampler) D3d11SamplerInfo;
 
 /// D3D11: get internal sampler resource objects
 pub fn d3d11QuerySamplerInfo(smp: Sampler) D3d11SamplerInfo {
@@ -4828,7 +4828,7 @@ pub fn d3d11QuerySamplerInfo(smp: Sampler) D3d11SamplerInfo {
 }
 
 /// D3D11: get internal shader resource objects
-pub extern fn sg_d3d11_query_shader_info(Shader) D3d11ShaderInfo;
+extern fn sg_d3d11_query_shader_info(Shader) D3d11ShaderInfo;
 
 /// D3D11: get internal shader resource objects
 pub fn d3d11QueryShaderInfo(shd: Shader) D3d11ShaderInfo {
@@ -4836,7 +4836,7 @@ pub fn d3d11QueryShaderInfo(shd: Shader) D3d11ShaderInfo {
 }
 
 /// D3D11: get internal pipeline resource objects
-pub extern fn sg_d3d11_query_pipeline_info(Pipeline) D3d11PipelineInfo;
+extern fn sg_d3d11_query_pipeline_info(Pipeline) D3d11PipelineInfo;
 
 /// D3D11: get internal pipeline resource objects
 pub fn d3d11QueryPipelineInfo(pip: Pipeline) D3d11PipelineInfo {
@@ -4844,7 +4844,7 @@ pub fn d3d11QueryPipelineInfo(pip: Pipeline) D3d11PipelineInfo {
 }
 
 /// D3D11: get internal pass resource objects
-pub extern fn sg_d3d11_query_attachments_info(Attachments) D3d11AttachmentsInfo;
+extern fn sg_d3d11_query_attachments_info(Attachments) D3d11AttachmentsInfo;
 
 /// D3D11: get internal pass resource objects
 pub fn d3d11QueryAttachmentsInfo(atts: Attachments) D3d11AttachmentsInfo {
@@ -4852,7 +4852,7 @@ pub fn d3d11QueryAttachmentsInfo(atts: Attachments) D3d11AttachmentsInfo {
 }
 
 /// Metal: return __bridge-casted MTLDevice
-pub extern fn sg_mtl_device() ?*const anyopaque;
+extern fn sg_mtl_device() ?*const anyopaque;
 
 /// Metal: return __bridge-casted MTLDevice
 pub fn mtlDevice() ?*const anyopaque {
@@ -4860,7 +4860,7 @@ pub fn mtlDevice() ?*const anyopaque {
 }
 
 /// Metal: return __bridge-casted MTLRenderCommandEncoder in current pass (or zero if outside pass)
-pub extern fn sg_mtl_render_command_encoder() ?*const anyopaque;
+extern fn sg_mtl_render_command_encoder() ?*const anyopaque;
 
 /// Metal: return __bridge-casted MTLRenderCommandEncoder in current pass (or zero if outside pass)
 pub fn mtlRenderCommandEncoder() ?*const anyopaque {
@@ -4868,7 +4868,7 @@ pub fn mtlRenderCommandEncoder() ?*const anyopaque {
 }
 
 /// Metal: get internal __bridge-casted buffer resource objects
-pub extern fn sg_mtl_query_buffer_info(Buffer) MtlBufferInfo;
+extern fn sg_mtl_query_buffer_info(Buffer) MtlBufferInfo;
 
 /// Metal: get internal __bridge-casted buffer resource objects
 pub fn mtlQueryBufferInfo(buf: Buffer) MtlBufferInfo {
@@ -4876,7 +4876,7 @@ pub fn mtlQueryBufferInfo(buf: Buffer) MtlBufferInfo {
 }
 
 /// Metal: get internal __bridge-casted image resource objects
-pub extern fn sg_mtl_query_image_info(Image) MtlImageInfo;
+extern fn sg_mtl_query_image_info(Image) MtlImageInfo;
 
 /// Metal: get internal __bridge-casted image resource objects
 pub fn mtlQueryImageInfo(img: Image) MtlImageInfo {
@@ -4884,7 +4884,7 @@ pub fn mtlQueryImageInfo(img: Image) MtlImageInfo {
 }
 
 /// Metal: get internal __bridge-casted sampler resource objects
-pub extern fn sg_mtl_query_sampler_info(Sampler) MtlSamplerInfo;
+extern fn sg_mtl_query_sampler_info(Sampler) MtlSamplerInfo;
 
 /// Metal: get internal __bridge-casted sampler resource objects
 pub fn mtlQuerySamplerInfo(smp: Sampler) MtlSamplerInfo {
@@ -4892,7 +4892,7 @@ pub fn mtlQuerySamplerInfo(smp: Sampler) MtlSamplerInfo {
 }
 
 /// Metal: get internal __bridge-casted shader resource objects
-pub extern fn sg_mtl_query_shader_info(Shader) MtlShaderInfo;
+extern fn sg_mtl_query_shader_info(Shader) MtlShaderInfo;
 
 /// Metal: get internal __bridge-casted shader resource objects
 pub fn mtlQueryShaderInfo(shd: Shader) MtlShaderInfo {
@@ -4900,7 +4900,7 @@ pub fn mtlQueryShaderInfo(shd: Shader) MtlShaderInfo {
 }
 
 /// Metal: get internal __bridge-casted pipeline resource objects
-pub extern fn sg_mtl_query_pipeline_info(Pipeline) MtlPipelineInfo;
+extern fn sg_mtl_query_pipeline_info(Pipeline) MtlPipelineInfo;
 
 /// Metal: get internal __bridge-casted pipeline resource objects
 pub fn mtlQueryPipelineInfo(pip: Pipeline) MtlPipelineInfo {
@@ -4908,7 +4908,7 @@ pub fn mtlQueryPipelineInfo(pip: Pipeline) MtlPipelineInfo {
 }
 
 /// WebGPU: return WGPUDevice object
-pub extern fn sg_wgpu_device() ?*const anyopaque;
+extern fn sg_wgpu_device() ?*const anyopaque;
 
 /// WebGPU: return WGPUDevice object
 pub fn wgpuDevice() ?*const anyopaque {
@@ -4916,7 +4916,7 @@ pub fn wgpuDevice() ?*const anyopaque {
 }
 
 /// WebGPU: return WGPUQueue object
-pub extern fn sg_wgpu_queue() ?*const anyopaque;
+extern fn sg_wgpu_queue() ?*const anyopaque;
 
 /// WebGPU: return WGPUQueue object
 pub fn wgpuQueue() ?*const anyopaque {
@@ -4924,7 +4924,7 @@ pub fn wgpuQueue() ?*const anyopaque {
 }
 
 /// WebGPU: return this frame's WGPUCommandEncoder
-pub extern fn sg_wgpu_command_encoder() ?*const anyopaque;
+extern fn sg_wgpu_command_encoder() ?*const anyopaque;
 
 /// WebGPU: return this frame's WGPUCommandEncoder
 pub fn wgpuCommandEncoder() ?*const anyopaque {
@@ -4932,7 +4932,7 @@ pub fn wgpuCommandEncoder() ?*const anyopaque {
 }
 
 /// WebGPU: return WGPURenderPassEncoder of current pass
-pub extern fn sg_wgpu_render_pass_encoder() ?*const anyopaque;
+extern fn sg_wgpu_render_pass_encoder() ?*const anyopaque;
 
 /// WebGPU: return WGPURenderPassEncoder of current pass
 pub fn wgpuRenderPassEncoder() ?*const anyopaque {
@@ -4940,7 +4940,7 @@ pub fn wgpuRenderPassEncoder() ?*const anyopaque {
 }
 
 /// WebGPU: get internal buffer resource objects
-pub extern fn sg_wgpu_query_buffer_info(Buffer) WgpuBufferInfo;
+extern fn sg_wgpu_query_buffer_info(Buffer) WgpuBufferInfo;
 
 /// WebGPU: get internal buffer resource objects
 pub fn wgpuQueryBufferInfo(buf: Buffer) WgpuBufferInfo {
@@ -4948,7 +4948,7 @@ pub fn wgpuQueryBufferInfo(buf: Buffer) WgpuBufferInfo {
 }
 
 /// WebGPU: get internal image resource objects
-pub extern fn sg_wgpu_query_image_info(Image) WgpuImageInfo;
+extern fn sg_wgpu_query_image_info(Image) WgpuImageInfo;
 
 /// WebGPU: get internal image resource objects
 pub fn wgpuQueryImageInfo(img: Image) WgpuImageInfo {
@@ -4956,7 +4956,7 @@ pub fn wgpuQueryImageInfo(img: Image) WgpuImageInfo {
 }
 
 /// WebGPU: get internal sampler resource objects
-pub extern fn sg_wgpu_query_sampler_info(Sampler) WgpuSamplerInfo;
+extern fn sg_wgpu_query_sampler_info(Sampler) WgpuSamplerInfo;
 
 /// WebGPU: get internal sampler resource objects
 pub fn wgpuQuerySamplerInfo(smp: Sampler) WgpuSamplerInfo {
@@ -4964,7 +4964,7 @@ pub fn wgpuQuerySamplerInfo(smp: Sampler) WgpuSamplerInfo {
 }
 
 /// WebGPU: get internal shader resource objects
-pub extern fn sg_wgpu_query_shader_info(Shader) WgpuShaderInfo;
+extern fn sg_wgpu_query_shader_info(Shader) WgpuShaderInfo;
 
 /// WebGPU: get internal shader resource objects
 pub fn wgpuQueryShaderInfo(shd: Shader) WgpuShaderInfo {
@@ -4972,7 +4972,7 @@ pub fn wgpuQueryShaderInfo(shd: Shader) WgpuShaderInfo {
 }
 
 /// WebGPU: get internal pipeline resource objects
-pub extern fn sg_wgpu_query_pipeline_info(Pipeline) WgpuPipelineInfo;
+extern fn sg_wgpu_query_pipeline_info(Pipeline) WgpuPipelineInfo;
 
 /// WebGPU: get internal pipeline resource objects
 pub fn wgpuQueryPipelineInfo(pip: Pipeline) WgpuPipelineInfo {
@@ -4980,7 +4980,7 @@ pub fn wgpuQueryPipelineInfo(pip: Pipeline) WgpuPipelineInfo {
 }
 
 /// WebGPU: get internal pass resource objects
-pub extern fn sg_wgpu_query_attachments_info(Attachments) WgpuAttachmentsInfo;
+extern fn sg_wgpu_query_attachments_info(Attachments) WgpuAttachmentsInfo;
 
 /// WebGPU: get internal pass resource objects
 pub fn wgpuQueryAttachmentsInfo(atts: Attachments) WgpuAttachmentsInfo {
@@ -4988,7 +4988,7 @@ pub fn wgpuQueryAttachmentsInfo(atts: Attachments) WgpuAttachmentsInfo {
 }
 
 /// GL: get internal buffer resource objects
-pub extern fn sg_gl_query_buffer_info(Buffer) GlBufferInfo;
+extern fn sg_gl_query_buffer_info(Buffer) GlBufferInfo;
 
 /// GL: get internal buffer resource objects
 pub fn glQueryBufferInfo(buf: Buffer) GlBufferInfo {
@@ -4996,7 +4996,7 @@ pub fn glQueryBufferInfo(buf: Buffer) GlBufferInfo {
 }
 
 /// GL: get internal image resource objects
-pub extern fn sg_gl_query_image_info(Image) GlImageInfo;
+extern fn sg_gl_query_image_info(Image) GlImageInfo;
 
 /// GL: get internal image resource objects
 pub fn glQueryImageInfo(img: Image) GlImageInfo {
@@ -5004,7 +5004,7 @@ pub fn glQueryImageInfo(img: Image) GlImageInfo {
 }
 
 /// GL: get internal sampler resource objects
-pub extern fn sg_gl_query_sampler_info(Sampler) GlSamplerInfo;
+extern fn sg_gl_query_sampler_info(Sampler) GlSamplerInfo;
 
 /// GL: get internal sampler resource objects
 pub fn glQuerySamplerInfo(smp: Sampler) GlSamplerInfo {
@@ -5012,7 +5012,7 @@ pub fn glQuerySamplerInfo(smp: Sampler) GlSamplerInfo {
 }
 
 /// GL: get internal shader resource objects
-pub extern fn sg_gl_query_shader_info(Shader) GlShaderInfo;
+extern fn sg_gl_query_shader_info(Shader) GlShaderInfo;
 
 /// GL: get internal shader resource objects
 pub fn glQueryShaderInfo(shd: Shader) GlShaderInfo {
@@ -5020,7 +5020,7 @@ pub fn glQueryShaderInfo(shd: Shader) GlShaderInfo {
 }
 
 /// GL: get internal pass resource objects
-pub extern fn sg_gl_query_attachments_info(Attachments) GlAttachmentsInfo;
+extern fn sg_gl_query_attachments_info(Attachments) GlAttachmentsInfo;
 
 /// GL: get internal pass resource objects
 pub fn glQueryAttachmentsInfo(atts: Attachments) GlAttachmentsInfo {

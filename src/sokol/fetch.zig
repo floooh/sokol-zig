@@ -1067,7 +1067,7 @@ pub const Request = extern struct {
 };
 
 /// setup sokol-fetch (can be called on multiple threads)
-pub extern fn sfetch_setup([*c]const Desc) void;
+extern fn sfetch_setup([*c]const Desc) void;
 
 /// setup sokol-fetch (can be called on multiple threads)
 pub fn setup(desc: Desc) void {
@@ -1075,7 +1075,7 @@ pub fn setup(desc: Desc) void {
 }
 
 /// discard a sokol-fetch context
-pub extern fn sfetch_shutdown() void;
+extern fn sfetch_shutdown() void;
 
 /// discard a sokol-fetch context
 pub fn shutdown() void {
@@ -1083,7 +1083,7 @@ pub fn shutdown() void {
 }
 
 /// return true if sokol-fetch has been setup
-pub extern fn sfetch_valid() bool;
+extern fn sfetch_valid() bool;
 
 /// return true if sokol-fetch has been setup
 pub fn valid() bool {
@@ -1091,7 +1091,7 @@ pub fn valid() bool {
 }
 
 /// get the desc struct that was passed to sfetch_setup()
-pub extern fn sfetch_desc() Desc;
+extern fn sfetch_desc() Desc;
 
 /// get the desc struct that was passed to sfetch_setup()
 pub fn getDesc() Desc {
@@ -1099,7 +1099,7 @@ pub fn getDesc() Desc {
 }
 
 /// return the max userdata size in number of bytes (SFETCH_MAX_USERDATA_UINT64 * sizeof(uint64_t))
-pub extern fn sfetch_max_userdata_bytes() i32;
+extern fn sfetch_max_userdata_bytes() i32;
 
 /// return the max userdata size in number of bytes (SFETCH_MAX_USERDATA_UINT64 * sizeof(uint64_t))
 pub fn maxUserdataBytes() i32 {
@@ -1107,7 +1107,7 @@ pub fn maxUserdataBytes() i32 {
 }
 
 /// return the value of the SFETCH_MAX_PATH implementation config value
-pub extern fn sfetch_max_path() i32;
+extern fn sfetch_max_path() i32;
 
 /// return the value of the SFETCH_MAX_PATH implementation config value
 pub fn maxPath() i32 {
@@ -1115,7 +1115,7 @@ pub fn maxPath() i32 {
 }
 
 /// send a fetch-request, get handle to request back
-pub extern fn sfetch_send([*c]const Request) Handle;
+extern fn sfetch_send([*c]const Request) Handle;
 
 /// send a fetch-request, get handle to request back
 pub fn send(request: Request) Handle {
@@ -1123,7 +1123,7 @@ pub fn send(request: Request) Handle {
 }
 
 /// return true if a handle is valid *and* the request is alive
-pub extern fn sfetch_handle_valid(Handle) bool;
+extern fn sfetch_handle_valid(Handle) bool;
 
 /// return true if a handle is valid *and* the request is alive
 pub fn handleValid(h: Handle) bool {
@@ -1131,7 +1131,7 @@ pub fn handleValid(h: Handle) bool {
 }
 
 /// do per-frame work, moves requests into and out of IO threads, and invokes response-callbacks
-pub extern fn sfetch_dowork() void;
+extern fn sfetch_dowork() void;
 
 /// do per-frame work, moves requests into and out of IO threads, and invokes response-callbacks
 pub fn dowork() void {
@@ -1139,7 +1139,7 @@ pub fn dowork() void {
 }
 
 /// bind a data buffer to a request (request must not currently have a buffer bound, must be called from response callback
-pub extern fn sfetch_bind_buffer(Handle, Range) void;
+extern fn sfetch_bind_buffer(Handle, Range) void;
 
 /// bind a data buffer to a request (request must not currently have a buffer bound, must be called from response callback
 pub fn bindBuffer(h: Handle, buffer: Range) void {
@@ -1147,7 +1147,7 @@ pub fn bindBuffer(h: Handle, buffer: Range) void {
 }
 
 /// clear the 'buffer binding' of a request, returns previous buffer pointer (can be 0), must be called from response callback
-pub extern fn sfetch_unbind_buffer(Handle) ?*anyopaque;
+extern fn sfetch_unbind_buffer(Handle) ?*anyopaque;
 
 /// clear the 'buffer binding' of a request, returns previous buffer pointer (can be 0), must be called from response callback
 pub fn unbindBuffer(h: Handle) ?*anyopaque {
@@ -1155,7 +1155,7 @@ pub fn unbindBuffer(h: Handle) ?*anyopaque {
 }
 
 /// cancel a request that's in flight (will call response callback with .cancelled + .finished)
-pub extern fn sfetch_cancel(Handle) void;
+extern fn sfetch_cancel(Handle) void;
 
 /// cancel a request that's in flight (will call response callback with .cancelled + .finished)
 pub fn cancel(h: Handle) void {
@@ -1163,7 +1163,7 @@ pub fn cancel(h: Handle) void {
 }
 
 /// pause a request (will call response callback each frame with .paused)
-pub extern fn sfetch_pause(Handle) void;
+extern fn sfetch_pause(Handle) void;
 
 /// pause a request (will call response callback each frame with .paused)
 pub fn pause(h: Handle) void {
@@ -1171,7 +1171,7 @@ pub fn pause(h: Handle) void {
 }
 
 /// continue a paused request
-pub extern fn sfetch_continue(Handle) void;
+extern fn sfetch_continue(Handle) void;
 
 /// continue a paused request
 pub fn continueFetching(h: Handle) void {
