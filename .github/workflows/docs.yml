@@ -12,7 +12,8 @@ jobs:
       - uses: mlugg/setup-zig@v1
         with:
             version: master
-      - run: zig build-lib src/sokol/sokol.zig -femit-docs
+      - name: gen-docs
+        run: gendocs.sh
       - name: upload-artifact
         uses: actions/upload-artifact@main
         with:
