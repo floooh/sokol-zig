@@ -13,7 +13,7 @@ jobs:
         with:
             version: master
       - name: gen-docs
-        run: gendocs.sh
+        run: ./gendocs.sh
       - name: upload-artifact
         uses: actions/upload-artifact@main
         with:
