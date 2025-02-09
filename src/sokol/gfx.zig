@@ -1559,7 +1559,7 @@
 //   as soon as the vertex format shows up in webgpu.h, sokol_gfx.h will add support.
 //
 // - Likewise, the following sokol-gfx vertex formats are not supported in WebGPU:
-//   R16, R16SN, RG16, RG16SN, RGBA16, RGBA16SN and all PVRTC compressed format.
+//   R16, R16SN, RG16, RG16SN, RGBA16, RGBA16SN.
 //   Unlike unsupported vertex formats, unsupported pixel formats can be queried
 //   in cross-backend code via sg_query_pixel_format() though.
 //
@@ -1836,10 +1836,6 @@ pub const PixelFormat = enum(i32) {
     BC6H_RGBUF,
     BC7_RGBA,
     BC7_SRGBA,
-    PVRTC_RGB_2BPP,
-    PVRTC_RGB_4BPP,
-    PVRTC_RGBA_2BPP,
-    PVRTC_RGBA_4BPP,
     ETC2_RGB8,
     ETC2_SRGB8,
     ETC2_RGB8A1,
