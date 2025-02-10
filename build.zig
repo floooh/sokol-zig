@@ -526,7 +526,7 @@ fn buildDocs(b: *Build, target: Build.ResolvedTarget) void {
         .target = target,
         .optimize = .Debug,
     });
-    // custom tool to reduce the sources.tar file size
+    // need to invoke an external tool to inject custom functionality into a build step:
     const tool = b.addExecutable(.{
         .name = "fixdoctar",
         .root_source_file = b.path("tools/fixdoctar.zig"),
