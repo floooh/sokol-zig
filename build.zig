@@ -533,8 +533,7 @@ fn buildDocs(b: *Build, target: Build.ResolvedTarget) void {
         .target = b.graph.host,
     });
     const tool_step = b.addRunArtifact(tool);
-    tool_step.addArgs(&.{ "--prefix", "sokol" });
-    tool_step.addArg("--input");
+    tool_step.addArgs(&.{ "--prefix", "sokol", "--input" });
     tool_step.addDirectoryArg(lib.getEmittedDocs());
     tool_step.addArg("--output");
     const sources_tar = tool_step.addOutputFileArg("sources.tar");

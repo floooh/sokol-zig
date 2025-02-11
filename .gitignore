@@ -1,7 +1,5 @@
 .vscode/
-docs
+.DS_Store
 zig-*/
 .zig-*/
 NUL
-*.a
-*.a.o
