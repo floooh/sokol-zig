@@ -79,6 +79,8 @@ pub fn build(b: *Build) !void {
 
     // a manually invoked build step to recompile shaders via sokol-shdc
     buildShaders(b, target);
+    // a manually invoked build step to build auto-docs
+    buildDocs(b, target);
 }
 
 // build one of the examples
@@ -515,4 +517,38 @@ fn buildShaders(b: *Build, target: Build.ResolvedTarget) void {
         });
         shdc_step.dependOn(&cmd.step);
     }
+}
+
+fn buildDocs(b: *Build, target: Build.ResolvedTarget) void {
+    const lib = b.addStaticLibrary(.{
+        .name = "sokol",
+        .root_source_file = b.path("src/sokol/sokol.zig"),
+        .target = target,
+        .optimize = .Debug,
+    });
+    // need to invoke an external tool to inject custom functionality into a build step:
+    const tool = b.addExecutable(.{
+        .name = "fixdoctar",
+        .root_source_file = b.path("tools/fixdoctar.zig"),
+        .target = b.graph.host,
+    });
+    const tool_step = b.addRunArtifact(tool);
+    tool_step.addArgs(&.{ "--prefix", "sokol", "--input" });
+    tool_step.addDirectoryArg(lib.getEmittedDocs());
+    tool_step.addArg("--output");
+    const sources_tar = tool_step.addOutputFileArg("sources.tar");
+    tool_step.step.dependOn(&lib.step);
+
+    // install doc-gen output and the smaller sources.tar on top
+    const install_docs = b.addInstallDirectory(.{
+        .source_dir = lib.getEmittedDocs(),
+        .install_dir = .prefix,
+        .install_subdir = "docs",
+    });
+    install_docs.step.dependOn(&tool_step.step);
+    const overwrite_sources_tar = b.addInstallFile(sources_tar, "docs/sources.tar");
+    overwrite_sources_tar.step.dependOn(&install_docs.step);
+
+    const doc_step = b.step("docs", "Build documentation");
+    doc_step.dependOn(&overwrite_sources_tar.step);
 }
