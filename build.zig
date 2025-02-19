@@ -94,7 +94,7 @@ const ExampleOptions = struct {
 fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !void {
     const main_src = "src/examples/" ++ name ++ ".zig";
     var run: ?*Build.Step.Run = null;
-    if (!options.target.result.isWasm()) {
+    if (!options.target.result.cpu.arch.isWasm()) {
         // for native platforms, build into a regular executable
         const example = b.addExecutable(.{
             .name = name,
@@ -140,13 +140,13 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !
 pub fn resolveSokolBackend(backend: SokolBackend, target: std.Target) SokolBackend {
     if (backend != .auto) {
         return backend;
-    } else if (target.isDarwin()) {
+    } else if (target.os.tag.isDarwin()) {
         return .metal;
     } else if (target.os.tag == .windows) {
         return .d3d11;
-    } else if (target.isWasm()) {
+    } else if (target.cpu.arch.isWasm()) {
         return .gles3;
-    } else if (target.isAndroid()) {
+    } else if (target.abi.isAndroid()) {
         return .gles3;
     } else {
         return .gl;
@@ -194,7 +194,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     // sokol is used as package manager dependency via 'dep_sokol.artifact("sokol_clib")'
     b.installArtifact(lib);
 
-    if (options.target.result.isWasm()) {
+    if (options.target.result.cpu.arch.isWasm()) {
         // make sure we're building for the wasm32-emscripten target, not wasm32-freestanding
         if (lib.rootModuleTarget().os.tag != .emscripten) {
             std.log.err("Please build with 'zig build -Dtarget=wasm32-emscripten", .{});
@@ -225,7 +225,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     }
 
     // platform specific compile and link options
-    if (lib.rootModuleTarget().isDarwin()) {
+    if (lib.rootModuleTarget().os.tag.isDarwin()) {
         try cflags.append("-ObjC");
         lib.linkFramework("Foundation");
         lib.linkFramework("AudioToolbox");
@@ -247,7 +247,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
                 lib.linkFramework("OpenGL");
             }
         }
-    } else if (lib.rootModuleTarget().isAndroid()) {
+    } else if (lib.rootModuleTarget().abi.isAndroid()) {
         if (.gles3 != backend) {
             @panic("For android targets, you must have backend set to GLES3");
         }
@@ -500,7 +500,7 @@ fn buildShaders(b: *Build, target: Build.ResolvedTarget) void {
     }
     const shdc_path = sokol_tools_bin_dir ++ optional_shdc.?;
     const shdc_step = b.step("shaders", "Compile shaders (needs ../sokol-tools-bin)");
-    const glsl = if (target.result.isDarwin()) "glsl410" else "glsl430";
+    const glsl = if (target.result.os.tag.isDarwin()) "glsl410" else "glsl430";
     const slang = glsl ++ ":metal_macos:hlsl5:glsl300es:wgsl";
     inline for (shaders) |shader| {
         const cmd = b.addSystemCommand(&.{

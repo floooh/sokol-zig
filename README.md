@@ -167,7 +167,7 @@ pub fn build(b: *Build) !void {
     });
 
     // special case handling for native vs web build
-    if (target.result.isWasm()) {
+    if (target.result.cpu.arch.isWasm()) {
         try buildWeb(b, target, optimize, dep_sokol);
     } else {
         try buildNative(b, target, optimize, dep_sokol);
