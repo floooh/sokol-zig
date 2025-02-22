@@ -66,6 +66,7 @@ pub fn build(b: *Build) !void {
         "debugtext-userfont",
         "shapes",
         "vertexpull",
+        "instancing-compute",
     };
     inline for (examples) |example| {
         try buildExample(b, example, .{
@@ -78,7 +79,7 @@ pub fn build(b: *Build) !void {
     }
 
     // a manually invoked build step to recompile shaders via sokol-shdc
-    buildShaders(b, target);
+    buildShaders(b);
     // a manually invoked build step to build auto-docs
     buildDocs(b, target);
 }
@@ -471,22 +472,23 @@ fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
 // TODO: install sokol-shdc via package manager
-fn buildShaders(b: *Build, target: Build.ResolvedTarget) void {
+fn buildShaders(b: *Build) void {
     const sokol_tools_bin_dir = "../sokol-tools-bin/bin/";
     const shaders_dir = "src/examples/shaders/";
     const shaders = .{
-        "bufferoffsets.glsl",
-        "cube.glsl",
-        "instancing.glsl",
-        "mrt.glsl",
-        "noninterleaved.glsl",
-        "offscreen.glsl",
-        "quad.glsl",
-        "shapes.glsl",
-        "texcube.glsl",
-        "blend.glsl",
-        "vertexpull.glsl",
-        "triangle.glsl",
+        .{ .src = "bufferoffsets.glsl", .needs_compute = false },
+        .{ .src = "cube.glsl", .needs_compute = false },
+        .{ .src = "instancing.glsl", .needs_compute = false },
+        .{ .src = "mrt.glsl", .needs_compute = false },
+        .{ .src = "noninterleaved.glsl", .needs_compute = false },
+        .{ .src = "offscreen.glsl", .needs_compute = false },
+        .{ .src = "quad.glsl", .needs_compute = false },
+        .{ .src = "shapes.glsl", .needs_compute = false },
+        .{ .src = "texcube.glsl", .needs_compute = false },
+        .{ .src = "blend.glsl", .needs_compute = false },
+        .{ .src = "triangle.glsl", .needs_compute = false },
+        .{ .src = "vertexpull.glsl", .needs_compute = true },
+        .{ .src = "instancing-compute.glsl", .needs_compute = true },
     };
     const optional_shdc: ?[:0]const u8 = comptime switch (builtin.os.tag) {
         .windows => "win32/sokol-shdc.exe",
@@ -500,15 +502,17 @@ fn buildShaders(b: *Build, target: Build.ResolvedTarget) void {
     }
     const shdc_path = sokol_tools_bin_dir ++ optional_shdc.?;
     const shdc_step = b.step("shaders", "Compile shaders (needs ../sokol-tools-bin)");
-    const glsl = if (target.result.os.tag.isDarwin()) "glsl410" else "glsl430";
-    const slang = glsl ++ ":metal_macos:hlsl5:glsl300es:wgsl";
     inline for (shaders) |shader| {
+        const slang = if (shader.needs_compute)
+            "glsl430:glsl310es:metal_macos:hlsl5:wgsl"
+        else
+            "glsl410:glsl300es:metal_macos:hlsl5:wgsl";
         const cmd = b.addSystemCommand(&.{
             shdc_path,
             "-i",
-            shaders_dir ++ shader,
+            shaders_dir ++ shader.src,
             "-o",
-            shaders_dir ++ shader ++ ".zig",
+            shaders_dir ++ shader.src ++ ".zig",
             "-l",
             slang,
             "-f",
