@@ -1559,7 +1559,7 @@
 //   as soon as the vertex format shows up in webgpu.h, sokol_gfx.h will add support.
 //
 // - Likewise, the following sokol-gfx vertex formats are not supported in WebGPU:
-//   R16, R16SN, RG16, RG16SN, RGBA16, RGBA16SN and all PVRTC compressed format.
+//   R16, R16SN, RG16, RG16SN, RGBA16, RGBA16SN.
 //   Unlike unsupported vertex formats, unsupported pixel formats can be queried
 //   in cross-backend code via sg_query_pixel_format() though.
 //
@@ -1836,10 +1836,6 @@ pub const PixelFormat = enum(i32) {
     BC6H_RGBUF,
     BC7_RGBA,
     BC7_SRGBA,
-    PVRTC_RGB_2BPP,
-    PVRTC_RGB_4BPP,
-    PVRTC_RGBA_2BPP,
-    PVRTC_RGBA_4BPP,
     ETC2_RGB8,
     ETC2_SRGB8,
     ETC2_RGB8A1,
@@ -2348,7 +2344,9 @@ pub const StencilOp = enum(i32) {
 ///             .dst_factor_alpha
 ///
 /// The default value is SG_BLENDFACTOR_ONE for source
-/// factors, and SG_BLENDFACTOR_ZERO for destination factors.
+/// factors, and for the destination SG_BLENDFACTOR_ZERO if the associated
+/// blend-op is ADD, SUBTRACT or REVERSE_SUBTRACT or SG_BLENDFACTOR_ONE
+/// if the associated blend-op is MIN or MAX.
 pub const BlendFactor = enum(i32) {
     DEFAULT,
     ZERO,
@@ -2387,6 +2385,8 @@ pub const BlendOp = enum(i32) {
     ADD,
     SUBTRACT,
     REVERSE_SUBTRACT,
+    MIN,
+    MAX,
     NUM,
 };
 
@@ -3721,6 +3721,7 @@ pub const LogItem = enum(i32) {
     VALIDATE_PIPELINEDESC_LAYOUT_STRIDE4,
     VALIDATE_PIPELINEDESC_ATTR_SEMANTICS,
     VALIDATE_PIPELINEDESC_SHADER_READONLY_STORAGEBUFFERS,
+    VALIDATE_PIPELINEDESC_BLENDOP_MINMAX_REQUIRES_BLENDFACTOR_ONE,
     VALIDATE_ATTACHMENTSDESC_CANARY,
     VALIDATE_ATTACHMENTSDESC_NO_ATTACHMENTS,
     VALIDATE_ATTACHMENTSDESC_NO_CONT_COLOR_ATTS,
