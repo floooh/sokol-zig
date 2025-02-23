@@ -490,7 +490,7 @@ fn buildShaders(b: *Build, target: Build.ResolvedTarget) void {
     };
     const optional_shdc: ?[:0]const u8 = comptime switch (builtin.os.tag) {
         .windows => "win32/sokol-shdc.exe",
-        .linux => "linux/sokol-shdc",
+        .linux => if (builtin.cpu.arch.isX86()) "linux/sokol-shdc" else "linux_arm64/sokol-shdc",
         .macos => if (builtin.cpu.arch.isX86()) "osx/sokol-shdc" else "osx_arm64/sokol-shdc",
         else => null,
     };
