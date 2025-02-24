@@ -12,6 +12,28 @@ pub const SokolBackend = enum {
     wgpu,
 };
 
+pub const TargetPlatform = enum {
+    android,
+    linux,
+    darwin, // macos and ios
+    macos,
+    ios,
+    windows,
+    web,
+};
+
+pub fn isPlatform(target: std.Target, platform: TargetPlatform) bool {
+    return switch (platform) {
+        .android => target.abi.isAndroid(),
+        .linux => target.os.tag == .linux,
+        .darwin => target.os.tag.isDarwin(),
+        .macos => target.os.tag == .macos,
+        .ios => target.os.tag == .ios,
+        .windows => target.os.tag == .windows,
+        .web => target.cpu.arch.isWasm(),
+    };
+}
+
 pub fn build(b: *Build) !void {
     const opt_use_gl = b.option(bool, "gl", "Force OpenGL (default: false)") orelse false;
     const opt_use_gles3 = b.option(bool, "gles3", "Force OpenGL ES3 (default: false)") orelse false;
@@ -95,7 +117,7 @@ const ExampleOptions = struct {
 fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !void {
     const main_src = "src/examples/" ++ name ++ ".zig";
     var run: ?*Build.Step.Run = null;
-    if (!options.target.result.cpu.arch.isWasm()) {
+    if (!isPlatform(options.target.result, .web)) {
         // for native platforms, build into a regular executable
         const example = b.addExecutable(.{
             .name = name,
@@ -141,13 +163,13 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !
 pub fn resolveSokolBackend(backend: SokolBackend, target: std.Target) SokolBackend {
     if (backend != .auto) {
         return backend;
-    } else if (target.os.tag.isDarwin()) {
+    } else if (isPlatform(target, .darwin)) {
         return .metal;
-    } else if (target.os.tag == .windows) {
+    } else if (isPlatform(target, .windows)) {
         return .d3d11;
-    } else if (target.cpu.arch.isWasm()) {
+    } else if (isPlatform(target, .web)) {
         return .gles3;
-    } else if (target.abi.isAndroid()) {
+    } else if (isPlatform(target, .android)) {
         return .gles3;
     } else {
         return .gl;
@@ -195,7 +217,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     // sokol is used as package manager dependency via 'dep_sokol.artifact("sokol_clib")'
     b.installArtifact(lib);
 
-    if (options.target.result.cpu.arch.isWasm()) {
+    if (isPlatform(options.target.result, .web)) {
         // make sure we're building for the wasm32-emscripten target, not wasm32-freestanding
         if (lib.rootModuleTarget().os.tag != .emscripten) {
             std.log.err("Please build with 'zig build -Dtarget=wasm32-emscripten", .{});
@@ -492,7 +514,7 @@ fn buildShaders(b: *Build) void {
     };
     const optional_shdc: ?[:0]const u8 = comptime switch (builtin.os.tag) {
         .windows => "win32/sokol-shdc.exe",
-        .linux => "linux/sokol-shdc",
+        .linux => if (builtin.cpu.arch.isX86()) "linux/sokol-shdc" else "linux_arm64/sokol-shdc",
         .macos => if (builtin.cpu.arch.isX86()) "osx/sokol-shdc" else "osx_arm64/sokol-shdc",
         else => null,
     };
