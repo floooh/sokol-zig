@@ -147,8 +147,8 @@ export fn frame() void {
     sg.dispatch(@intCast((state.num_particles + 63) / 64), 1, 1);
     sg.endPass();
 
-    // shader and pipeline for rendering the particles, this uses
-    // the compute-updated storage buffer to provide the particle positions
+    // render pass to render the particles via instancing, with the
+    // instance positions coming from the storage buffer
     state.ry += 60.0 * dt;
     const vs_params = computeVsParams(1.0, state.ry);
     sg.beginPass(.{
