@@ -23,15 +23,28 @@ pub const TargetPlatform = enum {
 };
 
 pub fn isPlatform(target: std.Target, platform: TargetPlatform) bool {
-    return switch (platform) {
-        .android => target.abi.isAndroid(),
-        .linux => target.os.tag == .linux,
-        .darwin => target.os.tag.isDarwin(),
-        .macos => target.os.tag == .macos,
-        .ios => target.os.tag == .ios,
-        .windows => target.os.tag == .windows,
-        .web => target.cpu.arch.isWasm(),
-    };
+    if (builtin.zig_version.major == 0 and builtin.zig_version.minor < 14) {
+        // FIXME: remove after zig 0.14.0 release
+        return switch (platform) {
+            .android => target.abi == .android,
+            .linux => target.os.tag == .linux,
+            .darwin => target.os.tag.isDarwin(),
+            .macos => target.os.tag == .macos,
+            .ios => target.os.tag == .ios,
+            .windows => target.os.tag == .windows,
+            .web => target.cpu.arch.isWasm(),
+        };
+    } else {
+        return switch (platform) {
+            .android => target.abi.isAndroid(),
+            .linux => target.os.tag == .linux,
+            .darwin => target.os.tag.isDarwin(),
+            .macos => target.os.tag == .macos,
+            .ios => target.os.tag == .ios,
+            .windows => target.os.tag == .windows,
+            .web => target.cpu.arch.isWasm(),
+        };
+    }
 }
 
 pub fn build(b: *Build) !void {
@@ -247,7 +260,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     }
 
     // platform specific compile and link options
-    if (lib.rootModuleTarget().os.tag.isDarwin()) {
+    if (isPlatform(lib.rootModuleTarget(), .darwin)) {
         try cflags.append("-ObjC");
         lib.linkFramework("Foundation");
         lib.linkFramework("AudioToolbox");
@@ -269,7 +282,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
                 lib.linkFramework("OpenGL");
             }
         }
-    } else if (lib.rootModuleTarget().abi.isAndroid()) {
+    } else if (isPlatform(lib.rootModuleTarget(), .android)) {
         if (.gles3 != backend) {
             @panic("For android targets, you must have backend set to GLES3");
         }
