@@ -290,7 +290,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         lib.linkSystemLibrary("EGL");
         lib.linkSystemLibrary("android");
         lib.linkSystemLibrary("log");
-    } else if (lib.rootModuleTarget().os.tag == .linux) {
+    } else if (isPlatform(lib.rootModuleTarget(), .linux)) {
         if (options.use_egl) try cflags.append("-DSOKOL_FORCE_EGL");
         if (!options.use_x11) try cflags.append("-DSOKOL_DISABLE_X11");
         if (!options.use_wayland) try cflags.append("-DSOKOL_DISABLE_WAYLAND");
@@ -311,7 +311,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         if (link_egl) {
             lib.linkSystemLibrary("EGL");
         }
-    } else if (lib.rootModuleTarget().os.tag == .windows) {
+    } else if (isPlatform(lib.rootModuleTarget(), .windows)) {
         lib.linkSystemLibrary("kernel32");
         lib.linkSystemLibrary("user32");
         lib.linkSystemLibrary("gdi32");
@@ -320,6 +320,8 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
             lib.linkSystemLibrary("d3d11");
             lib.linkSystemLibrary("dxgi");
         }
+    } else if (isPlatform(lib.rootModuleTarget(), .web)) {
+        try cflags.append("-fno-sanitize=undefined");
     }
 
     // finally add the C source files
