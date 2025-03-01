@@ -20,6 +20,5 @@ jobs:
             sudo apt-get install libglu1-mesa-dev mesa-common-dev xorg-dev libasound-dev
       - name: build Native
         run: zig build --summary all
-      # NOTE: WASM debug builds currently broken because of missing ubsan symbols
-      #- name: build Wasm
-      #  run: zig build --summary all -Dtarget=wasm32-emscripten
+      - name: build Wasm
+        run: zig build --summary all -Dtarget=wasm32-emscripten
