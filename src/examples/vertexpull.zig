@@ -29,7 +29,7 @@ export fn init() void {
     });
 
     // if storage buffers are not supported on the current backend, just render a red screen
-    if (!sg.queryFeatures().storage_buffer) {
+    if (!sg.queryFeatures().compute) {
         state.pass_action.colors[0] = .{
             .load_action = .CLEAR,
             .clear_value = .{ .r = 1, .g = 0, .b = 0, .a = 1 },
@@ -111,7 +111,7 @@ export fn frame() void {
     const vs_params = computeVsParams(state.rx, state.ry);
 
     sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
-    if (sg.queryFeatures().storage_buffer) {
+    if (sg.queryFeatures().compute) {
         sg.applyPipeline(state.pip);
         sg.applyBindings(state.bind);
         sg.applyUniforms(shd.UB_vs_params, sg.asRange(&vs_params));

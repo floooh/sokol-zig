@@ -1868,7 +1868,7 @@ pub const Features = extern struct {
     image_clamp_to_border: bool = false,
     mrt_independent_blend_state: bool = false,
     mrt_independent_write_mask: bool = false,
-    storage_buffer: bool = false,
+    compute: bool = false,
     msaa_image_bindings: bool = false,
 };
 
@@ -2618,6 +2618,7 @@ pub const Swapchain = extern struct {
 /// (clear to color=grey, depth=1 and stencil=0).
 pub const Pass = extern struct {
     _start_canary: u32 = 0,
+    compute: bool = false,
     action: PassAction = .{},
     attachments: Attachments = .{},
     swapchain: Swapchain = .{},
@@ -3009,6 +3010,7 @@ pub const ShaderStage = enum(i32) {
     NONE,
     VERTEX,
     FRAGMENT,
+    COMPUTE,
 };
 
 pub const ShaderFunction = extern struct {
@@ -3062,6 +3064,7 @@ pub const ShaderStorageBuffer = extern struct {
     stage: ShaderStage = .NONE,
     readonly: bool = false,
     hlsl_register_t_n: u8 = 0,
+    hlsl_register_u_n: u8 = 0,
     msl_buffer_n: u8 = 0,
     wgsl_group1_binding_n: u8 = 0,
     glsl_binding_n: u8 = 0,
@@ -3074,16 +3077,24 @@ pub const ShaderImageSamplerPair = extern struct {
     glsl_name: [*c]const u8 = null,
 };
 
+pub const MtlShaderThreadsPerThreadgroup = extern struct {
+    x: i32 = 0,
+    y: i32 = 0,
+    z: i32 = 0,
+};
+
 pub const ShaderDesc = extern struct {
     _start_canary: u32 = 0,
     vertex_func: ShaderFunction = .{},
     fragment_func: ShaderFunction = .{},
+    compute_func: ShaderFunction = .{},
     attrs: [16]ShaderVertexAttr = [_]ShaderVertexAttr{.{}} ** 16,
     uniform_blocks: [8]ShaderUniformBlock = [_]ShaderUniformBlock{.{}} ** 8,
     storage_buffers: [8]ShaderStorageBuffer = [_]ShaderStorageBuffer{.{}} ** 8,
     images: [16]ShaderImage = [_]ShaderImage{.{}} ** 16,
     samplers: [16]ShaderSampler = [_]ShaderSampler{.{}} ** 16,
     image_sampler_pairs: [16]ShaderImageSamplerPair = [_]ShaderImageSamplerPair{.{}} ** 16,
+    mtl_threads_per_threadgroup: MtlShaderThreadsPerThreadgroup = .{},
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
 };
@@ -3215,6 +3226,7 @@ pub const ColorTargetState = extern struct {
 
 pub const PipelineDesc = extern struct {
     _start_canary: u32 = 0,
+    compute: bool = false,
     shader: Shader = .{},
     layout: VertexLayoutState = .{},
     depth: DepthState = .{},
@@ -3296,7 +3308,7 @@ pub const AttachmentsDesc = extern struct {
 /// sg_query_sampler_info()
 /// sg_query_shader_info()
 /// sg_query_pipeline_info()
-/// sg_query_pass_info()
+/// sg_query_attachments_info()
 pub const SlotInfo = extern struct {
     state: ResourceState = .INITIAL,
     res_id: u32 = 0,
@@ -3352,6 +3364,7 @@ pub const FrameStatsGl = extern struct {
     num_enable_vertex_attrib_array: u32 = 0,
     num_disable_vertex_attrib_array: u32 = 0,
     num_uniform: u32 = 0,
+    num_memory_barriers: u32 = 0,
 };
 
 pub const FrameStatsD3d11Pass = extern struct {
@@ -3371,15 +3384,20 @@ pub const FrameStatsD3d11Pipeline = extern struct {
     num_vs_set_constant_buffers: u32 = 0,
     num_ps_set_shader: u32 = 0,
     num_ps_set_constant_buffers: u32 = 0,
+    num_cs_set_shader: u32 = 0,
+    num_cs_set_constant_buffers: u32 = 0,
 };
 
 pub const FrameStatsD3d11Bindings = extern struct {
     num_ia_set_vertex_buffers: u32 = 0,
     num_ia_set_index_buffer: u32 = 0,
     num_vs_set_shader_resources: u32 = 0,
-    num_ps_set_shader_resources: u32 = 0,
     num_vs_set_samplers: u32 = 0,
+    num_ps_set_shader_resources: u32 = 0,
     num_ps_set_samplers: u32 = 0,
+    num_cs_set_shader_resources: u32 = 0,
+    num_cs_set_samplers: u32 = 0,
+    num_cs_set_unordered_access_views: u32 = 0,
 };
 
 pub const FrameStatsD3d11Uniforms = extern struct {
@@ -3426,11 +3444,15 @@ pub const FrameStatsMetalBindings = extern struct {
     num_set_fragment_buffer: u32 = 0,
     num_set_fragment_texture: u32 = 0,
     num_set_fragment_sampler_state: u32 = 0,
+    num_set_compute_buffer: u32 = 0,
+    num_set_compute_texture: u32 = 0,
+    num_set_compute_sampler_state: u32 = 0,
 };
 
 pub const FrameStatsMetalUniforms = extern struct {
     num_set_vertex_buffer_offset: u32 = 0,
     num_set_fragment_buffer_offset: u32 = 0,
+    num_set_compute_buffer_offset: u32 = 0,
 };
 
 pub const FrameStatsMetal = extern struct {
@@ -3475,6 +3497,7 @@ pub const FrameStats = extern struct {
     num_apply_bindings: u32 = 0,
     num_apply_uniforms: u32 = 0,
     num_draw: u32 = 0,
+    num_dispatch: u32 = 0,
     num_update_buffer: u32 = 0,
     num_append_buffer: u32 = 0,
     num_update_image: u32 = 0,
@@ -3508,6 +3531,7 @@ pub const LogItem = enum(i32) {
     GL_FRAMEBUFFER_STATUS_UNKNOWN,
     D3D11_CREATE_BUFFER_FAILED,
     D3D11_CREATE_BUFFER_SRV_FAILED,
+    D3D11_CREATE_BUFFER_UAV_FAILED,
     D3D11_CREATE_DEPTH_TEXTURE_UNSUPPORTED_PIXEL_FORMAT,
     D3D11_CREATE_DEPTH_TEXTURE_FAILED,
     D3D11_CREATE_2D_TEXTURE_UNSUPPORTED_PIXEL_FORMAT,
@@ -3520,6 +3544,7 @@ pub const LogItem = enum(i32) {
     D3D11_CREATE_SAMPLER_STATE_FAILED,
     D3D11_UNIFORMBLOCK_HLSL_REGISTER_B_OUT_OF_RANGE,
     D3D11_STORAGEBUFFER_HLSL_REGISTER_T_OUT_OF_RANGE,
+    D3D11_STORAGEBUFFER_HLSL_REGISTER_U_OUT_OF_RANGE,
     D3D11_IMAGE_HLSL_REGISTER_T_OUT_OF_RANGE,
     D3D11_SAMPLER_HLSL_REGISTER_S_OUT_OF_RANGE,
     D3D11_LOAD_D3DCOMPILER_47_DLL_FAILED,
@@ -3547,6 +3572,8 @@ pub const LogItem = enum(i32) {
     METAL_STORAGEBUFFER_MSL_BUFFER_SLOT_OUT_OF_RANGE,
     METAL_IMAGE_MSL_TEXTURE_SLOT_OUT_OF_RANGE,
     METAL_SAMPLER_MSL_SAMPLER_SLOT_OUT_OF_RANGE,
+    METAL_CREATE_CPS_FAILED,
+    METAL_CREATE_CPS_OUTPUT,
     METAL_CREATE_RPS_FAILED,
     METAL_CREATE_RPS_OUTPUT,
     METAL_CREATE_DSS_FAILED,
@@ -3566,8 +3593,8 @@ pub const LogItem = enum(i32) {
     WGPU_SAMPLER_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
     WGPU_CREATE_PIPELINE_LAYOUT_FAILED,
     WGPU_CREATE_RENDER_PIPELINE_FAILED,
+    WGPU_CREATE_COMPUTE_PIPELINE_FAILED,
     WGPU_ATTACHMENTS_CREATE_TEXTURE_VIEW_FAILED,
-    DRAW_REQUIRED_BINDINGS_OR_UNIFORMS_MISSING,
     IDENTICAL_COMMIT_LISTENER,
     COMMIT_LISTENER_ARRAY_FULL,
     TRACE_HOOKS_NOT_ENABLED,
@@ -3602,12 +3629,13 @@ pub const LogItem = enum(i32) {
     PIPELINE_POOL_EXHAUSTED,
     PASS_POOL_EXHAUSTED,
     BEGINPASS_ATTACHMENT_INVALID,
+    APPLY_BINDINGS_STORAGE_BUFFER_TRACKER_EXHAUSTED,
     DRAW_WITHOUT_BINDINGS,
     VALIDATE_BUFFERDESC_CANARY,
-    VALIDATE_BUFFERDESC_SIZE,
-    VALIDATE_BUFFERDESC_DATA,
-    VALIDATE_BUFFERDESC_DATA_SIZE,
-    VALIDATE_BUFFERDESC_NO_DATA,
+    VALIDATE_BUFFERDESC_EXPECT_NONZERO_SIZE,
+    VALIDATE_BUFFERDESC_EXPECT_MATCHING_DATA_SIZE,
+    VALIDATE_BUFFERDESC_EXPECT_ZERO_DATA_SIZE,
+    VALIDATE_BUFFERDESC_EXPECT_NO_DATA,
     VALIDATE_BUFFERDESC_STORAGEBUFFER_SUPPORTED,
     VALIDATE_BUFFERDESC_STORAGEBUFFER_SIZE_MULTIPLE_4,
     VALIDATE_IMAGEDATA_NODATA,
@@ -3631,10 +3659,15 @@ pub const LogItem = enum(i32) {
     VALIDATE_SAMPLERDESC_CANARY,
     VALIDATE_SAMPLERDESC_ANISTROPIC_REQUIRES_LINEAR_FILTERING,
     VALIDATE_SHADERDESC_CANARY,
-    VALIDATE_SHADERDESC_SOURCE,
-    VALIDATE_SHADERDESC_BYTECODE,
-    VALIDATE_SHADERDESC_SOURCE_OR_BYTECODE,
+    VALIDATE_SHADERDESC_VERTEX_SOURCE,
+    VALIDATE_SHADERDESC_FRAGMENT_SOURCE,
+    VALIDATE_SHADERDESC_COMPUTE_SOURCE,
+    VALIDATE_SHADERDESC_VERTEX_SOURCE_OR_BYTECODE,
+    VALIDATE_SHADERDESC_FRAGMENT_SOURCE_OR_BYTECODE,
+    VALIDATE_SHADERDESC_COMPUTE_SOURCE_OR_BYTECODE,
+    VALIDATE_SHADERDESC_INVALID_SHADER_COMBO,
     VALIDATE_SHADERDESC_NO_BYTECODE_SIZE,
+    VALIDATE_SHADERDESC_METAL_THREADS_PER_THREADGROUP,
     VALIDATE_SHADERDESC_UNIFORMBLOCK_NO_CONT_MEMBERS,
     VALIDATE_SHADERDESC_UNIFORMBLOCK_SIZE_IS_ZERO,
     VALIDATE_SHADERDESC_UNIFORMBLOCK_METAL_BUFFER_SLOT_OUT_OF_RANGE,
@@ -3652,11 +3685,12 @@ pub const LogItem = enum(i32) {
     VALIDATE_SHADERDESC_STORAGEBUFFER_METAL_BUFFER_SLOT_COLLISION,
     VALIDATE_SHADERDESC_STORAGEBUFFER_HLSL_REGISTER_T_OUT_OF_RANGE,
     VALIDATE_SHADERDESC_STORAGEBUFFER_HLSL_REGISTER_T_COLLISION,
+    VALIDATE_SHADERDESC_STORAGEBUFFER_HLSL_REGISTER_U_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_STORAGEBUFFER_HLSL_REGISTER_U_COLLISION,
     VALIDATE_SHADERDESC_STORAGEBUFFER_GLSL_BINDING_OUT_OF_RANGE,
     VALIDATE_SHADERDESC_STORAGEBUFFER_GLSL_BINDING_COLLISION,
     VALIDATE_SHADERDESC_STORAGEBUFFER_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
     VALIDATE_SHADERDESC_STORAGEBUFFER_WGSL_GROUP1_BINDING_COLLISION,
-    VALIDATE_SHADERDESC_STORAGEBUFFER_READONLY,
     VALIDATE_SHADERDESC_IMAGE_METAL_TEXTURE_SLOT_OUT_OF_RANGE,
     VALIDATE_SHADERDESC_IMAGE_METAL_TEXTURE_SLOT_COLLISION,
     VALIDATE_SHADERDESC_IMAGE_HLSL_REGISTER_T_OUT_OF_RANGE,
@@ -3681,9 +3715,12 @@ pub const LogItem = enum(i32) {
     VALIDATE_SHADERDESC_ATTR_STRING_TOO_LONG,
     VALIDATE_PIPELINEDESC_CANARY,
     VALIDATE_PIPELINEDESC_SHADER,
+    VALIDATE_PIPELINEDESC_COMPUTE_SHADER_EXPECTED,
+    VALIDATE_PIPELINEDESC_NO_COMPUTE_SHADER_EXPECTED,
     VALIDATE_PIPELINEDESC_NO_CONT_ATTRS,
     VALIDATE_PIPELINEDESC_LAYOUT_STRIDE4,
     VALIDATE_PIPELINEDESC_ATTR_SEMANTICS,
+    VALIDATE_PIPELINEDESC_SHADER_READONLY_STORAGEBUFFERS,
     VALIDATE_PIPELINEDESC_BLENDOP_MINMAX_REQUIRES_BLENDFACTOR_ONE,
     VALIDATE_ATTACHMENTSDESC_CANARY,
     VALIDATE_ATTACHMENTSDESC_NO_ATTACHMENTS,
@@ -3717,6 +3754,7 @@ pub const LogItem = enum(i32) {
     VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_SIZES,
     VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_SAMPLE_COUNT,
     VALIDATE_BEGINPASS_CANARY,
+    VALIDATE_BEGINPASS_EXPECT_NO_ATTACHMENTS,
     VALIDATE_BEGINPASS_ATTACHMENTS_EXISTS,
     VALIDATE_BEGINPASS_ATTACHMENTS_VALID,
     VALIDATE_BEGINPASS_COLOR_ATTACHMENT_IMAGE,
@@ -3750,20 +3788,28 @@ pub const LogItem = enum(i32) {
     VALIDATE_BEGINPASS_SWAPCHAIN_WGPU_EXPECT_DEPTHSTENCILVIEW,
     VALIDATE_BEGINPASS_SWAPCHAIN_WGPU_EXPECT_DEPTHSTENCILVIEW_NOTSET,
     VALIDATE_BEGINPASS_SWAPCHAIN_GL_EXPECT_FRAMEBUFFER_NOTSET,
+    VALIDATE_AVP_RENDERPASS_EXPECTED,
+    VALIDATE_ASR_RENDERPASS_EXPECTED,
     VALIDATE_APIP_PIPELINE_VALID_ID,
     VALIDATE_APIP_PIPELINE_EXISTS,
     VALIDATE_APIP_PIPELINE_VALID,
+    VALIDATE_APIP_PASS_EXPECTED,
     VALIDATE_APIP_SHADER_EXISTS,
     VALIDATE_APIP_SHADER_VALID,
+    VALIDATE_APIP_COMPUTEPASS_EXPECTED,
+    VALIDATE_APIP_RENDERPASS_EXPECTED,
     VALIDATE_APIP_CURPASS_ATTACHMENTS_EXISTS,
     VALIDATE_APIP_CURPASS_ATTACHMENTS_VALID,
     VALIDATE_APIP_ATT_COUNT,
     VALIDATE_APIP_COLOR_FORMAT,
     VALIDATE_APIP_DEPTH_FORMAT,
     VALIDATE_APIP_SAMPLE_COUNT,
+    VALIDATE_ABND_PASS_EXPECTED,
     VALIDATE_ABND_PIPELINE,
     VALIDATE_ABND_PIPELINE_EXISTS,
     VALIDATE_ABND_PIPELINE_VALID,
+    VALIDATE_ABND_COMPUTE_EXPECTED_NO_VBS,
+    VALIDATE_ABND_COMPUTE_EXPECTED_NO_IB,
     VALIDATE_ABND_EXPECTED_VB,
     VALIDATE_ABND_VB_EXISTS,
     VALIDATE_ABND_VB_TYPE,
@@ -3788,9 +3834,20 @@ pub const LogItem = enum(i32) {
     VALIDATE_ABND_EXPECTED_STORAGEBUFFER_BINDING,
     VALIDATE_ABND_STORAGEBUFFER_EXISTS,
     VALIDATE_ABND_STORAGEBUFFER_BINDING_BUFFERTYPE,
-    VALIDATE_AUB_NO_PIPELINE,
-    VALIDATE_AUB_NO_UNIFORMBLOCK_AT_SLOT,
-    VALIDATE_AUB_SIZE,
+    VALIDATE_AU_PASS_EXPECTED,
+    VALIDATE_AU_NO_PIPELINE,
+    VALIDATE_AU_NO_UNIFORMBLOCK_AT_SLOT,
+    VALIDATE_AU_SIZE,
+    VALIDATE_DRAW_RENDERPASS_EXPECTED,
+    VALIDATE_DRAW_BASEELEMENT,
+    VALIDATE_DRAW_NUMELEMENTS,
+    VALIDATE_DRAW_NUMINSTANCES,
+    VALIDATE_DRAW_REQUIRED_BINDINGS_OR_UNIFORMS_MISSING,
+    VALIDATE_DISPATCH_COMPUTEPASS_EXPECTED,
+    VALIDATE_DISPATCH_NUMGROUPSX,
+    VALIDATE_DISPATCH_NUMGROUPSY,
+    VALIDATE_DISPATCH_NUMGROUPSZ,
+    VALIDATE_DISPATCH_REQUIRED_BINDINGS_OR_UNIFORMS_MISSING,
     VALIDATE_UPDATEBUF_USAGE,
     VALIDATE_UPDATEBUF_SIZE,
     VALIDATE_UPDATEBUF_ONCE,
@@ -3963,6 +4020,7 @@ pub const Desc = extern struct {
     pipeline_pool_size: i32 = 0,
     attachments_pool_size: i32 = 0,
     uniform_buffer_size: i32 = 0,
+    max_dispatch_calls_per_pass: i32 = 0,
     max_commit_listeners: i32 = 0,
     disable_validation: bool = false,
     d3d11_shader_debugging: bool = false,
@@ -4184,6 +4242,12 @@ extern fn sg_draw(u32, u32, u32) void;
 
 pub fn draw(base_element: u32, num_elements: u32, num_instances: u32) void {
     sg_draw(base_element, num_elements, num_instances);
+}
+
+extern fn sg_dispatch(i32, i32, i32) void;
+
+pub fn dispatch(num_groups_x: i32, num_groups_y: i32, num_groups_z: i32) void {
+    sg_dispatch(num_groups_x, num_groups_y, num_groups_z);
 }
 
 extern fn sg_end_pass() void;
@@ -4754,7 +4818,8 @@ pub const WgpuShaderInfo = extern struct {
 };
 
 pub const WgpuPipelineInfo = extern struct {
-    pip: ?*const anyopaque = null,
+    render_pipeline: ?*const anyopaque = null,
+    compute_pipeline: ?*const anyopaque = null,
 };
 
 pub const WgpuAttachmentsInfo = extern struct {
@@ -4860,12 +4925,20 @@ pub fn mtlDevice() ?*const anyopaque {
     return sg_mtl_device();
 }
 
-/// Metal: return __bridge-casted MTLRenderCommandEncoder in current pass (or zero if outside pass)
+/// Metal: return __bridge-casted MTLRenderCommandEncoder when inside render pass (otherwise zero)
 extern fn sg_mtl_render_command_encoder() ?*const anyopaque;
 
-/// Metal: return __bridge-casted MTLRenderCommandEncoder in current pass (or zero if outside pass)
+/// Metal: return __bridge-casted MTLRenderCommandEncoder when inside render pass (otherwise zero)
 pub fn mtlRenderCommandEncoder() ?*const anyopaque {
     return sg_mtl_render_command_encoder();
+}
+
+/// Metal: return __bridge-casted MTLComputeCommandEncoder when inside compute pass (otherwise zero)
+extern fn sg_mtl_compute_command_encoder() ?*const anyopaque;
+
+/// Metal: return __bridge-casted MTLComputeCommandEncoder when inside compute pass (otherwise zero)
+pub fn mtlComputeCommandEncoder() ?*const anyopaque {
+    return sg_mtl_compute_command_encoder();
 }
 
 /// Metal: get internal __bridge-casted buffer resource objects
@@ -4932,12 +5005,20 @@ pub fn wgpuCommandEncoder() ?*const anyopaque {
     return sg_wgpu_command_encoder();
 }
 
-/// WebGPU: return WGPURenderPassEncoder of current pass
+/// WebGPU: return WGPURenderPassEncoder of current pass (returns 0 when outside pass or in a compute pass)
 extern fn sg_wgpu_render_pass_encoder() ?*const anyopaque;
 
-/// WebGPU: return WGPURenderPassEncoder of current pass
+/// WebGPU: return WGPURenderPassEncoder of current pass (returns 0 when outside pass or in a compute pass)
 pub fn wgpuRenderPassEncoder() ?*const anyopaque {
     return sg_wgpu_render_pass_encoder();
+}
+
+/// WebGPU: return WGPUComputePassEncoder of current pass (returns 0 when outside pass or in a render pass)
+extern fn sg_wgpu_compute_pass_encoder() ?*const anyopaque;
+
+/// WebGPU: return WGPUComputePassEncoder of current pass (returns 0 when outside pass or in a render pass)
+pub fn wgpuComputePassEncoder() ?*const anyopaque {
+    return sg_wgpu_compute_pass_encoder();
 }
 
 /// WebGPU: get internal buffer resource objects
