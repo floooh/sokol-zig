@@ -704,8 +704,11 @@ pub fn texcubeShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.vertex_func.entry = "main";
             desc.fragment_func.source = &fs_source_glsl410;
             desc.fragment_func.entry = "main";
+            desc.attrs[0].base_type = .FLOAT;
             desc.attrs[0].glsl_name = "pos";
+            desc.attrs[1].base_type = .FLOAT;
             desc.attrs[1].glsl_name = "color0";
+            desc.attrs[2].base_type = .FLOAT;
             desc.attrs[2].glsl_name = "texcoord0";
             desc.uniform_blocks[0].stage = .VERTEX;
             desc.uniform_blocks[0].layout = .STD140;
@@ -729,8 +732,11 @@ pub fn texcubeShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.vertex_func.entry = "main";
             desc.fragment_func.source = &fs_source_glsl300es;
             desc.fragment_func.entry = "main";
+            desc.attrs[0].base_type = .FLOAT;
             desc.attrs[0].glsl_name = "pos";
+            desc.attrs[1].base_type = .FLOAT;
             desc.attrs[1].glsl_name = "color0";
+            desc.attrs[2].base_type = .FLOAT;
             desc.attrs[2].glsl_name = "texcoord0";
             desc.uniform_blocks[0].stage = .VERTEX;
             desc.uniform_blocks[0].layout = .STD140;
@@ -756,10 +762,13 @@ pub fn texcubeShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.fragment_func.source = &fs_source_hlsl5;
             desc.fragment_func.d3d11_target = "ps_5_0";
             desc.fragment_func.entry = "main";
+            desc.attrs[0].base_type = .FLOAT;
             desc.attrs[0].hlsl_sem_name = "TEXCOORD";
             desc.attrs[0].hlsl_sem_index = 0;
+            desc.attrs[1].base_type = .FLOAT;
             desc.attrs[1].hlsl_sem_name = "TEXCOORD";
             desc.attrs[1].hlsl_sem_index = 1;
+            desc.attrs[2].base_type = .FLOAT;
             desc.attrs[2].hlsl_sem_name = "TEXCOORD";
             desc.attrs[2].hlsl_sem_index = 2;
             desc.uniform_blocks[0].stage = .VERTEX;
@@ -783,6 +792,9 @@ pub fn texcubeShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.vertex_func.entry = "main0";
             desc.fragment_func.source = &fs_source_metal_macos;
             desc.fragment_func.entry = "main0";
+            desc.attrs[0].base_type = .FLOAT;
+            desc.attrs[1].base_type = .FLOAT;
+            desc.attrs[2].base_type = .FLOAT;
             desc.uniform_blocks[0].stage = .VERTEX;
             desc.uniform_blocks[0].layout = .STD140;
             desc.uniform_blocks[0].size = 64;
@@ -804,6 +816,9 @@ pub fn texcubeShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.vertex_func.entry = "main";
             desc.fragment_func.source = &fs_source_wgsl;
             desc.fragment_func.entry = "main";
+            desc.attrs[0].base_type = .FLOAT;
+            desc.attrs[1].base_type = .FLOAT;
+            desc.attrs[2].base_type = .FLOAT;
             desc.uniform_blocks[0].stage = .VERTEX;
             desc.uniform_blocks[0].layout = .STD140;
             desc.uniform_blocks[0].size = 64;

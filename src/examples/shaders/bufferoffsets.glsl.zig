@@ -503,7 +503,9 @@ pub fn bufferoffsetsShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.vertex_func.entry = "main";
             desc.fragment_func.source = &fs_source_glsl410;
             desc.fragment_func.entry = "main";
+            desc.attrs[0].base_type = .FLOAT;
             desc.attrs[0].glsl_name = "position";
+            desc.attrs[1].base_type = .FLOAT;
             desc.attrs[1].glsl_name = "color0";
         },
         .GLES3 => {
@@ -511,7 +513,9 @@ pub fn bufferoffsetsShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.vertex_func.entry = "main";
             desc.fragment_func.source = &fs_source_glsl300es;
             desc.fragment_func.entry = "main";
+            desc.attrs[0].base_type = .FLOAT;
             desc.attrs[0].glsl_name = "position";
+            desc.attrs[1].base_type = .FLOAT;
             desc.attrs[1].glsl_name = "color0";
         },
         .D3D11 => {
@@ -521,8 +525,10 @@ pub fn bufferoffsetsShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.fragment_func.source = &fs_source_hlsl5;
             desc.fragment_func.d3d11_target = "ps_5_0";
             desc.fragment_func.entry = "main";
+            desc.attrs[0].base_type = .FLOAT;
             desc.attrs[0].hlsl_sem_name = "TEXCOORD";
             desc.attrs[0].hlsl_sem_index = 0;
+            desc.attrs[1].base_type = .FLOAT;
             desc.attrs[1].hlsl_sem_name = "TEXCOORD";
             desc.attrs[1].hlsl_sem_index = 1;
         },
@@ -531,12 +537,16 @@ pub fn bufferoffsetsShaderDesc(backend: sg.Backend) sg.ShaderDesc {
             desc.vertex_func.entry = "main0";
             desc.fragment_func.source = &fs_source_metal_macos;
             desc.fragment_func.entry = "main0";
+            desc.attrs[0].base_type = .FLOAT;
+            desc.attrs[1].base_type = .FLOAT;
         },
         .WGPU => {
             desc.vertex_func.source = &vs_source_wgsl;
             desc.vertex_func.entry = "main";
             desc.fragment_func.source = &fs_source_wgsl;
             desc.fragment_func.entry = "main";
+            desc.attrs[0].base_type = .FLOAT;
+            desc.attrs[1].base_type = .FLOAT;
         },
         else => {},
     }
