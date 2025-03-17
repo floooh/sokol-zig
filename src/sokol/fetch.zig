@@ -227,7 +227,7 @@
 //         path or HTTP URL. The string will be copied into an internal data
 //         structure, and passed "as is" (apart from any required
 //         encoding-conversions) to fopen(), CreateFileW() or
-//         XMLHttpRequest. The maximum length of the string is defined by
+//         the html fetch API call. The maximum length of the string is defined by
 //         the SFETCH_MAX_PATH configuration define, the default is 1024 bytes
 //         including the 0-terminator byte.
 //
@@ -314,7 +314,7 @@
 //
 //     - requests dispatched to a channel are either forwarded into that
 //     channel's worker thread (on native platforms), or cause an HTTP
-//     request to be sent via an asynchronous XMLHttpRequest (on the web
+//     request to be sent via an asynchronous fetch() call (on the web
 //     platform)
 //
 //     - for all requests which have finished their current IO operation a
@@ -1035,6 +1035,7 @@ pub const Error = enum(i32) {
     UNEXPECTED_EOF,
     INVALID_HTTP_STATUS,
     CANCELLED,
+    JS_OTHER,
 };
 
 /// the response struct passed to the response callback
