@@ -3,6 +3,30 @@ const builtin = @import("builtin");
 const Build = std.Build;
 const OptimizeMode = std.builtin.OptimizeMode;
 
+const examples = .{
+    "clear",
+    "triangle",
+    "quad",
+    "bufferoffsets",
+    "cube",
+    "noninterleaved",
+    "texcube",
+    "blend",
+    "offscreen",
+    "instancing",
+    "mrt",
+    "saudio",
+    "sgl",
+    "sgl-context",
+    "sgl-points",
+    "debugtext",
+    "debugtext-print",
+    "debugtext-userfont",
+    "shapes",
+    "vertexpull",
+    "instancing-compute",
+};
+
 pub const SokolBackend = enum {
     auto, // Windows: D3D11, macOS/iOS: Metal, otherwise: GL
     d3d11,
@@ -23,28 +47,15 @@ pub const TargetPlatform = enum {
 };
 
 pub fn isPlatform(target: std.Target, platform: TargetPlatform) bool {
-    if (builtin.zig_version.major == 0 and builtin.zig_version.minor < 14) {
-        // FIXME: remove after zig 0.14.0 release
-        return switch (platform) {
-            .android => target.abi == .android,
-            .linux => target.os.tag == .linux,
-            .darwin => target.os.tag.isDarwin(),
-            .macos => target.os.tag == .macos,
-            .ios => target.os.tag == .ios,
-            .windows => target.os.tag == .windows,
-            .web => target.cpu.arch.isWasm(),
-        };
-    } else {
-        return switch (platform) {
-            .android => target.abi.isAndroid(),
-            .linux => target.os.tag == .linux,
-            .darwin => target.os.tag.isDarwin(),
-            .macos => target.os.tag == .macos,
-            .ios => target.os.tag == .ios,
-            .windows => target.os.tag == .windows,
-            .web => target.cpu.arch.isWasm(),
-        };
-    }
+    return switch (platform) {
+        .android => target.abi.isAndroid(),
+        .linux => target.os.tag == .linux,
+        .darwin => target.os.tag.isDarwin(),
+        .macos => target.os.tag == .macos,
+        .ios => target.os.tag == .ios,
+        .windows => target.os.tag == .windows,
+        .web => target.cpu.arch.isWasm(),
+    };
 }
 
 pub fn build(b: *Build) !void {
@@ -79,44 +90,27 @@ pub fn build(b: *Build) !void {
     });
     mod_sokol.linkLibrary(lib_sokol);
 
-    // the integrated examples
-    const examples = .{
-        "clear",
-        "triangle",
-        "quad",
-        "bufferoffsets",
-        "cube",
-        "noninterleaved",
-        "texcube",
-        "blend",
-        "offscreen",
-        "instancing",
-        "mrt",
-        "saudio",
-        "sgl",
-        "sgl-context",
-        "sgl-points",
-        "debugtext",
-        "debugtext-print",
-        "debugtext-userfont",
-        "shapes",
-        "vertexpull",
-        "instancing-compute",
-    };
-    inline for (examples) |example| {
-        try buildExample(b, example, .{
-            .target = target,
-            .optimize = optimize,
-            .backend = sokol_backend,
-            .mod_sokol = mod_sokol,
-            .emsdk = emsdk,
-        });
-    }
-
+    // examples build step
+    try buildExamples(b, .{
+        .target = target,
+        .optimize = optimize,
+        .backend = sokol_backend,
+        .mod_sokol = mod_sokol,
+        .emsdk = emsdk,
+    });
     // a manually invoked build step to recompile shaders via sokol-shdc
     buildShaders(b);
     // a manually invoked build step to build auto-docs
     buildDocs(b, target);
+}
+
+// build all examples
+fn buildExamples(b: *Build, options: ExampleOptions) !void {
+    // a top level build step for all examples
+    const examples_step = b.step("examples", "Build all examples");
+    inline for (examples) |example| {
+        try buildExample(b, example, examples_step, options);
+    }
 }
 
 // build one of the examples
@@ -127,29 +121,31 @@ const ExampleOptions = struct {
     mod_sokol: *Build.Module,
     emsdk: *Build.Dependency,
 };
-fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !void {
-    const main_src = "src/examples/" ++ name ++ ".zig";
-    var run: ?*Build.Step.Run = null;
+fn buildExample(b: *Build, comptime name: []const u8, examples_step: *Build.Step, options: ExampleOptions) !void {
+    const mod = b.createModule(.{
+        .root_source_file = b.path("examples/" ++ name ++ ".zig"),
+        .target = options.target,
+        .optimize = options.optimize,
+        .imports = &.{
+            .{ .name = "sokol", .module = options.mod_sokol },
+        },
+    });
+
+    var run: *Build.Step.Run = undefined;
     if (!isPlatform(options.target.result, .web)) {
         // for native platforms, build into a regular executable
         const example = b.addExecutable(.{
             .name = name,
-            .root_source_file = b.path(main_src),
-            .target = options.target,
-            .optimize = options.optimize,
+            .root_module = mod,
         });
-        example.root_module.addImport("sokol", options.mod_sokol);
-        b.installArtifact(example);
+        examples_step.dependOn(&b.addInstallArtifact(example, .{}).step);
         run = b.addRunArtifact(example);
     } else {
         // for WASM, need to build the Zig code as static library, since linking happens via emcc
         const example = b.addStaticLibrary(.{
             .name = name,
-            .root_source_file = b.path(main_src),
-            .target = options.target,
-            .optimize = options.optimize,
+            .root_module = mod,
         });
-        example.root_module.addImport("sokol", options.mod_sokol);
 
         // create a special emcc linker run step
         const backend = resolveSokolBackend(options.backend, options.target.result);
@@ -165,11 +161,13 @@ fn buildExample(b: *Build, comptime name: []const u8, options: ExampleOptions) !
             .shell_file_path = b.path("src/sokol/web/shell.html"),
             .extra_args = &.{"-sSTACK_SIZE=512KB"},
         });
-        // ...and a special run step to run the build result via emrun
+        examples_step.dependOn(&link_step.step);
+
+        // a special run step to run the build result via emrun
         run = emRunStep(b, .{ .name = name, .emsdk = options.emsdk });
-        run.?.step.dependOn(&link_step.step);
+        run.step.dependOn(&link_step.step);
     }
-    b.step("run-" ++ name, "Run " ++ name).dependOn(&run.?.step);
+    b.step("run-" ++ name, "Run " ++ name).dependOn(&run.step);
 }
 
 // helper function to resolve .auto backend based on target platform
@@ -448,9 +446,6 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
         .install_subdir = "web",
     });
     install.step.dependOn(&emcc.step);
-
-    // get the emcc step to run on 'zig build'
-    b.getInstallStep().dependOn(&install.step);
     return install;
 }
 
@@ -511,7 +506,7 @@ fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
 // TODO: install sokol-shdc via package manager
 fn buildShaders(b: *Build) void {
     const sokol_tools_bin_dir = "../sokol-tools-bin/bin/";
-    const shaders_dir = "src/examples/shaders/";
+    const shaders_dir = "examples/shaders/";
     const shaders = .{
         .{ .src = "bufferoffsets.glsl", .needs_compute = false },
         .{ .src = "cube.glsl", .needs_compute = false },

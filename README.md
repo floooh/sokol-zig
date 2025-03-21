@@ -27,9 +27,9 @@ On Linux install the following packages: libglu1-mesa-dev, mesa-common-dev, xorg
 To build the platform-native samples:
 
 ```sh
-# just build:
-zig build
-# build and run samples:
+# build all examples:
+zig build examples
+# build and run individual examples:
 zig build run-clear
 zig build run-triangle
 zig build run-quad
@@ -74,7 +74,7 @@ Backend: .sokol.gfx.Backend.GLCORE33
 For the web-samples, run:
 
 ```sh
-zig build -Dtarget=wasm32-emscripten
+zig build examples -Dtarget=wasm32-emscripten
 # or to build and run one of the samples
 zig build run-clear -Dtarget=wasm32-emscripten
 ...
@@ -210,6 +210,8 @@ fn buildWeb(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMode, dep
         .use_filesystem = false,
         .shell_file_path = dep_sokol.path("src/sokol/web/shell.html"),
     });
+    // attach Emscripten linker output to default install step
+    b.getInstallStep().dependOn(&link_step.step);
     // ...and a special run step to start the web build output via 'emrun'
     const run = sokol.emRunStep(b, .{ .name = "pacman", .emsdk = emsdk });
     run.step.dependOn(&link_step.step);
