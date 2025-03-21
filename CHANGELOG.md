@@ -4,6 +4,25 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 21-Mar-2025
+
+Some build.zig and package structure cleanup:
+
+- the examples are no longer part of the build.zig.zon package
+- examples are no longer automatically built on `zig build`, instead
+  use `zig build examples`
+- ...a minor breaking change for the Emscripten linker step: this also
+  no longer attaches itself automatically to the `install` step, e.g. just
+  running `zig build` will not automatically run the Emscripten linker steps.
+  Instead use the result of `emLinkStep()` to setup the standard install dependencies
+  yourself like this:
+  ```zig
+    const link_step = try sokol.emLinkStep(b, .{ ... });
+    b.getInstallStep().dependOn(&link_step.step);
+  ```
+  Also see the updated example build.zig code in the readme.
+- build.zig: remove zig 0.13.x vs 0.14.x compatibility hacks
+
 ### 08-Dec-2024
 
 The sokol_imgui.h compilation is now more configurable by allowing to override
