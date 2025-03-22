@@ -13,5 +13,10 @@
             .url = "git+https://github.com/emscripten-core/emsdk#4.0.3",
             .hash = "N-V-__8AAOG3BQCJ9cn-N2swm2o5cLmDhmdHmtwNngOChK78",
         },
+        .shdc = .{
+            .url = "git+https://github.com/floooh/sokol-tools-bin?ref=zig-package#c676624c7790dff93e1b96b5cb94d6dbe79f0a50",
+            .hash = "sokolshdc-0.1.0-r2KZDpE59wNwLS4kuBUNkBpl4hHc1jjsT7aWJ4Cr0Rz4",
+            .lazy = true,
+        },
     },
 }

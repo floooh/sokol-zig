@@ -3,28 +3,28 @@ const builtin = @import("builtin");
 const Build = std.Build;
 const OptimizeMode = std.builtin.OptimizeMode;
 
-const examples = .{
-    "clear",
-    "triangle",
-    "quad",
-    "bufferoffsets",
-    "cube",
-    "noninterleaved",
-    "texcube",
-    "blend",
-    "offscreen",
-    "instancing",
-    "mrt",
-    "saudio",
-    "sgl",
-    "sgl-context",
-    "sgl-points",
-    "debugtext",
-    "debugtext-print",
-    "debugtext-userfont",
-    "shapes",
-    "vertexpull",
-    "instancing-compute",
+const examples = [_]Example{
+    .{ .name = "clear" },
+    .{ .name = "triangle", .has_shader = true },
+    .{ .name = "quad", .has_shader = true },
+    .{ .name = "bufferoffsets", .has_shader = true },
+    .{ .name = "cube", .has_shader = true },
+    .{ .name = "noninterleaved", .has_shader = true },
+    .{ .name = "texcube", .has_shader = true },
+    .{ .name = "blend", .has_shader = true },
+    .{ .name = "offscreen", .has_shader = true },
+    .{ .name = "instancing", .has_shader = true },
+    .{ .name = "mrt", .has_shader = true },
+    .{ .name = "saudio" },
+    .{ .name = "sgl" },
+    .{ .name = "sgl-context" },
+    .{ .name = "sgl-points" },
+    .{ .name = "debugtext" },
+    .{ .name = "debugtext-print" },
+    .{ .name = "debugtext-userfont" },
+    .{ .name = "shapes", .has_shader = true },
+    .{ .name = "vertexpull", .has_shader = true, .needs_compute = true },
+    .{ .name = "instancing-compute", .has_shader = true, .needs_compute = true },
 };
 
 pub const SokolBackend = enum {
@@ -59,6 +59,7 @@ pub fn isPlatform(target: std.Target, platform: TargetPlatform) bool {
 }
 
 pub fn build(b: *Build) !void {
+    const opt_shaders = b.option(bool, "shaders", "Also compile shaders when building examples") orelse false;
     const opt_use_gl = b.option(bool, "gl", "Force OpenGL (default: false)") orelse false;
     const opt_use_gles3 = b.option(bool, "gles3", "Force OpenGL ES3 (default: false)") orelse false;
     const opt_use_wgpu = b.option(bool, "wgpu", "Force WebGPU (default: false, web only)") orelse false;
@@ -97,77 +98,10 @@ pub fn build(b: *Build) !void {
         .backend = sokol_backend,
         .mod_sokol = mod_sokol,
         .emsdk = emsdk,
+        .compile_shaders = opt_shaders,
     });
-    // a manually invoked build step to recompile shaders via sokol-shdc
-    buildShaders(b);
     // a manually invoked build step to build auto-docs
     buildDocs(b, target);
-}
-
-// build all examples
-fn buildExamples(b: *Build, options: ExampleOptions) !void {
-    // a top level build step for all examples
-    const examples_step = b.step("examples", "Build all examples");
-    inline for (examples) |example| {
-        try buildExample(b, example, examples_step, options);
-    }
-}
-
-// build one of the examples
-const ExampleOptions = struct {
-    target: Build.ResolvedTarget,
-    optimize: OptimizeMode,
-    backend: SokolBackend,
-    mod_sokol: *Build.Module,
-    emsdk: *Build.Dependency,
-};
-fn buildExample(b: *Build, comptime name: []const u8, examples_step: *Build.Step, options: ExampleOptions) !void {
-    const mod = b.createModule(.{
-        .root_source_file = b.path("examples/" ++ name ++ ".zig"),
-        .target = options.target,
-        .optimize = options.optimize,
-        .imports = &.{
-            .{ .name = "sokol", .module = options.mod_sokol },
-        },
-    });
-
-    var run: *Build.Step.Run = undefined;
-    if (!isPlatform(options.target.result, .web)) {
-        // for native platforms, build into a regular executable
-        const example = b.addExecutable(.{
-            .name = name,
-            .root_module = mod,
-        });
-        examples_step.dependOn(&b.addInstallArtifact(example, .{}).step);
-        run = b.addRunArtifact(example);
-    } else {
-        // for WASM, need to build the Zig code as static library, since linking happens via emcc
-        const example = b.addStaticLibrary(.{
-            .name = name,
-            .root_module = mod,
-        });
-
-        // create a special emcc linker run step
-        const backend = resolveSokolBackend(options.backend, options.target.result);
-        const link_step = try emLinkStep(b, .{
-            .lib_main = example,
-            .target = options.target,
-            .optimize = options.optimize,
-            .emsdk = options.emsdk,
-            .use_webgpu = backend == .wgpu,
-            .use_webgl2 = backend != .wgpu,
-            .use_emmalloc = true,
-            .use_filesystem = false,
-            .shell_file_path = b.path("src/sokol/web/shell.html"),
-            .extra_args = &.{"-sSTACK_SIZE=512KB"},
-        });
-        examples_step.dependOn(&link_step.step);
-
-        // a special run step to run the build result via emrun
-        run = emRunStep(b, .{ .name = name, .emsdk = options.emsdk });
-        run.step.dependOn(&link_step.step);
-    }
-    b.step("run-" ++ name, "Run " ++ name).dependOn(&run.step);
 }
 
 // helper function to resolve .auto backend based on target platform
@@ -348,6 +282,8 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     return lib;
 }
 
+//== EMSCRIPTEN INTEGRATION ============================================================================================
+
 // for wasm32-emscripten, need to run the Emscripten linker from the Emscripten SDK
 // NOTE: ideally this would go into a separate emsdk-zig package
 pub const EmLinkOptions = struct {
@@ -502,59 +438,7 @@ fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
     }
 }
 
-// a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
-// TODO: install sokol-shdc via package manager
-fn buildShaders(b: *Build) void {
-    const sokol_tools_bin_dir = "../sokol-tools-bin/bin/";
-    const shaders_dir = "examples/shaders/";
-    const shaders = .{
-        .{ .src = "bufferoffsets.glsl", .needs_compute = false },
-        .{ .src = "cube.glsl", .needs_compute = false },
-        .{ .src = "instancing.glsl", .needs_compute = false },
-        .{ .src = "mrt.glsl", .needs_compute = false },
-        .{ .src = "noninterleaved.glsl", .needs_compute = false },
-        .{ .src = "offscreen.glsl", .needs_compute = false },
-        .{ .src = "quad.glsl", .needs_compute = false },
-        .{ .src = "shapes.glsl", .needs_compute = false },
-        .{ .src = "texcube.glsl", .needs_compute = false },
-        .{ .src = "blend.glsl", .needs_compute = false },
-        .{ .src = "triangle.glsl", .needs_compute = false },
-        .{ .src = "vertexpull.glsl", .needs_compute = true },
-        .{ .src = "instancing-compute.glsl", .needs_compute = true },
-    };
-    const optional_shdc: ?[:0]const u8 = comptime switch (builtin.os.tag) {
-        .windows => "win32/sokol-shdc.exe",
-        .linux => if (builtin.cpu.arch.isX86()) "linux/sokol-shdc" else "linux_arm64/sokol-shdc",
-        .macos => if (builtin.cpu.arch.isX86()) "osx/sokol-shdc" else "osx_arm64/sokol-shdc",
-        else => null,
-    };
-    if (optional_shdc == null) {
-        std.log.warn("unsupported host platform, skipping shader compiler step", .{});
-        return;
-    }
-    const shdc_path = sokol_tools_bin_dir ++ optional_shdc.?;
-    const shdc_step = b.step("shaders", "Compile shaders (needs ../sokol-tools-bin)");
-    inline for (shaders) |shader| {
-        const slang = if (shader.needs_compute)
-            "glsl430:glsl310es:metal_macos:hlsl5:wgsl"
-        else
-            "glsl410:glsl300es:metal_macos:hlsl5:wgsl";
-        const cmd = b.addSystemCommand(&.{
-            shdc_path,
-            "-i",
-            shaders_dir ++ shader.src,
-            "-o",
-            shaders_dir ++ shader.src ++ ".zig",
-            "-l",
-            slang,
-            "-f",
-            "sokol_zig",
-            "--reflection",
-        });
-        shdc_step.dependOn(&cmd.step);
-    }
-}
-
+//== DOCUMENTATION =====================================================================================================
 fn buildDocs(b: *Build, target: Build.ResolvedTarget) void {
     const lib = b.addStaticLibrary(.{
         .name = "sokol",
@@ -587,4 +471,115 @@ fn buildDocs(b: *Build, target: Build.ResolvedTarget) void {
 
     const doc_step = b.step("docs", "Build documentation");
     doc_step.dependOn(&overwrite_sources_tar.step);
+}
+
+//=== EXAMPLES =========================================================================================================
+const Example = struct {
+    name: []const u8,
+    has_shader: bool = false,
+    needs_compute: bool = false,
+};
+
+const ExampleOptions = struct {
+    target: Build.ResolvedTarget,
+    optimize: OptimizeMode,
+    backend: SokolBackend,
+    mod_sokol: *Build.Module,
+    compile_shaders: bool,
+    emsdk: *Build.Dependency,
+};
+
+// build all examples
+fn buildExamples(b: *Build, options: ExampleOptions) !void {
+    // a top level build step for all examples
+    const examples_step = b.step("examples", "Build all examples");
+    inline for (examples) |example| {
+        try buildExample(b, example, examples_step, options);
+    }
+}
+
+// build one of the examples
+fn buildExample(b: *Build, example: Example, examples_step: *Build.Step, options: ExampleOptions) !void {
+    const mod = b.createModule(.{
+        .root_source_file = b.path(b.fmt("examples/{s}.zig", .{example.name})),
+        .target = options.target,
+        .optimize = options.optimize,
+        .imports = &.{
+            .{ .name = "sokol", .module = options.mod_sokol },
+        },
+    });
+
+    // optionally build shader
+    const opt_shd_step = if (options.compile_shaders) try buildExampleShader(b, example) else null;
+
+    var run: *Build.Step.Run = undefined;
+    if (!isPlatform(options.target.result, .web)) {
+        // for native platforms, build into a regular executable
+        const example_step = b.addExecutable(.{
+            .name = example.name,
+            .root_module = mod,
+        });
+        if (opt_shd_step) |shd_step| {
+            example_step.step.dependOn(&shd_step.step);
+        }
+        examples_step.dependOn(&b.addInstallArtifact(example_step, .{}).step);
+        run = b.addRunArtifact(example_step);
+    } else {
+        // for WASM, need to build the Zig code as static library, since linking happens via emcc
+        const example_step = b.addStaticLibrary(.{
+            .name = example.name,
+            .root_module = mod,
+        });
+        if (opt_shd_step) |shd_step| {
+            example_step.step.dependOn(&shd_step.step);
+        }
+
+        // create a special emcc linker run step
+        const backend = resolveSokolBackend(options.backend, options.target.result);
+        const link_step = try emLinkStep(b, .{
+            .lib_main = example_step,
+            .target = options.target,
+            .optimize = options.optimize,
+            .emsdk = options.emsdk,
+            .use_webgpu = backend == .wgpu,
+            .use_webgl2 = backend != .wgpu,
+            .use_emmalloc = true,
+            .use_filesystem = false,
+            .shell_file_path = b.path("src/sokol/web/shell.html"),
+            .extra_args = &.{"-sSTACK_SIZE=512KB"},
+        });
+        examples_step.dependOn(&link_step.step);
+
+        // a special run step to run the build result via emrun
+        run = emRunStep(b, .{ .name = example.name, .emsdk = options.emsdk });
+        run.step.dependOn(&link_step.step);
+    }
+    b.step(b.fmt("run-{s}", .{example.name}), b.fmt("Run {s}", .{example.name})).dependOn(&run.step);
+}
+
+// a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
+fn buildExampleShader(b: *Build, example: Example) !?*Build.Step.Run {
+    if (!example.has_shader) {
+        return null;
+    }
+    const dep_shdc = b.lazyDependency("shdc", .{}) orelse return null;
+    const shdc = b.lazyImport(@This(), "shdc") orelse return null;
+    const shaders_dir = "examples/shaders/";
+    const input_path = b.fmt("{s}{s}.glsl", .{ shaders_dir, example.name });
+    const output_path = b.fmt("{s}{s}.glsl.zig", .{ shaders_dir, example.name });
+    return try shdc.compile(b, .{
+        .dep_shdc = dep_shdc,
+        .input = b.path(input_path),
+        .output = b.path(output_path),
+        .slang = .{
+            .glsl430 = example.needs_compute,
+            .glsl410 = !example.needs_compute,
+            .glsl310es = example.needs_compute,
+            .glsl300es = !example.needs_compute,
+            .metal_macos = true,
+            .hlsl5 = true,
+            .wgsl = true,
+        },
+        .reflection = true,
+    });
 }
