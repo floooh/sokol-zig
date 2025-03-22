@@ -4,6 +4,21 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 22-Mar-2025
+
+The sokol-shdc shader compiler is now integrated as a (lazy) Zig package dependency,
+and a build.zig.zon and build.zig (with helper code to invoke the shader compiler)
+has been added to the [sokol-tools-bin repository](https://github.com/floooh/sokol-tools-bin).
+
+Recompiling the example shaders is now done as part of the `examples` build step
+like this:
+
+```
+zig build examples -Dshaders
+```
+
+The `-Dshaders` will trigger pulling the lazy sokol-shdc binaries dependency.
+
 ### 21-Mar-2025
 
 Some build.zig and package structure cleanup:
