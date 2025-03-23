@@ -4,6 +4,18 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 23-Mar-2025
+
+Change the sokol-shdc dependency from lazy to static. Using a lazy dependency
+turned out to be too much hassle to invoke the shader compiler from
+upstream projects (those shouldn't import their own sokol-shdc dependency
+because the sokol-shdc sub-dependency of the sokol-zig dependency will always
+point to the matching sokol-shdc version). See the [pacman.zig/build.zig](https://github.com/floooh/pacman.zig/blob/main/build.zig)
+for an example of how to run the shader compiler from an upstream project.
+
+Also, when building the examples, the shaders will be automatically recompiled
+when needed.
+
 ### 22-Mar-2025
 
 The sokol-shdc shader compiler is now integrated as a (lazy) Zig package dependency,
