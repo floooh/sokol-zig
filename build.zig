@@ -3,6 +3,9 @@ const builtin = @import("builtin");
 const Build = std.Build;
 const OptimizeMode = std.builtin.OptimizeMode;
 
+// re-export the shader compiler module for use by upstream projects
+pub const shdc = @import("shdc");
+
 const examples = [_]Example{
     .{ .name = "clear" },
     .{ .name = "triangle", .has_shader = true },
@@ -59,7 +62,6 @@ pub fn isPlatform(target: std.Target, platform: TargetPlatform) bool {
 }
 
 pub fn build(b: *Build) !void {
-    const opt_shaders = b.option(bool, "shaders", "Also compile shaders when building examples") orelse false;
     const opt_use_gl = b.option(bool, "gl", "Force OpenGL (default: false)") orelse false;
     const opt_use_gles3 = b.option(bool, "gles3", "Force OpenGL ES3 (default: false)") orelse false;
     const opt_use_wgpu = b.option(bool, "wgpu", "Force WebGPU (default: false, web only)") orelse false;
@@ -98,7 +100,6 @@ pub fn build(b: *Build) !void {
         .backend = sokol_backend,
         .mod_sokol = mod_sokol,
         .emsdk = emsdk,
-        .compile_shaders = opt_shaders,
     });
     // a manually invoked build step to build auto-docs
     buildDocs(b, target);
@@ -463,7 +464,6 @@ const ExampleOptions = struct {
     optimize: OptimizeMode,
     backend: SokolBackend,
     mod_sokol: *Build.Module,
-    compile_shaders: bool,
     emsdk: *Build.Dependency,
 };
 
@@ -488,7 +488,7 @@ fn buildExample(b: *Build, example: Example, examples_step: *Build.Step, options
     });
 
     // optionally build shader
-    const opt_shd_step = if (options.compile_shaders) try buildExampleShader(b, example) else null;
+    const opt_shd_step = try buildExampleShader(b, example);
 
     var run: *Build.Step.Run = undefined;
     if (!isPlatform(options.target.result, .web)) {
@@ -539,13 +539,11 @@ fn buildExampleShader(b: *Build, example: Example) !?*Build.Step.Run {
     if (!example.has_shader) {
         return null;
     }
-    const dep_shdc = b.lazyDependency("shdc", .{}) orelse return null;
-    const shdc = b.lazyImport(@This(), "shdc") orelse return null;
     const shaders_dir = "examples/shaders/";
     const input_path = b.fmt("{s}{s}.glsl", .{ shaders_dir, example.name });
     const output_path = b.fmt("{s}{s}.glsl.zig", .{ shaders_dir, example.name });
     return try shdc.compile(b, .{
-        .dep_shdc = dep_shdc,
+        .dep_shdc = b.dependency("shdc", .{}),
         .input = b.path(input_path),
         .output = b.path(output_path),
         .slang = .{

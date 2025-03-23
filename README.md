@@ -29,9 +29,7 @@ To build the platform-native samples:
 ```sh
 # build all examples:
 zig build examples
-# recompile shaders and build examples (fetches sokol-shdc binary package)
-zig build examples -Dshaders
-# build and run individual examples (this can also be combined with -Dshaders)
+# build and run individual examples
 zig build run-clear
 zig build run-triangle
 zig build run-quad
