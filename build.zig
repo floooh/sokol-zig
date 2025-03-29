@@ -69,6 +69,7 @@ pub fn build(b: *Build) !void {
     const opt_use_wayland = b.option(bool, "wayland", "Force Wayland (default: false, Linux only, not supported in main-line headers)") orelse false;
     const opt_use_egl = b.option(bool, "egl", "Force EGL (default: false, Linux only)") orelse false;
     const opt_with_sokol_imgui = b.option(bool, "with_sokol_imgui", "Add support for sokol_imgui.h bindings") orelse false;
+    const opt_dont_link_system_libs = b.option(bool, "dont_link_system_libs", "Do not link system libraries required by sokol (default: false)") orelse false;
     const opt_sokol_imgui_cprefix = b.option([]const u8, "sokol_imgui_cprefix", "Override Dear ImGui C bindings prefix for sokol_imgui.h (see SOKOL_IMGUI_CPREFIX)");
     const opt_cimgui_header_path = b.option([]const u8, "cimgui_header_path", "Override the Dear ImGui C bindings header name (default: cimgui.h)");
     const sokol_backend: SokolBackend = if (opt_use_gl) .gl else if (opt_use_gles3) .gles3 else if (opt_use_wgpu) .wgpu else .auto;
@@ -90,6 +91,7 @@ pub fn build(b: *Build) !void {
         .sokol_imgui_cprefix = opt_sokol_imgui_cprefix,
         .cimgui_header_path = opt_cimgui_header_path,
         .emsdk = emsdk,
+        .dont_link_system_libs = opt_dont_link_system_libs,
     });
     mod_sokol.linkLibrary(lib_sokol);
 
@@ -134,6 +136,7 @@ pub const LibSokolOptions = struct {
     with_sokol_imgui: bool = false,
     sokol_imgui_cprefix: ?[]const u8 = null,
     cimgui_header_path: ?[]const u8 = null,
+    dont_link_system_libs: bool = true,
 };
 pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     const csrc_root = "src/sokol/c/";
@@ -194,65 +197,74 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     }
 
     // platform specific compile and link options
+    const link_system_libs = !options.dont_link_system_libs;
     if (isPlatform(lib.rootModuleTarget(), .darwin)) {
         try cflags.append("-ObjC");
-        lib.linkFramework("Foundation");
-        lib.linkFramework("AudioToolbox");
-        if (.metal == backend) {
-            lib.linkFramework("MetalKit");
-            lib.linkFramework("Metal");
-        }
-        if (lib.rootModuleTarget().os.tag == .ios) {
-            lib.linkFramework("UIKit");
-            lib.linkFramework("AVFoundation");
-            if (.gl == backend) {
-                lib.linkFramework("OpenGLES");
-                lib.linkFramework("GLKit");
+        if (link_system_libs) {
+            lib.linkFramework("Foundation");
+            lib.linkFramework("AudioToolbox");
+            if (.metal == backend) {
+                lib.linkFramework("MetalKit");
+                lib.linkFramework("Metal");
             }
-        } else if (lib.rootModuleTarget().os.tag == .macos) {
-            lib.linkFramework("Cocoa");
-            lib.linkFramework("QuartzCore");
-            if (.gl == backend) {
-                lib.linkFramework("OpenGL");
+            if (lib.rootModuleTarget().os.tag == .ios) {
+                lib.linkFramework("UIKit");
+                lib.linkFramework("AVFoundation");
+                if (.gl == backend) {
+                    lib.linkFramework("OpenGLES");
+                    lib.linkFramework("GLKit");
+                }
+            } else if (lib.rootModuleTarget().os.tag == .macos) {
+                lib.linkFramework("Cocoa");
+                lib.linkFramework("QuartzCore");
+                if (.gl == backend) {
+                    lib.linkFramework("OpenGL");
+                }
             }
         }
     } else if (isPlatform(lib.rootModuleTarget(), .android)) {
         if (.gles3 != backend) {
             @panic("For android targets, you must have backend set to GLES3");
         }
-        lib.linkSystemLibrary("GLESv3");
-        lib.linkSystemLibrary("EGL");
-        lib.linkSystemLibrary("android");
-        lib.linkSystemLibrary("log");
+        if (link_system_libs) {
+            lib.linkSystemLibrary("GLESv3");
+            lib.linkSystemLibrary("EGL");
+            lib.linkSystemLibrary("android");
+            lib.linkSystemLibrary("log");
+        }
     } else if (isPlatform(lib.rootModuleTarget(), .linux)) {
         if (options.use_egl) try cflags.append("-DSOKOL_FORCE_EGL");
         if (!options.use_x11) try cflags.append("-DSOKOL_DISABLE_X11");
         if (!options.use_wayland) try cflags.append("-DSOKOL_DISABLE_WAYLAND");
         const link_egl = options.use_egl or options.use_wayland;
-        lib.linkSystemLibrary("asound");
-        lib.linkSystemLibrary("GL");
-        if (options.use_x11) {
-            lib.linkSystemLibrary("X11");
-            lib.linkSystemLibrary("Xi");
-            lib.linkSystemLibrary("Xcursor");
-        }
-        if (options.use_wayland) {
-            lib.linkSystemLibrary("wayland-client");
-            lib.linkSystemLibrary("wayland-cursor");
-            lib.linkSystemLibrary("wayland-egl");
-            lib.linkSystemLibrary("xkbcommon");
-        }
-        if (link_egl) {
-            lib.linkSystemLibrary("EGL");
+        if (link_system_libs) {
+            lib.linkSystemLibrary("asound");
+            lib.linkSystemLibrary("GL");
+            if (options.use_x11) {
+                lib.linkSystemLibrary("X11");
+                lib.linkSystemLibrary("Xi");
+                lib.linkSystemLibrary("Xcursor");
+            }
+            if (options.use_wayland) {
+                lib.linkSystemLibrary("wayland-client");
+                lib.linkSystemLibrary("wayland-cursor");
+                lib.linkSystemLibrary("wayland-egl");
+                lib.linkSystemLibrary("xkbcommon");
+            }
+            if (link_egl) {
+                lib.linkSystemLibrary("EGL");
+            }
         }
     } else if (isPlatform(lib.rootModuleTarget(), .windows)) {
-        lib.linkSystemLibrary("kernel32");
-        lib.linkSystemLibrary("user32");
-        lib.linkSystemLibrary("gdi32");
-        lib.linkSystemLibrary("ole32");
-        if (.d3d11 == backend) {
-            lib.linkSystemLibrary("d3d11");
-            lib.linkSystemLibrary("dxgi");
+        if (link_system_libs) {
+            lib.linkSystemLibrary("kernel32");
+            lib.linkSystemLibrary("user32");
+            lib.linkSystemLibrary("gdi32");
+            lib.linkSystemLibrary("ole32");
+            if (.d3d11 == backend) {
+                lib.linkSystemLibrary("d3d11");
+                lib.linkSystemLibrary("dxgi");
+            }
         }
     } else if (isPlatform(lib.rootModuleTarget(), .web)) {
         try cflags.append("-fno-sanitize=undefined");
