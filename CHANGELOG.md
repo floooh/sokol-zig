@@ -4,6 +4,12 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 29-Mar-2025
+
+Added a new build option `dont_link_system_libs`. When this is provided, upstream
+projects need to take care of linking the correct system libraries required
+by the sokol headers themselves (see issue https://github.com/floooh/sokol-zig/issues/109 for details).
+
 ### 23-Mar-2025
 
 Change the sokol-shdc dependency from lazy to static. Using a lazy dependency

@@ -69,6 +69,7 @@ pub fn build(b: *Build) !void {
     const opt_use_wayland = b.option(bool, "wayland", "Force Wayland (default: false, Linux only, not supported in main-line headers)") orelse false;
     const opt_use_egl = b.option(bool, "egl", "Force EGL (default: false, Linux only)") orelse false;
     const opt_with_sokol_imgui = b.option(bool, "with_sokol_imgui", "Add support for sokol_imgui.h bindings") orelse false;
+    const opt_dont_link_system_libs = b.option(bool, "dont_link_system_libs", "Do not link system libraries required by sokol (default: false)") orelse false;
     const opt_sokol_imgui_cprefix = b.option([]const u8, "sokol_imgui_cprefix", "Override Dear ImGui C bindings prefix for sokol_imgui.h (see SOKOL_IMGUI_CPREFIX)");
     const opt_cimgui_header_path = b.option([]const u8, "cimgui_header_path", "Override the Dear ImGui C bindings header name (default: cimgui.h)");
     const sokol_backend: SokolBackend = if (opt_use_gl) .gl else if (opt_use_gles3) .gles3 else if (opt_use_wgpu) .wgpu else .auto;
@@ -90,6 +91,7 @@ pub fn build(b: *Build) !void {
         .sokol_imgui_cprefix = opt_sokol_imgui_cprefix,
         .cimgui_header_path = opt_cimgui_header_path,
         .emsdk = emsdk,
+        .dont_link_system_libs = opt_dont_link_system_libs,
     });
     mod_sokol.linkLibrary(lib_sokol);
 
@@ -134,7 +136,7 @@ pub const LibSokolOptions = struct {
     with_sokol_imgui: bool = false,
     sokol_imgui_cprefix: ?[]const u8 = null,
     cimgui_header_path: ?[]const u8 = null,
-    link_system_libraries: bool = true,
+    dont_link_system_libs: bool = true,
 };
 pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     const csrc_root = "src/sokol/c/";
@@ -195,9 +197,10 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     }
 
     // platform specific compile and link options
-    if (options.link_system_libraries) {
-        if (isPlatform(lib.rootModuleTarget(), .darwin)) {
-            try cflags.append("-ObjC");
+    const link_system_libs = !options.dont_link_system_libs;
+    if (isPlatform(lib.rootModuleTarget(), .darwin)) {
+        try cflags.append("-ObjC");
+        if (link_system_libs) {
             lib.linkFramework("Foundation");
             lib.linkFramework("AudioToolbox");
             if (.metal == backend) {
@@ -218,19 +221,23 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
                     lib.linkFramework("OpenGL");
                 }
             }
-        } else if (isPlatform(lib.rootModuleTarget(), .android)) {
-            if (.gles3 != backend) {
-                @panic("For android targets, you must have backend set to GLES3");
-            }
+        }
+    } else if (isPlatform(lib.rootModuleTarget(), .android)) {
+        if (.gles3 != backend) {
+            @panic("For android targets, you must have backend set to GLES3");
+        }
+        if (link_system_libs) {
             lib.linkSystemLibrary("GLESv3");
             lib.linkSystemLibrary("EGL");
             lib.linkSystemLibrary("android");
             lib.linkSystemLibrary("log");
-        } else if (isPlatform(lib.rootModuleTarget(), .linux)) {
-            if (options.use_egl) try cflags.append("-DSOKOL_FORCE_EGL");
-            if (!options.use_x11) try cflags.append("-DSOKOL_DISABLE_X11");
-            if (!options.use_wayland) try cflags.append("-DSOKOL_DISABLE_WAYLAND");
-            const link_egl = options.use_egl or options.use_wayland;
+        }
+    } else if (isPlatform(lib.rootModuleTarget(), .linux)) {
+        if (options.use_egl) try cflags.append("-DSOKOL_FORCE_EGL");
+        if (!options.use_x11) try cflags.append("-DSOKOL_DISABLE_X11");
+        if (!options.use_wayland) try cflags.append("-DSOKOL_DISABLE_WAYLAND");
+        const link_egl = options.use_egl or options.use_wayland;
+        if (link_system_libs) {
             lib.linkSystemLibrary("asound");
             lib.linkSystemLibrary("GL");
             if (options.use_x11) {
@@ -247,7 +254,9 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
             if (link_egl) {
                 lib.linkSystemLibrary("EGL");
             }
-        } else if (isPlatform(lib.rootModuleTarget(), .windows)) {
+        }
+    } else if (isPlatform(lib.rootModuleTarget(), .windows)) {
+        if (link_system_libs) {
             lib.linkSystemLibrary("kernel32");
             lib.linkSystemLibrary("user32");
             lib.linkSystemLibrary("gdi32");
@@ -257,9 +266,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
                 lib.linkSystemLibrary("dxgi");
             }
         }
-    }
-
-    if (isPlatform(lib.rootModuleTarget(), .web)) {
+    } else if (isPlatform(lib.rootModuleTarget(), .web)) {
         try cflags.append("-fno-sanitize=undefined");
     }
 
