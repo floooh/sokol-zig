@@ -308,6 +308,16 @@
 //         HWND has been cast to a void pointer in order to be tunneled
 //         through code which doesn't include Windows.h.
 //
+//     const void* sapp_x11_get_window(void)
+//         On Linux, get the X11 Window, otherwise a null pointer. The
+//         Window has been cast to a void pointer in order to be tunneled
+//         through code which doesn't include X11/Xlib.h.
+//
+//     const void* sapp_x11_get_display(void)
+//         On Linux, get the X11 Display, otherwise a null pointer. The
+//         Display has been cast to a void pointer in order to be tunneled
+//         through code which doesn't include X11/Xlib.h.
+//
 //     const void* sapp_wgpu_get_device(void)
 //     const void* sapp_wgpu_get_render_view(void)
 //     const void* sapp_wgpu_get_resolve_view(void)
@@ -2267,6 +2277,22 @@ extern fn sapp_gl_get_minor_version() i32;
 /// GL: get minor version (only valid for desktop GL)
 pub fn glGetMinorVersion() i32 {
     return sapp_gl_get_minor_version();
+}
+
+/// X11: get Window
+extern fn sapp_x11_get_window() ?*const anyopaque;
+
+/// X11: get Window
+pub fn x11GetWindow() ?*const anyopaque {
+    return sapp_x11_get_window();
+}
+
+/// X11: get Display
+extern fn sapp_x11_get_display() ?*const anyopaque;
+
+/// X11: get Display
+pub fn x11GetDisplay() ?*const anyopaque {
+    return sapp_x11_get_display();
 }
 
 /// Android: get native activity handle
