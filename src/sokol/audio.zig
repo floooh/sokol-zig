@@ -22,8 +22,6 @@
 // SAUDIO_RING_MAX_SLOTS           - max number of slots in the push-audio ring buffer (default 1024)
 // SAUDIO_OSX_USE_SYSTEM_HEADERS   - define this to force inclusion of system headers on
 //                                   macOS instead of using embedded CoreAudio declarations
-// SAUDIO_ANDROID_AAUDIO           - on Android, select the AAudio backend (default)
-// SAUDIO_ANDROID_SLES             - on Android, select the OpenSLES backend
 //
 // If sokol_audio.h is compiled as a DLL, define the following before
 // including the declaration or implementation:
@@ -39,7 +37,7 @@
 // - on iOS: AudioToolbox, AVFoundation
 // - on FreeBSD: asound
 // - on Linux: asound
-// - on Android: link with OpenSLES or aaudio
+// - on Android: aaudio
 // - on Windows with MSVC or Clang toolchain: no action needed, libs are defined in-source via pragma-comment-lib
 // - on Windows with MINGW/MSYS2 gcc: compile with '-mwin32' and link with -lole32
 //
@@ -54,7 +52,7 @@
 // - macOS: CoreAudio
 // - iOS: CoreAudio+AVAudioSession
 // - emscripten: WebAudio with ScriptProcessorNode
-// - Android: AAudio (default) or OpenSLES, select at build time
+// - Android: AAudio
 //
 // Sokol Audio will not do any buffer mixing or volume control, if you have
 // multiple independent input streams of sample data you need to perform the
@@ -80,7 +78,7 @@
 //
 // SOKOL AUDIO, SOLOUD AND MINIAUDIO
 // =================================
-// The WASAPI, ALSA, OpenSLES and CoreAudio backend code has been taken from the
+// The WASAPI, ALSA and CoreAudio backend code has been taken from the
 // SoLoud library (with some modifications, so any bugs in there are most
 // likely my fault). If you need a more fully-featured audio solution, check
 // out SoLoud, it's excellent:
@@ -508,15 +506,6 @@ pub const LogItem = enum(i32) {
     AAUDIO_RESTARTING_STREAM_AFTER_ERROR,
     USING_AAUDIO_BACKEND,
     AAUDIO_CREATE_STREAMBUILDER_FAILED,
-    USING_SLES_BACKEND,
-    SLES_CREATE_ENGINE_FAILED,
-    SLES_ENGINE_GET_ENGINE_INTERFACE_FAILED,
-    SLES_CREATE_OUTPUT_MIX_FAILED,
-    SLES_MIXER_GET_VOLUME_INTERFACE_FAILED,
-    SLES_ENGINE_CREATE_AUDIO_PLAYER_FAILED,
-    SLES_PLAYER_GET_PLAY_INTERFACE_FAILED,
-    SLES_PLAYER_GET_VOLUME_INTERFACE_FAILED,
-    SLES_PLAYER_GET_BUFFERQUEUE_INTERFACE_FAILED,
     COREAUDIO_NEW_OUTPUT_FAILED,
     COREAUDIO_ALLOCATE_BUFFER_FAILED,
     COREAUDIO_START_FAILED,
