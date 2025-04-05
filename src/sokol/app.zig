@@ -332,8 +332,9 @@
 //
 //     int sapp_gl_get_major_version(void)
 //     int sapp_gl_get_minor_version(void)
-//         Returns the major and minor version of the GL context
-//         (only for SOKOL_GLCORE, all other backends return zero here, including SOKOL_GLES3)
+//     bool sapp_gl_is_gles(void)
+//         Returns the major and minor version of the GL context and
+//         whether the GL context is a GLES context
 //
 //     const void* sapp_android_get_native_activity(void);
 //         On Android, get the native activity ANativeActivity pointer, otherwise
@@ -2263,20 +2264,28 @@ pub fn glGetFramebuffer() u32 {
     return sapp_gl_get_framebuffer();
 }
 
-/// GL: get major version (only valid for desktop GL)
+/// GL: get major version
 extern fn sapp_gl_get_major_version() i32;
 
-/// GL: get major version (only valid for desktop GL)
+/// GL: get major version
 pub fn glGetMajorVersion() i32 {
     return sapp_gl_get_major_version();
 }
 
-/// GL: get minor version (only valid for desktop GL)
+/// GL: get minor version
 extern fn sapp_gl_get_minor_version() i32;
 
-/// GL: get minor version (only valid for desktop GL)
+/// GL: get minor version
 pub fn glGetMinorVersion() i32 {
     return sapp_gl_get_minor_version();
+}
+
+/// GL: return true if the context is GLES
+extern fn sapp_gl_is_gles() bool;
+
+/// GL: return true if the context is GLES
+pub fn glIsGles() bool {
+    return sapp_gl_is_gles();
 }
 
 /// X11: get Window
