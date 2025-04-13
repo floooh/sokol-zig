@@ -537,6 +537,8 @@ fn buildExample(b: *Build, example: Example, examples_step: *Build.Step, options
             .use_filesystem = false,
             .shell_file_path = b.path("src/sokol/web/shell.html"),
             .extra_args = &.{"-sSTACK_SIZE=512KB"},
+            // don't run Closure minification for WebGPU, see: https://github.com/emscripten-core/emscripten/issues/20415
+            .release_use_closure = options.backend != .wgpu,
         });
         examples_step.dependOn(&link_step.step);
 
