@@ -72,6 +72,7 @@ pub fn build(b: *Build) !void {
     const opt_dont_link_system_libs = b.option(bool, "dont_link_system_libs", "Do not link system libraries required by sokol (default: false)") orelse false;
     const opt_sokol_imgui_cprefix = b.option([]const u8, "sokol_imgui_cprefix", "Override Dear ImGui C bindings prefix for sokol_imgui.h (see SOKOL_IMGUI_CPREFIX)");
     const opt_cimgui_header_path = b.option([]const u8, "cimgui_header_path", "Override the Dear ImGui C bindings header name (default: cimgui.h)");
+    const opt_dylib = b.option(bool, "dylib", "Builds sokol_clib as dylib") orelse false;
     const sokol_backend: SokolBackend = if (opt_use_gl) .gl else if (opt_use_gles3) .gles3 else if (opt_use_wgpu) .wgpu else .auto;
 
     const target = b.standardTargetOptions(.{});
@@ -84,6 +85,7 @@ pub fn build(b: *Build) !void {
         .target = target,
         .optimize = optimize,
         .backend = sokol_backend,
+        .dylib = opt_dylib,
         .use_wayland = opt_use_wayland,
         .use_x11 = opt_use_x11,
         .use_egl = opt_use_egl,
@@ -131,6 +133,7 @@ pub const LibSokolOptions = struct {
     backend: SokolBackend = .auto,
     use_egl: bool = false,
     use_x11: bool = true,
+    dylib: bool = false,
     use_wayland: bool = false,
     emsdk: ?*Build.Dependency = null,
     with_sokol_imgui: bool = false,
@@ -152,11 +155,17 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         "sokol_glue.c",
         "sokol_fetch.c",
     };
-    const lib = b.addStaticLibrary(.{
+    const lib = b.addLibrary(.{
         .name = "sokol_clib",
-        .target = options.target,
-        .optimize = options.optimize,
-        .link_libc = true,
+        .linkage = switch (options.dylib) {
+            true => .dynamic,
+            else => .static,
+        },
+        .root_module = b.addModule("sokol_clib", .{
+            .target = options.target,
+            .optimize = options.optimize,
+            .link_libc = true,
+        }),
     });
 
     // make sokol headers available to users of `sokol_clib` via `#include "sokol/sokol_gfx.h"
