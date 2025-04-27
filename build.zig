@@ -72,7 +72,7 @@ pub fn build(b: *Build) !void {
     const opt_dont_link_system_libs = b.option(bool, "dont_link_system_libs", "Do not link system libraries required by sokol (default: false)") orelse false;
     const opt_sokol_imgui_cprefix = b.option([]const u8, "sokol_imgui_cprefix", "Override Dear ImGui C bindings prefix for sokol_imgui.h (see SOKOL_IMGUI_CPREFIX)");
     const opt_cimgui_header_path = b.option([]const u8, "cimgui_header_path", "Override the Dear ImGui C bindings header name (default: cimgui.h)");
-    const opt_dynamic_linkage = b.option(bool, "dynamic_linkage", "Builds sokol_clib artifact with dynamic linkage.") orelse false;
+    const opt_dynamic_linkage = b.option(bool, "dynamic_linkage", "Build sokol_clib artifact as dynamic link library.") orelse false;
     const sokol_backend: SokolBackend = if (opt_use_gl) .gl else if (opt_use_gles3) .gles3 else if (opt_use_wgpu) .wgpu else .auto;
 
     const target = b.standardTargetOptions(.{});
@@ -155,7 +155,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         "sokol_glue.c",
         "sokol_fetch.c",
     };
-    const module = b.addModule("mod_sokol_clib", .{
+    const mod = b.addModule("mod_sokol_clib", .{
         .target = options.target,
         .optimize = options.optimize,
         .link_libc = true,
@@ -169,7 +169,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
             return error.Wasm32EmscriptenExpected;
         }
         // add the Emscripten system include seach path
-        module.addSystemIncludePath(emSdkLazyPath(b, options.emsdk.?, &.{ "upstream", "emscripten", "cache", "sysroot", "include" }));
+        mod.addSystemIncludePath(emSdkLazyPath(b, options.emsdk.?, &.{ "upstream", "emscripten", "cache", "sysroot", "include" }));
     }
 
     // resolve .auto backend into specific backend by platform
@@ -193,24 +193,24 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     if (isPlatform(mod_target, .darwin)) {
         try cflags.append("-ObjC");
         if (link_system_libs) {
-            module.linkFramework("Foundation", .{});
-            module.linkFramework("AudioToolbox", .{});
+            mod.linkFramework("Foundation", .{});
+            mod.linkFramework("AudioToolbox", .{});
             if (.metal == backend) {
-                module.linkFramework("MetalKit", .{});
-                module.linkFramework("Metal", .{});
+                mod.linkFramework("MetalKit", .{});
+                mod.linkFramework("Metal", .{});
             }
             if (mod_target.os.tag == .ios) {
-                module.linkFramework("UIKit", .{});
-                module.linkFramework("AVFoundation", .{});
+                mod.linkFramework("UIKit", .{});
+                mod.linkFramework("AVFoundation", .{});
                 if (.gl == backend) {
-                    module.linkFramework("OpenGLES", .{});
-                    module.linkFramework("GLKit", .{});
+                    mod.linkFramework("OpenGLES", .{});
+                    mod.linkFramework("GLKit", .{});
                 }
             } else if (mod_target.os.tag == .macos) {
-                module.linkFramework("Cocoa", .{});
-                module.linkFramework("QuartzCore", .{});
+                mod.linkFramework("Cocoa", .{});
+                mod.linkFramework("QuartzCore", .{});
                 if (.gl == backend) {
-                    module.linkFramework("OpenGL", .{});
+                    mod.linkFramework("OpenGL", .{});
                 }
             }
         }
@@ -219,10 +219,10 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
             @panic("For android targets, you must have backend set to GLES3");
         }
         if (link_system_libs) {
-            module.linkSystemLibrary("GLESv3", .{});
-            module.linkSystemLibrary("EGL", .{});
-            module.linkSystemLibrary("android", .{});
-            module.linkSystemLibrary("log", .{});
+            mod.linkSystemLibrary("GLESv3", .{});
+            mod.linkSystemLibrary("EGL", .{});
+            mod.linkSystemLibrary("android", .{});
+            mod.linkSystemLibrary("log", .{});
         }
     } else if (isPlatform(mod_target, .linux)) {
         if (options.use_egl) try cflags.append("-DSOKOL_FORCE_EGL");
@@ -230,32 +230,32 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         if (!options.use_wayland) try cflags.append("-DSOKOL_DISABLE_WAYLAND");
         const link_egl = options.use_egl or options.use_wayland;
         if (link_system_libs) {
-            module.linkSystemLibrary("asound", .{});
-            module.linkSystemLibrary("GL", .{});
+            mod.linkSystemLibrary("asound", .{});
+            mod.linkSystemLibrary("GL", .{});
             if (options.use_x11) {
-                module.linkSystemLibrary("X11", .{});
-                module.linkSystemLibrary("Xi", .{});
-                module.linkSystemLibrary("Xcursor", .{});
+                mod.linkSystemLibrary("X11", .{});
+                mod.linkSystemLibrary("Xi", .{});
+                mod.linkSystemLibrary("Xcursor", .{});
             }
             if (options.use_wayland) {
-                module.linkSystemLibrary("wayland-client", .{});
-                module.linkSystemLibrary("wayland-cursor", .{});
-                module.linkSystemLibrary("wayland-egl", .{});
-                module.linkSystemLibrary("xkbcommon", .{});
+                mod.linkSystemLibrary("wayland-client", .{});
+                mod.linkSystemLibrary("wayland-cursor", .{});
+                mod.linkSystemLibrary("wayland-egl", .{});
+                mod.linkSystemLibrary("xkbcommon", .{});
             }
             if (link_egl) {
-                module.linkSystemLibrary("EGL", .{});
+                mod.linkSystemLibrary("EGL", .{});
             }
         }
     } else if (isPlatform(mod_target, .windows)) {
         if (link_system_libs) {
-            module.linkSystemLibrary("kernel32", .{});
-            module.linkSystemLibrary("user32", .{});
-            module.linkSystemLibrary("gdi32", .{});
-            module.linkSystemLibrary("ole32", .{});
+            mod.linkSystemLibrary("kernel32", .{});
+            mod.linkSystemLibrary("user32", .{});
+            mod.linkSystemLibrary("gdi32", .{});
+            mod.linkSystemLibrary("ole32", .{});
             if (.d3d11 == backend) {
-                module.linkSystemLibrary("d3d11", .{});
-                module.linkSystemLibrary("dxgi", .{});
+                mod.linkSystemLibrary("d3d11", .{});
+                mod.linkSystemLibrary("dxgi", .{});
             }
         }
     } else if (isPlatform(mod_target, .web)) {
@@ -264,7 +264,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
 
     // finally add the C source files
     inline for (csources) |csrc| {
-        module.addCSourceFile(.{
+        mod.addCSourceFile(.{
             .file = b.path(csrc_root ++ csrc),
             .flags = cflags.slice(),
         });
@@ -279,7 +279,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         if (options.cimgui_header_path) |cimgui_header_path| {
             try cflags.append(b.fmt("-DCIMGUI_HEADER_PATH=\"{s}\"", .{cimgui_header_path}));
         }
-        module.addCSourceFile(.{
+        mod.addCSourceFile(.{
             .file = b.path(csrc_root ++ "sokol_imgui.c"),
             .flags = cflags.slice(),
         });
@@ -288,18 +288,15 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     // build the library artifact
     const lib = b.addLibrary(.{
         .name = "sokol_clib",
-        .linkage = switch (options.dynamic_linkage) {
-            false => .static,
-            true => .dynamic,
-        },
-        .root_module = module,
+        .linkage = if (options.dynamic_linkage) .dynamic else .static,
+        .root_module = mod,
     });
 
     // make sokol headers available to users of `sokol_clib` via `#include "sokol/sokol_gfx.h"
     lib.installHeadersDirectory(b.path("src/sokol/c"), "sokol", .{});
 
+    // one-time setup of Emscripten SDK
     if (isPlatform(mod_target, .web)) {
-        // one-time setup of Emscripten SDK
         if (try emSdkSetupStep(b, options.emsdk.?)) |emsdk_setup| {
             lib.step.dependOn(&emsdk_setup.step);
         }
