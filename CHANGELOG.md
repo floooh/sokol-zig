@@ -4,6 +4,12 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 27-Apr-2025
+
+The sokol C library can now be built as dynamic link library via `-Ddynamic_linkage`.
+See PR https://github.com/floooh/sokol-zig/pull/116 for details. Many thanks to
+@remzisenel for the PR!
+
 ### 29-Mar-2025
 
 Added a new build option `dont_link_system_libs`. When this is provided, upstream
