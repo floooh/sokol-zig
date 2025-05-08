@@ -54,7 +54,7 @@ export fn init() void {
 
     // a render pass with one color- and one depth-attachment image
     var img_desc = sg.ImageDesc{
-        .render_target = true,
+        .usage = .{ .render_attachment = true },
         .width = 256,
         .height = 256,
         .pixel_format = .RGBA8,

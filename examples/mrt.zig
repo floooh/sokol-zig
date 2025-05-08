@@ -112,7 +112,7 @@ export fn init() void {
 
     // index buffer for a cube
     const cube_ibuf = sg.makeBuffer(.{
-        .type = .INDEXBUFFER,
+        .usage = .{ .index_buffer = true },
         .data = sg.asRange(&[_]u16{
             0,  1,  2,  0,  2,  3,
             6,  5,  4,  7,  6,  4,
@@ -283,7 +283,7 @@ fn createOffscreenAttachments(width: i32, height: i32) void {
 
     // create offscreen render target images and pass
     const color_img_desc: sg.ImageDesc = .{
-        .render_target = true,
+        .usage = .{ .render_attachment = true },
         .width = width,
         .height = height,
         .sample_count = offscreen_sample_count,

@@ -45,7 +45,7 @@ export fn init() void {
 
     // a storage buffer with the cube vertex data
     state.bind.storage_buffers[shd.SBUF_ssbo] = sg.makeBuffer(.{
-        .type = .STORAGEBUFFER,
+        .usage = .{ .storage_buffer = true },
         .data = sg.asRange(&[_]shd.SbVertex{
             // zig fmt: off
             .{ .pos = .{ -1.0, -1.0, -1.0 }, .color = .{ 1.0, 0.0, 0.0, 1.0 } },
@@ -79,7 +79,7 @@ export fn init() void {
 
     // a regular index buffer
     state.bind.index_buffer = sg.makeBuffer(.{
-        .type = .INDEXBUFFER,
+        .usage = .{ .index_buffer = true },
         .data = sg.asRange(&[_]u16{
             0,  1,  2,  0,  2,  3,
             6,  5,  4,  7,  6,  4,
