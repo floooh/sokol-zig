@@ -76,7 +76,7 @@ export fn init() void {
 
     // create an offscreen render target texture, pass-attachments object and pass-action
     state.offscreen.img = sg.makeImage(.{
-        .render_target = true,
+        .usage = .{ .render_attachment = true },
         .width = offscreen_width,
         .height = offscreen_height,
         .pixel_format = offscreen_pixel_format,

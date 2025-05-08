@@ -48,7 +48,7 @@ export fn init() void {
         }),
     });
     state.bind.index_buffer = sg.makeBuffer(.{
-        .type = .INDEXBUFFER,
+        .usage = .{ .index_buffer = true },
         .data = sg.asRange(&[_]u16{
             // triangle indices
             0, 1, 2,

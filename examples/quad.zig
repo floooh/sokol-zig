@@ -35,7 +35,7 @@ export fn init() void {
 
     // an index buffer
     state.bind.index_buffer = sg.makeBuffer(.{
-        .type = .INDEXBUFFER,
+        .usage = .{ .index_buffer = true },
         .data = sg.asRange(&[_]u16{ 0, 1, 2, 0, 2, 3 }),
     });
 
