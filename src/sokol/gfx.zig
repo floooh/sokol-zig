@@ -450,7 +450,7 @@
 //     sg_apply_scissor_rect[f]
 //     sg_draw
 //
-// The following function may be called inside a render- or compute-pass, but
+// The folling function may be called inside a render- or compute-pass, but
 // not outside a pass:
 //
 //     sg_apply_pipeline
@@ -816,7 +816,7 @@
 //     - for the GLES3 backend, source code must be provided in '#version 300 es' syntax
 //     - for the D3D11 backend, shaders can be provided as source or binary
 //       blobs, the source code should be in HLSL4.0 (for compatibility with old
-//       low-end GPUs) or preferably in HLSL5.0 syntax, note that when
+//       low-end GPUs) or preferrably in HLSL5.0 syntax, note that when
 //       shader source code is provided for the D3D11 backend, sokol-gfx will
 //       dynamically load 'd3dcompiler_47.dll'
 //     - for the Metal backends, shaders can be provided as source or binary blobs, the
@@ -881,7 +881,7 @@
 //     - a boolean 'readonly' flag, this is used for validation and hazard
 //       tracking in some 3D backends. Note that in render passes, only
 //       readonly storage buffer bindings are allowed. In compute passes, any
-//       read/write storage buffer binding is assumed to be written to by the
+//       read/write storage buffer binding is assumbed to be written to by the
 //       compute shader.
 //     - a backend-specific bind slot:
 //         - D3D11/HLSL:
@@ -976,7 +976,7 @@
 //     - for Metal:    https://github.com/floooh/sokol-samples/tree/master/metal
 //     - for OpenGL:   https://github.com/floooh/sokol-samples/tree/master/glfw
 //     - for GLES3:    https://github.com/floooh/sokol-samples/tree/master/html5
-//     - for WebGPU:   https://github.com/floooh/sokol-samples/tree/master/wgpu
+//     - for WebGPI:   https://github.com/floooh/sokol-samples/tree/master/wgpu
 //
 //
 // ON SG_IMAGESAMPLETYPE_UNFILTERABLE_FLOAT AND SG_SAMPLERTYPE_NONFILTERING
@@ -1718,7 +1718,7 @@
 // - Likewise, the following sokol-gfx pixel formats are not supported in WebGPU:
 //   R16, R16SN, RG16, RG16SN, RGBA16, RGBA16SN.
 //   Unlike unsupported vertex formats, unsupported pixel formats can be queried
-//   in cross-backend code via sg_query_pixel_format() though.
+//   in cross-backend code via sg_query_pixelformat() though.
 //
 // - The Emscripten WebGPU shim currently doesn't support the Closure minification
 //   post-link-step (e.g. currently the emcc argument '--closure 1' or '--closure 2'
@@ -1840,6 +1840,7 @@ pub const Range = extern struct {
 pub const invalid_id = 0;
 pub const num_inflight_frames = 2;
 pub const max_color_attachments = 4;
+pub const max_storage_attachments = 4;
 pub const max_uniformblock_members = 16;
 pub const max_vertex_attributes = 16;
 pub const max_mipmaps = 16;
@@ -1997,6 +1998,8 @@ pub const PixelformatInfo = extern struct {
     msaa: bool = false,
     depth: bool = false,
     compressed: bool = false,
+    read: bool = false,
+    write: bool = false,
     bytes_per_pixel: i32 = 0,
 };
 
@@ -2008,6 +2011,7 @@ pub const Features = extern struct {
     mrt_independent_write_mask: bool = false,
     compute: bool = false,
     msaa_image_bindings: bool = false,
+    separate_buffer_types: bool = false,
 };
 
 /// Runtime information about resource limits, returned by sg_query_limit()
@@ -2044,62 +2048,6 @@ pub const ResourceState = enum(i32) {
     VALID,
     FAILED,
     INVALID,
-};
-
-/// sg_usage
-///
-/// A resource usage hint describing the update strategy of
-/// buffers and images. This is used in the sg_buffer_desc.usage
-/// and sg_image_desc.usage members when creating buffers
-/// and images:
-///
-/// SG_USAGE_IMMUTABLE:     the resource will never be updated with
-///                         new (CPU-side) data, instead the content of the
-///                         resource must be provided on creation
-/// SG_USAGE_DYNAMIC:       the resource will be updated infrequently
-///                         with new data (this could range from "once
-///                         after creation", to "quite often but not
-///                         every frame")
-/// SG_USAGE_STREAM:        the resource will be updated each frame
-///                         with new content
-///
-/// The rendering backends use this hint to prevent that the
-/// CPU needs to wait for the GPU when attempting to update
-/// a resource that might be currently accessed by the GPU.
-///
-/// Resource content is updated with the functions sg_update_buffer() or
-/// sg_append_buffer() for buffer objects, and sg_update_image() for image
-/// objects. For the sg_update_*() functions, only one update is allowed per
-/// frame and resource object, while sg_append_buffer() can be called
-/// multiple times per frame on the same buffer. The application must update
-/// all data required for rendering (this means that the update data can be
-/// smaller than the resource size, if only a part of the overall resource
-/// size is used for rendering, you only need to make sure that the data that
-/// *is* used is valid).
-///
-/// The default usage is SG_USAGE_IMMUTABLE.
-pub const Usage = enum(i32) {
-    DEFAULT,
-    IMMUTABLE,
-    DYNAMIC,
-    STREAM,
-    NUM,
-};
-
-/// sg_buffer_type
-///
-/// Indicates whether a buffer will be bound as vertex-,
-/// index- or storage-buffer.
-///
-/// Used in the sg_buffer_desc.type member when creating a buffer.
-///
-/// The default value is SG_BUFFERTYPE_VERTEXBUFFER.
-pub const BufferType = enum(i32) {
-    DEFAULT,
-    VERTEXBUFFER,
-    INDEXBUFFER,
-    STORAGEBUFFER,
-    NUM,
 };
 
 /// sg_index_type
@@ -2874,6 +2822,18 @@ pub const Bindings = extern struct {
     _end_canary: u32 = 0,
 };
 
+/// sg_buffer_usage
+///
+/// TODO
+pub const BufferUsage = extern struct {
+    vertex_buffer: bool = false,
+    index_buffer: bool = false,
+    storage_buffer: bool = false,
+    immutable: bool = false,
+    dynamic_update: bool = false,
+    stream_update: bool = false,
+};
+
 /// sg_buffer_desc
 ///
 /// Creation parameters for sg_buffer objects, used in the
@@ -2882,8 +2842,7 @@ pub const Bindings = extern struct {
 /// The default configuration is:
 ///
 /// .size:      0       (*must* be >0 for buffers without data)
-/// .type:      SG_BUFFERTYPE_VERTEXBUFFER
-/// .usage:     SG_USAGE_IMMUTABLE
+/// .usage              .vertex_buffer = true, .immutable = true
 /// .data.ptr   0       (*must* be valid for immutable buffers)
 /// .data.size  0       (*must* be > 0 for immutable buffers)
 /// .label      0       (optional string label)
@@ -2928,8 +2887,7 @@ pub const Bindings = extern struct {
 pub const BufferDesc = extern struct {
     _start_canary: u32 = 0,
     size: usize = 0,
-    type: BufferType = .DEFAULT,
-    usage: Usage = .DEFAULT,
+    usage: BufferUsage = .{},
     data: Range = .{},
     label: [*c]const u8 = null,
     gl_buffers: [2]u32 = [_]u32{0} ** 2,
@@ -2937,6 +2895,17 @@ pub const BufferDesc = extern struct {
     d3d11_buffer: ?*const anyopaque = null,
     wgpu_buffer: ?*const anyopaque = null,
     _end_canary: u32 = 0,
+};
+
+/// sg_image_usage
+///
+/// TODO
+pub const ImageUsage = extern struct {
+    render_attachment: bool = false,
+    storage_attachment: bool = false,
+    immutable: bool = false,
+    dynamic_update: bool = false,
+    stream_update: bool = false,
 };
 
 /// sg_image_data
@@ -2954,15 +2923,15 @@ pub const ImageData = extern struct {
 ///
 /// The default configuration is:
 ///
-/// .type:              SG_IMAGETYPE_2D
-/// .render_target:     false
+/// .type               SG_IMAGETYPE_2D
+/// .usage              .immutable = true
 /// .width              0 (must be set to >0)
 /// .height             0 (must be set to >0)
 /// .num_slices         1 (3D textures: depth; array textures: number of layers)
-/// .num_mipmaps:       1
-/// .usage:             SG_USAGE_IMMUTABLE
-/// .pixel_format:      SG_PIXELFORMAT_RGBA8 for textures, or sg_desc.environment.defaults.color_format for render targets
-/// .sample_count:      1 for textures, or sg_desc.environment.defaults.sample_count for render targets
+/// .num_mipmaps        1
+/// .usage              SG_USAGE_IMMUTABLE
+/// .pixel_format       SG_PIXELFORMAT_RGBA8 for textures, or sg_desc.environment.defaults.color_format for render targets
+/// .sample_count       1 for textures, or sg_desc.environment.defaults.sample_count for render targets
 /// .data               an sg_image_data struct to define the initial content
 /// .label              0 (optional string label for trace hooks)
 ///
@@ -3005,12 +2974,11 @@ pub const ImageData = extern struct {
 pub const ImageDesc = extern struct {
     _start_canary: u32 = 0,
     type: ImageType = .DEFAULT,
-    render_target: bool = false,
+    usage: ImageUsage = .{},
     width: i32 = 0,
     height: i32 = 0,
     num_slices: i32 = 0,
     num_mipmaps: i32 = 0,
-    usage: Usage = .DEFAULT,
     pixel_format: PixelFormat = .DEFAULT,
     sample_count: i32 = 0,
     data: ImageData = .{},
@@ -3257,6 +3225,17 @@ pub const ShaderStorageBuffer = extern struct {
     glsl_binding_n: u8 = 0,
 };
 
+pub const ShaderStorageImage = extern struct {
+    stage: ShaderStage = .NONE,
+    image_type: ImageType = .DEFAULT,
+    access_format: PixelFormat = .DEFAULT,
+    writeonly: bool = false,
+    hlsl_register_u_n: u8 = 0,
+    msl_texture_n: u8 = 0,
+    wgsl_group2_binding_n: u8 = 0,
+    glsl_binding_n: u8 = 0,
+};
+
 pub const ShaderImageSamplerPair = extern struct {
     stage: ShaderStage = .NONE,
     image_slot: u8 = 0,
@@ -3281,6 +3260,7 @@ pub const ShaderDesc = extern struct {
     images: [16]ShaderImage = [_]ShaderImage{.{}} ** 16,
     samplers: [16]ShaderSampler = [_]ShaderSampler{.{}} ** 16,
     image_sampler_pairs: [16]ShaderImageSamplerPair = [_]ShaderImageSamplerPair{.{}} ** 16,
+    storage_images: [4]ShaderStorageImage = [_]ShaderStorageImage{.{}} ** 4,
     mtl_threads_per_threadgroup: MtlShaderThreadsPerThreadgroup = .{},
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
@@ -3481,6 +3461,7 @@ pub const AttachmentsDesc = extern struct {
     colors: [4]AttachmentDesc = [_]AttachmentDesc{.{}} ** 4,
     resolves: [4]AttachmentDesc = [_]AttachmentDesc{.{}} ** 4,
     depth_stencil: AttachmentDesc = .{},
+    storages: [4]AttachmentDesc = [_]AttachmentDesc{.{}} ** 4,
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
 };
@@ -3715,6 +3696,7 @@ pub const LogItem = enum(i32) {
     GL_3D_TEXTURES_NOT_SUPPORTED,
     GL_ARRAY_TEXTURES_NOT_SUPPORTED,
     GL_STORAGEBUFFER_GLSL_BINDING_OUT_OF_RANGE,
+    GL_STORAGEIMAGE_GLSL_BINDING_OUT_OF_RANGE,
     GL_SHADER_COMPILATION_FAILED,
     GL_SHADER_LINKING_FAILED,
     GL_VERTEX_ATTRIBUTE_NOT_FOUND_IN_SHADER,
@@ -3744,6 +3726,7 @@ pub const LogItem = enum(i32) {
     D3D11_STORAGEBUFFER_HLSL_REGISTER_U_OUT_OF_RANGE,
     D3D11_IMAGE_HLSL_REGISTER_T_OUT_OF_RANGE,
     D3D11_SAMPLER_HLSL_REGISTER_S_OUT_OF_RANGE,
+    D3D11_STORAGEIMAGE_HLSL_REGISTER_U_OUT_OF_RANGE,
     D3D11_LOAD_D3DCOMPILER_47_DLL_FAILED,
     D3D11_SHADER_COMPILATION_FAILED,
     D3D11_SHADER_COMPILATION_OUTPUT,
@@ -3754,6 +3737,7 @@ pub const LogItem = enum(i32) {
     D3D11_CREATE_BLEND_STATE_FAILED,
     D3D11_CREATE_RTV_FAILED,
     D3D11_CREATE_DSV_FAILED,
+    D3D11_CREATE_UAV_FAILED,
     D3D11_MAP_FOR_UPDATE_BUFFER_FAILED,
     D3D11_MAP_FOR_APPEND_BUFFER_FAILED,
     D3D11_MAP_FOR_UPDATE_IMAGE_FAILED,
@@ -3767,6 +3751,7 @@ pub const LogItem = enum(i32) {
     METAL_SHADER_ENTRY_NOT_FOUND,
     METAL_UNIFORMBLOCK_MSL_BUFFER_SLOT_OUT_OF_RANGE,
     METAL_STORAGEBUFFER_MSL_BUFFER_SLOT_OUT_OF_RANGE,
+    METAL_STORAGEIMAGE_MSL_TEXTURE_SLOT_OUT_OF_RANGE,
     METAL_IMAGE_MSL_TEXTURE_SLOT_OUT_OF_RANGE,
     METAL_SAMPLER_MSL_SAMPLER_SLOT_OUT_OF_RANGE,
     METAL_CREATE_CPS_FAILED,
@@ -3788,6 +3773,7 @@ pub const LogItem = enum(i32) {
     WGPU_STORAGEBUFFER_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
     WGPU_IMAGE_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
     WGPU_SAMPLER_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
+    WGPU_STORAGEIMAGE_WGSL_GROUP2_BINDING_OUT_OF_RANGE,
     WGPU_CREATE_PIPELINE_LAYOUT_FAILED,
     WGPU_CREATE_RENDER_PIPELINE_FAILED,
     WGPU_CREATE_COMPUTE_PIPELINE_FAILED,
@@ -3829,27 +3815,36 @@ pub const LogItem = enum(i32) {
     APPLY_BINDINGS_STORAGE_BUFFER_TRACKER_EXHAUSTED,
     DRAW_WITHOUT_BINDINGS,
     VALIDATE_BUFFERDESC_CANARY,
+    VALIDATE_BUFFERDESC_IMMUTABLE_DYNAMIC_STREAM,
+    VALIDATE_BUFFERDESC_SEPARATE_BUFFER_TYPES,
     VALIDATE_BUFFERDESC_EXPECT_NONZERO_SIZE,
     VALIDATE_BUFFERDESC_EXPECT_MATCHING_DATA_SIZE,
     VALIDATE_BUFFERDESC_EXPECT_ZERO_DATA_SIZE,
+    VALIATE_EXPECT_DATA,
     VALIDATE_BUFFERDESC_EXPECT_NO_DATA,
+    VALIDATE_BUFFERDESC_EXPECT_DATA,
     VALIDATE_BUFFERDESC_STORAGEBUFFER_SUPPORTED,
     VALIDATE_BUFFERDESC_STORAGEBUFFER_SIZE_MULTIPLE_4,
     VALIDATE_IMAGEDATA_NODATA,
     VALIDATE_IMAGEDATA_DATA_SIZE,
     VALIDATE_IMAGEDESC_CANARY,
+    VALIDATE_IMAGEDESC_IMMUTABLE_DYNAMIC_STREAM,
+    VALIDATE_IMAGEDESC_RENDER_VS_STORAGE_ATTACHMENT,
     VALIDATE_IMAGEDESC_WIDTH,
     VALIDATE_IMAGEDESC_HEIGHT,
-    VALIDATE_IMAGEDESC_RT_PIXELFORMAT,
     VALIDATE_IMAGEDESC_NONRT_PIXELFORMAT,
-    VALIDATE_IMAGEDESC_MSAA_BUT_NO_RT,
-    VALIDATE_IMAGEDESC_NO_MSAA_RT_SUPPORT,
-    VALIDATE_IMAGEDESC_MSAA_NUM_MIPMAPS,
-    VALIDATE_IMAGEDESC_MSAA_3D_IMAGE,
-    VALIDATE_IMAGEDESC_MSAA_CUBE_IMAGE,
+    VALIDATE_IMAGEDESC_MSAA_BUT_NO_ATTACHMENT,
     VALIDATE_IMAGEDESC_DEPTH_3D_IMAGE,
-    VALIDATE_IMAGEDESC_RT_IMMUTABLE,
-    VALIDATE_IMAGEDESC_RT_NO_DATA,
+    VALIDATE_IMAGEDESC_ATTACHMENT_EXPECT_IMMUTABLE,
+    VALIDATE_IMAGEDESC_ATTACHMENT_EXPECT_NO_DATA,
+    VALIDATE_IMAGEDESC_RENDERATTACHMENT_NO_MSAA_SUPPORT,
+    VALIDATE_IMAGEDESC_RENDERATTACHMENT_MSAA_NUM_MIPMAPS,
+    VALIDATE_IMAGEDESC_RENDERATTACHMENT_MSAA_3D_IMAGE,
+    VALIDATE_IMAGEDESC_RENDERATTACHMENT_MSAA_CUBE_IMAGE,
+    VALIDATE_IMAGEDESC_RENDERATTACHMENT_MSAA_ARRAY_IMAGE,
+    VALIDATE_IMAGEDESC_RENDERATTACHMENT_PIXELFORMAT,
+    VALIDATE_IMAGEDESC_STORAGEATTACHMENT_PIXELFORMAT,
+    VALIDATE_IMAGEDESC_STORAGEATTACHMENT_EXPECT_NO_MSAA,
     VALIDATE_IMAGEDESC_INJECTED_NO_DATA,
     VALIDATE_IMAGEDESC_DYNAMIC_NO_DATA,
     VALIDATE_IMAGEDESC_COMPRESSED_IMMUTABLE,
@@ -3888,6 +3883,15 @@ pub const LogItem = enum(i32) {
     VALIDATE_SHADERDESC_STORAGEBUFFER_GLSL_BINDING_COLLISION,
     VALIDATE_SHADERDESC_STORAGEBUFFER_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
     VALIDATE_SHADERDESC_STORAGEBUFFER_WGSL_GROUP1_BINDING_COLLISION,
+    VALIDATE_SHADERDESC_STORAGEIMAGE_EXPECT_COMPUTE_STAGE,
+    VALIDATE_SHADERDESC_STORAGEIMAGE_METAL_TEXTURE_SLOT_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_STORAGEIMAGE_METAL_TEXTURE_SLOT_COLLISION,
+    VALIDATE_SHADERDESC_STORAGEIMAGE_HLSL_REGISTER_U_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_STORAGEIMAGE_HLSL_REGISTER_U_COLLISION,
+    VALIDATE_SHADERDESC_STORAGEIMAGE_GLSL_BINDING_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_STORAGEIMAGE_GLSL_BINDING_COLLISION,
+    VALIDATE_SHADERDESC_STORAGEIMAGE_WGSL_GROUP2_BINDING_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_STORAGEIMAGE_WGSL_GROUP2_BINDING_COLLISION,
     VALIDATE_SHADERDESC_IMAGE_METAL_TEXTURE_SLOT_OUT_OF_RANGE,
     VALIDATE_SHADERDESC_IMAGE_METAL_TEXTURE_SLOT_COLLISION,
     VALIDATE_SHADERDESC_IMAGE_HLSL_REGISTER_T_OUT_OF_RANGE,
@@ -3923,14 +3927,13 @@ pub const LogItem = enum(i32) {
     VALIDATE_ATTACHMENTSDESC_CANARY,
     VALIDATE_ATTACHMENTSDESC_NO_ATTACHMENTS,
     VALIDATE_ATTACHMENTSDESC_NO_CONT_COLOR_ATTS,
-    VALIDATE_ATTACHMENTSDESC_IMAGE,
-    VALIDATE_ATTACHMENTSDESC_MIPLEVEL,
-    VALIDATE_ATTACHMENTSDESC_FACE,
-    VALIDATE_ATTACHMENTSDESC_LAYER,
-    VALIDATE_ATTACHMENTSDESC_SLICE,
-    VALIDATE_ATTACHMENTSDESC_IMAGE_NO_RT,
+    VALIDATE_ATTACHMENTSDESC_COLOR_IMAGE,
+    VALIDATE_ATTACHMENTSDESC_COLOR_MIPLEVEL,
+    VALIDATE_ATTACHMENTSDESC_COLOR_FACE,
+    VALIDATE_ATTACHMENTSDESC_COLOR_LAYER,
+    VALIDATE_ATTACHMENTSDESC_COLOR_SLICE,
+    VALIDATE_ATTACHMENTSDESC_COLOR_IMAGE_NO_RENDERATTACHMENT,
     VALIDATE_ATTACHMENTSDESC_COLOR_INV_PIXELFORMAT,
-    VALIDATE_ATTACHMENTSDESC_DEPTH_INV_PIXELFORMAT,
     VALIDATE_ATTACHMENTSDESC_IMAGE_SIZES,
     VALIDATE_ATTACHMENTSDESC_IMAGE_SAMPLE_COUNTS,
     VALIDATE_ATTACHMENTSDESC_RESOLVE_COLOR_IMAGE_MSAA,
@@ -3943,21 +3946,32 @@ pub const LogItem = enum(i32) {
     VALIDATE_ATTACHMENTSDESC_RESOLVE_IMAGE_NO_RT,
     VALIDATE_ATTACHMENTSDESC_RESOLVE_IMAGE_SIZES,
     VALIDATE_ATTACHMENTSDESC_RESOLVE_IMAGE_FORMAT,
+    VALIDATE_ATTACHMENTSDESC_DEPTH_INV_PIXELFORMAT,
     VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE,
     VALIDATE_ATTACHMENTSDESC_DEPTH_MIPLEVEL,
     VALIDATE_ATTACHMENTSDESC_DEPTH_FACE,
     VALIDATE_ATTACHMENTSDESC_DEPTH_LAYER,
     VALIDATE_ATTACHMENTSDESC_DEPTH_SLICE,
-    VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_NO_RT,
+    VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_NO_RENDERATTACHMENT,
     VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_SIZES,
     VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_SAMPLE_COUNT,
+    VALIDATE_ATTACHMENTSDESC_STORAGE_IMAGE,
+    VALIDATE_ATTACHMENTSDESC_STORAGE_MIPLEVEL,
+    VALIDATE_ATTACHMENTSDESC_STORAGE_FACE,
+    VALIDATE_ATTACHMENTSDESC_STORAGE_LAYER,
+    VALIDATE_ATTACHMENTSDESC_STORAGE_SLICE,
+    VALIDATE_ATTACHMENTSDESC_STORAGE_IMAGE_NO_STORAGEATTACHMENT,
+    VALIDATE_ATTACHMENTSDESC_STORAGE_INV_PIXELFORMAT,
+    VALIDATE_ATTACHMENTSDESC_RENDER_VS_STORAGE_ATTACHMENTS,
     VALIDATE_BEGINPASS_CANARY,
-    VALIDATE_BEGINPASS_EXPECT_NO_ATTACHMENTS,
     VALIDATE_BEGINPASS_ATTACHMENTS_EXISTS,
     VALIDATE_BEGINPASS_ATTACHMENTS_VALID,
+    VALIDATE_BEGINPASS_COMPUTEPASS_STORAGE_ATTACHMENTS_ONLY,
+    VALIDATE_BEGINPASS_RENDERPASS_RENDER_ATTACHMENTS_ONLY,
     VALIDATE_BEGINPASS_COLOR_ATTACHMENT_IMAGE,
     VALIDATE_BEGINPASS_RESOLVE_ATTACHMENT_IMAGE,
     VALIDATE_BEGINPASS_DEPTHSTENCIL_ATTACHMENT_IMAGE,
+    VALIDATE_BEGINPASS_STORAGE_ATTACHMENT_IMAGE,
     VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_WIDTH,
     VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_WIDTH_NOTSET,
     VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_HEIGHT,
@@ -4002,6 +4016,11 @@ pub const LogItem = enum(i32) {
     VALIDATE_APIP_COLOR_FORMAT,
     VALIDATE_APIP_DEPTH_FORMAT,
     VALIDATE_APIP_SAMPLE_COUNT,
+    VALIDATE_APIP_EXPECTED_STORAGE_ATTACHMENT_IMAGE,
+    VALIDATE_APIP_STORAGE_ATTACHMENT_IMAGE_EXISTS,
+    VALIDATE_APIP_STORAGE_ATTACHMENT_IMAGE_VALID,
+    VALIDATE_APIP_STORAGE_ATTACHMENT_PIXELFORMAT,
+    VALIDATE_APIP_STORAGE_ATTACHMENT_IMAGE_TYPE,
     VALIDATE_ABND_PASS_EXPECTED,
     VALIDATE_ABND_EMPTY_BINDINGS,
     VALIDATE_ABND_PIPELINE,
@@ -4034,6 +4053,10 @@ pub const LogItem = enum(i32) {
     VALIDATE_ABND_STORAGEBUFFER_EXISTS,
     VALIDATE_ABND_STORAGEBUFFER_BINDING_BUFFERTYPE,
     VALIDATE_ABND_STORAGEBUFFER_READWRITE_IMMUTABLE,
+    VALIDATE_ABND_IMAGE_BINDING_VS_DEPTHSTENCIL_ATTACHMENT,
+    VALIDATE_ABND_IMAGE_BINDING_VS_COLOR_ATTACHMENT,
+    VALIDATE_ABND_IMAGE_BINDING_VS_RESOLVE_ATTACHMENT,
+    VALIDATE_ABND_IMAGE_BINDING_VS_STORAGE_ATTACHMENT,
     VALIDATE_AU_PASS_EXPECTED,
     VALIDATE_AU_NO_PIPELINE,
     VALIDATE_AU_NO_UNIFORMBLOCK_AT_SLOT,
@@ -4667,15 +4690,9 @@ pub fn queryBufferSize(buf: Buffer) usize {
     return sg_query_buffer_size(buf);
 }
 
-extern fn sg_query_buffer_type(Buffer) BufferType;
+extern fn sg_query_buffer_usage(Buffer) BufferUsage;
 
-pub fn queryBufferType(buf: Buffer) BufferType {
-    return sg_query_buffer_type(buf);
-}
-
-extern fn sg_query_buffer_usage(Buffer) Usage;
-
-pub fn queryBufferUsage(buf: Buffer) Usage {
+pub fn queryBufferUsage(buf: Buffer) BufferUsage {
     return sg_query_buffer_usage(buf);
 }
 
@@ -4715,9 +4732,9 @@ pub fn queryImagePixelformat(img: Image) PixelFormat {
     return sg_query_image_pixelformat(img);
 }
 
-extern fn sg_query_image_usage(Image) Usage;
+extern fn sg_query_image_usage(Image) ImageUsage;
 
-pub fn queryImageUsage(img: Image) Usage {
+pub fn queryImageUsage(img: Image) ImageUsage {
     return sg_query_image_usage(img);
 }
 
