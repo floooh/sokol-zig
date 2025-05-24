@@ -53,7 +53,7 @@ export fn init() void {
 
     // a zero-initialized storage buffer for the particle state
     const sbuf = sg.makeBuffer(.{
-        .type = .STORAGEBUFFER,
+        .usage = .{ .storage_buffer = true },
         .size = max_particles * @sizeOf(shd.Particle),
         .label = "particle-buffer",
     });
@@ -81,7 +81,7 @@ export fn init() void {
         .label = "geometry-vbuf",
     });
     state.display.bind.index_buffer = sg.makeBuffer(.{
-        .type = .INDEXBUFFER,
+        .usage = .{ .index_buffer = true },
         .data = sg.asRange(&[_]u16{
             2, 1, 0, 3, 2, 0,
             4, 3, 0, 1, 4, 0,

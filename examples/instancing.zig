@@ -56,7 +56,7 @@ export fn init() void {
 
     // an index buffer for the static geometry
     state.bind.index_buffer = sg.makeBuffer(.{
-        .type = .INDEXBUFFER,
+        .usage = .{ .index_buffer = true },
         .data = sg.asRange(&[_]u16{
             2, 1, 0, 3, 2, 0,
             4, 3, 0, 1, 4, 0,
@@ -67,7 +67,7 @@ export fn init() void {
 
     // an empty dynamic vertex buffer for the instancing data, goes in vertex buffer slot 1
     state.bind.vertex_buffers[1] = sg.makeBuffer(.{
-        .usage = .STREAM,
+        .usage = .{ .stream_update = true },
         .size = max_particles * @sizeOf(vec3),
     });
 

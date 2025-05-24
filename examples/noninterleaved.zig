@@ -56,7 +56,7 @@ export fn init() void {
 
     // cube index buffer
     const ibuf = sg.makeBuffer(.{
-        .type = .INDEXBUFFER,
+        .usage = .{ .index_buffer = true },
         .data = sg.asRange(&[_]u16{
             0,  1,  2,  0,  2,  3,
             6,  5,  4,  7,  6,  4,
