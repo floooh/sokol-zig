@@ -1,6 +1,7 @@
 //! repackage the autodocs sources.tar to only contain sokol sources
 //! (which reduces the size from 13 MBytes to abour 500 KBytes)
 const std = @import("std");
+const log = std.log;
 const Allocator = std.mem.Allocator;
 
 pub fn main() !void {
@@ -12,14 +13,18 @@ pub fn main() !void {
     const prefix = try arg(arena, "--prefix");
     const input_dir = try arg(arena, "--input");
     const output_path = try arg(arena, "--output");
+    log.info("fixdoctar called with:", .{});
+    log.info("--prefix: {s}", .{prefix});
+    log.info("--input_dir: {s}", .{input_dir});
+    log.info("--output_dir: {s}", .{output_path});
 
     // iterate over sources.tar file, find relevant files and write to output tar file
     const inp_path = try std.fs.path.join(arena, &.{ input_dir, "sources.tar" });
-    const inp_file = std.fs.openFileAbsolute(inp_path, .{}) catch |err| {
+    const inp_file = std.fs.cwd().openFile(inp_path, .{}) catch |err| {
         fatal("failed to open input file '{s}' with {}", .{ inp_path, err });
     };
     defer inp_file.close();
-    const outp_file = std.fs.createFileAbsolute(output_path, .{}) catch |err| {
+    const outp_file = std.fs.cwd().createFile(output_path, .{}) catch |err| {
         fatal("failed to open output file '{s}' with {}", .{ output_path, err });
     };
     defer outp_file.close();
@@ -41,6 +46,7 @@ pub fn main() !void {
             else => continue,
         }
     }
+    log.info("Done.", .{});
     return std.process.cleanExit();
 }
 
