@@ -113,7 +113,7 @@
             });
 
     --- create resource objects (at least buffers, shaders and pipelines,
-        and optionally images, samplers and render-pass-attachments):
+        and optionally images, samplers and render/compute-pass-attachments):
 
             sg_buffer sg_make_buffer(const sg_buffer_desc*)
             sg_image sg_make_image(const sg_image_desc*)
@@ -147,17 +147,22 @@
 
             sg_begin_pass(&(sg_pass){ .compute = true });
 
+        If the compute pass writes into storage images, provide those as
+        'storage attachments' via an sg_attachments object:
+
+            sg_begin_pass(&(sg_pass){ .compute = true, .attachments = attattachments });
+
     --- set the pipeline state for the next draw call with:
 
             sg_apply_pipeline(sg_pipeline pip)
 
     --- fill an sg_bindings struct with the resource bindings for the next
         draw- or dispatch-call (0..N vertex buffers, 0 or 1 index buffer, 0..N images,
-        samplers and storage-buffers), and call:
+        samplers and storage-buffers), and call
 
             sg_apply_bindings(const sg_bindings* bindings)
 
-        to update the resource bindings. Note that in a compute pass, no vertex-
+        ...to update the resource bindings. Note that in a compute pass, no vertex-
         or index-buffer bindings are allowed and will be rejected by the validation
         layer.
 
@@ -238,7 +243,7 @@
             sg_update_image(sg_image img, const sg_image_data* data)
 
         Buffers and images to be updated must have been created with
-        SG_USAGE_DYNAMIC or SG_USAGE_STREAM.
+        sg_buffer_desc.usage.dynamic_update or .stream_update.
 
         Only one update per frame is allowed for buffer and image resources when
         using the sg_update_*() functions. The rationale is to have a simple
@@ -277,7 +282,7 @@
         }
 
         A buffer to be used with sg_append_buffer() must have been created
-        with SG_USAGE_DYNAMIC or SG_USAGE_STREAM.
+        with sg_buffer_desc.usage.dynamic_update or .stream_update.
 
         If the application appends more data to the buffer then fits into
         the buffer, the buffer will go into the "overflow" state for the
@@ -701,10 +706,11 @@
 
     ON COMPUTE PASSES
     =================
-    Compute passes are used to update the content of storage resources
-    (currently only storage buffers) by running compute shader code on
-    the GPU. This will almost always be more efficient than computing
-    that same data on the CPU and uploading the data via `sg_update_buffer()`.
+    Compute passes are used to update the content of storage buffers and
+    storage images by running compute shader code on
+    the GPU. Updating storage resources with a compute shader will almost always
+    be more efficient than computing the same data on the CPU and then uploading
+    it via `sg_update_buffer()` or `sg_update_image()`.
 
     NOTE: compute passes are only supported on the following platforms and
     backends:
@@ -723,33 +729,49 @@
         - iOS with GLES3
         - Web with WebGL2
 
-    A compute pass is started with:
+    A compute pass which only updates storage buffers is started with:
 
         sg_begin_pass(&(sg_pass){ .compute = true });
 
-    ...and finished with:
+    ...if the compute pass updates storage images, the images must be 'bound'
+    via an sg_attachments object:
+
+        sg_begin_pass(&(sg_pass){ .compute = true, .attachments = attachments });
+
+    Image objects in such a compute pass attachments object must be created with
+    `storage_attachment` usage:
+
+        sg_image storage_image = sg_make_image(&(sg_image_desc){
+            .usage = {
+                .storage_attachment = true,
+            },
+            // ...
+        });
+
+    ...a compute pass is finished with a regular:
 
         sg_end_pass();
 
     Typically the following functions will be called inside a compute pass:
 
-        sg_apply_pipeline
-        sg_apply_bindings
-        sg_apply_uniforms
-        sg_dispatch
+        sg_apply_pipeline()
+        sg_apply_bindings()
+        sg_apply_uniforms()
+        sg_dispatch()
 
     The following functions are disallowed inside a compute pass
     and will cause validation layer errors:
 
-        sg_apply_viewport[f]
-        sg_apply_scissor_rect[f]
-        sg_draw
+        sg_apply_viewport[f]()
+        sg_apply_scissor_rect[f]()
+        sg_draw()
 
     Only special 'compute shaders' and 'compute pipelines' can be used in
     compute passes. A compute shader only has a compute-function instead
     of a vertex- and fragment-function pair, and it doesn't accept vertex-
-    and index-buffers as input, only storage-buffers, textures and non-filtering
-    samplers (more details on compute shaders in the following section).
+    and index-buffers as input, only storage-buffers, textures, non-filtering
+    samplers and images via storage attachments (more details on compute shaders in
+    the following section).
 
     A compute pipeline is created by providing a compute shader object,
     setting the .compute creation parameter to true and not defining any
@@ -773,6 +795,7 @@
 
         - https://floooh.github.io/sokol-webgpu/instancing-compute-sapp.html
         - https://floooh.github.io/sokol-webgpu/computeboids-sapp.html
+        - https://floooh.github.io/sokol-webgpu/imageblur-sapp.html
 
 
     ON SHADER CREATION
@@ -786,7 +809,8 @@
     The easiest way to provide all this shader creation data is to use the
     sokol-shdc shader compiler tool to compile shaders from a common
     GLSL syntax into backend-specific sources or binary blobs, along with
-    shader interface information and uniform blocks mapped to C structs.
+    shader interface information and uniform blocks and storage buffer array items
+    mapped to C structs.
 
     To create a shader using a C header which has been code-generated by sokol-shdc:
 
@@ -815,7 +839,9 @@
         - for the desktop GL backend, source code can be provided in '#version 410' or
           '#version 430', version 430 is required when using storage buffers and
           compute shaders support, but note that this is not available on macOS
-        - for the GLES3 backend, source code must be provided in '#version 300 es' syntax
+        - for the GLES3 backend, source code must be provided in '#version 300 es' or
+          '#version 310 es' syntax (version 310 is required for storage buffer and
+          compute shader support, but note that this is not supported on WebGL2)
         - for the D3D11 backend, shaders can be provided as source or binary
           blobs, the source code should be in HLSL4.0 (for compatibility with old
           low-end GPUs) or preferably in HLSL5.0 syntax, note that when
@@ -862,7 +888,7 @@
             .mtl_threads_per_threadgroup = { .x = 64, .y = 1, .z = 1 },
         }
 
-    - Information about each uniform block used in the shader:
+    - Information about each uniform block binding used in the shader:
         - the shader stage of the uniform block (vertex, fragment or compute)
         - the size of the uniform block in number of bytes
         - a memory layout hint (currently 'native' or 'std140') where 'native' defines a
@@ -878,7 +904,7 @@
         - please also NOTE the documentation sections about UNIFORM DATA LAYOUT
           and CROSS-BACKEND COMMON UNIFORM DATA LAYOUT below!
 
-    - A description of each storage buffer used in the shader:
+    - A description of each storage buffer binding used in the shader:
         - the shader stage of the storage buffer
         - a boolean 'readonly' flag, this is used for validation and hazard
           tracking in some 3D backends. Note that in render passes, only
@@ -892,15 +918,41 @@
                   buffers and textures share the same bind space for
                   'shader resource views')
                 - for read/write storage buffer buffer bindings: the UAV register N
-                  (`register(uN)`) where N is 0..7 (in HLSL, readwrite storage
+                  (`register(uN)`) where N is 0..11 (in HLSL, readwrite storage
                   buffers use their own bind space for 'unordered access views')
             - Metal/MSL: the buffer bind slot N (`[[buffer(N)]]`) where N is 8..15
             - WebGPU/WGSL: the binding N in `@group(0) @binding(N)` where N is 0..127
             - GL/GLSL: the buffer binding N in `layout(binding=N)` where N is 0..7
-        - note that storage buffers are not supported on all backends
+        - note that storage buffer bindings are not supported on all backends
           and platforms
 
-    - A description of each texture/image used in the shader:
+    - A description of each storage image binding used in the shader (only supported
+      in compute shaders):
+        - the shader stage (*must* be compute)
+        - the expected image type:
+            - SG_IMAGETYPE_2D
+            - SG_IMAGETYPE_CUBE
+            - SG_IMAGETYPE_3D
+            - SG_IMAGETYPE_ARRAY
+        - the 'access pixel format', this is currently limited to:
+            - SG_PIXELFORMAT_RGBA8
+            - SG_PIXELFORMAT_RGBA8SN/UI/SI
+            - SG_PIXELFORMAT_RGBA16UI/SI/F
+            - SG_PIXELFORMAT_R32UIUI/SI/F
+            - SG_PIXELFORMAT_RG32UI/SI/F
+            - SG_PIXELFORMAT_RGBA32UI/SI/F
+        - the access type (readwrite or writeonly)
+        - a backend-specific bind slot:
+            - D3D11/HLSL: the UAV register N (`register(uN)` where N is 0..11, the
+              bind slot must not collide with UAV storage buffer bindings
+            - Metal/MSL: the texture bind slot N (`[[texture(N)]])` where N is 0..19,
+              the bind slot must not collide with other texture bindings on the same
+              stage
+            - WebGPU/WGSL: the binding N in `@group(2) @binding(N)` where N is 0..3
+            - GL/GLSL: the buffer binding N in `layout(binding=N)` where N is 0..3
+        - note that storage image bindings are not supported on all backends and platforms
+
+    - A description of each texture binding used in the shader:
         - the shader stage of the texture (vertex, fragment or compute)
         - the expected image type:
             - SG_IMAGETYPE_2D
@@ -917,7 +969,8 @@
         - a backend-specific bind slot:
             - D3D11/HLSL: the texture register N (`register(tN)`) where N is 0..23
               (in HLSL, readonly storage buffers and texture share the same bind space)
-            - Metal/MSL: the texture bind slot N (`[[texture(N)]]`) where N is 0..15
+            - Metal/MSL: the texture bind slot N (`[[texture(N)]]`) where N is 0..19
+              (the bind slot must not collide with storage image bindings on the same stage)
             - WebGPU/WGSL: the binding N in `@group(0) @binding(N)` where N is 0..127
 
     - A description of each sampler used in the shader:
@@ -952,24 +1005,26 @@
 
         - D3D11/HLSL:
             - separate bindslot space per shader stage
-            - uniform blocks (as cbuffer): `register(b0..b7)`
-            - textures and readonly storage buffers: `register(t0..t23)`
-            - read/write storage buffers: `register(u0..u7)`
+            - uniform block bindings (as cbuffer): `register(b0..b7)`
+            - texture- and readonly storage buffer bindings: `register(t0..t23)`
+            - read/write storage buffer and storage image bindings: `register(u0..u11)`
             - samplers: `register(s0..s15)`
         - Metal/MSL:
             - separate bindslot space per shader stage
             - uniform blocks: `[[buffer(0..7)]]`
             - storage buffers: `[[buffer(8..15)]]`
-            - textures: `[[texture(0..15)]]`
+            - textures and storage image bindings: `[[texture(0..19)]]`
             - samplers: `[[sampler(0..15)]]`
         - WebGPU/WGSL:
             - common bindslot space across shader stages
             - uniform blocks: `@group(0) @binding(0..15)`
             - textures, samplers and storage buffers: `@group(1) @binding(0..127)`
+            - storage image bindings: `@group(2) @binding(0..3)`
         - GL/GLSL:
             - uniforms and image-samplers are bound by name
-            - storage buffers: `layout(std430, binding=0..7)` (common
+            - storage buffer bindings: `layout(std430, binding=0..7)` (common
               bindslot space across shader stages)
+            - storage image bindings: `layout(binding=0..3, [access_format])`
 
     For example code of how to create backend-specific shader objects,
     please refer to the following samples:
@@ -1193,7 +1248,7 @@
           can only read from storage buffers, while compute-shaders can both read
           and write storage buffers)
         - create one or more storage buffers via sg_make_buffer() with the
-          buffer type SG_BUFFERTYPE_STORAGEBUFFER
+          `.usage.storage_buffer = true`
         - when creating a shader via sg_make_shader(), populate the sg_shader_desc
           struct with binding info (when using sokol-shdc, this step will be taken care
           of automatically)
@@ -1304,8 +1359,8 @@
               (https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-object-rwbyteaddressbuffer)
             - readonly-storage buffers and textures are both bound as 'shader-resource-view' and
               share the same bind slots (declared as `register(tN)` in HLSL), where N must be in the range 0..23)
-            - read/write storage buffers are bound as 'unordered-access-view' (declared as `register(uN)` in HLSL
-              where N is in the range 0..7)
+            - read/write storage buffers and storage images are bound as 'unordered-access-view'
+              (declared as `register(uN)` in HLSL where N is in the range 0..11)
 
         Metal:
             - in Metal there is no internal difference between vertex-, uniform- and
@@ -1332,6 +1387,53 @@
 
               `@group(1) @binding(0..127)
 
+    ON STORAGE IMAGES:
+    ==================
+    To write pixel data to texture objects in compute shaders, first an image
+    object must be created with `storage_attachment usage`:
+
+        sg_image storage_image = sg_make_image(&(sg_image_desc){
+            .usage = {
+                .storage_attachment = true,
+            },
+            .width = ...,
+            .height = ...,
+            .pixel_format = ...,
+        });
+
+    ...next the image object must be wrapped in an attachment object, this allows
+    to pick a specific mipmap level or slice to be accessed by the compute shader:
+
+        sg_attachments storage_attachment = sg_make_attachment(&(sg_attachments_desc){
+            .storages[0] = {
+                .image = storage_image,
+                .mip_level = ...,
+                .slice = ...,
+            },
+        });
+
+    Finally 'bind' the storage image as pass attachment in the `sg_begin_pass`
+    call of a compute pass:
+
+        sg_begin_pass(&(sg_pass){ .compute = true, .attachments = storage_attachments });
+        ...
+        sg_end_pass();
+
+    Storage attachments should only be accessed as `readwrite` or `writeonly` mode
+    in compute shaders because if the limited bind space of up to 4 slots. For
+    readonly access, just bind the storage image as regular texture via
+    `sg_apply_bindings()`.
+
+    For an example of using storage images in compute shaders see imageblur-sapp:
+
+        - C code: https://github.com/floooh/sokol-samples/blob/master/sapp/imageblur-sapp.c
+        - shader: https://github.com/floooh/sokol-samples/blob/master/sapp/imageblur-sapp.glsl
+
+    NOTE: in the (hopefully not-too-distant) future, working with storage
+    images will change by moving the resource binding from pass attachments to
+    regular bindings via `sg_apply_bindings()`, but this requires the
+    introduction of resource view objects into sokol-gfx (see planning
+    ticket: https://github.com/floooh/sokol/issues/1252)
 
     TRACE HOOKS:
     ============
@@ -1665,6 +1767,11 @@
       bindings must be in the range 0..127:
 
         @group(1) @binding(0..127)
+
+      All storage image attachments must use `@group(2)` and bindings
+      must be in the range 0..3:
+
+        @group(2) @binding(0..3)
 
       Note that the number of texture, sampler and storage buffer bindings
       is still limited despite the large bind range:
@@ -2922,7 +3029,21 @@ typedef struct sg_bindings {
 /*
     sg_buffer_usage
 
-    TODO
+    Describes how a buffer object is going to be used:
+
+    .vertex_buffer (default: true)
+        the buffer will bound as vertex buffer via sg_bindings.vertex_buffers[]
+    .index_buffer (default: false)
+        the buffer will bound as index buffer via sg_bindings.index_buffer
+    .storage_buffer (default: false)
+        the buffer will bound as storage buffer via sg_bindings.storage_buffers[]
+    .immutable (default: true)
+        the buffer content will never be updated from the CPU side (but
+        may be written to by a compute shader)
+    .dynamic_update (default: false)
+        the buffer content will be infrequently updated from the CPU side
+    .stream_upate (default: false)
+        the buffer content will be updated each frame from the CPU side
 */
 typedef struct sg_buffer_usage {
     bool vertex_buffer;
@@ -2936,15 +3057,14 @@ typedef struct sg_buffer_usage {
 /*
     sg_buffer_desc
 
-    Creation parameters for sg_buffer objects, used in the
-    sg_make_buffer() call.
+    Creation parameters for sg_buffer objects, used in the sg_make_buffer() call.
 
     The default configuration is:
 
     .size:      0       (*must* be >0 for buffers without data)
     .usage              .vertex_buffer = true, .immutable = true
-    .data.ptr   0       (*must* be valid for immutable buffers)
-    .data.size  0       (*must* be > 0 for immutable buffers)
+    .data.ptr   0       (*must* be valid for immutable buffers without storage buffer usage)
+    .data.size  0       (*must* be > 0 for immutable buffers without storage buffer usage)
     .label      0       (optional string label)
 
     For immutable buffers which are initialized with initial data,
@@ -2954,13 +3074,17 @@ typedef struct sg_buffer_usage {
     For immutable or mutable buffers without initial data, keep the .data item
     zero-initialized, and set the buffer size in the .size item instead.
 
-    NOTE: Immutable buffers without initial data are guaranteed to be
-    zero-initialized. For mutable (dynamic or streaming) buffers, the
-    initial content is undefined.
-
     You can also set both size values, but currently both size values must
     be identical (this may change in the future when the dynamic resource
     management may become more flexible).
+
+    NOTE: Immutable buffers without storage-buffer-usage *must* be created
+    with initial content, this restriction doesn't apply to storage buffer usage,
+    because storage buffers may also get their initial content by running
+    a compute shader on them.
+
+    NOTE: Buffers without initial data will have undefined content, e.g.
+    do *not* expect the buffer to be zero-initialized!
 
     ADVANCED TOPIC: Injecting native 3D-API buffers:
 
@@ -2972,12 +3096,12 @@ typedef struct sg_buffer_usage {
     .d3d11_buffer
 
     You must still provide all other struct items except the .data item, and
-    these must match the creation parameters of the native buffers you
-    provide. For SG_USAGE_IMMUTABLE, only provide a single native 3D-API
-    buffer, otherwise you need to provide SG_NUM_INFLIGHT_FRAMES buffers
+    these must match the creation parameters of the native buffers you provide.
+    For sg_buffer_desc.usage.immutable buffers, only provide a single native
+    3D-API buffer, otherwise you need to provide SG_NUM_INFLIGHT_FRAMES buffers
     (only for GL and Metal, not D3D11). Providing multiple buffers for GL and
-    Metal is necessary because sokol_gfx will rotate through them when
-    calling sg_update_buffer() to prevent lock-stalls.
+    Metal is necessary because sokol_gfx will rotate through them when calling
+    sg_update_buffer() to prevent lock-stalls.
 
     Note that it is expected that immutable injected buffer have already been
     initialized with content, and the .content member must be 0!
@@ -3002,7 +3126,23 @@ typedef struct sg_buffer_desc {
 /*
     sg_image_usage
 
-    TODO
+    Describes how the image object is going to be used:
+
+    .render_attachment (default: false)
+        the image object is used as color-, resolve- or depth-stencil-
+        attachment in a render pass
+    .storage_attachment (default: false)
+        the image object is used as storage-attachment in a
+        compute pass (to be written to by compute shaders)
+    .immutable (default: true)
+        the image content cannot be updated from the CPU side
+        (but may be updated by the GPU in a render- or compute-pass)
+    .dynamic_update (default: false)
+        the image content is updated infrequently by the CPU
+    .stream_update (default: false)
+        the image content is updated each frame by the CPU via
+
+    Note that the usage as texture binding is implicit and always allowed.
 */
 typedef struct sg_image_usage {
     bool render_attachment;
@@ -3036,7 +3176,6 @@ typedef struct sg_image_data {
     .height             0 (must be set to >0)
     .num_slices         1 (3D textures: depth; array textures: number of layers)
     .num_mipmaps        1
-    .usage              SG_USAGE_IMMUTABLE
     .pixel_format       SG_PIXELFORMAT_RGBA8 for textures, or sg_desc.environment.defaults.color_format for render targets
     .sample_count       1 for textures, or sg_desc.environment.defaults.sample_count for render targets
     .data               an sg_image_data struct to define the initial content
@@ -3053,8 +3192,12 @@ typedef struct sg_image_data {
 
     NOTE:
 
-    Images with usage SG_USAGE_IMMUTABLE must be fully initialized by
+    Regular (non-attachment) images with usage.immutable must be fully initialized by
     providing a valid .data member which points to initialization data.
+
+    Images with usage.render_attachment or usage.storage_attachment must
+    *not* be created with initial content. Be aware that the initial
+    content of render- and storage-attachment images is undefined.
 
     ADVANCED TOPIC: Injecting native 3D-API textures:
 
@@ -3150,7 +3293,7 @@ typedef struct sg_sampler_desc {
     reflection information to sokol-gfx.
 
     If you use sokol-shdc you can ignore the following information since
-    the sg_shader_desc struct will be code generated.
+    the sg_shader_desc struct will be code-generated.
 
     Otherwise you need to provide the following information to the
     sg_make_shader() call:
@@ -3185,7 +3328,7 @@ typedef struct sg_sampler_desc {
             - WGSL: `@workgroup_size(x, y, z)`
           ...but in Metal the workgroup size is declared on the CPU side
 
-    - reflection information for each uniform block used by the shader:
+    - reflection information for each uniform block binding used by the shader:
         - the shader stage the uniform block appears in (SG_SHADERSTAGE_*)
         - the size in bytes of the uniform block
         - backend-specific bindslots:
@@ -3199,14 +3342,14 @@ typedef struct sg_sampler_desc {
                 - if the member is an array, the array count
                 - the member name
 
-    - reflection information for each texture used by the shader:
+    - reflection information for each texture binding used by the shader:
         - the shader stage the texture appears in (SG_SHADERSTAGE_*)
         - the image type (SG_IMAGETYPE_*)
         - the image-sample type (SG_IMAGESAMPLETYPE_*)
         - whether the texture is multisampled
         - backend specific bindslots:
             - HLSL: the texture register `register(t0..23)`
-            - MSL: the texture attribute `[[texture(0..15)]]`
+            - MSL: the texture attribute `[[texture(0..19)]]`
             - WGSL: the binding in `@group(1) @binding(0..127)`
 
     - reflection information for each sampler used by the shader:
@@ -3217,17 +3360,30 @@ typedef struct sg_sampler_desc {
             - MSL: the sampler attribute `[[sampler(0..15)]]`
             - WGSL: the binding in `@group(0) @binding(0..127)`
 
-    - reflection information for each storage buffer used by the shader:
+    - reflection information for each storage buffer binding used by the shader:
         - the shader stage the storage buffer appears in (SG_SHADERSTAGE_*)
-        - whether the storage buffer is readonly (currently this must
-          always be true)
+        - whether the storage buffer is readonly
         - backend specific bindslots:
             - HLSL:
                 - for readonly storage buffer bindings: `register(t0..23)`
-                - for read/write storage buffer bindings: `register(u0..7)`
+                - for read/write storage buffer bindings: `register(u0..11)`
             - MSL: the buffer attribute `[[buffer(8..15)]]`
             - WGSL: the binding in `@group(1) @binding(0..127)`
             - GL: the binding in `layout(binding=0..7)`
+
+    - reflection information for each storage image binding used by the shader:
+        - the shader stage (*must* be SG_SHADERSTAGE_COMPUTE)
+        - whether the storage image is writeonly or readwrite (for readonly
+          access use a regular texture binding instead)
+        - the image type expected by the shader (SG_IMAGETYPE_*)
+        - the access pixel format expected by the shader (SG_PIXELFORMAT_*),
+          note that only a subset of pixel formats is allowed for storage image
+          bindings
+        - backend specific bindslots:
+            - HLSL: the UAV register `register(u0..u11)`
+            - MSL: the texture attribute `[[texture(0..19)]]`
+            - WGSL: the binding in `@group(2) @binding(0..3)`
+            - GLSL: the binding in `layout(binding=0..3, [access_format])`
 
     - reflection information for each combined image-sampler object
       used by the shader:
@@ -3258,9 +3414,9 @@ typedef struct sg_sampler_desc {
     For all GL backends, shader source-code must be provided. For D3D11 and Metal,
     either shader source-code or byte-code can be provided.
 
-    NOTE that the uniform block, image, sampler and storage_buffer arrays
-    can have gaps. This allows to use the same sg_bindings struct for
-    different related shader variants.
+    NOTE that the uniform block, image, sampler, storage_buffer and
+    storage_image arrays may have gaps. This allows to use the same sg_bindings
+    struct for different related shader variants.
 
     For D3D11, if source code is provided, the d3dcompiler_47.dll will be loaded
     on demand. If this fails, shader creation will fail. When compiling HLSL
@@ -3409,6 +3565,10 @@ typedef struct sg_shader_desc {
     Please note that ALL vertex attribute offsets must be 0 in order for the
     automatic offset computation to kick in.
 
+    Note that if you use vertex-pulling from storage buffers instead of
+    fixed-function vertex input you can simply omit the entire nested .layout
+    struct.
+
     The default configuration is as follows:
 
     .compute:               false (must be set to true for a compute pipeline)
@@ -3544,11 +3704,25 @@ typedef struct sg_pipeline_desc {
     Creation parameters for an sg_attachments object, used as argument to the
     sg_make_attachments() function.
 
-    An attachments object bundles 0..4 color attachments, 0..4 msaa-resolve
-    attachments, and none or one depth-stencil attachmente for use
-    in a render pass. At least one color attachment or one depth-stencil
-    attachment must be provided (no color attachment and a depth-stencil
-    attachment is useful for a depth-only render pass).
+    An attachments object bundles either bundles 'render attachments' for
+    a render pass, or 'storage attachments' for a compute pass which writes
+    to storage images.
+
+    Render attachments are:
+
+        - 0..4 color attachment images
+        - 0..4 msaa-resolve attachment images
+        - 0 or one depth-stencil attachment image
+
+    Note that all types of render attachment images must be created with
+    `sg_image_desc.usage.render_attachment = true`. At least one color-attachment
+    or depth-stencil-attachment image must be provided in a render pass
+    (only providing a depth-stencil-attachment is useful for depth-only passes).
+
+    Alternatively provide 1..4 storage attachment images which must be created
+    with `sg_image_desc.usage.storage_attachment = true`.
+
+    An sg_attachments object cannot have both render- and storage-attachments.
 
     Each attachment definition consists of an image object, and two additional indices
     describing which subimage the pass will render into: one mipmap index, and if the image
@@ -4027,16 +4201,15 @@ typedef struct sg_frame_stats {
     _SG_LOGITEM_XMACRO(VALIDATE_BUFFERDESC_EXPECT_NONZERO_SIZE, "sg_buffer_desc.size must be greater zero") \
     _SG_LOGITEM_XMACRO(VALIDATE_BUFFERDESC_EXPECT_MATCHING_DATA_SIZE, "sg_buffer_desc.size and .data.size must be equal") \
     _SG_LOGITEM_XMACRO(VALIDATE_BUFFERDESC_EXPECT_ZERO_DATA_SIZE, "sg_buffer_desc.data.size expected to be zero") \
-    _SG_LOGITEM_XMACRO(VALIATE_EXPECT_DATA, "sg_buffer_desc: initial data expected for immutable buffers without storage buffer usage") \
     _SG_LOGITEM_XMACRO(VALIDATE_BUFFERDESC_EXPECT_NO_DATA, "sg_buffer_desc.data.ptr must be null for dynamic/stream buffers") \
-    _SG_LOGITEM_XMACRO(VALIDATE_BUFFERDESC_EXPECT_DATA, "sg_buffer_desc: initial data must be provided for immutable buffers without storage buffer usage") \
+    _SG_LOGITEM_XMACRO(VALIDATE_BUFFERDESC_EXPECT_DATA, "sg_buffer_desc: initial content data must be provided for immutable buffers without storage buffer usage") \
     _SG_LOGITEM_XMACRO(VALIDATE_BUFFERDESC_STORAGEBUFFER_SUPPORTED, "storage buffers not supported by the backend 3D API (requires OpenGL >= 4.3)") \
     _SG_LOGITEM_XMACRO(VALIDATE_BUFFERDESC_STORAGEBUFFER_SIZE_MULTIPLE_4, "size of storage buffers must be a multiple of 4") \
     _SG_LOGITEM_XMACRO(VALIDATE_IMAGEDATA_NODATA, "sg_image_data: no data (.ptr and/or .size is zero)") \
     _SG_LOGITEM_XMACRO(VALIDATE_IMAGEDATA_DATA_SIZE, "sg_image_data: data size doesn't match expected surface size") \
     _SG_LOGITEM_XMACRO(VALIDATE_IMAGEDESC_CANARY, "sg_image_desc not initialized") \
     _SG_LOGITEM_XMACRO(VALIDATE_IMAGEDESC_IMMUTABLE_DYNAMIC_STREAM, "sg_image_desc.usage: only one of .immutable, .dynamic_update, .stream_update can be true") \
-    _SG_LOGITEM_XMACRO(VALIDATE_IMAGEDESC_RENDER_VS_STORAGE_ATTACHMENT, "sg_image_desc.usage: only one of .render_attachemnt or .storage_attachment can be true") \
+    _SG_LOGITEM_XMACRO(VALIDATE_IMAGEDESC_RENDER_VS_STORAGE_ATTACHMENT, "sg_image_desc.usage: only one of .render_attachment or .storage_attachment can be true") \
     _SG_LOGITEM_XMACRO(VALIDATE_IMAGEDESC_WIDTH, "sg_image_desc.width must be > 0") \
     _SG_LOGITEM_XMACRO(VALIDATE_IMAGEDESC_HEIGHT, "sg_image_desc.height must be > 0") \
     _SG_LOGITEM_XMACRO(VALIDATE_IMAGEDESC_NONRT_PIXELFORMAT, "invalid pixel format for non-render-target image") \
@@ -4135,7 +4308,7 @@ typedef struct sg_frame_stats {
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_NO_ATTACHMENTS, "sg_attachments_desc no color, depth-stencil or storage attachments") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_NO_CONT_COLOR_ATTS, "color attachments must occupy continuous slots") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_COLOR_IMAGE, "color attachment image is not valid") \
-    _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_COLOR_MIPLEVEL, "color attachment mip level is bigger than image has mipmaps") \
+    _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_COLOR_MIPLEVEL, "color attachment mip level is higher than number of mipmaps in image") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_COLOR_FACE, "color attachment image is cubemap, but face index is too big") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_COLOR_LAYER, "color attachment image is array texture, but layer index is too big") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_COLOR_SLICE, "color attachment image is 3d texture, but slice value is too big") \
@@ -4146,7 +4319,7 @@ typedef struct sg_frame_stats {
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_RESOLVE_COLOR_IMAGE_MSAA, "resolve attachments must have a color attachment image with sample count > 1") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_RESOLVE_IMAGE, "resolve attachment image not valid") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_RESOLVE_SAMPLE_COUNT, "pass resolve attachment image sample count must be 1") \
-    _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_RESOLVE_MIPLEVEL, "resolve attachment mip level is bigger than image's number of mipmaps") \
+    _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_RESOLVE_MIPLEVEL, "resolve attachment mip level is higher than number of mipmaps in image") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_RESOLVE_FACE, "resolve attachment is cubemap, but face index is too big") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_RESOLVE_LAYER, "resolve attachment is array texture, but layer index is too big") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_RESOLVE_SLICE, "resolve attachment is 3d texture, but slice value is too big") \
@@ -4155,15 +4328,15 @@ typedef struct sg_frame_stats {
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_RESOLVE_IMAGE_FORMAT, "resolve attachment pixel format must match color attachment pixel format") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_DEPTH_INV_PIXELFORMAT, "depth attachment image must be depth or depth-stencil pixel format") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE, "depth attachment image is not valid") \
-    _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_DEPTH_MIPLEVEL, "depth attachment mip level is bigger than image has mipmaps") \
+    _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_DEPTH_MIPLEVEL, "depth attachment mip level is higher than number of mipmaps in image") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_DEPTH_FACE, "depth attachment image is cubemap, but face index is too big") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_DEPTH_LAYER, "depth attachment image is array texture, but layer index is too big") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_DEPTH_SLICE, "depth attachment image is 3d texture, but slice value is too big") \
-    _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_NO_RENDERATTACHMENT, "depth attachment image must be sg_image_desc.usage.render_attachemnt=true") \
+    _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_NO_RENDERATTACHMENT, "depth attachment image must be sg_image_desc.usage.render_attachment=true") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_SIZES, "depth attachment image size must match color attachment image size") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_SAMPLE_COUNT, "depth attachment sample count must match color attachment sample count") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_STORAGE_IMAGE, "storage attachment image is not valid") \
-    _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_STORAGE_MIPLEVEL, "storage attachment mip level is bigger than image has mipmaps") \
+    _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_STORAGE_MIPLEVEL, "storage attachment mip level is higher than number of mipmaps in image") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_STORAGE_FACE, "storage attachment image is cubemap, but face index is too big") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_STORAGE_LAYER, "storage attachment image is array texture, but layer index is too big") \
     _SG_LOGITEM_XMACRO(VALIDATE_ATTACHMENTSDESC_STORAGE_SLICE, "storage attachment image is 3d texture, but slice value is too big") \
@@ -4173,7 +4346,7 @@ typedef struct sg_frame_stats {
     _SG_LOGITEM_XMACRO(VALIDATE_BEGINPASS_CANARY, "sg_begin_pass: pass struct not initialized") \
     _SG_LOGITEM_XMACRO(VALIDATE_BEGINPASS_ATTACHMENTS_EXISTS, "sg_begin_pass: attachments object no longer alive") \
     _SG_LOGITEM_XMACRO(VALIDATE_BEGINPASS_ATTACHMENTS_VALID, "sg_begin_pass: attachments object not in resource state VALID") \
-    _SG_LOGITEM_XMACRO(VALIDATE_BEGINPASS_COMPUTEPASS_STORAGE_ATTACHMENTS_ONLY, "sg_begin_pass: only storage attachemnts allowed on compute pass") \
+    _SG_LOGITEM_XMACRO(VALIDATE_BEGINPASS_COMPUTEPASS_STORAGE_ATTACHMENTS_ONLY, "sg_begin_pass: only storage attachments allowed on compute pass") \
     _SG_LOGITEM_XMACRO(VALIDATE_BEGINPASS_RENDERPASS_RENDER_ATTACHMENTS_ONLY, "sg_begin_pass: a render pass cannot have storage attachments") \
     _SG_LOGITEM_XMACRO(VALIDATE_BEGINPASS_COLOR_ATTACHMENT_IMAGE, "sg_begin_pass: one or more color attachment images are not valid") \
     _SG_LOGITEM_XMACRO(VALIDATE_BEGINPASS_RESOLVE_ATTACHMENT_IMAGE, "sg_begin_pass: one or more resolve attachment images are not valid") \
@@ -4237,12 +4410,12 @@ typedef struct sg_frame_stats {
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_COMPUTE_EXPECTED_NO_IB, "sg_apply_bindings: index buffer binding not allowed in compute pass") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_EXPECTED_VB, "sg_apply_bindings: vertex buffer binding is missing or buffer handle is invalid") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_VB_EXISTS, "sg_apply_bindings: vertex buffer no longer alive") \
-    _SG_LOGITEM_XMACRO(VALIDATE_ABND_VB_TYPE, "sg_apply_bindings: buffer in vertex buffer slot is not a SG_BUFFERTYPE_VERTEXBUFFER") \
+    _SG_LOGITEM_XMACRO(VALIDATE_ABND_VB_TYPE, "sg_apply_bindings: buffer in vertex buffer slot doesn't have vertex buffer usage (sg_buffer_desc.usage.storage_buffer)") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_VB_OVERFLOW, "sg_apply_bindings: buffer in vertex buffer slot is overflown") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_NO_IB, "sg_apply_bindings: pipeline object defines indexed rendering, but no index buffer provided") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_IB, "sg_apply_bindings: pipeline object defines non-indexed rendering, but index buffer provided") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_IB_EXISTS, "sg_apply_bindings: index buffer no longer alive") \
-    _SG_LOGITEM_XMACRO(VALIDATE_ABND_IB_TYPE, "sg_apply_bindings: buffer in index buffer slot is not a SG_BUFFERTYPE_INDEXBUFFER") \
+    _SG_LOGITEM_XMACRO(VALIDATE_ABND_IB_TYPE, "sg_apply_bindings: buffer in index buffer slot doesn't have index buffer usage (sg_buffer_desc.usage.index_buffer)") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_IB_OVERFLOW, "sg_apply_bindings: buffer in index buffer slot is overflown") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_EXPECTED_IMAGE_BINDING, "sg_apply_bindings: image binding is missing or the image handle is invalid") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_IMG_EXISTS, "sg_apply_bindings: bound image no longer alive") \
@@ -4258,7 +4431,7 @@ typedef struct sg_frame_stats {
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_SMP_EXISTS, "sg_apply_bindings: bound sampler no longer alive") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_EXPECTED_STORAGEBUFFER_BINDING, "sg_apply_bindings: storage buffer binding is missing or the buffer handle is invalid") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_STORAGEBUFFER_EXISTS, "sg_apply_bindings: bound storage buffer no longer alive") \
-    _SG_LOGITEM_XMACRO(VALIDATE_ABND_STORAGEBUFFER_BINDING_BUFFERTYPE, "sg_apply_bindings: buffer bound to storage buffer slot is not of type storage buffer") \
+    _SG_LOGITEM_XMACRO(VALIDATE_ABND_STORAGEBUFFER_BINDING_BUFFERTYPE, "sg_apply_bindings: buffer bound to storage buffer slot doesn't have storage buffer usage (sg_buffer_desc.usage.storage_buffer)") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_STORAGEBUFFER_READWRITE_IMMUTABLE, "sg_apply_bindings: storage buffers bound as read/write must have usage immutable") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_IMAGE_BINDING_VS_DEPTHSTENCIL_ATTACHMENT, "sg_apply_bindings: cannot bind image in the same pass it is used as depth-stencil attachment") \
     _SG_LOGITEM_XMACRO(VALIDATE_ABND_IMAGE_BINDING_VS_COLOR_ATTACHMENT, "sg_apply_bindings: cannot bind image in the same pass it is used as color attachment") \
@@ -5827,6 +6000,7 @@ typedef struct _sg_attachments_s {
         _sg_dummy_attachment_t colors[SG_MAX_COLOR_ATTACHMENTS];
         _sg_dummy_attachment_t resolves[SG_MAX_COLOR_ATTACHMENTS];
         _sg_dummy_attachment_t depth_stencil;
+        _sg_dummy_attachment_t storages[SG_MAX_STORAGE_ATTACHMENTS];
     } dmy;
 } _sg_dummy_attachments_t;
 typedef _sg_dummy_attachments_t _sg_attachments_t;
@@ -7372,32 +7546,35 @@ _SOKOL_PRIVATE void _sg_dummy_discard_pipeline(_sg_pipeline_t* pip) {
     _SOKOL_UNUSED(pip);
 }
 
-_SOKOL_PRIVATE sg_resource_state _sg_dummy_create_attachments(_sg_attachments_t* atts, _sg_image_t** color_images, _sg_image_t** resolve_images, _sg_image_t* ds_img, const sg_attachments_desc* desc) {
-    SOKOL_ASSERT(atts && desc);
-    SOKOL_ASSERT(color_images && resolve_images);
+_SOKOL_PRIVATE sg_resource_state _sg_dummy_create_attachments(_sg_attachments_t* atts, const _sg_attachments_ptrs_t* atts_ptrs, const sg_attachments_desc* desc) {
+    SOKOL_ASSERT(atts && atts_ptrs && desc);
 
     for (int i = 0; i < atts->cmn.num_colors; i++) {
         const sg_attachment_desc* color_desc = &desc->colors[i];
         _SOKOL_UNUSED(color_desc);
         SOKOL_ASSERT(color_desc->image.id != SG_INVALID_ID);
         SOKOL_ASSERT(0 == atts->dmy.colors[i].image);
-        SOKOL_ASSERT(color_images[i] && (color_images[i]->slot.id == color_desc->image.id));
-        SOKOL_ASSERT(_sg_is_valid_attachment_color_format(color_images[i]->cmn.pixel_format));
-        atts->dmy.colors[i].image = color_images[i];
-
+        SOKOL_ASSERT(atts_ptrs->color_images[i]);
+        _sg_image_t* clr_img = atts_ptrs->color_images[i];
+        SOKOL_ASSERT(clr_img->slot.id == color_desc->image.id);
+        SOKOL_ASSERT(_sg_is_valid_attachment_color_format(clr_img->cmn.pixel_format));
+        atts->dmy.colors[i].image = clr_img;
         const sg_attachment_desc* resolve_desc = &desc->resolves[i];
         if (resolve_desc->image.id != SG_INVALID_ID) {
             SOKOL_ASSERT(0 == atts->dmy.resolves[i].image);
-            SOKOL_ASSERT(resolve_images[i] && (resolve_images[i]->slot.id == resolve_desc->image.id));
-            SOKOL_ASSERT(color_images[i] && (color_images[i]->cmn.pixel_format == resolve_images[i]->cmn.pixel_format));
-            atts->dmy.resolves[i].image = resolve_images[i];
+            SOKOL_ASSERT(atts_ptrs->resolve_images[i]);
+            _sg_image_t* rsv_img = atts_ptrs->resolve_images[i];
+            SOKOL_ASSERT(rsv_img->slot.id == resolve_desc->image.id);
+            SOKOL_ASSERT(clr_img->cmn.pixel_format == rsv_img->cmn.pixel_format);
+            atts->dmy.resolves[i].image = rsv_img;
         }
     }
-
     SOKOL_ASSERT(0 == atts->dmy.depth_stencil.image);
     const sg_attachment_desc* ds_desc = &desc->depth_stencil;
     if (ds_desc->image.id != SG_INVALID_ID) {
-        SOKOL_ASSERT(ds_img && (ds_img->slot.id == ds_desc->image.id));
+        SOKOL_ASSERT(atts_ptrs->ds_image);
+        _sg_image_t* ds_img = atts_ptrs->ds_image;
+        SOKOL_ASSERT(ds_img->slot.id == ds_desc->image.id);
         SOKOL_ASSERT(_sg_is_valid_attachment_depth_format(ds_img->cmn.pixel_format));
         atts->dmy.depth_stencil.image = ds_img;
     }
@@ -7422,6 +7599,11 @@ _SOKOL_PRIVATE _sg_image_t* _sg_dummy_attachments_resolve_image(const _sg_attach
 _SOKOL_PRIVATE _sg_image_t* _sg_dummy_attachments_ds_image(const _sg_attachments_t* atts) {
     SOKOL_ASSERT(atts);
     return atts->dmy.depth_stencil.image;
+}
+
+_SOKOL_PRIVATE _sg_image_t* _sg_dummy_attachments_storage_image(const _sg_attachments_t* atts, int index) {
+    SOKOL_ASSERT(atts && (index >= 0) && (index < SG_MAX_COLOR_ATTACHMENTS));
+    return atts->dmy.storages[index].image;
 }
 
 _SOKOL_PRIVATE void _sg_dummy_begin_pass(const sg_pass* pass) {
@@ -9075,11 +9257,11 @@ _SOKOL_PRIVATE sg_resource_state _sg_gl_create_image(_sg_image_t* img, const sg_
             _sg_gl_cache_bind_texture_sampler(0, img->gl.target, img->gl.tex[slot], 0);
             glTexParameteri(img->gl.target, GL_TEXTURE_MAX_LEVEL, img->cmn.num_mipmaps - 1);
 
-            // NOTE: workaround for https://issues.chromium.org/issues/355605685
-            // FIXME: on GLES3 and GL 4.3 (e.g. not macOS) the texture initialization
-            // should be rewritten to use glTexStorage + glTexSubImage
+            // NOTE: initially a workaround for https://issues.chromium.org/issues/355605685
+            // Now also needed for storage images on GLES 3.1.
+            // See for the 'non-hacky' solution: https://github.com/floooh/sokol/issues/1263
             bool tex_storage_allocated = false;
-            #if defined(__EMSCRIPTEN__)
+            #if defined(SOKOL_GLES3)
                 if (desc->data.subimage[0][0].ptr == 0) {
                     SOKOL_ASSERT(!msaa);
                     tex_storage_allocated = true;
@@ -9574,7 +9756,7 @@ _SOKOL_PRIVATE sg_resource_state _sg_gl_create_attachments(_sg_attachments_t* at
         _SOKOL_UNUSED(color_desc);
         SOKOL_ASSERT(color_desc->image.id != SG_INVALID_ID);
         SOKOL_ASSERT(0 == atts->gl.colors[i].image);
-        SOKOL_ASSERT(atts_ptrs->color_images[i]);\
+        SOKOL_ASSERT(atts_ptrs->color_images[i]);
         _sg_image_t* clr_img = atts_ptrs->color_images[i];
         SOKOL_ASSERT(clr_img->slot.id == color_desc->image.id);
         SOKOL_ASSERT(_sg_is_valid_attachment_color_format(clr_img->cmn.pixel_format));
@@ -16764,7 +16946,7 @@ _SOKOL_PRIVATE sg_resource_state _sg_wgpu_create_pipeline(_sg_pipeline_t* pip, _
 
     // - @group(0) for uniform blocks
     // - @group(1) for all image, sampler and storagebuffer resources
-    // - @group(2) optional: storage image attachemnts in compute passes
+    // - @group(2) optional: storage image attachments in compute passes
     size_t num_bgls = 2;
     WGPUBindGroupLayout wgpu_bgl[_SG_WGPU_MAX_BINDGROUPS];
     _sg_clear(&wgpu_bgl, sizeof(wgpu_bgl));
@@ -19379,7 +19561,7 @@ _SOKOL_PRIVATE bool _sg_validate_apply_bindings(const sg_bindings* bindings) {
             for (size_t i = 0; i < SG_MAX_VERTEXBUFFER_BINDSLOTS; i++) {
                 if (pip->cmn.vertex_buffer_layout_active[i]) {
                     _SG_VALIDATE(bindings->vertex_buffers[i].id != SG_INVALID_ID, VALIDATE_ABND_EXPECTED_VB);
-                    // buffers in vertex-buffer-slots must be of type SG_BUFFERTYPE_VERTEXBUFFER
+                    // buffers in vertex-buffer-slots must have vertex buffer usage
                     if (bindings->vertex_buffers[i].id != SG_INVALID_ID) {
                         const _sg_buffer_t* buf = _sg_lookup_buffer(&_sg.pools, bindings->vertex_buffers[i].id);
                         _SG_VALIDATE(buf != 0, VALIDATE_ABND_VB_EXISTS);
@@ -19404,7 +19586,7 @@ _SOKOL_PRIVATE bool _sg_validate_apply_bindings(const sg_bindings* bindings) {
                 _SG_VALIDATE(bindings->index_buffer.id != SG_INVALID_ID, VALIDATE_ABND_NO_IB);
             }
             if (bindings->index_buffer.id != SG_INVALID_ID) {
-                // buffer in index-buffer-slot must be of type SG_BUFFERTYPE_INDEXBUFFER
+                // buffer in index-buffer-slot must have index buffer usage
                 const _sg_buffer_t* buf = _sg_lookup_buffer(&_sg.pools, bindings->index_buffer.id);
                 _SG_VALIDATE(buf != 0, VALIDATE_ABND_IB_EXISTS);
                 if (buf && buf->slot.state == SG_RESOURCESTATE_VALID) {
@@ -21678,6 +21860,14 @@ SOKOL_API_IMPL sg_shader_desc sg_query_shader_desc(sg_shader shd_id) {
             const _sg_shader_storage_buffer_t* sbuf = &shd->cmn.storage_buffers[sbuf_idx];
             sbuf_desc->stage = sbuf->stage;
             sbuf_desc->readonly = sbuf->readonly;
+        }
+        for (size_t simg_idx = 0; simg_idx < SG_MAX_STORAGE_ATTACHMENTS; simg_idx++) {
+            sg_shader_storage_image* simg_desc = &desc.storage_images[simg_idx];
+            const _sg_shader_storage_image_t* simg = &shd->cmn.storage_images[simg_idx];
+            simg_desc->stage = simg->stage;
+            simg_desc->access_format = simg->access_format;
+            simg_desc->image_type = simg->image_type;
+            simg_desc->writeonly = simg->writeonly;
         }
         for (size_t img_idx = 0; img_idx < SG_MAX_IMAGE_BINDSLOTS; img_idx++) {
             sg_shader_image* img_desc = &desc.images[img_idx];
