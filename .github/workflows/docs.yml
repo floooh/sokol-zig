@@ -8,9 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
-      - uses: mlugg/setup-zig@v1
-        with:
-            version: 0.14.0
+      - uses: goto-bus-stop/setup-zig@v2
       - name: gen-docs
         run: zig build docs
       - name: upload-artifact
