@@ -398,7 +398,7 @@
 //     This is why calling sg_query_surface_pitch() for a compressed pixel format and height
 //     N, N+1, N+2, ... may return the same result.
 //
-//     The row_align_bytes parammeter is for added flexibility. For image data that goes into
+//     The row_align_bytes parameter is for added flexibility. For image data that goes into
 //     the sg_make_image() or sg_update_image() this should generally be 1, because these
 //     functions take tightly packed image data as input no matter what alignment restrictions
 //     exist in the backend 3D APIs.
