@@ -179,7 +179,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         }
         const opt_emsdk_setup_step = try emSdkSetupStep(b, emsdk);
 
-        // for WebGPU, need to run embuilder for `emdawnwebgpu`
+        // for WebGPU, need to run embuilder for `emdawnwebgpu` after emsdk setup and before C library build
         if (options.backend == .wgpu) {
             const embuilder_step = emBuilderStep(b, .{
                 .port_name = "emdawnwebgpu",
@@ -416,7 +416,7 @@ pub fn emRunStep(b: *Build, options: EmRunOptions) *Build.Step.Run {
     return emrun;
 }
 
-// build a system comman step which runs the `embuilder command`
+// build a system command step which runs the `embuilder command`
 pub const EmBuilderOptions = struct {
     port_name: []const u8,
     lto: bool = false,
