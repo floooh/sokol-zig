@@ -161,15 +161,44 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         .link_libc = true,
     });
     const mod_target = options.target.result;
-
+    const backend = resolveSokolBackend(options.backend, mod_target);
+    const lib = b.addLibrary(.{
+        .name = "sokol_clib",
+        .linkage = if (options.dynamic_linkage) .dynamic else .static,
+        .root_module = mod,
+    });
     if (isPlatform(mod_target, .web)) {
+        const emsdk = options.emsdk orelse {
+            std.log.err("Must provide emsdk dependency when building for web (LibSokolOptions.emsdk)", .{});
+            return error.EmscriptenSdkDepenencyExpected;
+        };
         // make sure we're building for the wasm32-emscripten target, not wasm32-freestanding
         if (mod_target.os.tag != .emscripten) {
             std.log.err("Please build with 'zig build -Dtarget=wasm32-emscripten", .{});
-            return error.Wasm32EmscriptenExpected;
+            return error.TargetWasm32EmscriptenExpected;
         }
+        const opt_emsdk_setup_step = try emSdkSetupStep(b, emsdk);
+
+        // for WebGPU, need to run embuilder for `emdawnwebgpu` after emsdk setup and before C library build
+        if (options.backend == .wgpu) {
+            const embuilder_step = emBuilderStep(b, .{
+                .port_name = "emdawnwebgpu",
+                .emsdk = emsdk,
+            });
+            if (opt_emsdk_setup_step) |emsdk_setup_step| {
+                embuilder_step.step.dependOn(&emsdk_setup_step.step);
+            }
+            lib.step.dependOn(&embuilder_step.step);
+            // need to add include path to find emdawnwebgpu <webgpu/webgpu.h> before Emscripten SDK webgpu.h
+            mod.addSystemIncludePath(emSdkLazyPath(b, emsdk, &.{ "upstream", "emscripten", "cache", "ports", "emdawnwebgpu", "emdawnwebgpu_pkg", "webgpu", "include" }));
+        } else {
+            if (opt_emsdk_setup_step) |emsdk_setup_step| {
+                lib.step.dependOn(&emsdk_setup_step.step);
+            }
+        }
+
         // add the Emscripten system include seach path
-        mod.addSystemIncludePath(emSdkLazyPath(b, options.emsdk.?, &.{ "upstream", "emscripten", "cache", "sysroot", "include" }));
+        mod.addSystemIncludePath(emSdkLazyPath(b, emsdk, &.{ "upstream", "emscripten", "cache", "sysroot", "include" }));
     }
 
     // resolve .auto backend into specific backend by platform
@@ -178,7 +207,6 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     if (options.optimize != .Debug) {
         try cflags.append("-DNDEBUG");
     }
-    const backend = resolveSokolBackend(options.backend, mod_target);
     switch (backend) {
         .d3d11 => try cflags.append("-DSOKOL_D3D11"),
         .metal => try cflags.append("-DSOKOL_METAL"),
@@ -285,22 +313,8 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         });
     }
 
-    // build the library artifact
-    const lib = b.addLibrary(.{
-        .name = "sokol_clib",
-        .linkage = if (options.dynamic_linkage) .dynamic else .static,
-        .root_module = mod,
-    });
-
     // make sokol headers available to users of `sokol_clib` via `#include "sokol/sokol_gfx.h"
     lib.installHeadersDirectory(b.path("src/sokol/c"), "sokol", .{});
-
-    // one-time setup of Emscripten SDK
-    if (isPlatform(mod_target, .web)) {
-        if (try emSdkSetupStep(b, options.emsdk.?)) |emsdk_setup| {
-            lib.step.dependOn(&emsdk_setup.step);
-        }
-    }
 
     // installArtifact allows us to find the lib_sokol compile step when
     // sokol is used as package manager dependency via 'dep_sokol.artifact("sokol_clib")'
@@ -329,7 +343,7 @@ pub const EmLinkOptions = struct {
     extra_args: []const []const u8 = &.{},
 };
 pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
-    const emcc_path = emSdkLazyPath(b, options.emsdk, &.{ "upstream", "emscripten", "emcc" }).getPath(b);
+    const emcc_path = emTool(b, options.emsdk, "emcc").getPath(b);
     const emcc = b.addSystemCommand(&.{emcc_path});
     emcc.setName("emcc"); // hide emcc path
     if (options.optimize == .Debug) {
@@ -349,7 +363,7 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
         }
     }
     if (options.use_webgpu) {
-        emcc.addArg("-sUSE_WEBGPU=1");
+        emcc.addArg("--use-port=emdawnwebgpu");
     }
     if (options.use_webgl2) {
         emcc.addArg("-sUSE_WEBGL2=1");
@@ -397,14 +411,43 @@ pub const EmRunOptions = struct {
     emsdk: *Build.Dependency,
 };
 pub fn emRunStep(b: *Build, options: EmRunOptions) *Build.Step.Run {
-    const emrun_path = b.findProgram(&.{"emrun"}, &.{}) catch emSdkLazyPath(b, options.emsdk, &.{ "upstream", "emscripten", "emrun" }).getPath(b);
+    const emrun_path = emTool(b, options.emsdk, "emrun").getPath(b);
     const emrun = b.addSystemCommand(&.{ emrun_path, b.fmt("{s}/web/{s}.html", .{ b.install_path, options.name }) });
     return emrun;
 }
 
+// build a system command step which runs the `embuilder command`
+pub const EmBuilderOptions = struct {
+    port_name: []const u8,
+    lto: bool = false,
+    pic: bool = false,
+    force: bool = false,
+    emsdk: *Build.Dependency,
+};
+pub fn emBuilderStep(b: *Build, options: EmBuilderOptions) *Build.Step.Run {
+    const embuilder_path = emTool(b, options.emsdk, "embuilder").getPath(b);
+    const embuilder = b.addSystemCommand(&.{embuilder_path});
+    if (options.lto) {
+        embuilder.addArg("--lto");
+    }
+    if (options.pic) {
+        embuilder.addArg("--pic");
+    }
+    if (options.force) {
+        embuilder.addArg("--force");
+    }
+    embuilder.addArgs(&.{ "build", options.port_name });
+    return embuilder;
+}
+
 // helper function to build a LazyPath from the emsdk root and provided path components
-fn emSdkLazyPath(b: *Build, emsdk: *Build.Dependency, subPaths: []const []const u8) Build.LazyPath {
-    return emsdk.path(b.pathJoin(subPaths));
+fn emSdkLazyPath(b: *Build, emsdk: *Build.Dependency, sub_paths: []const []const u8) Build.LazyPath {
+    return emsdk.path(b.pathJoin(sub_paths));
+}
+
+// helper function to get Emscripten SDK tool path
+pub fn emTool(b: *Build, emsdk: *Build.Dependency, tool: []const u8) Build.LazyPath {
+    return emSdkLazyPath(b, emsdk, &.{ "upstream", "emscripten", tool });
 }
 
 fn createEmsdkStep(b: *Build, emsdk: *Build.Dependency) *Build.Step.Run {
@@ -551,7 +594,7 @@ fn buildExample(b: *Build, example: Example, examples_step: *Build.Step, options
             .use_filesystem = false,
             .shell_file_path = b.path("src/sokol/web/shell.html"),
             .extra_args = &.{"-sSTACK_SIZE=512KB"},
-            // don't run Closure minification for WebGPU, see: https://github.com/emscripten-core/emscripten/issues/20415
+            // don't run Closure pass for WebGPU, see: https://issues.chromium.org/issues/424836759
             .release_use_closure = options.backend != .wgpu,
         });
         examples_step.dependOn(&link_step.step);
