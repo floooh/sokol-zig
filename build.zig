@@ -567,7 +567,7 @@ fn buildExample(b: *Build, example: Example, examples_step: *Build.Step, options
             .root_module = mod,
         });
         if (opt_shd_step) |shd_step| {
-            example_step.step.dependOn(&shd_step.step);
+            example_step.step.dependOn(shd_step);
         }
         examples_step.dependOn(&b.addInstallArtifact(example_step, .{}).step);
         run = b.addRunArtifact(example_step);
@@ -578,7 +578,7 @@ fn buildExample(b: *Build, example: Example, examples_step: *Build.Step, options
             .root_module = mod,
         });
         if (opt_shd_step) |shd_step| {
-            example_step.step.dependOn(&shd_step.step);
+            example_step.step.dependOn(shd_step);
         }
 
         // create a special emcc linker run step
@@ -606,17 +606,17 @@ fn buildExample(b: *Build, example: Example, examples_step: *Build.Step, options
     b.step(b.fmt("run-{s}", .{example.name}), b.fmt("Run {s}", .{example.name})).dependOn(&run.step);
 }
 
-fn buildExampleShader(b: *Build, example: Example) !?*Build.Step.Run {
+fn buildExampleShader(b: *Build, example: Example) !?*Build.Step {
     if (!example.has_shader) {
         return null;
     }
     const shaders_dir = "examples/shaders/";
     const input_path = b.fmt("{s}{s}.glsl", .{ shaders_dir, example.name });
     const output_path = b.fmt("{s}{s}.glsl.zig", .{ shaders_dir, example.name });
-    return try shdc.compile(b, .{
-        .dep_shdc = b.dependency("shdc", .{}),
+    const res = try shdc.compile(b, .{
+        .shdc_dep = b.dependency("shdc", .{}),
         .input = b.path(input_path),
-        .output = b.path(output_path),
+        .output = output_path,
         .slang = .{
             .glsl430 = example.needs_compute,
             .glsl410 = !example.needs_compute,
@@ -628,4 +628,5 @@ fn buildExampleShader(b: *Build, example: Example) !?*Build.Step.Run {
         },
         .reflection = true,
     });
+    return res.step;
 }
