@@ -15,7 +15,7 @@
         },
         .shdc = .{
             .url = "../sokol-tools-bin",
-            .hash = "sokolshdc-0.1.0-r2KZDgz7kwRG7mH6RS9hp573Ndh-4k4aid0VLCB88jPs",
+            .hash = "sokolshdc-0.1.0-r2KZDvr6kwRkMURYxpazhYgyM8cxiO519Lrvq-NaBkjA",
         },
     },
 }

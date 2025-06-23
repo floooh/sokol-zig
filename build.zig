@@ -611,7 +611,7 @@ fn buildExampleShader(b: *Build, example: Example) !?*Build.Step {
         return null;
     }
     const shaders_dir = "examples/shaders/";
-    const res = try shdc.createSourceFile(b, .{
+    return shdc.createSourceFile(b, .{
         .shdc_dep = b.dependency("shdc", .{}),
         .input = b.fmt("{s}{s}.glsl", .{ shaders_dir, example.name }),
         .output = b.fmt("{s}{s}.glsl.zig", .{ shaders_dir, example.name }),
@@ -626,5 +626,4 @@ fn buildExampleShader(b: *Build, example: Example) !?*Build.Step {
         },
         .reflection = true,
     });
-    return &res.step;
 }
