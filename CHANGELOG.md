@@ -4,6 +4,11 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 24-Jun-2025
+
+Shader compilation via sokol-shdc is now more flexible. See the new readme section
+`Shader compilation`, and this PR: https://github.com/floooh/sokol-tools-bin/pull/11
+
 ### 27-Apr-2025
 
 The sokol C library can now be built as dynamic link library via `-Ddynamic_linkage`.
