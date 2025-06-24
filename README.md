@@ -219,6 +219,84 @@ fn buildWeb(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMode, dep
 }
 ```
 
+## Shader compilation
+
+sokol-zig comes with integrates `sokol-shdc` support and offers two ways to
+integrate shader compilation into the build process:
+
+1. Compile the shader source file into a Zig source file within the
+   project's source directory, which is then directly imported.
+2. Compile the shader source file into a Zig module, with the module
+   source file existing only in the Zig cache.
+
+For both cases, you need to import the sokol dependency in your
+project's build.zig:
+
+```zig
+const sokol = @import("sokol");
+```
+
+...you'll also need the sokol and shdc dependencies:
+
+```zig
+    const dep_sokol = b.dependency("sokol", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const dep_shdc = dep_sokol.builder.dependency("shdc", .{});
+```
+
+### Option 1: compile shader source into a Zig source file
+
+```zig
+    // call shdc.createSourceFile() helper function, this returns a `!*Build.Step`:
+    const shdc_step = try sokol.shdc.createSourceFile(b, .{
+        .shdc_dep = dep_shdc,
+        .input = "src/shader.glsl",
+        .output = "src/shader.zig",
+        .slang = .{ .hlsl5 = true, ... },
+    });
+
+    // add the shader compilation step as dependency to the build step
+    // which requires the generated Zig source file
+    exe_step.step.dependOn(shdc_step);
+```
+
+...and then import the shader as Zig source file in your application code:
+
+```zig
+const shd = @import("shader.zig");
+```
+
+### Option 2: compile shader source into a Zig module
+
+```zig
+    // call shdc.createModule() helper function, this returns a `!*Build.Module`:
+    const shd_mod = try sokol.shdc.createModule(b, "shader", dep_sokol, .{
+        .shdc_dep = dep_shdc,
+        .input = "src/shader.glsl",
+        .output = "shader.zig",
+        .slang = .{ .hlsl5 = true, ... },
+    });
+
+    // add the module as import to the module which imports the shader:
+    const main_mod = b.createModule(.{
+        .root_source_file = "src/main.zig",
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{
+            .{ .name = "sokol", .module = dep_sokol.module("sokol") },
+            .{ .name = "shader", .module = shd_mod },
+        }
+    });
+```
+
+Then in your `main.zig`, import the shader module:
+
+```zig
+const shd = @import("shader");
+```
+
 ## Using sokol headers in C code
 
 The sokol-zig build.zig exposes a C library artifact called `sokol_clib`.
