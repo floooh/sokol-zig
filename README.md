@@ -135,11 +135,15 @@ pub fn build(b: *Build) !void {
     });
    const hello = b.addExecutable(.{
         .name = "hello",
-        .target = target,
-        .optimize = optimize,
-        .root_source_file = b.path("src/hello.zig"),
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/hello.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = .{
+                .{ .name = "sokol", dep_sokol.module("sokol") },
+            }
+        },
     });
-    hello.root_module.addImport("sokol", dep_sokol.module("sokol"));
     b.installArtifact(hello);
     const run = b.addRunArtifact(hello);
     b.step("run", "Run hello").dependOn(&run.step);
@@ -155,8 +159,12 @@ Such a 'hybrid' build script might look like this (copied straight from [pacman.
 ```zig
 const std = @import("std");
 const Build = std.Build;
-const OptimizeMode = std.builtin.OptimizeMode;
 const sokol = @import("sokol");
+
+const Options = struct {
+    mod: *Build.Module,
+    dep_sokol: *Build.Dependency,
+};
 
 pub fn build(b: *Build) !void {
     const target = b.standardTargetOptions(.{});
@@ -165,50 +173,54 @@ pub fn build(b: *Build) !void {
         .target = target,
         .optimize = optimize,
     });
+    const mod_pacman = b.createModule(.{
+        .root_source_file = b.path("src/pacman.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{
+            .{ .name = "sokol", .module = dep_sokol.module("sokol") },
+            .{ .name = "shader", .module = try createShaderModule(b, dep_sokol) },
+        },
+    });
 
     // special case handling for native vs web build
+    const opts = Options{ .mod = mod_pacman, .dep_sokol = dep_sokol };
     if (target.result.cpu.arch.isWasm()) {
-        try buildWeb(b, target, optimize, dep_sokol);
+        try buildWeb(b, opts);
     } else {
-        try buildNative(b, target, optimize, dep_sokol);
+        try buildNative(b, opts);
     }
 }
 
 // this is the regular build for all native platforms, nothing surprising here
-fn buildNative(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMode, dep_sokol: *Build.Dependency) !void {
-    const pacman = b.addExecutable(.{
+fn buildNative(b: *Build, opts: Options) !void {
+    const exe = b.addExecutable(.{
         .name = "pacman",
-        .target = target,
-        .optimize = optimize,
-        .root_source_file = b.path("src/pacman.zig"),
+        .root_module = opts.mod,
     });
-    pacman.root_module.addImport("sokol", dep_sokol.module("sokol"));
-    b.installArtifact(pacman);
-    const run = b.addRunArtifact(pacman);
+    b.installArtifact(exe);
+    const run = b.addRunArtifact(exe);
     b.step("run", "Run pacman").dependOn(&run.step);
 }
 
 // for web builds, the Zig code needs to be built into a library and linked with the Emscripten linker
-fn buildWeb(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMode, dep_sokol: *Build.Dependency) !void {
-    const pacman = b.addStaticLibrary(.{
+fn buildWeb(b: *Build, opts: Options) !void {
+    const lib = b.addStaticLibrary(.{
         .name = "pacman",
-        .target = target,
-        .optimize = optimize,
-        .root_source_file = b.path("src/pacman.zig"),
+        .root_module = opts.mod,
     });
-    pacman.root_module.addImport("sokol", dep_sokol.module("sokol"));
 
     // create a build step which invokes the Emscripten linker
-    const emsdk = dep_sokol.builder.dependency("emsdk", .{});
+    const emsdk = opts.dep_sokol.builder.dependency("emsdk", .{});
     const link_step = try sokol.emLinkStep(b, .{
-        .lib_main = pacman,
-        .target = target,
-        .optimize = optimize,
+        .lib_main = lib,
+        .target = opts.mod.resolved_target.?,
+        .optimize = opts.mod.optimize.?,
         .emsdk = emsdk,
         .use_webgl2 = true,
         .use_emmalloc = true,
         .use_filesystem = false,
-        .shell_file_path = dep_sokol.path("src/sokol/web/shell.html"),
+        .shell_file_path = opts.dep_sokol.path("src/sokol/web/shell.html"),
     });
     // attach Emscripten linker output to default install step
     b.getInstallStep().dependOn(&link_step.step);
@@ -216,6 +228,11 @@ fn buildWeb(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMode, dep
     const run = sokol.emRunStep(b, .{ .name = "pacman", .emsdk = emsdk });
     run.step.dependOn(&link_step.step);
     b.step("run", "Run pacman").dependOn(&run.step);
+}
+
+// compile shader via sokol-shdc
+fn createShaderModule(b: *Build, dep_sokol: *Build.Dependency) !*Build.Module {
+    // ...
 }
 ```
 
