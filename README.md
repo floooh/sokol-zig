@@ -221,7 +221,7 @@ fn buildWeb(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMode, dep
 
 ## Shader compilation
 
-sokol-zig comes with integrates `sokol-shdc` support and offers two ways to
+sokol-zig comes with builtin `sokol-shdc` support and offers two ways to
 integrate shader compilation into the build process:
 
 1. Compile the shader source file into a Zig source file within the
