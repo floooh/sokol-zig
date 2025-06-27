@@ -260,12 +260,14 @@ const sokol = @import("sokol");
         .target = target,
         .optimize = optimize,
     });
-    const dep_shdc = dep_sokol.builder.dependency("shdc", .{});
 ```
 
 ### Option 1: compile shader source into a Zig source file
 
 ```zig
+    // extract shdc dependency from sokol dependency
+    const dep_shdc = dep_sokol.builder.dependency("shdc", .{});
+
     // call shdc.createSourceFile() helper function, this returns a `!*Build.Step`:
     const shdc_step = try sokol.shdc.createSourceFile(b, .{
         .shdc_dep = dep_shdc,
@@ -288,8 +290,12 @@ const shd = @import("shader.zig");
 ### Option 2: compile shader source into a Zig module
 
 ```zig
+    // extract the sokol module and shdc dependency from sokol dependency
+    const mod_sokol = dep_sokol.module("sokol");
+    const dep_shdc = dep_sokol.builder.dependency("shdc", .{});
+
     // call shdc.createModule() helper function, this returns a `!*Build.Module`:
-    const shd_mod = try sokol.shdc.createModule(b, "shader", dep_sokol, .{
+    const mod_shd = try sokol.shdc.createModule(b, "shader", mod_sokol, .{
         .shdc_dep = dep_shdc,
         .input = "src/shader.glsl",
         .output = "shader.zig",
@@ -302,8 +308,8 @@ const shd = @import("shader.zig");
         .target = target,
         .optimize = optimize,
         .imports = &.{
-            .{ .name = "sokol", .module = dep_sokol.module("sokol") },
-            .{ .name = "shader", .module = shd_mod },
+            .{ .name = "sokol", .module = mod_sokol },
+            .{ .name = "shader", .module = mod_shd },
         }
     });
 ```
@@ -313,6 +319,10 @@ Then in your `main.zig`, import the shader module:
 ```zig
 const shd = @import("shader");
 ```
+
+...also see the pacman.zig project's build.zig as example:
+
+https://github.com/floooh/pacman.zig/blob/main/build.zig
 
 ## Using sokol headers in C code
 
