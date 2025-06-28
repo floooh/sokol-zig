@@ -3329,6 +3329,8 @@ pub const SamplerDesc = extern struct {
 /// source code, you can provide an optional target string via
 /// sg_shader_stage_desc.d3d11_target, the default target is "vs_4_0" for the
 /// vertex shader stage and "ps_4_0" for the pixel shader stage.
+/// You may optionally provide the file path to enable the default #include handler
+/// behavior when compiling source code.
 pub const ShaderStage = enum(i32) {
     NONE,
     VERTEX,
@@ -3341,6 +3343,7 @@ pub const ShaderFunction = extern struct {
     bytecode: Range = .{},
     entry: [*c]const u8 = null,
     d3d11_target: [*c]const u8 = null,
+    d3d11_filepath: [*c]const u8 = null,
 };
 
 pub const ShaderAttrBaseType = enum(i32) {
