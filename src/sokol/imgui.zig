@@ -227,6 +227,21 @@
 //
 //     simgui_shutdown()
 //
+// ON ATTACHING YOUR OWN FONTS
+// ===========================
+// Since Dear ImGui 1.92.0, using using non-default fonts has been greatly simplified:
+//
+// First, call `simgui_setup()` with the `.no_default_font` so that
+// sokol_imgui.h skips adding the default font.
+//
+// ...then simply call `AddFontDefault()` or `AddFontFromMemoryTTF()` on
+// the Dear ImGui IO object.
+//
+// Do *NOT*:
+//     - call the deprecated `GetTexDataAsRGBA32()` function
+//     - create a sokol-gfx image object for the font
+//     - set the `Font->TexID` on the ImGui IO object
+//
 //
 // ON USER-PROVIDED IMAGES AND SAMPLERS
 // ====================================
@@ -261,6 +276,21 @@
 //
 //     sg_image img = simgui_image_from_imtextureid(imtex_id);
 //     sg_sampler smp = simgui_sampler_from_imtextureid(imtex_id);
+//
+// NOTE on C bindings since 1.92.0:
+//
+//     Since Dear ImGui v1.92.0 the ImGui::Image function takes an
+//     ImTextureRef object instead of ImTextureID. In C++ this doesn't
+//     require a code change since the ImTextureRef is automatically constructed
+//     from the ImTextureID.
+//
+//     In C this doesn't work and you need to explicitly create an
+//     ImTextureRef struct, for instance:
+//
+//         igImage((ImTextureRef){ ._TexID = my_tex_id }, ...);
+//
+//     Currently Dear Bindings is missing a wrapper function for this,
+//     also see: https://github.com/dearimgui/dear_bindings/issues/99
 //
 //
 // MEMORY ALLOCATION OVERRIDE
@@ -556,17 +586,5 @@ extern fn simgui_shutdown() void;
 
 pub fn shutdown() void {
     simgui_shutdown();
-}
-
-extern fn simgui_create_fonts_texture([*c]const FontTexDesc) void;
-
-pub fn createFontsTexture(desc: FontTexDesc) void {
-    simgui_create_fonts_texture(&desc);
-}
-
-extern fn simgui_destroy_fonts_texture() void;
-
-pub fn destroyFontsTexture() void {
-    simgui_destroy_fonts_texture();
 }
 
