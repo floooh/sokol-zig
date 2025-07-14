@@ -488,17 +488,21 @@ fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
 
 //== DOCUMENTATION =====================================================================================================
 fn buildDocs(b: *Build, target: Build.ResolvedTarget) void {
-    const lib = b.addStaticLibrary(.{
+    const lib = b.addLibrary(.{
         .name = "sokol",
-        .root_source_file = b.path("src/sokol/sokol.zig"),
-        .target = target,
-        .optimize = .Debug,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/sokol/sokol.zig"),
+            .target = target,
+            .optimize = .Debug,
+        }),
     });
     // need to invoke an external tool to inject custom functionality into a build step:
     const tool = b.addExecutable(.{
         .name = "fixdoctar",
-        .root_source_file = b.path("tools/fixdoctar.zig"),
-        .target = b.graph.host,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/fixdoctar.zig"),
+            .target = b.graph.host,
+        }),
     });
     const tool_step = b.addRunArtifact(tool);
     tool_step.addArgs(&.{ "--prefix", "sokol", "--input" });
@@ -573,7 +577,7 @@ fn buildExample(b: *Build, example: Example, examples_step: *Build.Step, options
         run = b.addRunArtifact(example_step);
     } else {
         // for WASM, need to build the Zig code as static library, since linking happens via emcc
-        const example_step = b.addStaticLibrary(.{
+        const example_step = b.addLibrary(.{
             .name = example.name,
             .root_module = mod,
         });
