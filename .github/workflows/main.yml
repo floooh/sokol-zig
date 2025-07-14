@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@main
       - uses: mlugg/setup-zig@v2
         with:
-          version: master
+          version: 0.14.1
       - name: prepare-linux
         if: runner.os == 'Linux'
         run: |
