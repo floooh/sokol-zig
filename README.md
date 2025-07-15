@@ -205,7 +205,7 @@ fn buildNative(b: *Build, opts: Options) !void {
 
 // for web builds, the Zig code needs to be built into a library and linked with the Emscripten linker
 fn buildWeb(b: *Build, opts: Options) !void {
-    const lib = b.addStaticLibrary(.{
+    const lib = b.addLibrary(.{
         .name = "pacman",
         .root_module = opts.mod,
     });
