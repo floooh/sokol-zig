@@ -517,7 +517,7 @@ pub const LogItem = enum(i32) {
 /// Used in saudio_desc to provide a custom logging and error reporting
 /// callback to sokol-audio.
 pub const Logger = extern struct {
-    func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
+    func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.c) void = null,
     user_data: ?*anyopaque = null,
 };
 
@@ -528,8 +528,8 @@ pub const Logger = extern struct {
 /// alloc_fn and free_fn function must be provided (e.g. it's not valid to
 /// override one function but not the other).
 pub const Allocator = extern struct {
-    alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.c) ?*anyopaque = null,
+    free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.c) void = null,
     user_data: ?*anyopaque = null,
 };
 
@@ -539,8 +539,8 @@ pub const Desc = extern struct {
     buffer_frames: i32 = 0,
     packet_frames: i32 = 0,
     num_packets: i32 = 0,
-    stream_cb: ?*const fn ([*c]f32, i32, i32) callconv(.C) void = null,
-    stream_userdata_cb: ?*const fn ([*c]f32, i32, i32, ?*anyopaque) callconv(.C) void = null,
+    stream_cb: ?*const fn ([*c]f32, i32, i32) callconv(.c) void = null,
+    stream_userdata_cb: ?*const fn ([*c]f32, i32, i32, ?*anyopaque) callconv(.c) void = null,
     user_data: ?*anyopaque = null,
     allocator: Allocator = .{},
     logger: Logger = .{},

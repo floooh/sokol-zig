@@ -1596,8 +1596,8 @@ pub const IconDesc = extern struct {
 /// alloc_fn and free_fn function must be provided (e.g. it's not valid to
 /// override one function but not the other).
 pub const Allocator = extern struct {
-    alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.c) ?*anyopaque = null,
+    free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.c) void = null,
     user_data: ?*anyopaque = null,
 };
 
@@ -1712,22 +1712,22 @@ pub const LogItem = enum(i32) {
 /// debug mode (e.g. NDEBUG *not* defined) and install a logger (for instance
 /// the standard logging function from sokol_log.h).
 pub const Logger = extern struct {
-    func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
+    func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.c) void = null,
     user_data: ?*anyopaque = null,
 };
 
 /// sokol-app initialization options, used as return value of sokol_main()
 /// or sapp_run() argument.
 pub const Desc = extern struct {
-    init_cb: ?*const fn () callconv(.C) void = null,
-    frame_cb: ?*const fn () callconv(.C) void = null,
-    cleanup_cb: ?*const fn () callconv(.C) void = null,
-    event_cb: ?*const fn ([*c]const Event) callconv(.C) void = null,
+    init_cb: ?*const fn () callconv(.c) void = null,
+    frame_cb: ?*const fn () callconv(.c) void = null,
+    cleanup_cb: ?*const fn () callconv(.c) void = null,
+    event_cb: ?*const fn ([*c]const Event) callconv(.c) void = null,
     user_data: ?*anyopaque = null,
-    init_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) void = null,
-    frame_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) void = null,
-    cleanup_userdata_cb: ?*const fn (?*anyopaque) callconv(.C) void = null,
-    event_userdata_cb: ?*const fn ([*c]const Event, ?*anyopaque) callconv(.C) void = null,
+    init_userdata_cb: ?*const fn (?*anyopaque) callconv(.c) void = null,
+    frame_userdata_cb: ?*const fn (?*anyopaque) callconv(.c) void = null,
+    cleanup_userdata_cb: ?*const fn (?*anyopaque) callconv(.c) void = null,
+    event_userdata_cb: ?*const fn ([*c]const Event, ?*anyopaque) callconv(.c) void = null,
     width: i32 = 0,
     height: i32 = 0,
     sample_count: i32 = 0,
@@ -1784,7 +1784,7 @@ pub const Html5FetchResponse = extern struct {
 
 pub const Html5FetchRequest = extern struct {
     dropped_file_index: i32 = 0,
-    callback: ?*const fn ([*c]const Html5FetchResponse) callconv(.C) void = null,
+    callback: ?*const fn ([*c]const Html5FetchResponse) callconv(.c) void = null,
     buffer: Range = .{},
     user_data: ?*anyopaque = null,
 };

@@ -529,33 +529,13 @@ pub fn asRange(val: anytype) Range {
     }
 }
 
-// std.fmt compatible Writer
-pub const Writer = struct {
-    pub const Error = error{};
-    pub fn writeAll(self: Writer, bytes: []const u8) Error!void {
-        _ = self;
-        for (bytes) |byte| {
-            putc(byte);
-        }
-    }
-    pub fn writeByteNTimes(self: Writer, byte: u8, n: usize) Error!void {
-        _ = self;
-        var i: u64 = 0;
-        while (i < n) : (i += 1) {
-            putc(byte);
-        }
-    }
-    pub fn writeBytesNTimes(self: Writer, bytes: []const u8, n: usize) Error!void {
-        var i: usize = 0;
-        while (i < n) : (i += 1) {
-            try self.writeAll(bytes);
-        }
-    }
-};
 // std.fmt-style formatted print
 pub fn print(comptime fmt: anytype, args: anytype) void {
-    const writer: Writer = .{};
-    @import("std").fmt.format(writer, fmt, args) catch {};
+    const cbuf = getClearedFmtBuffer();
+    const p: [*]u8 = @constCast(@ptrCast(cbuf.ptr));
+    const buf = p[0..cbuf.size];
+    const out = @import("std").fmt.bufPrint(buf, fmt, args) catch "";
+    for (out) |c| putc(c);
 }
 
 pub const LogItem = enum(i32) {
@@ -572,7 +552,7 @@ pub const LogItem = enum(i32) {
 /// Used in sdtx_desc_t to provide a custom logging and error reporting
 /// callback to sokol-debugtext.
 pub const Logger = extern struct {
-    func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
+    func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.c) void = null,
     user_data: ?*anyopaque = null,
 };
 
@@ -620,8 +600,8 @@ pub const ContextDesc = extern struct {
 /// alloc_fn and free_fn function must be provided (e.g. it's not valid to
 /// override one function but not the other).
 pub const Allocator = extern struct {
-    alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.c) ?*anyopaque = null,
+    free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.c) void = null,
     user_data: ?*anyopaque = null,
 };
 
@@ -890,5 +870,13 @@ extern fn sdtx_putr([*c]const u8, i32) void;
 
 pub fn putr(str: [:0]const u8, len: i32) void {
     sdtx_putr(@ptrCast(str), len);
+}
+
+/// language bindings helper: get the internal printf format buffer
+extern fn sdtx_get_cleared_fmt_buffer() Range;
+
+/// language bindings helper: get the internal printf format buffer
+pub fn getClearedFmtBuffer() Range {
+    return sdtx_get_cleared_fmt_buffer();
 }
 

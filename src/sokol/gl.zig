@@ -713,7 +713,7 @@ pub const LogItem = enum(i32) {
 /// Used in sgl_desc_t to provide a custom logging and error reporting
 /// callback to sokol-gl.
 pub const Logger = extern struct {
-    func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.C) void = null,
+    func: ?*const fn ([*c]const u8, u32, u32, [*c]const u8, u32, [*c]const u8, ?*anyopaque) callconv(.c) void = null,
     user_data: ?*anyopaque = null,
 };
 
@@ -761,8 +761,8 @@ pub const ContextDesc = extern struct {
 /// alloc and free function must be provided (e.g. it's not valid to
 /// override one function but not the other).
 pub const Allocator = extern struct {
-    alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.C) ?*anyopaque = null,
-    free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.C) void = null,
+    alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.c) ?*anyopaque = null,
+    free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.c) void = null,
     user_data: ?*anyopaque = null,
 };
 
