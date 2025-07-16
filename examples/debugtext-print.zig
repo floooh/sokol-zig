@@ -11,9 +11,6 @@ const sglue = sokol.glue;
 const stm = sokol.time;
 const sdtx = @import("sokol").debugtext;
 
-// only needed when using std.fmt directly instead of sokol.debugtext.print()
-const fmt = @import("std").fmt;
-
 // font slots
 const KC854 = 0;
 const C64 = 1;
