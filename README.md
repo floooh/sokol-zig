@@ -133,16 +133,19 @@ pub fn build(b: *Build) !void {
         .target = target,
         .optimize = optimize,
     });
-   const hello = b.addExecutable(.{
+    const hello = b.addExecutable(.{
         .name = "hello",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/hello.zig"),
             .target = target,
             .optimize = optimize,
-            .imports = .{
-                .{ .name = "sokol", dep_sokol.module("sokol") },
-            }
-        },
+            .imports = &.{
+                .{
+                    .name = "sokol",
+                    .module = dep_sokol.module("sokol"),
+                },
+            },
+        }),
     });
     b.installArtifact(hello);
     const run = b.addRunArtifact(hello);
