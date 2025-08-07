@@ -1,7 +1,6 @@
 .{
     .name = .sokol,
     .version = "0.1.0",
-    .minimum_zig_version = "0.14.1",
     .fingerprint = 0xf9f6f48d2b47bda5,
     .paths = .{
         "src",
