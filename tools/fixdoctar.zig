@@ -5,9 +5,14 @@ const log = std.log;
 const Allocator = std.mem.Allocator;
 
 pub fn main() !void {
-    var arena_state = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena_state.deinit();
-    const arena = arena_state.allocator();
+    var dbg_allocator: std.heap.DebugAllocator(.{}) = .init;
+    defer if (dbg_allocator.deinit() != .ok) {
+        @panic("Memory leaks detected!");
+    };
+    const alloc = dbg_allocator.allocator();
+    var arena_allocator: std.heap.ArenaAllocator = .init(alloc);
+    defer arena_allocator.deinit();
+    const arena = arena_allocator.allocator();
 
     // parse args
     const prefix = try arg(arena, "--prefix");
@@ -46,7 +51,7 @@ pub fn main() !void {
                 if (std.mem.startsWith(u8, tar_item.name, prefix)) {
                     // FIMXE: currently it's not possible to directly plug iter.streamRemaining()
                     // into a std.tar.Writer, so let's go through an intermediate buffer
-                    var imm_writer: std.Io.Writer.Allocating = .init(arena);
+                    var imm_writer: std.Io.Writer.Allocating = .init(alloc);
                     defer imm_writer.deinit();
                     // stream the current tar item into the intermediate writer
                     try iter.streamRemaining(tar_item, &imm_writer.writer);
