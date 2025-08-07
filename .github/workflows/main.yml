@@ -11,6 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@main
       - uses: mlugg/setup-zig@v2
+        version: master
       - name: prepare-linux
         if: runner.os == 'Linux'
         run: |
