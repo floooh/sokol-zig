@@ -28,11 +28,15 @@ pub fn main() !void {
         fatal("failed to open output file '{s}' with {}", .{ output_path, err });
     };
     defer outp_file.close();
+    var file_read_buffer: [1024]u8 = undefined;
+    var file_write_buffer: [1024]u8 = undefined;
+    var file_reader: std.fs.File.Reader = .init(inp_file, &file_read_buffer);
+    var file_writer: std.fs.File.Writer = .init(outp_file, &file_write_buffer);
 
-    var tar_writer = std.tar.writer(outp_file.writer());
+    var tar_writer: std.tar.Writer = .{ .underlying_writer = &file_writer.interface };
     var file_name_buffer: [1024]u8 = undefined;
     var link_name_buffer: [1024]u8 = undefined;
-    var iter = std.tar.iterator(inp_file.reader(), .{
+    var iter: std.tar.Iterator = .init(&file_reader.interface, .{
         .file_name_buffer = &file_name_buffer,
         .link_name_buffer = &link_name_buffer,
     });
@@ -40,6 +44,8 @@ pub fn main() !void {
         switch (tar_item.kind) {
             .file => {
                 if (std.mem.startsWith(u8, tar_item.name, prefix)) {
+                    // FIMXE: figure out how to get a reader for the current tar iterator item
+                    // with the new Reader/Writer system
                     try tar_writer.writeFileStream(tar_item.name, tar_item.size, tar_item.reader(), .{ .mode = tar_item.mode });
                 }
             },
