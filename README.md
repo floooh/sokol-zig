@@ -4,7 +4,7 @@ Auto-generated Zig bindings for the [sokol headers](https://github.com/floooh/so
 
 [Auto-generated docs](https://floooh.github.io/sokol-zig-docs) (wip)
 
-For Zig version 0.14.0+
+For Zig version 0.15+
 
 In case of breaking changes in Zig, the bindings might fall behind. Please don't hesitate to
 ping me via a Github issue, or even better, provide a PR :)
