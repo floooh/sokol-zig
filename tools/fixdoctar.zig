@@ -44,14 +44,23 @@ pub fn main() !void {
         switch (tar_item.kind) {
             .file => {
                 if (std.mem.startsWith(u8, tar_item.name, prefix)) {
-                    // FIMXE: figure out how to get a reader for the current tar iterator item
-                    // with the new Reader/Writer system
-                    try tar_writer.writeFileStream(tar_item.name, tar_item.size, tar_item.reader(), .{ .mode = tar_item.mode });
+                    // FIMXE: currently it's not possible to directly plug iter.streamRemaining()
+                    // into a std.tar.Writer, so let's go through an intermediate buffer
+                    var imm_writer: std.Io.Writer.Allocating = .init(arena);
+                    defer imm_writer.deinit();
+                    // stream the current tar item into the intermediate writer
+                    try iter.streamRemaining(tar_item, &imm_writer.writer);
+                    // get an intermediate reader on the intermediate writer's buffer
+                    var imm_reader = std.Io.Reader.fixed(imm_writer.getWritten());
+                    // ... and write the file data into the tar-writer
+                    try tar_writer.writeFileStream(tar_item.name, tar_item.size, &imm_reader, .{ .mode = tar_item.mode });
                 }
             },
             else => continue,
         }
     }
+    try tar_writer.finishPedantically();
+    try tar_writer.underlying_writer.flush();
     log.info("Done.", .{});
     return std.process.cleanExit();
 }
