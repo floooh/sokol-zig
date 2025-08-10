@@ -13,8 +13,8 @@
             .hash = "N-V-__8AAEWFDwBdd7oE1EcCE3lK2y01-2ourXGKhpZeaZxQ",
         },
         .shdc = .{
-            .url = "../../../sokol-tools-bin",
-            .hash = "sokolshdc-0.1.0-r2KZDuJqQwhWQi3WjbD0J37dcaLTkmB4VcFtz8QnMxBI",
+            .url = "git+https://github.com/floooh/sokol-tools-bin#c240bd1d17d4192572ee6e0cdb6e2477e4a7df80",
+            .hash = "sokolshdc-0.1.0-r2KZDj7gkwRMQjYMiLigcvLi1O1jSnBGeA9qlLen4Rfz",
         },
     },
 }
