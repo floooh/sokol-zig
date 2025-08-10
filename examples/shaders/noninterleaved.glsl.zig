@@ -628,8 +628,8 @@ pub fn noninterleavedAttrSlot(attr_name: []const u8) ?usize {
     }
     return null;
 }
-pub fn noninterleavedImageSlot(img_name: []const u8) ?usize {
-    _ = img_name;
+pub fn noninterleavedTextureSlot(tex_name: []const u8) ?usize {
+    _ = tex_name;
     return null;
 }
 pub fn noninterleavedSamplerSlot(smp_name: []const u8) ?usize {

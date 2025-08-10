@@ -20,26 +20,28 @@ const vec3 = @import("math.zig").Vec3;
 const mat4 = @import("math.zig").Mat4;
 const shd = @import("shaders/mrt.glsl.zig");
 
+const num_mrts = 3;
 const offscreen_sample_count = 1;
 
 const state = struct {
-    const offscreen = struct {
-        var pass_action: sg.PassAction = .{};
-        var attachments_desc: sg.AttachmentsDesc = .{};
-        var attachments: sg.Attachments = .{};
-        var pip: sg.Pipeline = .{};
-        var bind: sg.Bindings = .{};
+    const images = struct {
+        var color: [num_mrts]sg.Image = @splat(.{});
+        var resolve: [num_mrts]sg.Image = @splat(.{});
+        var depth: sg.Image = .{};
     };
-    const fsq = struct {
+    const offscreen = struct {
         var pip: sg.Pipeline = .{};
         var bind: sg.Bindings = .{};
+        var pass: sg.Pass = .{};
+    };
+    const display = struct {
+        var pip: sg.Pipeline = .{};
+        var bind: sg.Bindings = .{};
+        var pass_action: sg.PassAction = .{};
     };
     const dbg = struct {
         var pip: sg.Pipeline = .{};
         var bind: sg.Bindings = .{};
-    };
-    const default = struct {
-        var pass_action: sg.PassAction = .{};
     };
     var rx: f32 = 0.0;
     var ry: f32 = 0.0;
@@ -52,30 +54,28 @@ export fn init() void {
         .logger = .{ .func = slog.func },
     });
 
+    // setup the offscreen render pass resources, this will also be called when the window resizes
+    recreateOffscreenAttachments(sapp.width(), sapp.height());
+
     // setup pass action for default render pass
-    state.default.pass_action.colors[0] = .{ .load_action = .DONTCARE };
-    state.default.pass_action.depth = .{ .load_action = .DONTCARE };
-    state.default.pass_action.stencil = .{ .load_action = .DONTCARE };
+    state.display.pass_action.colors[0] = .{ .load_action = .DONTCARE };
+    state.display.pass_action.depth = .{ .load_action = .DONTCARE };
+    state.display.pass_action.stencil = .{ .load_action = .DONTCARE };
 
     // set pass action for offscreen render pass
-    state.offscreen.pass_action.colors[0] = .{
-        .load_action = .CLEAR,
-        .clear_value = .{ .r = 0.25, .g = 0, .b = 0, .a = 1 },
-    };
-    state.offscreen.pass_action.colors[1] = .{
-        .load_action = .CLEAR,
-        .clear_value = .{ .r = 0, .g = 0.25, .b = 0, .a = 1 },
-    };
-    state.offscreen.pass_action.colors[2] = .{
-        .load_action = .CLEAR,
-        .clear_value = .{ .r = 0, .g = 0, .b = 0.25, .a = 1 },
-    };
-
-    // setup the offscreen render pass resources this will also be called when the window resizes
-    createOffscreenAttachments(sapp.width(), sapp.height());
+    for (0..num_mrts) |i| {
+        state.offscreen.pass.action.colors[i] = .{
+            .load_action = .CLEAR,
+            .clear_value = switch (i) {
+                0 => .{ .r = 0.25, .g = 0, .b = 0, .a = 1 },
+                1 => .{ .r = 0, .g = 0.25, .b = 0, .a = 1 },
+                else => .{ .r = 0, .g = 0, .b = 0.25, .a = 1 },
+            },
+        };
+    }
 
     // create vertex buffer for a cube
-    const cube_vbuf = sg.makeBuffer(.{
+    state.offscreen.bind.vertex_buffers[0] = sg.makeBuffer(.{
         .data = sg.asRange(&[_]f32{
             // positions        brightness
             -1.0, -1.0, -1.0, 1.0,
@@ -111,7 +111,7 @@ export fn init() void {
     });
 
     // index buffer for a cube
-    const cube_ibuf = sg.makeBuffer(.{
+    state.offscreen.bind.index_buffer = sg.makeBuffer(.{
         .usage = .{ .index_buffer = true },
         .data = sg.asRange(&[_]u16{
             0,  1,  2,  0,  2,  3,
@@ -122,10 +122,6 @@ export fn init() void {
             22, 21, 20, 23, 22, 20,
         }),
     });
-
-    // resource bindings for offscreen rendering
-    state.offscreen.bind.vertex_buffers[0] = cube_vbuf;
-    state.offscreen.bind.index_buffer = cube_ibuf;
 
     // shader and pipeline state object for rendering cube into MRT render targets
     state.offscreen.pip = sg.makePipeline(.{
@@ -151,10 +147,12 @@ export fn init() void {
     const quad_vbuf = sg.makeBuffer(.{
         .data = sg.asRange(&[_]f32{ 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0 }),
     });
+    state.display.bind.vertex_buffers[0] = quad_vbuf;
+    state.dbg.bind.vertex_buffers[0] = quad_vbuf;
 
     // shader and pipeline object to render a fullscreen quad which composes
     // the 3 offscreen render targets into the default framebuffer
-    state.fsq.pip = sg.makePipeline(.{
+    state.display.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.fsqShaderDesc(sg.queryBackend())),
         .layout = init: {
             var l = sg.VertexLayoutState{};
@@ -171,14 +169,8 @@ export fn init() void {
         .wrap_u = .CLAMP_TO_EDGE,
         .wrap_v = .CLAMP_TO_EDGE,
     });
-
-    // resource bindings to render the fullscreen quad (composed from the
-    // offscreen render target textures
-    state.fsq.bind.vertex_buffers[0] = quad_vbuf;
-    for (0..2) |i| {
-        state.fsq.bind.images[i] = state.offscreen.attachments_desc.colors[i].image;
-    }
-    state.fsq.bind.samplers[shd.SMP_smp] = smp;
+    state.display.bind.samplers[shd.SMP_smp] = smp;
+    state.dbg.bind.samplers[shd.SMP_smp] = smp;
 
     // shader, pipeline and resource bindings to render debug visualization quads
     state.dbg.pip = sg.makePipeline(.{
@@ -190,11 +182,6 @@ export fn init() void {
         },
         .primitive_type = .TRIANGLE_STRIP,
     });
-
-    // resource bindings to render the debug visualization
-    // (the required images will be filled in during rendering)
-    state.dbg.bind.vertex_buffers[0] = quad_vbuf;
-    state.dbg.bind.samplers[shd.SMP_smp] = smp;
 }
 
 export fn frame() void {
@@ -212,7 +199,7 @@ export fn frame() void {
     };
 
     // render cube into MRT offscreen render targets
-    sg.beginPass(.{ .action = state.offscreen.pass_action, .attachments = state.offscreen.attachments });
+    sg.beginPass(state.offscreen.pass);
     sg.applyPipeline(state.offscreen.pip);
     sg.applyBindings(state.offscreen.bind);
     sg.applyUniforms(shd.UB_offscreen_params, sg.asRange(&offscreen_params));
@@ -221,15 +208,15 @@ export fn frame() void {
 
     // render fullscreen quad with the composed offscreen-render images,
     // 3 a small debug view quads at the bottom of the screen
-    sg.beginPass(.{ .action = state.default.pass_action, .swapchain = sglue.swapchain() });
-    sg.applyPipeline(state.fsq.pip);
-    sg.applyBindings(state.fsq.bind);
+    sg.beginPass(.{ .action = state.display.pass_action, .swapchain = sglue.swapchain() });
+    sg.applyPipeline(state.display.pip);
+    sg.applyBindings(state.display.bind);
     sg.applyUniforms(shd.UB_fsq_params, sg.asRange(&fsq_params));
     sg.draw(0, 4, 1);
     sg.applyPipeline(state.dbg.pip);
-    inline for (0..3) |i| {
+    inline for (0..num_mrts) |i| {
         sg.applyViewport(i * 100, 0, 100, 100, false);
-        state.dbg.bind.images[shd.IMG_tex] = state.offscreen.attachments_desc.colors[i].image;
+        state.dbg.bind.views[shd.VIEW_tex] = state.display.bind.views[i];
         sg.applyBindings(state.dbg.bind);
         sg.draw(0, 4, 1);
     }
@@ -243,7 +230,7 @@ export fn cleanup() void {
 
 export fn event(ev: [*c]const sapp.Event) void {
     if (ev.*.type == .RESIZED) {
-        createOffscreenAttachments(ev.*.framebuffer_width, ev.*.framebuffer_height);
+        recreateOffscreenAttachments(ev.*.framebuffer_width, ev.*.framebuffer_height);
     }
 }
 
@@ -272,33 +259,55 @@ fn computeMVP(rx: f32, ry: f32) mat4 {
     return mat4.mul(mat4.mul(proj, state.view), model);
 }
 
-// helper function to create or re-create render target images and pass object for offscreen rendering
-fn createOffscreenAttachments(width: i32, height: i32) void {
-    // destroy previous resources (can be called with invalid ids)
-    sg.destroyAttachments(state.offscreen.attachments);
-    for (state.offscreen.attachments_desc.colors) |att| {
-        sg.destroyImage(att.image);
-    }
-    sg.destroyImage(state.offscreen.attachments_desc.depth_stencil.image);
+// helper function to create or re-create attachment resources
+fn recreateOffscreenAttachments(width: i32, height: i32) void {
+    // destroy and re-create create color, resolve and depth-stencil attachment images and views
+    // (NOTE: calling destroy funcs on invalid handles is fine)
+    for (0..num_mrts) |i| {
+        // color attachment images and views
+        sg.destroyImage(state.images.color[i]);
+        state.images.color[i] = sg.makeImage(.{
+            .usage = .{ .color_attachment = true },
+            .width = width,
+            .height = height,
+            .sample_count = offscreen_sample_count,
+        });
+        sg.destroyView(state.offscreen.pass.attachments.colors[i]);
+        state.offscreen.pass.attachments.colors[i] = sg.makeView(.{
+            .color_attachment = .{ .image = state.images.color[i] },
+        });
 
-    // create offscreen render target images and pass
-    const color_img_desc: sg.ImageDesc = .{
-        .usage = .{ .render_attachment = true },
+        // resolve attachment images and views
+        sg.destroyImage(state.images.resolve[i]);
+        state.images.resolve[i] = sg.makeImage(.{
+            .usage = .{ .resolve_attachment = true },
+            .width = width,
+            .height = height,
+            .sample_count = 1,
+        });
+        sg.destroyView(state.offscreen.pass.attachments.resolves[i]);
+        state.offscreen.pass.attachments.resolves[i] = sg.makeView(.{
+            .resolve_attachment = .{ .image = state.images.resolve[i] },
+        });
+
+        // the resolve images are also sampled as textures, so need texture views
+        sg.destroyView(state.display.bind.views[i]);
+        state.display.bind.views[i] = sg.makeView(.{
+            .texture = .{ .image = state.images.resolve[i] },
+        });
+    }
+
+    // depth-stencil attachment image and view
+    sg.destroyImage(state.images.depth);
+    state.images.depth = sg.makeImage(.{
+        .usage = .{ .depth_stencil_attachment = true },
         .width = width,
         .height = height,
         .sample_count = offscreen_sample_count,
-    };
-    var depth_img_desc = color_img_desc;
-    depth_img_desc.pixel_format = .DEPTH;
-
-    for (0..3) |i| {
-        state.offscreen.attachments_desc.colors[i].image = sg.makeImage(color_img_desc);
-    }
-    state.offscreen.attachments_desc.depth_stencil.image = sg.makeImage(depth_img_desc);
-    state.offscreen.attachments = sg.makeAttachments(state.offscreen.attachments_desc);
-
-    // update the fullscreen-quad texture bindings
-    for (0..3) |i| {
-        state.fsq.bind.images[i] = state.offscreen.attachments_desc.colors[i].image;
-    }
+        .pixel_format = .DEPTH,
+    });
+    sg.destroyView(state.offscreen.pass.attachments.depth_stencil);
+    state.offscreen.pass.attachments.depth_stencil = sg.makeView(.{
+        .depth_stencil_attachment = .{ .image = state.images.depth },
+    });
 }

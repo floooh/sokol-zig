@@ -1916,7 +1916,7 @@ pub fn asRange(val: anytype) Range {
 /// sg_sampler      sampler objects describing how a texture is sampled in a shader
 /// sg_shader:      vertex- and fragment-shaders and shader interface information
 /// sg_pipeline:    associated shader and vertex-layouts, and render states
-/// sg_attachments: a baked collection of render pass attachment images
+/// sg_view:        a resource view object used for bindings and render-pass attachments
 ///
 /// Instead of pointers, resource creation functions return a 32-bit
 /// handle which uniquely identifies the resource object.
@@ -1949,7 +1949,7 @@ pub const Pipeline = extern struct {
     id: u32 = 0,
 };
 
-pub const Attachments = extern struct {
+pub const View = extern struct {
     id: u32 = 0,
 };
 
@@ -1967,17 +1967,15 @@ pub const Range = extern struct {
 pub const invalid_id = 0;
 pub const num_inflight_frames = 2;
 pub const max_color_attachments = 4;
-pub const max_storage_attachments = 4;
 pub const max_uniformblock_members = 16;
 pub const max_vertex_attributes = 16;
 pub const max_mipmaps = 16;
 pub const max_texturearray_layers = 128;
-pub const max_uniformblock_bindslots = 8;
 pub const max_vertexbuffer_bindslots = 8;
-pub const max_image_bindslots = 16;
+pub const max_uniformblock_bindslots = 8;
+pub const max_view_bindslots = 28;
 pub const max_sampler_bindslots = 16;
-pub const max_storagebuffer_bindslots = 8;
-pub const max_image_sampler_pairs = 16;
+pub const max_texture_sampler_pairs = 16;
 
 /// sg_color
 ///
@@ -2137,8 +2135,9 @@ pub const Features = extern struct {
     mrt_independent_blend_state: bool = false,
     mrt_independent_write_mask: bool = false,
     compute: bool = false,
-    msaa_image_bindings: bool = false,
+    msaa_texture_bindings: bool = false,
     separate_buffer_types: bool = false,
+    gl_texture_views: bool = false,
 };
 
 /// Runtime information about resource limits, returned by sg_query_limit()
@@ -2212,6 +2211,8 @@ pub const ImageType = enum(i32) {
     NUM,
 };
 
+/// FIXME: rename to sg_texture_sample_type
+///
 /// sg_image_sample_type
 ///
 /// The basic data type of a texture sample as expected by a shader.
@@ -2814,6 +2815,15 @@ pub const Swapchain = extern struct {
     gl: GlSwapchain = .{},
 };
 
+/// sg_attachments
+///
+/// TODO
+pub const Attachments = extern struct {
+    colors: [4]View = [_]View{.{}} ** 4,
+    resolves: [4]View = [_]View{.{}} ** 4,
+    depth_stencil: View = .{},
+};
+
 /// sg_pass
 ///
 /// The sg_pass structure is passed as argument into the sg_begin_pass()
@@ -2828,12 +2838,16 @@ pub const Swapchain = extern struct {
 ///         .swapchain = sglue_swapchain(),
 ///     });
 ///
-/// For an offscreen render pass, provide an sg_pass_action struct and
-/// an sg_attachments handle:
+/// For an offscreen render pass, provide an sg_pass_action struct with
+/// attachments:
 ///
 ///     sg_begin_pass(&(sg_pass){
 ///         .action = { ... },
-///         .attachments = attachments,
+///         .attachments = {
+///             .colors = { ... },
+///             .resolves = { ... },
+///             .depth_stencil = ...,
+///         },
 ///     });
 ///
 /// You can also omit the .action object to get default pass action behaviour
@@ -2854,8 +2868,9 @@ pub const Pass = extern struct {
 
 /// sg_bindings
 ///
-/// The sg_bindings structure defines the buffers, images and
-/// samplers resource bindings for the next draw call.
+///
+/// The sg_bindings structure defines the resource bindings for
+/// the next draw call.
 ///
 /// To update the resource bindings, call sg_apply_bindings() with
 /// a pointer to a populated sg_bindings struct. Note that
@@ -2866,19 +2881,21 @@ pub const Pass = extern struct {
 /// A resource binding struct contains:
 ///
 /// - 1..N vertex buffers
-/// - 0..N vertex buffer offsets
-/// - 0..1 index buffers
-/// - 0..1 index buffer offsets
-/// - 0..N images
+/// - 1..N vertex buffer offsets
+/// - 0..1 index buffer
+/// - 0..1 index buffer offset
+/// - 0..N storage buffer views
+/// - 0..N storage image views
+/// - 0..N texture views
 /// - 0..N samplers
-/// - 0..N storage buffers
 ///
 /// Where 'N' is defined in the following constants:
 ///
 /// - SG_MAX_VERTEXBUFFER_BINDSLOTS
-/// - SG_MAX_IMAGE_BINDLOTS
-/// - SG_MAX_SAMPLER_BINDSLOTS
 /// - SG_MAX_STORAGEBUFFER_BINDGLOTS
+/// - SG_MAX_STORAGEIMAGE_BINDSLOTS
+/// - SG_MAX_TEXTURE_BINDLOTS
+/// - SG_MAX_SAMPLER_BINDSLOTS
 ///
 /// Note that inside compute passes vertex- and index-buffer-bindings are
 /// disallowed.
@@ -2891,14 +2908,14 @@ pub const Pass = extern struct {
 ///     @vs vs
 ///     layout(binding=0) uniform vs_params { ... };
 ///     layout(binding=0) readonly buffer ssbo { ... };
-///     layout(binding=0) uniform texture2D vs_tex;
+///     layout(binding=1) uniform texture2D vs_tex;
 ///     layout(binding=0) uniform sampler vs_smp;
 ///     ...
 ///     @end
 ///
 ///     @fs fs
 ///     layout(binding=1) uniform fs_params { ... };
-///     layout(binding=1) uniform texture2D fs_tex;
+///     layout(binding=2) uniform texture2D fs_tex;
 ///     layout(binding=1) uniform sampler fs_smp;
 ///     ...
 ///     @end
@@ -2907,22 +2924,22 @@ pub const Pass = extern struct {
 ///
 ///     const sg_bindings bnd = {
 ///         .vertex_buffers[0] = ...,
-///         .images[0] = vs_tex,
-///         .images[1] = fs_tex,
+///         .views[0] = ssbo_view,
+///         .views[0] = vs_tex_view,
+///         .views[2] = fs_tex_view,
 ///         .samplers[0] = vs_smp,
 ///         .samplers[1] = fs_smp,
-///         .storage_buffers[0] = ssbo,
 ///     };
 ///
 /// ...alternatively you can use code-generated slot indices:
 ///
 ///     const sg_bindings bnd = {
 ///         .vertex_buffers[0] = ...,
-///         .images[IMG_vs_tex] = vs_tex,
-///         .images[IMG_fs_tex] = fs_tex,
+///         .views[SBUF_ssbo] = ssbo_view,
+///         .views[TEX_vs_tex] = vs_tex_view,
+///         .views[TEX_fs_tex] = fs_tex_view,
 ///         .samplers[SMP_vs_smp] = vs_smp,
 ///         .samplers[SMP_fs_smp] = fs_smp,
-///         .storage_buffers[SBUF_ssbo] = ssbo,
 ///     };
 ///
 /// Resource bindslots for a specific shader/pipeline may have gaps, and an
@@ -2943,9 +2960,8 @@ pub const Bindings = extern struct {
     vertex_buffer_offsets: [8]i32 = [_]i32{0} ** 8,
     index_buffer: Buffer = .{},
     index_buffer_offset: i32 = 0,
-    images: [16]Image = [_]Image{.{}} ** 16,
+    views: [28]View = [_]View{.{}} ** 28,
     samplers: [16]Sampler = [_]Sampler{.{}} ** 16,
-    storage_buffers: [8]Buffer = [_]Buffer{.{}} ** 8,
     _end_canary: u32 = 0,
 };
 
@@ -2957,7 +2973,7 @@ pub const Bindings = extern struct {
 ///     the buffer will bound as vertex buffer via sg_bindings.vertex_buffers[]
 /// .index_buffer (default: false)
 ///     the buffer will bound as index buffer via sg_bindings.index_buffer
-/// .storage_buffer (default: false)
+/// .storage_buffer_binding (default: false)
 ///     the buffer will bound as storage buffer via sg_bindings.storage_buffers[]
 /// .immutable (default: true)
 ///     the buffer content will never be updated from the CPU side (but
@@ -3045,12 +3061,15 @@ pub const BufferDesc = extern struct {
 ///
 /// Describes how the image object is going to be used:
 ///
-/// .render_attachment (default: false)
-///     the image object is used as color-, resolve- or depth-stencil-
-///     attachment in a render pass
-/// .storage_attachment (default: false)
-///     the image object is used as storage-attachment in a
+/// .storage_image_binding (default: false)
+///     the image object is used as storage-image-binding in a
 ///     compute pass (to be written to by compute shaders)
+/// .color_attachment (default: false)
+///     the image object is used as a color-attachemnt in a render pass
+/// .resolve_attachment (default: false)
+///     the image object is used as a resolve-attachment in a render pass
+/// .depth_stencil_attachment (default: false)
+///     the image object is used as a depth-stencil-attachment in a render pass
 /// .immutable (default: true)
 ///     the image content cannot be updated from the CPU side
 ///     (but may be updated by the GPU in a render- or compute-pass)
@@ -3061,11 +3080,26 @@ pub const BufferDesc = extern struct {
 ///
 /// Note that the usage as texture binding is implicit and always allowed.
 pub const ImageUsage = extern struct {
-    render_attachment: bool = false,
-    storage_attachment: bool = false,
+    storage_image: bool = false,
+    color_attachment: bool = false,
+    resolve_attachment: bool = false,
+    depth_stencil_attachment: bool = false,
     immutable: bool = false,
     dynamic_update: bool = false,
     stream_update: bool = false,
+};
+
+/// sg_view_type
+///
+/// Allows to query the type of a view via the function sg_query_view_type()
+pub const ViewType = enum(i32) {
+    INVALID,
+    STORAGEBUFFER,
+    STORAGEIMAGE,
+    TEXTURE,
+    COLORATTACHMENT,
+    RESOLVEATTACHMENT,
+    DEPTHSTENCILATTACHMENT,
 };
 
 /// sg_image_data
@@ -3105,12 +3139,13 @@ pub const ImageData = extern struct {
 ///
 /// NOTE:
 ///
-/// Regular (non-attachment) images with usage.immutable must be fully initialized by
-/// providing a valid .data member which points to initialization data.
+/// Regular images used as texture binding with usage.immutable must be fully
+/// initialized by providing a valid .data member which points to initialization
+/// data.
 ///
-/// Images with usage.render_attachment or usage.storage_attachment must
+/// Images with usage.attachment or usage.storage_image must
 /// *not* be created with initial content. Be aware that the initial
-/// content of render- and storage-attachment images is undefined.
+/// content of render-attachment and storage-attachment images is undefined.
 ///
 /// ADVANCED TOPIC: Injecting native 3D-API textures:
 ///
@@ -3150,9 +3185,7 @@ pub const ImageDesc = extern struct {
     gl_texture_target: u32 = 0,
     mtl_textures: [2]?*const anyopaque = [_]?*const anyopaque{null} ** 2,
     d3d11_texture: ?*const anyopaque = null,
-    d3d11_shader_resource_view: ?*const anyopaque = null,
     wgpu_texture: ?*const anyopaque = null,
-    wgpu_texture_view: ?*const anyopaque = null,
     _end_canary: u32 = 0,
 };
 
@@ -3376,7 +3409,7 @@ pub const ShaderUniformBlock = extern struct {
     glsl_uniforms: [16]GlslShaderUniform = [_]GlslShaderUniform{.{}} ** 16,
 };
 
-pub const ShaderImage = extern struct {
+pub const ShaderTextureView = extern struct {
     stage: ShaderStage = .NONE,
     image_type: ImageType = .DEFAULT,
     sample_type: ImageSampleType = .DEFAULT,
@@ -3384,6 +3417,33 @@ pub const ShaderImage = extern struct {
     hlsl_register_t_n: u8 = 0,
     msl_texture_n: u8 = 0,
     wgsl_group1_binding_n: u8 = 0,
+};
+
+pub const ShaderStorageBufferView = extern struct {
+    stage: ShaderStage = .NONE,
+    readonly: bool = false,
+    hlsl_register_t_n: u8 = 0,
+    hlsl_register_u_n: u8 = 0,
+    msl_buffer_n: u8 = 0,
+    wgsl_group1_binding_n: u8 = 0,
+    glsl_binding_n: u8 = 0,
+};
+
+pub const ShaderStorageImageView = extern struct {
+    stage: ShaderStage = .NONE,
+    image_type: ImageType = .DEFAULT,
+    access_format: PixelFormat = .DEFAULT,
+    writeonly: bool = false,
+    hlsl_register_u_n: u8 = 0,
+    msl_texture_n: u8 = 0,
+    wgsl_group1_binding_n: u8 = 0,
+    glsl_binding_n: u8 = 0,
+};
+
+pub const ShaderView = extern struct {
+    texture: ShaderTextureView = .{},
+    storage_buffer: ShaderStorageBufferView = .{},
+    storage_image: ShaderStorageImageView = .{},
 };
 
 pub const ShaderSampler = extern struct {
@@ -3394,30 +3454,9 @@ pub const ShaderSampler = extern struct {
     wgsl_group1_binding_n: u8 = 0,
 };
 
-pub const ShaderStorageBuffer = extern struct {
+pub const ShaderTextureSamplerPair = extern struct {
     stage: ShaderStage = .NONE,
-    readonly: bool = false,
-    hlsl_register_t_n: u8 = 0,
-    hlsl_register_u_n: u8 = 0,
-    msl_buffer_n: u8 = 0,
-    wgsl_group1_binding_n: u8 = 0,
-    glsl_binding_n: u8 = 0,
-};
-
-pub const ShaderStorageImage = extern struct {
-    stage: ShaderStage = .NONE,
-    image_type: ImageType = .DEFAULT,
-    access_format: PixelFormat = .DEFAULT,
-    writeonly: bool = false,
-    hlsl_register_u_n: u8 = 0,
-    msl_texture_n: u8 = 0,
-    wgsl_group2_binding_n: u8 = 0,
-    glsl_binding_n: u8 = 0,
-};
-
-pub const ShaderImageSamplerPair = extern struct {
-    stage: ShaderStage = .NONE,
-    image_slot: u8 = 0,
+    view_slot: u8 = 0,
     sampler_slot: u8 = 0,
     glsl_name: [*c]const u8 = null,
 };
@@ -3435,11 +3474,9 @@ pub const ShaderDesc = extern struct {
     compute_func: ShaderFunction = .{},
     attrs: [16]ShaderVertexAttr = [_]ShaderVertexAttr{.{}} ** 16,
     uniform_blocks: [8]ShaderUniformBlock = [_]ShaderUniformBlock{.{}} ** 8,
-    storage_buffers: [8]ShaderStorageBuffer = [_]ShaderStorageBuffer{.{}} ** 8,
-    images: [16]ShaderImage = [_]ShaderImage{.{}} ** 16,
+    views: [28]ShaderView = [_]ShaderView{.{}} ** 28,
     samplers: [16]ShaderSampler = [_]ShaderSampler{.{}} ** 16,
-    image_sampler_pairs: [16]ShaderImageSamplerPair = [_]ShaderImageSamplerPair{.{}} ** 16,
-    storage_images: [4]ShaderStorageImage = [_]ShaderStorageImage{.{}} ** 4,
+    texture_sampler_pairs: [16]ShaderTextureSamplerPair = [_]ShaderTextureSamplerPair{.{}} ** 16,
     mtl_threads_per_threadgroup: MtlShaderThreadsPerThreadgroup = .{},
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
@@ -3604,61 +3641,39 @@ pub const PipelineDesc = extern struct {
     _end_canary: u32 = 0,
 };
 
-/// sg_attachments_desc
+/// sg_view_desc
 ///
-/// Creation parameters for an sg_attachments object, used as argument to the
-/// sg_make_attachments() function.
-///
-/// An attachments object bundles either bundles 'render attachments' for
-/// a render pass, or 'storage attachments' for a compute pass which writes
-/// to storage images.
-///
-/// Render attachments are:
-///
-///     - 0..4 color attachment images
-///     - 0..4 msaa-resolve attachment images
-///     - 0 or one depth-stencil attachment image
-///
-/// Note that all types of render attachment images must be created with
-/// `sg_image_desc.usage.render_attachment = true`. At least one color-attachment
-/// or depth-stencil-attachment image must be provided in a render pass
-/// (only providing a depth-stencil-attachment is useful for depth-only passes).
-///
-/// Alternatively provide 1..4 storage attachment images which must be created
-/// with `sg_image_desc.usage.storage_attachment = true`.
-///
-/// An sg_attachments object cannot have both render- and storage-attachments.
-///
-/// Each attachment definition consists of an image object, and two additional indices
-/// describing which subimage the pass will render into: one mipmap index, and if the image
-/// is a cubemap, array-texture or 3D-texture, the face-index, array-layer or
-/// depth-slice.
-///
-/// All attachments must have the same width and height.
-///
-/// All color attachments and the depth-stencil attachment must have the
-/// same sample count.
-///
-/// If a resolve attachment is set, an MSAA-resolve operation from the
-/// associated color attachment image into the resolve attachment image will take
-/// place in the sg_end_pass() function. In this case, the color attachment
-/// must have a (sample_count>1), and the resolve attachment a
-/// (sample_count==1). The resolve attachment also must have the same pixel
-/// format as the color attachment.
-///
-/// NOTE that MSAA depth-stencil attachments cannot be msaa-resolved!
-pub const AttachmentDesc = extern struct {
+/// TODO
+pub const BufferViewDesc = extern struct {
+    buffer: Buffer = .{},
+    offset: i32 = 0,
+};
+
+pub const ImageViewDesc = extern struct {
     image: Image = .{},
     mip_level: i32 = 0,
     slice: i32 = 0,
 };
 
-pub const AttachmentsDesc = extern struct {
+pub const TextureViewRange = extern struct {
+    base: i32 = 0,
+    count: i32 = 0,
+};
+
+pub const TextureViewDesc = extern struct {
+    image: Image = .{},
+    mip_levels: TextureViewRange = .{},
+    slices: TextureViewRange = .{},
+};
+
+pub const ViewDesc = extern struct {
     _start_canary: u32 = 0,
-    colors: [4]AttachmentDesc = [_]AttachmentDesc{.{}} ** 4,
-    resolves: [4]AttachmentDesc = [_]AttachmentDesc{.{}} ** 4,
-    depth_stencil: AttachmentDesc = .{},
-    storages: [4]AttachmentDesc = [_]AttachmentDesc{.{}} ** 4,
+    texture: TextureViewDesc = .{},
+    storage_buffer: BufferViewDesc = .{},
+    storage_image: ImageViewDesc = .{},
+    color_attachment: ImageViewDesc = .{},
+    resolve_attachment: ImageViewDesc = .{},
+    depth_stencil_attachment: ImageViewDesc = .{},
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
 };
@@ -3668,7 +3683,7 @@ pub const AttachmentsDesc = extern struct {
 /// sg_sampler_info
 /// sg_shader_info
 /// sg_pipeline_info
-/// sg_attachments_info
+/// sg_view_info
 ///
 /// These structs contain various internal resource attributes which
 /// might be useful for debug-inspection. Please don't rely on the
@@ -3683,7 +3698,7 @@ pub const AttachmentsDesc = extern struct {
 /// sg_query_sampler_info()
 /// sg_query_shader_info()
 /// sg_query_pipeline_info()
-/// sg_query_attachments_info()
+/// sg_query_view_info()
 pub const SlotInfo = extern struct {
     state: ResourceState = .INITIAL,
     res_id: u32 = 0,
@@ -3719,7 +3734,7 @@ pub const PipelineInfo = extern struct {
     slot: SlotInfo = .{},
 };
 
-pub const AttachmentsInfo = extern struct {
+pub const ViewInfo = extern struct {
     slot: SlotInfo = .{},
 };
 
@@ -3733,6 +3748,7 @@ pub const FrameStatsGl = extern struct {
     num_active_texture: u32 = 0,
     num_bind_texture: u32 = 0,
     num_bind_sampler: u32 = 0,
+    num_bind_image_texture: u32 = 0,
     num_use_program: u32 = 0,
     num_render_state: u32 = 0,
     num_vertex_attrib_pointer: u32 = 0,
@@ -3815,14 +3831,26 @@ pub const FrameStatsMetalPipeline = extern struct {
 
 pub const FrameStatsMetalBindings = extern struct {
     num_set_vertex_buffer: u32 = 0,
+    num_set_vertex_buffer_offset: u32 = 0,
+    num_skip_redundant_vertex_buffer: u32 = 0,
     num_set_vertex_texture: u32 = 0,
+    num_skip_redundant_vertex_texture: u32 = 0,
     num_set_vertex_sampler_state: u32 = 0,
+    num_skip_redundant_vertex_sampler_state: u32 = 0,
     num_set_fragment_buffer: u32 = 0,
+    num_set_fragment_buffer_offset: u32 = 0,
+    num_skip_redundant_fragment_buffer: u32 = 0,
     num_set_fragment_texture: u32 = 0,
+    num_skip_redundant_fragment_texture: u32 = 0,
     num_set_fragment_sampler_state: u32 = 0,
+    num_skip_redundant_fragment_sampler_state: u32 = 0,
     num_set_compute_buffer: u32 = 0,
+    num_set_compute_buffer_offset: u32 = 0,
+    num_skip_redundant_compute_buffer: u32 = 0,
     num_set_compute_texture: u32 = 0,
+    num_skip_redundant_compute_texture: u32 = 0,
     num_set_compute_sampler_state: u32 = 0,
+    num_skip_redundant_compute_sampler_state: u32 = 0,
 };
 
 pub const FrameStatsMetalUniforms = extern struct {
@@ -3923,8 +3951,8 @@ pub const LogItem = enum(i32) {
     D3D11_STORAGEBUFFER_HLSL_REGISTER_T_OUT_OF_RANGE,
     D3D11_STORAGEBUFFER_HLSL_REGISTER_U_OUT_OF_RANGE,
     D3D11_IMAGE_HLSL_REGISTER_T_OUT_OF_RANGE,
-    D3D11_SAMPLER_HLSL_REGISTER_S_OUT_OF_RANGE,
     D3D11_STORAGEIMAGE_HLSL_REGISTER_U_OUT_OF_RANGE,
+    D3D11_SAMPLER_HLSL_REGISTER_S_OUT_OF_RANGE,
     D3D11_LOAD_D3DCOMPILER_47_DLL_FAILED,
     D3D11_SHADER_COMPILATION_FAILED,
     D3D11_SHADER_COMPILATION_OUTPUT,
@@ -3968,14 +3996,13 @@ pub const LogItem = enum(i32) {
     WGPU_CREATE_SHADER_MODULE_FAILED,
     WGPU_SHADER_CREATE_BINDGROUP_LAYOUT_FAILED,
     WGPU_UNIFORMBLOCK_WGSL_GROUP0_BINDING_OUT_OF_RANGE,
+    WGPU_TEXTURE_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
     WGPU_STORAGEBUFFER_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
-    WGPU_IMAGE_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
+    WGPU_STORAGEIMAGE_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
     WGPU_SAMPLER_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
-    WGPU_STORAGEIMAGE_WGSL_GROUP2_BINDING_OUT_OF_RANGE,
     WGPU_CREATE_PIPELINE_LAYOUT_FAILED,
     WGPU_CREATE_RENDER_PIPELINE_FAILED,
     WGPU_CREATE_COMPUTE_PIPELINE_FAILED,
-    WGPU_ATTACHMENTS_CREATE_TEXTURE_VIEW_FAILED,
     IDENTICAL_COMMIT_LISTENER,
     COMMIT_LISTENER_ARRAY_FULL,
     TRACE_HOOKS_NOT_ENABLED,
@@ -3984,33 +4011,32 @@ pub const LogItem = enum(i32) {
     DEALLOC_SAMPLER_INVALID_STATE,
     DEALLOC_SHADER_INVALID_STATE,
     DEALLOC_PIPELINE_INVALID_STATE,
-    DEALLOC_ATTACHMENTS_INVALID_STATE,
+    DEALLOC_VIEW_INVALID_STATE,
     INIT_BUFFER_INVALID_STATE,
     INIT_IMAGE_INVALID_STATE,
     INIT_SAMPLER_INVALID_STATE,
     INIT_SHADER_INVALID_STATE,
     INIT_PIPELINE_INVALID_STATE,
-    INIT_ATTACHMENTS_INVALID_STATE,
+    INIT_VIEW_INVALID_STATE,
     UNINIT_BUFFER_INVALID_STATE,
     UNINIT_IMAGE_INVALID_STATE,
     UNINIT_SAMPLER_INVALID_STATE,
     UNINIT_SHADER_INVALID_STATE,
     UNINIT_PIPELINE_INVALID_STATE,
-    UNINIT_ATTACHMENTS_INVALID_STATE,
+    UNINIT_VIEW_INVALID_STATE,
     FAIL_BUFFER_INVALID_STATE,
     FAIL_IMAGE_INVALID_STATE,
     FAIL_SAMPLER_INVALID_STATE,
     FAIL_SHADER_INVALID_STATE,
     FAIL_PIPELINE_INVALID_STATE,
-    FAIL_ATTACHMENTS_INVALID_STATE,
+    FAIL_VIEW_INVALID_STATE,
     BUFFER_POOL_EXHAUSTED,
     IMAGE_POOL_EXHAUSTED,
     SAMPLER_POOL_EXHAUSTED,
     SHADER_POOL_EXHAUSTED,
     PIPELINE_POOL_EXHAUSTED,
-    PASS_POOL_EXHAUSTED,
-    BEGINPASS_ATTACHMENT_INVALID,
-    APPLY_BINDINGS_STORAGE_BUFFER_TRACKER_EXHAUSTED,
+    VIEW_POOL_EXHAUSTED,
+    BEGINPASS_ATTACHMENTS_ALIVE,
     DRAW_WITHOUT_BINDINGS,
     VALIDATE_BUFFERDESC_CANARY,
     VALIDATE_BUFFERDESC_IMMUTABLE_DYNAMIC_STREAM,
@@ -4026,7 +4052,6 @@ pub const LogItem = enum(i32) {
     VALIDATE_IMAGEDATA_DATA_SIZE,
     VALIDATE_IMAGEDESC_CANARY,
     VALIDATE_IMAGEDESC_IMMUTABLE_DYNAMIC_STREAM,
-    VALIDATE_IMAGEDESC_RENDER_VS_STORAGE_ATTACHMENT,
     VALIDATE_IMAGEDESC_WIDTH,
     VALIDATE_IMAGEDESC_HEIGHT,
     VALIDATE_IMAGEDESC_NONRT_PIXELFORMAT,
@@ -4034,14 +4059,15 @@ pub const LogItem = enum(i32) {
     VALIDATE_IMAGEDESC_DEPTH_3D_IMAGE,
     VALIDATE_IMAGEDESC_ATTACHMENT_EXPECT_IMMUTABLE,
     VALIDATE_IMAGEDESC_ATTACHMENT_EXPECT_NO_DATA,
-    VALIDATE_IMAGEDESC_RENDERATTACHMENT_NO_MSAA_SUPPORT,
-    VALIDATE_IMAGEDESC_RENDERATTACHMENT_MSAA_NUM_MIPMAPS,
-    VALIDATE_IMAGEDESC_RENDERATTACHMENT_MSAA_3D_IMAGE,
-    VALIDATE_IMAGEDESC_RENDERATTACHMENT_MSAA_CUBE_IMAGE,
-    VALIDATE_IMAGEDESC_RENDERATTACHMENT_MSAA_ARRAY_IMAGE,
-    VALIDATE_IMAGEDESC_RENDERATTACHMENT_PIXELFORMAT,
-    VALIDATE_IMAGEDESC_STORAGEATTACHMENT_PIXELFORMAT,
-    VALIDATE_IMAGEDESC_STORAGEATTACHMENT_EXPECT_NO_MSAA,
+    VALIDATE_IMAGEDESC_ATTACHMENT_PIXELFORMAT,
+    VALIDATE_IMAGEDESC_ATTACHMENT_RESOLVE_EXPECT_NO_MSAA,
+    VALIDATE_IMAGEDESC_ATTACHMENT_NO_MSAA_SUPPORT,
+    VALIDATE_IMAGEDESC_ATTACHMENT_MSAA_NUM_MIPMAPS,
+    VALIDATE_IMAGEDESC_ATTACHMENT_MSAA_3D_IMAGE,
+    VALIDATE_IMAGEDESC_ATTACHMENT_MSAA_CUBE_IMAGE,
+    VALIDATE_IMAGEDESC_ATTACHMENT_MSAA_ARRAY_IMAGE,
+    VALIDATE_IMAGEDESC_STORAGEIMAGE_PIXELFORMAT,
+    VALIDATE_IMAGEDESC_STORAGEIMAGE_EXPECT_NO_MSAA,
     VALIDATE_IMAGEDESC_INJECTED_NO_DATA,
     VALIDATE_IMAGEDESC_DYNAMIC_NO_DATA,
     VALIDATE_IMAGEDESC_COMPRESSED_IMMUTABLE,
@@ -4056,7 +4082,8 @@ pub const LogItem = enum(i32) {
     VALIDATE_SHADERDESC_COMPUTE_SOURCE_OR_BYTECODE,
     VALIDATE_SHADERDESC_INVALID_SHADER_COMBO,
     VALIDATE_SHADERDESC_NO_BYTECODE_SIZE,
-    VALIDATE_SHADERDESC_METAL_THREADS_PER_THREADGROUP,
+    VALIDATE_SHADERDESC_METAL_THREADS_PER_THREADGROUP_INITIALIZED,
+    VALIDATE_SHADERDESC_METAL_THREADS_PER_THREADGROUP_MULTIPLE_32,
     VALIDATE_SHADERDESC_UNIFORMBLOCK_NO_CONT_MEMBERS,
     VALIDATE_SHADERDESC_UNIFORMBLOCK_SIZE_IS_ZERO,
     VALIDATE_SHADERDESC_UNIFORMBLOCK_METAL_BUFFER_SLOT_OUT_OF_RANGE,
@@ -4070,46 +4097,47 @@ pub const LogItem = enum(i32) {
     VALIDATE_SHADERDESC_UNIFORMBLOCK_SIZE_MISMATCH,
     VALIDATE_SHADERDESC_UNIFORMBLOCK_ARRAY_COUNT,
     VALIDATE_SHADERDESC_UNIFORMBLOCK_STD140_ARRAY_TYPE,
-    VALIDATE_SHADERDESC_STORAGEBUFFER_METAL_BUFFER_SLOT_OUT_OF_RANGE,
-    VALIDATE_SHADERDESC_STORAGEBUFFER_METAL_BUFFER_SLOT_COLLISION,
-    VALIDATE_SHADERDESC_STORAGEBUFFER_HLSL_REGISTER_T_OUT_OF_RANGE,
-    VALIDATE_SHADERDESC_STORAGEBUFFER_HLSL_REGISTER_T_COLLISION,
-    VALIDATE_SHADERDESC_STORAGEBUFFER_HLSL_REGISTER_U_OUT_OF_RANGE,
-    VALIDATE_SHADERDESC_STORAGEBUFFER_HLSL_REGISTER_U_COLLISION,
-    VALIDATE_SHADERDESC_STORAGEBUFFER_GLSL_BINDING_OUT_OF_RANGE,
-    VALIDATE_SHADERDESC_STORAGEBUFFER_GLSL_BINDING_COLLISION,
-    VALIDATE_SHADERDESC_STORAGEBUFFER_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
-    VALIDATE_SHADERDESC_STORAGEBUFFER_WGSL_GROUP1_BINDING_COLLISION,
-    VALIDATE_SHADERDESC_STORAGEIMAGE_EXPECT_COMPUTE_STAGE,
-    VALIDATE_SHADERDESC_STORAGEIMAGE_METAL_TEXTURE_SLOT_OUT_OF_RANGE,
-    VALIDATE_SHADERDESC_STORAGEIMAGE_METAL_TEXTURE_SLOT_COLLISION,
-    VALIDATE_SHADERDESC_STORAGEIMAGE_HLSL_REGISTER_U_OUT_OF_RANGE,
-    VALIDATE_SHADERDESC_STORAGEIMAGE_HLSL_REGISTER_U_COLLISION,
-    VALIDATE_SHADERDESC_STORAGEIMAGE_GLSL_BINDING_OUT_OF_RANGE,
-    VALIDATE_SHADERDESC_STORAGEIMAGE_GLSL_BINDING_COLLISION,
-    VALIDATE_SHADERDESC_STORAGEIMAGE_WGSL_GROUP2_BINDING_OUT_OF_RANGE,
-    VALIDATE_SHADERDESC_STORAGEIMAGE_WGSL_GROUP2_BINDING_COLLISION,
-    VALIDATE_SHADERDESC_IMAGE_METAL_TEXTURE_SLOT_OUT_OF_RANGE,
-    VALIDATE_SHADERDESC_IMAGE_METAL_TEXTURE_SLOT_COLLISION,
-    VALIDATE_SHADERDESC_IMAGE_HLSL_REGISTER_T_OUT_OF_RANGE,
-    VALIDATE_SHADERDESC_IMAGE_HLSL_REGISTER_T_COLLISION,
-    VALIDATE_SHADERDESC_IMAGE_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
-    VALIDATE_SHADERDESC_IMAGE_WGSL_GROUP1_BINDING_COLLISION,
+    VALIDATE_SHADERDESC_VIEW_STORAGEBUFFER_METAL_BUFFER_SLOT_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_VIEW_STORAGEBUFFER_METAL_BUFFER_SLOT_COLLISION,
+    VALIDATE_SHADERDESC_VIEW_STORAGEBUFFER_HLSL_REGISTER_T_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_VIEW_STORAGEBUFFER_HLSL_REGISTER_T_COLLISION,
+    VALIDATE_SHADERDESC_VIEW_STORAGEBUFFER_HLSL_REGISTER_U_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_VIEW_STORAGEBUFFER_HLSL_REGISTER_U_COLLISION,
+    VALIDATE_SHADERDESC_VIEW_STORAGEBUFFER_GLSL_BINDING_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_VIEW_STORAGEBUFFER_GLSL_BINDING_COLLISION,
+    VALIDATE_SHADERDESC_VIEW_STORAGEBUFFER_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_VIEW_STORAGEBUFFER_WGSL_GROUP1_BINDING_COLLISION,
+    VALIDATE_SHADERDESC_VIEW_STORAGEIMAGE_EXPECT_COMPUTE_STAGE,
+    VALIDATE_SHADERDESC_VIEW_STORAGEIMAGE_METAL_TEXTURE_SLOT_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_VIEW_STORAGEIMAGE_METAL_TEXTURE_SLOT_COLLISION,
+    VALIDATE_SHADERDESC_VIEW_STORAGEIMAGE_HLSL_REGISTER_U_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_VIEW_STORAGEIMAGE_HLSL_REGISTER_U_COLLISION,
+    VALIDATE_SHADERDESC_VIEW_STORAGEIMAGE_GLSL_BINDING_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_VIEW_STORAGEIMAGE_GLSL_BINDING_COLLISION,
+    VALIDATE_SHADERDESC_VIEW_STORAGEIMAGE_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_VIEW_STORAGEIMAGE_WGSL_GROUP1_BINDING_COLLISION,
+    VALIDATE_SHADERDESC_VIEW_TEXTURE_METAL_TEXTURE_SLOT_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_VIEW_TEXTURE_METAL_TEXTURE_SLOT_COLLISION,
+    VALIDATE_SHADERDESC_VIEW_TEXTURE_HLSL_REGISTER_T_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_VIEW_TEXTURE_HLSL_REGISTER_T_COLLISION,
+    VALIDATE_SHADERDESC_VIEW_TEXTURE_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_VIEW_TEXTURE_WGSL_GROUP1_BINDING_COLLISION,
     VALIDATE_SHADERDESC_SAMPLER_METAL_SAMPLER_SLOT_OUT_OF_RANGE,
     VALIDATE_SHADERDESC_SAMPLER_METAL_SAMPLER_SLOT_COLLISION,
     VALIDATE_SHADERDESC_SAMPLER_HLSL_REGISTER_S_OUT_OF_RANGE,
     VALIDATE_SHADERDESC_SAMPLER_HLSL_REGISTER_S_COLLISION,
     VALIDATE_SHADERDESC_SAMPLER_WGSL_GROUP1_BINDING_OUT_OF_RANGE,
     VALIDATE_SHADERDESC_SAMPLER_WGSL_GROUP1_BINDING_COLLISION,
-    VALIDATE_SHADERDESC_IMAGE_SAMPLER_PAIR_IMAGE_SLOT_OUT_OF_RANGE,
-    VALIDATE_SHADERDESC_IMAGE_SAMPLER_PAIR_SAMPLER_SLOT_OUT_OF_RANGE,
-    VALIDATE_SHADERDESC_IMAGE_SAMPLER_PAIR_IMAGE_STAGE_MISMATCH,
-    VALIDATE_SHADERDESC_IMAGE_SAMPLER_PAIR_SAMPLER_STAGE_MISMATCH,
-    VALIDATE_SHADERDESC_IMAGE_SAMPLER_PAIR_GLSL_NAME,
+    VALIDATE_SHADERDESC_TEXTURE_SAMPLER_PAIR_VIEW_SLOT_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_TEXTURE_SAMPLER_PAIR_SAMPLER_SLOT_OUT_OF_RANGE,
+    VALIDATE_SHADERDESC_TEXTURE_SAMPLER_PAIR_TEXTURE_STAGE_MISMATCH,
+    VALIDATE_SHADERDESC_TEXTURE_SAMPLER_PAIR_EXPECT_TEXTURE_VIEW,
+    VALIDATE_SHADERDESC_TEXTURE_SAMPLER_PAIR_SAMPLER_STAGE_MISMATCH,
+    VALIDATE_SHADERDESC_TEXTURE_SAMPLER_PAIR_GLSL_NAME,
     VALIDATE_SHADERDESC_NONFILTERING_SAMPLER_REQUIRED,
     VALIDATE_SHADERDESC_COMPARISON_SAMPLER_REQUIRED,
-    VALIDATE_SHADERDESC_IMAGE_NOT_REFERENCED_BY_IMAGE_SAMPLER_PAIRS,
-    VALIDATE_SHADERDESC_SAMPLER_NOT_REFERENCED_BY_IMAGE_SAMPLER_PAIRS,
+    VALIDATE_SHADERDESC_TEXVIEW_NOT_REFERENCED_BY_TEXTURE_SAMPLER_PAIRS,
+    VALIDATE_SHADERDESC_SAMPLER_NOT_REFERENCED_BY_TEXTURE_SAMPLER_PAIRS,
     VALIDATE_SHADERDESC_ATTR_STRING_TOO_LONG,
     VALIDATE_PIPELINEDESC_CANARY,
     VALIDATE_PIPELINEDESC_SHADER,
@@ -4121,58 +4149,35 @@ pub const LogItem = enum(i32) {
     VALIDATE_PIPELINEDESC_ATTR_SEMANTICS,
     VALIDATE_PIPELINEDESC_SHADER_READONLY_STORAGEBUFFERS,
     VALIDATE_PIPELINEDESC_BLENDOP_MINMAX_REQUIRES_BLENDFACTOR_ONE,
-    VALIDATE_ATTACHMENTSDESC_CANARY,
-    VALIDATE_ATTACHMENTSDESC_NO_ATTACHMENTS,
-    VALIDATE_ATTACHMENTSDESC_NO_CONT_COLOR_ATTS,
-    VALIDATE_ATTACHMENTSDESC_COLOR_IMAGE,
-    VALIDATE_ATTACHMENTSDESC_COLOR_MIPLEVEL,
-    VALIDATE_ATTACHMENTSDESC_COLOR_FACE,
-    VALIDATE_ATTACHMENTSDESC_COLOR_LAYER,
-    VALIDATE_ATTACHMENTSDESC_COLOR_SLICE,
-    VALIDATE_ATTACHMENTSDESC_COLOR_IMAGE_NO_RENDERATTACHMENT,
-    VALIDATE_ATTACHMENTSDESC_COLOR_INV_PIXELFORMAT,
-    VALIDATE_ATTACHMENTSDESC_IMAGE_SIZES,
-    VALIDATE_ATTACHMENTSDESC_IMAGE_SAMPLE_COUNTS,
-    VALIDATE_ATTACHMENTSDESC_RESOLVE_COLOR_IMAGE_MSAA,
-    VALIDATE_ATTACHMENTSDESC_RESOLVE_IMAGE,
-    VALIDATE_ATTACHMENTSDESC_RESOLVE_SAMPLE_COUNT,
-    VALIDATE_ATTACHMENTSDESC_RESOLVE_MIPLEVEL,
-    VALIDATE_ATTACHMENTSDESC_RESOLVE_FACE,
-    VALIDATE_ATTACHMENTSDESC_RESOLVE_LAYER,
-    VALIDATE_ATTACHMENTSDESC_RESOLVE_SLICE,
-    VALIDATE_ATTACHMENTSDESC_RESOLVE_IMAGE_NO_RT,
-    VALIDATE_ATTACHMENTSDESC_RESOLVE_IMAGE_SIZES,
-    VALIDATE_ATTACHMENTSDESC_RESOLVE_IMAGE_FORMAT,
-    VALIDATE_ATTACHMENTSDESC_DEPTH_INV_PIXELFORMAT,
-    VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE,
-    VALIDATE_ATTACHMENTSDESC_DEPTH_MIPLEVEL,
-    VALIDATE_ATTACHMENTSDESC_DEPTH_FACE,
-    VALIDATE_ATTACHMENTSDESC_DEPTH_LAYER,
-    VALIDATE_ATTACHMENTSDESC_DEPTH_SLICE,
-    VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_NO_RENDERATTACHMENT,
-    VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_SIZES,
-    VALIDATE_ATTACHMENTSDESC_DEPTH_IMAGE_SAMPLE_COUNT,
-    VALIDATE_ATTACHMENTSDESC_STORAGE_IMAGE,
-    VALIDATE_ATTACHMENTSDESC_STORAGE_MIPLEVEL,
-    VALIDATE_ATTACHMENTSDESC_STORAGE_FACE,
-    VALIDATE_ATTACHMENTSDESC_STORAGE_LAYER,
-    VALIDATE_ATTACHMENTSDESC_STORAGE_SLICE,
-    VALIDATE_ATTACHMENTSDESC_STORAGE_IMAGE_NO_STORAGEATTACHMENT,
-    VALIDATE_ATTACHMENTSDESC_STORAGE_INV_PIXELFORMAT,
-    VALIDATE_ATTACHMENTSDESC_RENDER_VS_STORAGE_ATTACHMENTS,
+    VALIDATE_VIEWDESC_CANARY,
+    VALIDATE_VIEWDESC_UNIQUE_VIEWTYPE,
+    VALIDATE_VIEWDESC_ANY_VIEWTYPE,
+    VALIDATE_VIEWDESC_RESOURCE_ALIVE,
+    VALIDATE_VIEWDESC_RESOURCE_FAILED,
+    VALIDATE_VIEWDESC_STORAGEBUFFER_OFFSET_VS_BUFFER_SIZE,
+    VALIDATE_VIEWDESC_STORAGEBUFFER_OFFSET_MULTIPLE_256,
+    VALIDATE_VIEWDESC_STORAGEBUFFER_USAGE,
+    VALIDATE_VIEWDESC_STORAGEIMAGE_USAGE,
+    VALIDATE_VIEWDESC_COLORATTACHMENT_USAGE,
+    VALIDATE_VIEWDESC_RESOLVEATTACHMENT_USAGE,
+    VALIDATE_VIEWDESC_DEPTHSTENCILATTACHMENT_USAGE,
+    VALIDATE_VIEWDESC_IMAGE_MIPLEVEL,
+    VALIDATE_VIEWDESC_IMAGE_2D_SLICE,
+    VALIDATE_VIEWDESC_IMAGE_CUBEMAP_SLICE,
+    VALIDATE_VIEWDESC_IMAGE_ARRAY_SLICE,
+    VALIDATE_VIEWDESC_IMAGE_3D_SLICE,
+    VALIDATE_VIEWDESC_TEXTURE_EXPECT_NO_MSAA,
+    VALIDATE_VIEWDESC_TEXTURE_MIPLEVELS,
+    VALIDATE_VIEWDESC_TEXTURE_2D_SLICES,
+    VALIDATE_VIEWDESC_TEXTURE_CUBEMAP_SLICES,
+    VALIDATE_VIEWDESC_TEXTURE_ARRAY_SLICES,
+    VALIDATE_VIEWDESC_TEXTURE_3D_SLICES,
+    VALIDATE_VIEWDESC_STORAGEIMAGE_PIXELFORMAT,
+    VALIDATE_VIEWDESC_COLORATTACHMENT_PIXELFORMAT,
+    VALIDATE_VIEWDESC_DEPTHSTENCILATTACHMENT_PIXELFORMAT,
+    VALIDATE_VIEWDESC_RESOLVEATTACHMENT_SAMPLECOUNT,
     VALIDATE_BEGINPASS_CANARY,
-    VALIDATE_BEGINPASS_ATTACHMENTS_EXISTS,
-    VALIDATE_BEGINPASS_ATTACHMENTS_VALID,
-    VALIDATE_BEGINPASS_COMPUTEPASS_STORAGE_ATTACHMENTS_ONLY,
-    VALIDATE_BEGINPASS_RENDERPASS_RENDER_ATTACHMENTS_ONLY,
-    VALIDATE_BEGINPASS_COLOR_ATTACHMENT_IMAGE_ALIVE,
-    VALIDATE_BEGINPASS_COLOR_ATTACHMENT_IMAGE_VALID,
-    VALIDATE_BEGINPASS_RESOLVE_ATTACHMENT_IMAGE_ALIVE,
-    VALIDATE_BEGINPASS_RESOLVE_ATTACHMENT_IMAGE_VALID,
-    VALIDATE_BEGINPASS_DEPTHSTENCIL_ATTACHMENT_IMAGE_ALIVE,
-    VALIDATE_BEGINPASS_DEPTHSTENCIL_ATTACHMENT_IMAGE_VALID,
-    VALIDATE_BEGINPASS_STORAGE_ATTACHMENT_IMAGE_ALIVE,
-    VALIDATE_BEGINPASS_STORAGE_ATTACHMENT_IMAGE_VALID,
+    VALIDATE_BEGINPASS_COMPUTEPASS_EXPECT_NO_ATTACHMENTS,
     VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_WIDTH,
     VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_WIDTH_NOTSET,
     VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_HEIGHT,
@@ -4201,6 +4206,30 @@ pub const LogItem = enum(i32) {
     VALIDATE_BEGINPASS_SWAPCHAIN_WGPU_EXPECT_DEPTHSTENCILVIEW,
     VALIDATE_BEGINPASS_SWAPCHAIN_WGPU_EXPECT_DEPTHSTENCILVIEW_NOTSET,
     VALIDATE_BEGINPASS_SWAPCHAIN_GL_EXPECT_FRAMEBUFFER_NOTSET,
+    VALIDATE_BEGINPASS_COLORATTACHMENTVIEWS_CONTINUOUS,
+    VALIDATE_BEGINPASS_COLORATTACHMENTVIEW_ALIVE,
+    VALIDATE_BEGINPASS_COLORATTACHMENTVIEW_VALID,
+    VALIDATE_BEGINPASS_COLORATTACHMENTVIEW_TYPE,
+    VALIDATE_BEGINPASS_COLORATTACHMENTVIEW_IMAGE_ALIVE,
+    VALIDATE_BEGINPASS_COLORATTACHMENTVIEW_IMAGE_VALID,
+    VALIDATE_BEGINPASS_COLORATTACHMENTVIEW_SIZES,
+    VALIDATE_BEGINPASS_COLORATTACHMENTVIEW_SAMPLECOUNTS,
+    VALIDATE_BEGINPASS_RESOLVEATTACHMENTVIEW_NO_COLORATTACHMENTVIEW,
+    VALIDATE_BEGINPASS_RESOLVEATTACHMENTVIEW_ALIVE,
+    VALIDATE_BEGINPASS_RESOLVEATTACHMENTVIEW_VALID,
+    VALIDATE_BEGINPASS_RESOLVEATTACHMENTVIEW_TYPE,
+    VALIDATE_BEGINPASS_RESOLVEATTACHMENTVIEW_IMAGE_ALIVE,
+    VALIDATE_BEGINPASS_RESOLVEATTACHMENTVIEW_IMAGE_VALID,
+    VALIDATE_BEGINPASS_RESOLVEATTACHMENTVIEW_SIZES,
+    VALIDATE_BEGINPASS_DEPTHSTENCILATTACHMENTVIEWS_CONTINUOUS,
+    VALIDATE_BEGINPASS_DEPTHSTENCILATTACHMENTVIEW_ALIVE,
+    VALIDATE_BEGINPASS_DEPTHSTENCILATTACHMENTVIEW_VALID,
+    VALIDATE_BEGINPASS_DEPTHSTENCILATTACHMENTVIEW_TYPE,
+    VALIDATE_BEGINPASS_DEPTHSTENCILATTACHMENTVIEW_IMAGE_ALIVE,
+    VALIDATE_BEGINPASS_DEPTHSTENCILATTACHMENTVIEW_IMAGE_VALID,
+    VALIDATE_BEGINPASS_DEPTHSTENCILATTACHMENTVIEW_SIZES,
+    VALIDATE_BEGINPASS_DEPTHSTENCILATTACHMENTVIEW_SAMPLECOUNT,
+    VALIDATE_BEGINPASS_ATTACHMENTS_EXPECTED,
     VALIDATE_AVP_RENDERPASS_EXPECTED,
     VALIDATE_ASR_RENDERPASS_EXPECTED,
     VALIDATE_APIP_PIPELINE_VALID_ID,
@@ -4211,21 +4240,19 @@ pub const LogItem = enum(i32) {
     VALIDATE_APIP_PIPELINE_SHADER_VALID,
     VALIDATE_APIP_COMPUTEPASS_EXPECTED,
     VALIDATE_APIP_RENDERPASS_EXPECTED,
-    VALIDATE_APIP_CURPASS_ATTACHMENTS_ALIVE,
-    VALIDATE_APIP_CURPASS_ATTACHMENTS_VALID,
-    VALIDATE_APIP_ATT_COUNT,
-    VALIDATE_APIP_COLOR_ATTACHMENT_IMAGE_ALIVE,
-    VALIDATE_APIP_COLOR_ATTACHMENT_IMAGE_VALID,
-    VALIDATE_APIP_DEPTHSTENCIL_ATTACHMENT_IMAGE_ALIVE,
-    VALIDATE_APIP_DEPTHSTENCIL_ATTACHMENT_IMAGE_VALID,
-    VALIDATE_APIP_COLOR_FORMAT,
-    VALIDATE_APIP_DEPTH_FORMAT,
-    VALIDATE_APIP_SAMPLE_COUNT,
-    VALIDATE_APIP_EXPECTED_STORAGE_ATTACHMENT_IMAGE,
-    VALIDATE_APIP_STORAGE_ATTACHMENT_IMAGE_ALIVE,
-    VALIDATE_APIP_STORAGE_ATTACHMENT_IMAGE_VALID,
-    VALIDATE_APIP_STORAGE_ATTACHMENT_PIXELFORMAT,
-    VALIDATE_APIP_STORAGE_ATTACHMENT_IMAGE_TYPE,
+    VALIDATE_APIP_SWAPCHAIN_COLOR_COUNT,
+    VALIDATE_APIP_SWAPCHAIN_COLOR_FORMAT,
+    VALIDATE_APIP_SWAPCHAIN_DEPTH_FORMAT,
+    VALIDATE_APIP_SWAPCHAIN_SAMPLE_COUNT,
+    VALIDATE_APIP_ATTACHMENTS_ALIVE,
+    VALIDATE_APIP_COLORATTACHMENTS_COUNT,
+    VALIDATE_APIP_COLORATTACHMENTS_VIEW_VALID,
+    VALIDATE_APIP_COLORATTACHMENTS_IMAGE_VALID,
+    VALIDATE_APIP_COLORATTACHMENTS_FORMAT,
+    VALIDATE_APIP_DEPTHSTENCILATTACHMENT_VIEW_VALID,
+    VALIDATE_APIP_DEPTHSTENCILATTACHMENT_IMAGE_VALID,
+    VALIDATE_APIP_DEPTHSTENCILATTACHMENT_FORMAT,
+    VALIDATE_APIP_ATTACHMENT_SAMPLE_COUNT,
     VALIDATE_ABND_PASS_EXPECTED,
     VALIDATE_ABND_EMPTY_BINDINGS,
     VALIDATE_ABND_NO_PIPELINE,
@@ -4233,38 +4260,41 @@ pub const LogItem = enum(i32) {
     VALIDATE_ABND_PIPELINE_VALID,
     VALIDATE_ABND_PIPELINE_SHADER_ALIVE,
     VALIDATE_ABND_PIPELINE_SHADER_VALID,
-    VALIDATE_ABND_COMPUTE_EXPECTED_NO_VBS,
-    VALIDATE_ABND_COMPUTE_EXPECTED_NO_IB,
-    VALIDATE_ABND_EXPECTED_VB,
-    VALIDATE_ABND_VB_ALIVE,
-    VALIDATE_ABND_VB_TYPE,
-    VALIDATE_ABND_VB_OVERFLOW,
-    VALIDATE_ABND_NO_IB,
-    VALIDATE_ABND_IB,
-    VALIDATE_ABND_IB_ALIVE,
-    VALIDATE_ABND_IB_TYPE,
-    VALIDATE_ABND_IB_OVERFLOW,
-    VALIDATE_ABND_EXPECTED_IMAGE_BINDING,
-    VALIDATE_ABND_IMG_ALIVE,
-    VALIDATE_ABND_IMAGE_TYPE_MISMATCH,
-    VALIDATE_ABND_EXPECTED_MULTISAMPLED_IMAGE,
-    VALIDATE_ABND_IMAGE_MSAA,
-    VALIDATE_ABND_EXPECTED_FILTERABLE_IMAGE,
-    VALIDATE_ABND_EXPECTED_DEPTH_IMAGE,
+    VALIDATE_ABND_COMPUTE_EXPECTED_NO_VBUFS,
+    VALIDATE_ABND_COMPUTE_EXPECTED_NO_IBUF,
+    VALIDATE_ABND_EXPECTED_VBUF,
+    VALIDATE_ABND_VBUF_ALIVE,
+    VALIDATE_ABND_VBUF_USAGE,
+    VALIDATE_ABND_VBUF_OVERFLOW,
+    VALIDATE_ABND_EXPECTED_NO_IBUF,
+    VALIDATE_ABND_EXPECTED_IBUF,
+    VALIDATE_ABND_IBUF_ALIVE,
+    VALIDATE_ABND_IBUF_USAGE,
+    VALIDATE_ABND_IBUF_OVERFLOW,
+    VALIDATE_ABND_EXPECTED_VIEW_BINDING,
+    VALIDATE_ABND_VIEW_ALIVE,
+    VALIDATE_ABND_EXPECT_TEXVIEW,
+    VALIDATE_ABND_EXPECT_SBVIEW,
+    VALIDATE_ABND_EXPECT_SIMGVIEW,
+    VALIDATE_ABND_TEXVIEW_IMAGETYPE_MISMATCH,
+    VALIDATE_ABND_TEXVIEW_EXPECTED_MULTISAMPLED_IMAGE,
+    VALIDATE_ABND_TEXVIEW_EXPECTED_NON_MULTISAMPLED_IMAGE,
+    VALIDATE_ABND_TEXVIEW_EXPECTED_FILTERABLE_IMAGE,
+    VALIDATE_ABND_TEXVIEW_EXPECTED_DEPTH_IMAGE,
+    VALIDATE_ABND_SBVIEW_READWRITE_IMMUTABLE,
+    VALIDATE_ABND_SIMGVIEW_COMPUTE_PASS_EXPECTED,
+    VALIDATE_ABND_SIMGVIEW_IMAGETYPE_MISMATCH,
+    VALIDATE_ABND_SIMGVIEW_ACCESSFORMAT,
     VALIDATE_ABND_EXPECTED_SAMPLER_BINDING,
     VALIDATE_ABND_UNEXPECTED_SAMPLER_COMPARE_NEVER,
     VALIDATE_ABND_EXPECTED_SAMPLER_COMPARE_NEVER,
     VALIDATE_ABND_EXPECTED_NONFILTERING_SAMPLER,
-    VALIDATE_ABND_SMP_ALIVE,
-    VALIDATE_ABND_SMP_VALID,
-    VALIDATE_ABND_EXPECTED_STORAGEBUFFER_BINDING,
-    VALIDATE_ABND_STORAGEBUFFER_ALIVE,
-    VALIDATE_ABND_STORAGEBUFFER_BINDING_BUFFERTYPE,
-    VALIDATE_ABND_STORAGEBUFFER_READWRITE_IMMUTABLE,
-    VALIDATE_ABND_IMAGE_BINDING_VS_DEPTHSTENCIL_ATTACHMENT,
-    VALIDATE_ABND_IMAGE_BINDING_VS_COLOR_ATTACHMENT,
-    VALIDATE_ABND_IMAGE_BINDING_VS_RESOLVE_ATTACHMENT,
-    VALIDATE_ABND_IMAGE_BINDING_VS_STORAGE_ATTACHMENT,
+    VALIDATE_ABND_SAMPLER_ALIVE,
+    VALIDATE_ABND_SAMPLER_VALID,
+    VALIDATE_ABND_TEXTURE_BINDING_VS_DEPTHSTENCIL_ATTACHMENT,
+    VALIDATE_ABND_TEXTURE_BINDING_VS_COLOR_ATTACHMENT,
+    VALIDATE_ABND_TEXTURE_BINDING_VS_RESOLVE_ATTACHMENT,
+    VALIDATE_ABND_TEXTURE_BINDING_VS_STORAGE_ATTACHMENT,
     VALIDATE_AU_PASS_EXPECTED,
     VALIDATE_AU_NO_PIPELINE,
     VALIDATE_AU_PIPELINE_ALIVE,
@@ -4307,9 +4337,8 @@ pub const LogItem = enum(i32) {
 /// .sampler_pool_size              64
 /// .shader_pool_size               32
 /// .pipeline_pool_size             64
-/// .attachments_pool_size          16
+/// .view_pool_size                 256
 /// .uniform_buffer_size            4 MB (4*1024*1024)
-/// .max_dispatch_calls_per_pass    1024
 /// .max_commit_listeners           1024
 /// .disable_validation             false
 /// .mtl_force_managed_storage_mode false
@@ -4454,9 +4483,8 @@ pub const Desc = extern struct {
     sampler_pool_size: i32 = 0,
     shader_pool_size: i32 = 0,
     pipeline_pool_size: i32 = 0,
-    attachments_pool_size: i32 = 0,
+    view_pool_size: i32 = 0,
     uniform_buffer_size: i32 = 0,
-    max_dispatch_calls_per_pass: i32 = 0,
     max_commit_listeners: i32 = 0,
     disable_validation: bool = false,
     d3d11_shader_debugging: bool = false,
@@ -4552,10 +4580,10 @@ pub fn makePipeline(desc: PipelineDesc) Pipeline {
     return sg_make_pipeline(&desc);
 }
 
-extern fn sg_make_attachments([*c]const AttachmentsDesc) Attachments;
+extern fn sg_make_view([*c]const ViewDesc) View;
 
-pub fn makeAttachments(desc: AttachmentsDesc) Attachments {
-    return sg_make_attachments(&desc);
+pub fn makeView(desc: ViewDesc) View {
+    return sg_make_view(&desc);
 }
 
 extern fn sg_destroy_buffer(Buffer) void;
@@ -4588,10 +4616,10 @@ pub fn destroyPipeline(pip: Pipeline) void {
     sg_destroy_pipeline(pip);
 }
 
-extern fn sg_destroy_attachments(Attachments) void;
+extern fn sg_destroy_view(View) void;
 
-pub fn destroyAttachments(atts: Attachments) void {
-    sg_destroy_attachments(atts);
+pub fn destroyView(view: View) void {
+    sg_destroy_view(view);
 }
 
 extern fn sg_update_buffer(Buffer, [*c]const Range) void;
@@ -4774,10 +4802,10 @@ pub fn queryPipelineState(pip: Pipeline) ResourceState {
     return sg_query_pipeline_state(pip);
 }
 
-extern fn sg_query_attachments_state(Attachments) ResourceState;
+extern fn sg_query_view_state(View) ResourceState;
 
-pub fn queryAttachmentsState(atts: Attachments) ResourceState {
-    return sg_query_attachments_state(atts);
+pub fn queryViewState(view: View) ResourceState {
+    return sg_query_view_state(view);
 }
 
 /// get runtime information about a resource
@@ -4812,10 +4840,10 @@ pub fn queryPipelineInfo(pip: Pipeline) PipelineInfo {
     return sg_query_pipeline_info(pip);
 }
 
-extern fn sg_query_attachments_info(Attachments) AttachmentsInfo;
+extern fn sg_query_view_info(View) ViewInfo;
 
-pub fn queryAttachmentsInfo(atts: Attachments) AttachmentsInfo {
-    return sg_query_attachments_info(atts);
+pub fn queryViewInfo(view: View) ViewInfo {
+    return sg_query_view_info(view);
 }
 
 /// get desc structs matching a specific resource (NOTE that not all creation attributes may be provided)
@@ -4850,10 +4878,10 @@ pub fn queryPipelineDesc(pip: Pipeline) PipelineDesc {
     return sg_query_pipeline_desc(pip);
 }
 
-extern fn sg_query_attachments_desc(Attachments) AttachmentsDesc;
+extern fn sg_query_view_desc(View) ViewDesc;
 
-pub fn queryAttachmentsDesc(atts: Attachments) AttachmentsDesc {
-    return sg_query_attachments_desc(atts);
+pub fn queryViewDesc(view: View) ViewDesc {
+    return sg_query_view_desc(view);
 }
 
 /// get resource creation desc struct with their default values replaced
@@ -4888,10 +4916,10 @@ pub fn queryPipelineDefaults(desc: PipelineDesc) PipelineDesc {
     return sg_query_pipeline_defaults(&desc);
 }
 
-extern fn sg_query_attachments_defaults([*c]const AttachmentsDesc) AttachmentsDesc;
+extern fn sg_query_view_defaults([*c]const ViewDesc) ViewDesc;
 
-pub fn queryAttachmentsDefaults(desc: AttachmentsDesc) AttachmentsDesc {
-    return sg_query_attachments_defaults(&desc);
+pub fn queryViewDefaults(desc: ViewDesc) ViewDesc {
+    return sg_query_view_defaults(&desc);
 }
 
 /// assorted query functions
@@ -4956,6 +4984,24 @@ pub fn queryImageSampleCount(img: Image) i32 {
     return sg_query_image_sample_count(img);
 }
 
+extern fn sg_query_view_type(View) ViewType;
+
+pub fn queryViewType(view: View) ViewType {
+    return sg_query_view_type(view);
+}
+
+extern fn sg_query_view_image(View) Image;
+
+pub fn queryViewImage(view: View) Image {
+    return sg_query_view_image(view);
+}
+
+extern fn sg_query_view_buffer(View) Buffer;
+
+pub fn queryViewBuffer(view: View) Buffer {
+    return sg_query_view_buffer(view);
+}
+
 /// separate resource allocation and initialization (for async setup)
 extern fn sg_alloc_buffer() Buffer;
 
@@ -4988,10 +5034,10 @@ pub fn allocPipeline() Pipeline {
     return sg_alloc_pipeline();
 }
 
-extern fn sg_alloc_attachments() Attachments;
+extern fn sg_alloc_view() View;
 
-pub fn allocAttachments() Attachments {
-    return sg_alloc_attachments();
+pub fn allocView() View {
+    return sg_alloc_view();
 }
 
 extern fn sg_dealloc_buffer(Buffer) void;
@@ -5024,10 +5070,10 @@ pub fn deallocPipeline(pip: Pipeline) void {
     sg_dealloc_pipeline(pip);
 }
 
-extern fn sg_dealloc_attachments(Attachments) void;
+extern fn sg_dealloc_view(View) void;
 
-pub fn deallocAttachments(attachments: Attachments) void {
-    sg_dealloc_attachments(attachments);
+pub fn deallocView(view: View) void {
+    sg_dealloc_view(view);
 }
 
 extern fn sg_init_buffer(Buffer, [*c]const BufferDesc) void;
@@ -5060,10 +5106,10 @@ pub fn initPipeline(pip: Pipeline, desc: PipelineDesc) void {
     sg_init_pipeline(pip, &desc);
 }
 
-extern fn sg_init_attachments(Attachments, [*c]const AttachmentsDesc) void;
+extern fn sg_init_view(View, [*c]const ViewDesc) void;
 
-pub fn initAttachments(attachments: Attachments, desc: AttachmentsDesc) void {
-    sg_init_attachments(attachments, &desc);
+pub fn initView(view: View, desc: ViewDesc) void {
+    sg_init_view(view, &desc);
 }
 
 extern fn sg_uninit_buffer(Buffer) void;
@@ -5096,10 +5142,10 @@ pub fn uninitPipeline(pip: Pipeline) void {
     sg_uninit_pipeline(pip);
 }
 
-extern fn sg_uninit_attachments(Attachments) void;
+extern fn sg_uninit_view(View) void;
 
-pub fn uninitAttachments(atts: Attachments) void {
-    sg_uninit_attachments(atts);
+pub fn uninitView(view: View) void {
+    sg_uninit_view(view);
 }
 
 extern fn sg_fail_buffer(Buffer) void;
@@ -5132,10 +5178,10 @@ pub fn failPipeline(pip: Pipeline) void {
     sg_fail_pipeline(pip);
 }
 
-extern fn sg_fail_attachments(Attachments) void;
+extern fn sg_fail_view(View) void;
 
-pub fn failAttachments(atts: Attachments) void {
-    sg_fail_attachments(atts);
+pub fn failView(view: View) void {
+    sg_fail_view(view);
 }
 
 /// frame stats
@@ -5176,7 +5222,6 @@ pub const D3d11ImageInfo = extern struct {
     tex2d: ?*const anyopaque = null,
     tex3d: ?*const anyopaque = null,
     res: ?*const anyopaque = null,
-    srv: ?*const anyopaque = null,
 };
 
 pub const D3d11SamplerInfo = extern struct {
@@ -5196,8 +5241,10 @@ pub const D3d11PipelineInfo = extern struct {
     bs: ?*const anyopaque = null,
 };
 
-pub const D3d11AttachmentsInfo = extern struct {
-    color_rtv: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
+pub const D3d11ViewInfo = extern struct {
+    srv: ?*const anyopaque = null,
+    uav: ?*const anyopaque = null,
+    rtv: ?*const anyopaque = null,
     dsv: ?*const anyopaque = null,
 };
 
@@ -5233,7 +5280,6 @@ pub const WgpuBufferInfo = extern struct {
 
 pub const WgpuImageInfo = extern struct {
     tex: ?*const anyopaque = null,
-    view: ?*const anyopaque = null,
 };
 
 pub const WgpuSamplerInfo = extern struct {
@@ -5251,10 +5297,8 @@ pub const WgpuPipelineInfo = extern struct {
     compute_pipeline: ?*const anyopaque = null,
 };
 
-pub const WgpuAttachmentsInfo = extern struct {
-    color_view: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
-    resolve_view: [4]?*const anyopaque = [_]?*const anyopaque{null} ** 4,
-    ds_view: ?*const anyopaque = null,
+pub const WgpuViewInfo = extern struct {
+    view: ?*const anyopaque = null,
 };
 
 pub const GlBufferInfo = extern struct {
@@ -5265,7 +5309,6 @@ pub const GlBufferInfo = extern struct {
 pub const GlImageInfo = extern struct {
     tex: [2]u32 = [_]u32{0} ** 2,
     tex_target: u32 = 0,
-    msaa_render_buffer: u32 = 0,
     active_slot: i32 = 0,
 };
 
@@ -5277,9 +5320,10 @@ pub const GlShaderInfo = extern struct {
     prog: u32 = 0,
 };
 
-pub const GlAttachmentsInfo = extern struct {
-    framebuffer: u32 = 0,
-    msaa_resolve_framebuffer: [4]u32 = [_]u32{0} ** 4,
+pub const GlViewInfo = extern struct {
+    tex_view: [2]u32 = [_]u32{0} ** 2,
+    msaa_render_buffer: u32 = 0,
+    msaa_resolve_frame_buffer: u32 = 0,
 };
 
 /// D3D11: return ID3D11Device
@@ -5338,12 +5382,12 @@ pub fn d3d11QueryPipelineInfo(pip: Pipeline) D3d11PipelineInfo {
     return sg_d3d11_query_pipeline_info(pip);
 }
 
-/// D3D11: get internal pass resource objects
-extern fn sg_d3d11_query_attachments_info(Attachments) D3d11AttachmentsInfo;
+/// D3D11: get internal view resource objects
+extern fn sg_d3d11_query_view_info(View) D3d11ViewInfo;
 
-/// D3D11: get internal pass resource objects
-pub fn d3d11QueryAttachmentsInfo(atts: Attachments) D3d11AttachmentsInfo {
-    return sg_d3d11_query_attachments_info(atts);
+/// D3D11: get internal view resource objects
+pub fn d3d11QueryViewInfo(view: View) D3d11ViewInfo {
+    return sg_d3d11_query_view_info(view);
 }
 
 /// Metal: return __bridge-casted MTLDevice
@@ -5490,12 +5534,12 @@ pub fn wgpuQueryPipelineInfo(pip: Pipeline) WgpuPipelineInfo {
     return sg_wgpu_query_pipeline_info(pip);
 }
 
-/// WebGPU: get internal pass resource objects
-extern fn sg_wgpu_query_attachments_info(Attachments) WgpuAttachmentsInfo;
+/// WebGPU: get internal view resource objects
+extern fn sg_wgpu_query_view_info(View) WgpuViewInfo;
 
-/// WebGPU: get internal pass resource objects
-pub fn wgpuQueryAttachmentsInfo(atts: Attachments) WgpuAttachmentsInfo {
-    return sg_wgpu_query_attachments_info(atts);
+/// WebGPU: get internal view resource objects
+pub fn wgpuQueryViewInfo(view: View) WgpuViewInfo {
+    return sg_wgpu_query_view_info(view);
 }
 
 /// GL: get internal buffer resource objects
@@ -5530,11 +5574,11 @@ pub fn glQueryShaderInfo(shd: Shader) GlShaderInfo {
     return sg_gl_query_shader_info(shd);
 }
 
-/// GL: get internal pass resource objects
-extern fn sg_gl_query_attachments_info(Attachments) GlAttachmentsInfo;
+/// GL: get internal view resource objects
+extern fn sg_gl_query_view_info(View) GlViewInfo;
 
-/// GL: get internal pass resource objects
-pub fn glQueryAttachmentsInfo(atts: Attachments) GlAttachmentsInfo {
-    return sg_gl_query_attachments_info(atts);
+/// GL: get internal view resource objects
+pub fn glQueryViewInfo(view: View) GlViewInfo {
+    return sg_gl_query_view_info(view);
 }
 

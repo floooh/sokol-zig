@@ -14,13 +14,12 @@ const math = @import("std").math;
 
 const state = struct {
     const offscreen = struct {
-        var pass_action: sg.PassAction = .{};
-        var attachments: sg.Attachments = .{};
-        var img: sg.Image = .{};
+        var pass: sg.Pass = .{};
         var sgl_ctx: sgl.Context = .{};
     };
     const display = struct {
         var pass_action: sg.PassAction = .{};
+        var tex_view: sg.View = .{};
         var smp: sg.Sampler = .{};
         var sgl_pip: sgl.Pipeline = .{};
     };
@@ -74,20 +73,23 @@ export fn init() void {
         .sample_count = offscreen_sample_count,
     });
 
-    // create an offscreen render target texture, pass-attachments object and pass-action
-    state.offscreen.img = sg.makeImage(.{
-        .usage = .{ .render_attachment = true },
+    // create an color attachment image for the offscreen pass and associated views
+    const img = sg.makeImage(.{
+        .usage = .{ .color_attachment = true },
         .width = offscreen_width,
         .height = offscreen_height,
         .pixel_format = offscreen_pixel_format,
         .sample_count = offscreen_sample_count,
     });
+    state.offscreen.pass.attachments.colors[0] = sg.makeView(.{
+        .color_attachment = .{ .image = img },
+    });
+    state.display.tex_view = sg.makeView(.{
+        .texture = .{ .image = img },
+    });
 
-    var atts_desc = sg.AttachmentsDesc{};
-    atts_desc.colors[0].image = state.offscreen.img;
-    state.offscreen.attachments = sg.makeAttachments(atts_desc);
-
-    state.offscreen.pass_action.colors[0] = .{
+    // the offscreen render pass clear color
+    state.offscreen.pass.action.colors[0] = .{
         .load_action = .CLEAR,
         .clear_value = .{ .r = 0, .g = 0, .b = 0, .a = 1 },
     };
@@ -115,7 +117,7 @@ export fn frame() void {
     sgl.setContext(sgl.defaultContext());
     sgl.defaults();
     sgl.enableTexture();
-    sgl.texture(state.offscreen.img, state.display.smp);
+    sgl.texture(state.display.tex_view, state.display.smp);
     sgl.loadPipeline(state.display.sgl_pip);
     sgl.matrixModeProjection();
     sgl.perspective(sgl.asRadians(45.0), sapp.widthf() / sapp.heightf(), 0.1, 100.0);
@@ -129,7 +131,7 @@ export fn frame() void {
     drawCube();
 
     // do the actual offscreen and display rendering in sokol-gfx passes
-    sg.beginPass(.{ .action = state.offscreen.pass_action, .attachments = state.offscreen.attachments });
+    sg.beginPass(state.offscreen.pass);
     sgl.contextDraw(state.offscreen.sgl_ctx);
     sg.endPass();
     sg.beginPass(.{ .action = state.display.pass_action, .swapchain = sglue.swapchain() });
