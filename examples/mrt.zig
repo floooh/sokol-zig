@@ -261,7 +261,7 @@ fn computeMVP(rx: f32, ry: f32) mat4 {
 
 // helper function to create or re-create attachment resources
 fn recreateOffscreenAttachments(width: i32, height: i32) void {
-    // destroy and re-create create color, resolve and depth-stencil attachment images and views
+    // destroy and re-create color, resolve and depth-stencil attachment images and views
     // (NOTE: calling destroy funcs on invalid handles is fine)
     for (0..num_mrts) |i| {
         // color attachment images and views
