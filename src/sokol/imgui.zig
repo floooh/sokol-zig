@@ -249,25 +249,25 @@
 // ON USER-PROVIDED IMAGES AND SAMPLERS
 // ====================================
 // To render your own images via ImGui::Image() you need to create a Dear ImGui
-// compatible texture handle (ImTextureID) from a sokol-gfx image handle
-// or optionally an image handle and a compatible sampler handle.
+// compatible texture handle (ImTextureID) from a sokol-gfx texture view handle
+// or optionally a texture view handle and a compatible sampler handle.
 //
 // To create a ImTextureID from a sokol-gfx image handle, call:
 //
-//     sg_image img= ...;
-//     ImTextureID imtex_id = simgui_imtextureid(img);
+//     sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture_binding.image = img });
+//     ImTextureID imtex_id = simgui_imtextureid(tex_view);
 //
 // Since no sampler is provided, such a texture handle will use a default
 // sampler with nearest filtering and clamp-to-edge.
 //
 // If you need to render with a different sampler, do this instead:
 //
-//     sg_image img = ...;
+//     sg_view tex_view = ...;
 //     sg_sampler smp = ...;
-//     ImTextureID imtex_id = simgui_imtextureid_with_sampler(img, smp);
+//     ImTextureID imtex_id = simgui_imtextureid_with_sampler(tex_img, smp);
 //
 // You don't need to 'release' the ImTextureID handle, the ImTextureID
-// bits is simply a combination of the sg_image and sg_sampler bits.
+// bits is simply a combination of the sg_view and sg_sampler bits.
 //
 // Once you have constructed an ImTextureID handle via simgui_imtextureid()
 // or simgui_imtextureid_with_sampler(), it used in the ImGui::Image()
@@ -275,10 +275,15 @@
 //
 //     ImGui::Image(imtex_id, ...);
 //
-// To extract the sg_image and sg_sampler handle from an ImTextureID:
+// To extract the sg_view and sg_sampler handle from an ImTextureID:
 //
-//     sg_image img = simgui_image_from_imtextureid(imtex_id);
+//     sg_view tex_view = simgui_texture_view_from_imtextureid(imtex_id);
 //     sg_sampler smp = simgui_sampler_from_imtextureid(imtex_id);
+//
+// ...use the sokol-gfx function sg_query_view_image() if you need to
+// extract the texture view's image object:
+//
+//     sg_image img = sg_query_view_image(tex_view);
 //
 // NOTE on C bindings since Dear ImGui 1.92.0:
 //
@@ -495,22 +500,22 @@ pub fn render() void {
     simgui_render();
 }
 
-extern fn simgui_imtextureid(sg.Image) u64;
+extern fn simgui_imtextureid(sg.View) u64;
 
-pub fn imtextureid(img: sg.Image) u64 {
-    return simgui_imtextureid(img);
+pub fn imtextureid(tex_view: sg.View) u64 {
+    return simgui_imtextureid(tex_view);
 }
 
-extern fn simgui_imtextureid_with_sampler(sg.Image, sg.Sampler) u64;
+extern fn simgui_imtextureid_with_sampler(sg.View, sg.Sampler) u64;
 
-pub fn imtextureidWithSampler(img: sg.Image, smp: sg.Sampler) u64 {
-    return simgui_imtextureid_with_sampler(img, smp);
+pub fn imtextureidWithSampler(tex_view: sg.View, smp: sg.Sampler) u64 {
+    return simgui_imtextureid_with_sampler(tex_view, smp);
 }
 
-extern fn simgui_image_from_imtextureid(u64) sg.Image;
+extern fn simgui_texture_view_from_imtextureid(u64) sg.View;
 
-pub fn imageFromImtextureid(imtex_id: u64) sg.Image {
-    return simgui_image_from_imtextureid(imtex_id);
+pub fn textureViewFromImtextureid(imtex_id: u64) sg.View {
+    return simgui_texture_view_from_imtextureid(imtex_id);
 }
 
 extern fn simgui_sampler_from_imtextureid(u64) sg.Sampler;

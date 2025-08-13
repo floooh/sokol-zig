@@ -51,14 +51,18 @@ export fn init() void {
         .clear_value = .{ .r = 0, .g = 0.1, .b = 0.2, .a = 1 },
     };
 
-    // a zero-initialized storage buffer for the particle state
+    // a buffer and storage-buffer-view for the partcle state
     const sbuf = sg.makeBuffer(.{
-        .usage = .{ .storage_buffer = true },
+        .usage = .{
+            .vertex_buffer = true,
+            .storage_buffer = true,
+        },
         .size = max_particles * @sizeOf(shd.Particle),
         .label = "particle-buffer",
     });
-    state.compute.bind.storage_buffers[shd.SBUF_cs_ssbo] = sbuf;
-    state.display.bind.storage_buffers[shd.SBUF_vs_ssbo] = sbuf;
+    const sbuf_view = sg.makeView(.{ .storage_buffer = .{ .buffer = sbuf } });
+    state.compute.bind.views[shd.VIEW_cs_ssbo] = sbuf_view;
+    state.display.bind.views[shd.VIEW_vs_ssbo] = sbuf_view;
 
     // a compute shader and pipeline object for updating the particle state
     state.compute.pip = sg.makePipeline(.{

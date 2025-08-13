@@ -14,7 +14,7 @@ const math = @import("std").math;
 
 const state = struct {
     var pass_action: sg.PassAction = .{};
-    var img: sg.Image = .{};
+    var tex_view: sg.View = .{};
     var smp: sg.Sampler = .{};
     var pip3d: sgl.Pipeline = .{};
     const quad = struct {
@@ -40,10 +40,10 @@ export fn init() void {
         .logger = .{ .func = slog.func },
     });
 
-    // a checkerboard texture
+    // a checkerboard image and texture view
     const img_width = 8;
     const img_height = 8;
-    state.img = sg.makeImage(.{
+    const img = sg.makeImage(.{
         .width = img_width,
         .height = img_height,
         .data = init: {
@@ -60,6 +60,7 @@ export fn init() void {
             break :init data;
         },
     });
+    state.tex_view = sg.makeView(.{ .texture = .{ .image = img } });
 
     // ...and a sampler
     state.smp = sg.makeSampler(.{
@@ -229,7 +230,7 @@ fn drawTexCube(dt: f32) void {
     sgl.loadPipeline(state.pip3d);
 
     sgl.enableTexture();
-    sgl.texture(state.img, state.smp);
+    sgl.texture(state.tex_view, state.smp);
 
     sgl.matrixModeProjection();
     sgl.perspective(sgl.asRadians(45.0), 1.0, 0.1, 100.0);

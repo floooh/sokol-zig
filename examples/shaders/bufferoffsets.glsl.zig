@@ -547,8 +547,8 @@ pub fn bufferoffsetsAttrSlot(attr_name: []const u8) ?usize {
     }
     return null;
 }
-pub fn bufferoffsetsImageSlot(img_name: []const u8) ?usize {
-    _ = img_name;
+pub fn bufferoffsetsTextureSlot(tex_name: []const u8) ?usize {
+    _ = tex_name;
     return null;
 }
 pub fn bufferoffsetsSamplerSlot(smp_name: []const u8) ?usize {

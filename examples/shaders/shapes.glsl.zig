@@ -873,8 +873,8 @@ pub fn shapesAttrSlot(attr_name: []const u8) ?usize {
     }
     return null;
 }
-pub fn shapesImageSlot(img_name: []const u8) ?usize {
-    _ = img_name;
+pub fn shapesTextureSlot(tex_name: []const u8) ?usize {
+    _ = tex_name;
     return null;
 }
 pub fn shapesSamplerSlot(smp_name: []const u8) ?usize {

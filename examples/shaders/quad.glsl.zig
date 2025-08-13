@@ -547,8 +547,8 @@ pub fn quadAttrSlot(attr_name: []const u8) ?usize {
     }
     return null;
 }
-pub fn quadImageSlot(img_name: []const u8) ?usize {
-    _ = img_name;
+pub fn quadTextureSlot(tex_name: []const u8) ?usize {
+    _ = tex_name;
     return null;
 }
 pub fn quadSamplerSlot(smp_name: []const u8) ?usize {

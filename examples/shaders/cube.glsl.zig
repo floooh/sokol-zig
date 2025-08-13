@@ -628,8 +628,8 @@ pub fn cubeAttrSlot(attr_name: []const u8) ?usize {
     }
     return null;
 }
-pub fn cubeImageSlot(img_name: []const u8) ?usize {
-    _ = img_name;
+pub fn cubeTextureSlot(tex_name: []const u8) ?usize {
+    _ = tex_name;
     return null;
 }
 pub fn cubeSamplerSlot(smp_name: []const u8) ?usize {
