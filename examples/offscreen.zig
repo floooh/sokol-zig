@@ -43,7 +43,7 @@ export fn init() void {
         .clear_value = .{ .r = 0.25, .g = 0.45, .b = 0.65, .a = 1.0 },
     };
 
-    // offscreen pass action: clear to black
+    // offscreen pass action: clear to grey
     state.offscreen.pass.action.colors[0] = .{
         .load_action = .CLEAR,
         .clear_value = .{ .r = 0.25, .g = 0.25, .b = 0.25, .a = 1.0 },
