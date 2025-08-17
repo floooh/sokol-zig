@@ -18,10 +18,10 @@ pub fn main() !void {
     const prefix = try arg(arena, "--prefix");
     const input_dir = try arg(arena, "--input");
     const output_path = try arg(arena, "--output");
-    log.info("fixdoctar called with:", .{});
-    log.info("--prefix: {s}", .{prefix});
-    log.info("--input_dir: {s}", .{input_dir});
-    log.info("--output_dir: {s}", .{output_path});
+    //log.debug("fixdoctar called with:", .{});
+    //log.debug("--prefix: {s}", .{prefix});
+    //log.debug("--input_dir: {s}", .{input_dir});
+    //log.debug("--output_dir: {s}", .{output_path});
 
     // iterate over sources.tar file, find relevant files and write to output tar file
     const inp_path = try std.fs.path.join(arena, &.{ input_dir, "sources.tar" });
@@ -56,7 +56,7 @@ pub fn main() !void {
                     // stream the current tar item into the intermediate writer
                     try iter.streamRemaining(tar_item, &imm_writer.writer);
                     // get an intermediate reader on the intermediate writer's buffer
-                    var imm_reader = std.Io.Reader.fixed(imm_writer.getWritten());
+                    var imm_reader = std.Io.Reader.fixed(imm_writer.written());
                     // ... and write the file data into the tar-writer
                     try tar_writer.writeFileStream(tar_item.name, tar_item.size, &imm_reader, .{ .mode = tar_item.mode });
                 }
@@ -66,7 +66,6 @@ pub fn main() !void {
     }
     try tar_writer.finishPedantically();
     try tar_writer.underlying_writer.flush();
-    log.info("Done.", .{});
     return std.process.cleanExit();
 }
 
