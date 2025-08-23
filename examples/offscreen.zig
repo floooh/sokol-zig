@@ -14,16 +14,13 @@ const vec3 = @import("math.zig").Vec3;
 const mat4 = @import("math.zig").Mat4;
 const shd = @import("shaders/offscreen.glsl.zig");
 
-const offscreen_sample_count = 1;
-
 const state = struct {
     const offscreen = struct {
-        var pass_action: sg.PassAction = .{};
-        var attachments: sg.Attachments = .{};
+        var pass: sg.Pass = .{};
         var pip: sg.Pipeline = .{};
         var bind: sg.Bindings = .{};
     };
-    const default = struct {
+    const display = struct {
         var pass_action: sg.PassAction = .{};
         var pip: sg.Pipeline = .{};
         var bind: sg.Bindings = .{};
@@ -41,33 +38,48 @@ export fn init() void {
     });
 
     // default pass action: clear to blue-ish
-    state.default.pass_action.colors[0] = .{
+    state.display.pass_action.colors[0] = .{
         .load_action = .CLEAR,
         .clear_value = .{ .r = 0.25, .g = 0.45, .b = 0.65, .a = 1.0 },
     };
 
-    // offscreen pass action: clear to black
-    state.offscreen.pass_action.colors[0] = .{
+    // offscreen pass action: clear to grey
+    state.offscreen.pass.action.colors[0] = .{
         .load_action = .CLEAR,
         .clear_value = .{ .r = 0.25, .g = 0.25, .b = 0.25, .a = 1.0 },
     };
 
-    // a render pass with one color- and one depth-attachment image
-    var img_desc = sg.ImageDesc{
-        .usage = .{ .render_attachment = true },
-        .width = 256,
-        .height = 256,
-        .pixel_format = .RGBA8,
+    // setup the color- and depth-stencil-attachment images and views
+    const offscreen_width = 256;
+    const offscreen_height = 256;
+    const offscreen_sample_count = 1;
+    const color_img = sg.makeImage(.{
+        .usage = .{ .color_attachment = true },
+        .width = offscreen_width,
+        .height = offscreen_height,
         .sample_count = offscreen_sample_count,
-    };
-    const color_img = sg.makeImage(img_desc);
-    img_desc.pixel_format = .DEPTH;
-    const depth_img = sg.makeImage(img_desc);
+        .pixel_format = .RGBA8,
+    });
+    const depth_img = sg.makeImage(.{
+        .usage = .{ .depth_stencil_attachment = true },
+        .width = offscreen_width,
+        .height = offscreen_height,
+        .sample_count = offscreen_sample_count,
+        .pixel_format = .DEPTH,
+    });
 
-    var atts_desc = sg.AttachmentsDesc{};
-    atts_desc.colors[0].image = color_img;
-    atts_desc.depth_stencil.image = depth_img;
-    state.offscreen.attachments = sg.makeAttachments(atts_desc);
+    // the offscreen render pass needs a color- and depth-stencil-attachment view
+    state.offscreen.pass.attachments.colors[0] = sg.makeView(.{
+        .color_attachment = .{ .image = color_img },
+    });
+    state.offscreen.pass.attachments.depth_stencil = sg.makeView(.{
+        .depth_stencil_attachment = .{ .image = depth_img },
+    });
+
+    // the display render pass needs a texture view on the color image
+    state.display.bind.views[shd.VIEW_tex] = sg.makeView(.{
+        .texture = .{ .image = color_img },
+    });
 
     // a donut shape which is rendered into the offscreen render target, and
     // a sphere shape which is rendered into the default framebuffer
@@ -87,7 +99,12 @@ export fn init() void {
     state.sphere = sshape.elementRange(buf);
 
     const vbuf = sg.makeBuffer(sshape.vertexBufferDesc(buf));
+    state.offscreen.bind.vertex_buffers[0] = vbuf;
+    state.display.bind.vertex_buffers[0] = vbuf;
+
     const ibuf = sg.makeBuffer(sshape.indexBufferDesc(buf));
+    state.offscreen.bind.index_buffer = ibuf;
+    state.display.bind.index_buffer = ibuf;
 
     // shader and pipeline object for offscreen rendering
     state.offscreen.pip = sg.makePipeline(.{
@@ -115,7 +132,7 @@ export fn init() void {
     });
 
     // shader and pipeline object for the default render pass
-    state.default.pip = sg.makePipeline(.{
+    state.display.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.defaultShaderDesc(sg.queryBackend())),
         .layout = init: {
             var l = sg.VertexLayoutState{};
@@ -134,22 +151,12 @@ export fn init() void {
     });
 
     // a sampler object for sampling the render target texture
-    const smp = sg.makeSampler(.{
+    state.display.bind.samplers[shd.SMP_smp] = sg.makeSampler(.{
         .min_filter = .LINEAR,
         .mag_filter = .LINEAR,
         .wrap_u = .REPEAT,
         .wrap_v = .REPEAT,
     });
-
-    // resource bindings to render a non-textured cube (into the offscreen render target)
-    state.offscreen.bind.vertex_buffers[0] = vbuf;
-    state.offscreen.bind.index_buffer = ibuf;
-
-    // resource bindings to render a textured cube, using the offscreen render target as texture
-    state.default.bind.vertex_buffers[0] = vbuf;
-    state.default.bind.index_buffer = ibuf;
-    state.default.bind.images[shd.IMG_tex] = color_img;
-    state.default.bind.samplers[shd.SMP_smp] = smp;
 }
 
 export fn frame() void {
@@ -159,7 +166,7 @@ export fn frame() void {
     const aspect = sapp.widthf() / sapp.heightf();
 
     // the offscreen pass, rendering a rotating untextured donut into a render target image
-    sg.beginPass(.{ .action = state.offscreen.pass_action, .attachments = state.offscreen.attachments });
+    sg.beginPass(state.offscreen.pass);
     sg.applyPipeline(state.offscreen.pip);
     sg.applyBindings(state.offscreen.bind);
     sg.applyUniforms(shd.UB_vs_params, sg.asRange(&computeVsParams(state.rx, state.ry, 1.0, 2.5)));
@@ -168,9 +175,9 @@ export fn frame() void {
 
     // and the display pass, rendering a rotating textured sphere, using the previously
     // rendered offscreen render target as texture
-    sg.beginPass(.{ .action = state.default.pass_action, .swapchain = sglue.swapchain() });
-    sg.applyPipeline(state.default.pip);
-    sg.applyBindings(state.default.bind);
+    sg.beginPass(.{ .action = state.display.pass_action, .swapchain = sglue.swapchain() });
+    sg.applyPipeline(state.display.pip);
+    sg.applyBindings(state.display.bind);
     sg.applyUniforms(shd.UB_vs_params, sg.asRange(&computeVsParams(-state.rx * 0.25, state.ry * 0.25, aspect, 2)));
     sg.draw(state.sphere.base_element, state.sphere.num_elements, 1);
     sg.endPass();

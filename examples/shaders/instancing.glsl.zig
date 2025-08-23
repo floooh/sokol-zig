@@ -681,8 +681,8 @@ pub fn instancingAttrSlot(attr_name: []const u8) ?usize {
     }
     return null;
 }
-pub fn instancingImageSlot(img_name: []const u8) ?usize {
-    _ = img_name;
+pub fn instancingTextureSlot(tex_name: []const u8) ?usize {
+    _ = tex_name;
     return null;
 }
 pub fn instancingSamplerSlot(smp_name: []const u8) ?usize {

@@ -231,9 +231,9 @@
 //
 //         sgl_enable_texture()
 //         sgl_disable_texture()
-//         sgl_texture(sg_image img, sg_sampler smp)
+//         sgl_texture(sg_view tex_view, sg_sampler smp)
 //
-//     NOTE: the img and smp handles can be invalid (SG_INVALID_ID), in this
+//     NOTE: the tex_view and smp handles can be invalid (SG_INVALID_ID), in this
 //     case, sokol-gl will fall back to the internal default (white) texture
 //     and sampler.
 //
@@ -953,10 +953,10 @@ pub fn disableTexture() void {
     sgl_disable_texture();
 }
 
-extern fn sgl_texture(sg.Image, sg.Sampler) void;
+extern fn sgl_texture(sg.View, sg.Sampler) void;
 
-pub fn texture(img: sg.Image, smp: sg.Sampler) void {
-    sgl_texture(img, smp);
+pub fn texture(tex_view: sg.View, smp: sg.Sampler) void {
+    sgl_texture(tex_view, smp);
 }
 
 extern fn sgl_layer(i32) void;

@@ -88,19 +88,23 @@ export fn init() void {
         }),
     });
 
-    // create a small checker-board texture
-    state.bind.images[shd.IMG_tex] = sg.makeImage(.{
-        .width = 4,
-        .height = 4,
-        .data = init: {
-            var data = sg.ImageData{};
-            data.subimage[0][0] = sg.asRange(&[4 * 4]u32{
-                0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
-                0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
-                0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
-                0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
-            });
-            break :init data;
+    // create a small checker-board image and texture view
+    state.bind.views[shd.VIEW_tex] = sg.makeView(.{
+        .texture = .{
+            .image = sg.makeImage(.{
+                .width = 4,
+                .height = 4,
+                .data = init: {
+                    var data = sg.ImageData{};
+                    data.subimage[0][0] = sg.asRange(&[4 * 4]u32{
+                        0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
+                        0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
+                        0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
+                        0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
+                    });
+                    break :init data;
+                },
+            }),
         },
     });
 
