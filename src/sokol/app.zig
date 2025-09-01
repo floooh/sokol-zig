@@ -1556,15 +1556,17 @@ pub const Range = extern struct {
 
 /// sapp_image_desc
 ///
-/// This is used to describe image data to sokol_app.h (at first, window
-/// icons, later maybe cursor images).
+/// This is used to describe image data to sokol_app.h (window icons and cursor images).
 ///
-/// Note that the actual image pixel format depends on the use case:
+/// The pixel format is RGBA8.
 ///
-/// - window icon pixels are RGBA8
+/// cursor_hotspot_x and _y are used only for cursors, to define which pixel
+/// of the image should be aligned with the mouse position.
 pub const ImageDesc = extern struct {
     width: i32 = 0,
     height: i32 = 0,
+    cursor_hotspot_x: i32 = 0,
+    cursor_hotspot_y: i32 = 0,
     pixels: Range = .{},
 };
 
@@ -1628,6 +1630,7 @@ pub const LogItem = enum(i32) {
     WIN32_REGISTER_RAW_INPUT_DEVICES_FAILED_MOUSE_LOCK,
     WIN32_REGISTER_RAW_INPUT_DEVICES_FAILED_MOUSE_UNLOCK,
     WIN32_GET_RAW_INPUT_DATA_FAILED,
+    WIN32_DESTROYICON_FOR_CURSOR_FAILED,
     LINUX_GLX_LOAD_LIBGL_FAILED,
     LINUX_GLX_LOAD_ENTRY_POINTS_FAILED,
     LINUX_GLX_EXTENSION_NOT_FOUND,
@@ -1804,6 +1807,22 @@ pub const MouseCursor = enum(i32) {
     RESIZE_NESW,
     RESIZE_ALL,
     NOT_ALLOWED,
+    CUSTOM_0,
+    CUSTOM_1,
+    CUSTOM_2,
+    CUSTOM_3,
+    CUSTOM_4,
+    CUSTOM_5,
+    CUSTOM_6,
+    CUSTOM_7,
+    CUSTOM_8,
+    CUSTOM_9,
+    CUSTOM_10,
+    CUSTOM_11,
+    CUSTOM_12,
+    CUSTOM_13,
+    CUSTOM_14,
+    CUSTOM_15,
     NUM,
 };
 
@@ -1965,6 +1984,22 @@ extern fn sapp_get_mouse_cursor() MouseCursor;
 /// get current mouse cursor type
 pub fn getMouseCursor() MouseCursor {
     return sapp_get_mouse_cursor();
+}
+
+/// associate a custom mouse cursor image to a sapp_mouse_cursor enum entry
+extern fn sapp_bind_mouse_cursor_image(MouseCursor, [*c]const ImageDesc) MouseCursor;
+
+/// associate a custom mouse cursor image to a sapp_mouse_cursor enum entry
+pub fn bindMouseCursorImage(cursor: MouseCursor, desc: ImageDesc) MouseCursor {
+    return sapp_bind_mouse_cursor_image(cursor, &desc);
+}
+
+/// restore the sapp_mouse_cursor enum entry to it's default system appearance
+extern fn sapp_unbind_mouse_cursor_image(MouseCursor) void;
+
+/// restore the sapp_mouse_cursor enum entry to it's default system appearance
+pub fn unbindMouseCursorImage(cursor: MouseCursor) void {
+    sapp_unbind_mouse_cursor_image(cursor);
 }
 
 /// return the userdata pointer optionally provided in sapp_desc
