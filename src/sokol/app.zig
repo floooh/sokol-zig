@@ -685,8 +685,7 @@
 //             const size_t num_bytes = response->data.size;
 //             // and the pointer to the data (same as 'buf' in the fetch-call):
 //             const void* ptr = response->data.ptr;
-//         }
-//         else {
+//         } else {
 //             // on error check the error code:
 //             switch (response->error_code) {
 //                 case SAPP_HTML5_FETCH_ERROR_BUFFER_TOO_SMALL:
