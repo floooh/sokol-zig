@@ -4,6 +4,12 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 04-Sep-2025
+
+Updated to emsdk 4.0.14 and removed the `.use_offset_converter` option for the Emscripten
+link step, this is no longer necessary to make Zig's `@returnAddress()` builtin work
+in WASM.
+
 ### 24-Jun-2025
 
 Shader compilation via sokol-shdc is now more flexible. See the new readme section
