@@ -153,6 +153,19 @@ pub fn build(b: *Build) !void {
 }
 ```
 
+To force the GL backend on macOS or Windows, you can pass `.gl = true` to the dependency call:
+
+```zig
+const dep_sokol = b.dependency("sokol", .{
+    .target = target,
+    .optimize = optimize,
+    // same as building sokol-zig with -Dgl=true
+    .gl = true
+});
+```
+
+This can be done with any build option declared in `sokol-zig`.
+
 If you also want to run on the web via `-Dtarget=wasm32-emscripten`, the web platform
 build must look special, because Emscripten must be used for linking, and to run
 the build result in a browser, a special run step must be created.
