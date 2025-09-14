@@ -2008,7 +2008,6 @@ pub const max_color_attachments = 4;
 pub const max_uniformblock_members = 16;
 pub const max_vertex_attributes = 16;
 pub const max_mipmaps = 16;
-pub const max_texturearray_layers = 128;
 pub const max_vertexbuffer_bindslots = 8;
 pub const max_uniformblock_bindslots = 8;
 pub const max_view_bindslots = 28;
@@ -2298,20 +2297,6 @@ pub const SamplerType = enum(i32) {
     FILTERING,
     NONFILTERING,
     COMPARISON,
-    NUM,
-};
-
-/// sg_cube_face
-///
-/// The cubemap faces. Use these as indices in the sg_image_desc.content
-/// array.
-pub const CubeFace = enum(i32) {
-    POS_X,
-    NEG_X,
-    POS_Y,
-    NEG_Y,
-    POS_Z,
-    NEG_Z,
     NUM,
 };
 
@@ -3169,11 +3154,32 @@ pub const ViewType = enum(i32) {
 
 /// sg_image_data
 ///
-/// Defines the content of an image through a 2D array of sg_range structs.
-/// The first array dimension is the cubemap face, and the second array
-/// dimension the mipmap level.
+/// Defines the content of an image through an array of sg_range struct,
+/// each range pointing to one mip-level. For array-, cubemap- and 3D-images
+/// each mip-level contains all slice-surfaces for that mip-level in a single
+/// tightly packed memory block.
+///
+/// The size of a single surface in a mip-level for a regular 2D texture
+/// can be computed via:
+///
+///     sg_query_surface_pitch(pixel_format, width, height, 1);
+///
+/// For array- and 3d-images the size of a single miplevel is:
+///
+///     num_slices * sg_query_surface_pitch(pixel_format, width, height, 1);
+///
+/// For cubemap-images the size of a single mip-level is:
+///
+///     6 * sg_query_surface_pitch(pixel_format, width, height, 1);
+///
+/// The order of cubemap-faces is:
+///
+///     slice   direction
+///     0, 1 => +X, -X
+///     2, 3 => +Y, -Y
+///     4, 5 => +Z, -Z
 pub const ImageData = extern struct {
-    subimage: [6][16]Range = [_][16]Range{[_]Range{.{}} ** 16} ** 6,
+    mip_levels: [16]Range = [_]Range{.{}} ** 16,
 };
 
 /// sg_image_desc
@@ -4163,6 +4169,11 @@ pub const LogItem = enum(i32) {
     VALIDATE_IMAGEDATA_DATA_SIZE,
     VALIDATE_IMAGEDESC_CANARY,
     VALIDATE_IMAGEDESC_IMMUTABLE_DYNAMIC_STREAM,
+    VALIDATE_IMAGEDESC_IMAGETYPE_2D_NUMSLICES,
+    VALIDATE_IMAGEDESC_IMAGETYPE_CUBE_NUMSLICES,
+    VALIDATE_IMAGEDESC_IMAGETYPE_ARRAY_NUMSLICES,
+    VALIDATE_IMAGEDESC_IMAGETYPE_3D_NUMSLICES,
+    VALIDATE_IMAGEDESC_NUMSLICES,
     VALIDATE_IMAGEDESC_WIDTH,
     VALIDATE_IMAGEDESC_HEIGHT,
     VALIDATE_IMAGEDESC_NONRT_PIXELFORMAT,

@@ -48,7 +48,7 @@ export fn init() void {
         .height = img_height,
         .data = init: {
             var data = sg.ImageData{};
-            data.subimage[0][0] = sg.asRange(&pixels: {
+            data.mip_levels[0] = sg.asRange(&pixels: {
                 var res = std.mem.zeroes([img_width][img_height]u32);
                 for (0..img_height) |y| {
                     for (0..img_width) |x| {
