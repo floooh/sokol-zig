@@ -96,7 +96,7 @@ export fn init() void {
                 .height = 4,
                 .data = init: {
                     var data = sg.ImageData{};
-                    data.subimage[0][0] = sg.asRange(&[4 * 4]u32{
+                    data.mip_levels[0] = sg.asRange(&[4 * 4]u32{
                         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
                         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
                         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
