@@ -4005,6 +4005,15 @@ pub const FrameStatsWgpu = extern struct {
     bindings: FrameStatsWgpuBindings = .{},
 };
 
+pub const ResourceStats = extern struct {
+    total_alive: u32 = 0,
+    total_free: u32 = 0,
+    allocated: u32 = 0,
+    deallocated: u32 = 0,
+    inited: u32 = 0,
+    uninited: u32 = 0,
+};
+
 pub const FrameStats = extern struct {
     frame_index: u32 = 0,
     num_passes: u32 = 0,
@@ -4022,6 +4031,12 @@ pub const FrameStats = extern struct {
     size_update_buffer: u32 = 0,
     size_append_buffer: u32 = 0,
     size_update_image: u32 = 0,
+    buffers: ResourceStats = .{},
+    images: ResourceStats = .{},
+    samplers: ResourceStats = .{},
+    views: ResourceStats = .{},
+    shaders: ResourceStats = .{},
+    pipelines: ResourceStats = .{},
     gl: FrameStatsGl = .{},
     d3d11: FrameStatsD3d11 = .{},
     metal: FrameStatsMetal = .{},
