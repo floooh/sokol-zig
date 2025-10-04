@@ -204,6 +204,23 @@
 //     containing per-instance data must be bound, and the num_instances parameter
 //     must be > 1.
 //
+//     Alternatively, call:
+//
+//         sg_draw_ex(...)
+//
+//     to provide a base-vertex and/or base-instance which allows to render
+//     from different sections of a vertex buffer without rebinding the
+//     vertex buffer with a different offset. Note that the `sg_draw_ex()`
+//     only has limited portability on OpenGL, check the sg_limits struct
+//     members .draw_base_vertex and .draw_base_instance for runtime support,
+//     those are generally true on non-GL-backends, and on GL the feature
+//     flags are set according to the GL version:
+//
+//         - on GL base_instance != 0 is only supported since GL 4.2
+//         - on GLES3.x, base_instance != 0 is not supported
+//         - on GLES3.x, base_vertex is only supported since GLES3.2
+//           (e.g. not supported on WebGL2)
+//
 // --- ...or kick of a dispatch call to invoke a compute shader workload:
 //
 //         sg_dispatch(int num_groups_x, int num_groups_y, int num_groups_z)
@@ -2175,6 +2192,8 @@ pub const Features = extern struct {
     compute: bool = false,
     msaa_texture_bindings: bool = false,
     separate_buffer_types: bool = false,
+    draw_base_vertex: bool = false,
+    draw_base_instance: bool = false,
     gl_texture_views: bool = false,
 };
 
@@ -4034,6 +4053,7 @@ pub const FrameStats = extern struct {
     num_apply_bindings: u32 = 0,
     num_apply_uniforms: u32 = 0,
     num_draw: u32 = 0,
+    num_draw_ex: u32 = 0,
     num_dispatch: u32 = 0,
     num_update_buffer: u32 = 0,
     num_append_buffer: u32 = 0,
@@ -4445,9 +4465,18 @@ pub const LogItem = enum(i32) {
     VALIDATE_AU_NO_UNIFORMBLOCK_AT_SLOT,
     VALIDATE_AU_SIZE,
     VALIDATE_DRAW_RENDERPASS_EXPECTED,
-    VALIDATE_DRAW_BASEELEMENT,
-    VALIDATE_DRAW_NUMELEMENTS,
-    VALIDATE_DRAW_NUMINSTANCES,
+    VALIDATE_DRAW_BASEELEMENT_GE_ZERO,
+    VALIDATE_DRAW_NUMELEMENTS_GE_ZERO,
+    VALIDATE_DRAW_NUMINSTANCES_GE_ZERO,
+    VALIDATE_DRAW_EX_RENDERPASS_EXPECTED,
+    VALIDATE_DRAW_EX_BASEELEMENT_GE_ZERO,
+    VALIDATE_DRAW_EX_NUMELEMENTS_GE_ZERO,
+    VALIDATE_DRAW_EX_NUMINSTANCES_GE_ZERO,
+    VALIDATE_DRAW_EX_BASEINSTANCE_GE_ZERO,
+    VALIDATE_DRAW_EX_BASEVERTEX_VS_INDEXED,
+    VALIDATE_DRAW_EX_BASEINSTANCE_VS_INSTANCED,
+    VALIDATE_DRAW_EX_BASEVERTEX_NOT_SUPPORTED,
+    VALIDATE_DRAW_EX_BASEINSTANCE_NOT_SUPPORTED,
     VALIDATE_DRAW_REQUIRED_BINDINGS_OR_UNIFORMS_MISSING,
     VALIDATE_DISPATCH_COMPUTEPASS_EXPECTED,
     VALIDATE_DISPATCH_NUMGROUPSX,
@@ -4848,6 +4877,12 @@ extern fn sg_draw(u32, u32, u32) void;
 
 pub fn draw(base_element: u32, num_elements: u32, num_instances: u32) void {
     sg_draw(base_element, num_elements, num_instances);
+}
+
+extern fn sg_draw_ex(i32, i32, i32, i32, i32) void;
+
+pub fn drawEx(base_element: i32, num_elements: i32, num_instances: i32, base_vertex: i32, base_instance: i32) void {
+    sg_draw_ex(base_element, num_elements, num_instances, base_vertex, base_instance);
 }
 
 extern fn sg_dispatch(i32, i32, i32) void;
