@@ -368,10 +368,13 @@ fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
 pub fn asRange(val: anytype) Range {
     const type_info = @typeInfo(@TypeOf(val));
     switch (type_info) {
-        .pointer => {
-            switch (type_info.pointer.size) {
-                .one => return .{ .ptr = val, .size = @sizeOf(type_info.pointer.child) },
-                .slice => return .{ .ptr = val.ptr, .size = @sizeOf(type_info.pointer.child) * val.len },
+        .pointer => |pointer| {
+            switch (pointer.size) {
+                .one => switch (@typeInfo(pointer.child)) {
+                    .array => |array| return .{ .ptr = val, .size = array.len * @sizeOf(array.child) },
+                    else => return .{ .ptr = val, .size = @sizeOf(pointer.child) },
+                },
+                .slice => return .{ .ptr = val.ptr, .size = val.len * @sizeOf(pointer.child) },
                 else => @compileError("FIXME: Pointer type!"),
             }
         },
@@ -379,7 +382,7 @@ pub fn asRange(val: anytype) Range {
             @compileError("Structs and arrays must be passed as pointers to asRange");
         },
         else => {
-            @compileError("Cannot convert to range!");
+            @compileError("Cannot convert to Range!");
         },
     }
 }
