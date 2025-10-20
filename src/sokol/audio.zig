@@ -40,6 +40,7 @@
 // - on Android: aaudio
 // - on Windows with MSVC or Clang toolchain: no action needed, libs are defined in-source via pragma-comment-lib
 // - on Windows with MINGW/MSYS2 gcc: compile with '-mwin32' and link with -lole32
+// - on Vita: SceAudio
 //
 // FEATURE OVERVIEW
 // ================
@@ -53,6 +54,7 @@
 // - iOS: CoreAudio+AVAudioSession
 // - emscripten: WebAudio with ScriptProcessorNode
 // - Android: AAudio
+// - Vita: SceAudio
 //
 // Sokol Audio will not do any buffer mixing or volume control, if you have
 // multiple independent input streams of sample data you need to perform the
@@ -377,6 +379,25 @@
 // header must be present (usually both are installed with some sort
 // of ALSA development package).
 //
+// THE VITA BACKEND
+// ================
+// The VITA backend is automatically selected when compiling with vitasdk
+// ('PSP2_SDK_VERSION' is defined).
+//
+// For thread synchronisation, the pthread_mutex_* functions are used.
+//
+// Samples are converted from float to short (uint16_t) to maintain
+// all the same interface/api as other platforms.
+//
+// You may use any supported sample rate you wish, but all audio MUST
+// match the same sample rate you choose.
+//
+// This uses the "BGM" port to allow selecting the sample rate ("Main"
+// port is restricted to 48000 only).
+//
+// You need to link with the 'SceAudio' library, and the <psp2/audioout.h>
+// header must be present (usually both are installed with the vitasdk).
+//
 //
 // MEMORY ALLOCATION OVERRIDE
 // ==========================
@@ -510,6 +531,8 @@ pub const LogItem = enum(i32) {
     COREAUDIO_ALLOCATE_BUFFER_FAILED,
     COREAUDIO_START_FAILED,
     BACKEND_BUFFER_SIZE_ISNT_MULTIPLE_OF_PACKET_SIZE,
+    VITA_SCEAUDIO_OPEN_FAILED,
+    VITA_PTHREAD_CREATE_FAILED,
 };
 
 /// saudio_logger
