@@ -596,8 +596,6 @@ fn buildExample(b: *Build, example: Example, examples_step: *Build.Step, options
             .use_filesystem = false,
             .shell_file_path = b.path("src/sokol/web/shell.html"),
             .extra_args = &.{"-sSTACK_SIZE=512KB"},
-            // don't run Closure pass for WebGPU, see: https://issues.chromium.org/issues/424836759
-            .release_use_closure = options.backend != .wgpu,
         });
         examples_step.dependOn(&link_step.step);
 
