@@ -21,7 +21,7 @@ const mat4 = @import("math.zig").Mat4;
 const shd = @import("shaders/mrt.glsl.zig");
 
 const num_mrts = 3;
-const offscreen_sample_count = 1;
+const offscreen_sample_count = 4;
 
 const state = struct {
     const images = struct {
