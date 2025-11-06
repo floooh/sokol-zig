@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@main
       - uses: mlugg/setup-zig@v2
         with:
-          version: master
+          version: 0.15.2
       - name: gen-docs
         run: zig build docs
       - name: upload-artifact

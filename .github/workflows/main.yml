@@ -6,14 +6,13 @@ jobs:
   build:
     strategy:
       matrix:
-        # os: [ubuntu-latest, macos-latest, windows-latest]
-        os: [ubuntu-latest, macos-latest ]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{matrix.os}}
     steps:
       - uses: actions/checkout@main
       - uses: mlugg/setup-zig@v2
         with:
-          version: master
+          version: 0.15.2
       - name: prepare-linux
         if: runner.os == 'Linux'
         run: |
