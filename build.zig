@@ -107,6 +107,9 @@ pub fn build(b: *Build) !void {
     });
     // a manually invoked build step to build auto-docs
     buildDocs(b, target);
+
+    // web server
+    buildWebServer(b, target, optimize);
 }
 
 // helper function to resolve .auto backend based on target platform
@@ -484,6 +487,36 @@ fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
     }
 }
 
+fn buildWebServer(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMode) void {
+    const serve_exe = b.addExecutable(.{
+        .name = "serve",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/httpserver/serve.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+
+    const mod_server = b.addModule("StaticHttpFileServer", .{
+        .root_source_file = b.path("tools/httpserver/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    mod_server.addImport("mime", b.dependency("mime", .{
+        .target = target,
+        .optimize = optimize,
+    }).module("mime"));
+
+    serve_exe.root_module.addImport("StaticHttpFileServer", mod_server);
+
+    const run_serve_exe = b.addRunArtifact(serve_exe);
+    if (b.args) |args| run_serve_exe.addArgs(args);
+
+    const serve_step = b.step("serve", "Serve a directory of files");
+    serve_step.dependOn(&run_serve_exe.step);
+}
+
 //== DOCUMENTATION =====================================================================================================
 fn buildDocs(b: *Build, target: Build.ResolvedTarget) void {
     const lib = b.addLibrary(.{
@@ -542,8 +575,24 @@ const ExampleOptions = struct {
 fn buildExamples(b: *Build, options: ExampleOptions) !void {
     // a top level build step for all examples
     const examples_step = b.step("examples", "Build all examples");
+
     inline for (examples) |example| {
         try buildExample(b, example, examples_step, options);
+    }
+
+    if (isPlatform(options.target.result, .web)) {
+        var buf: [256 * examples.len]u8 = undefined;
+        var str_writer = std.Io.Writer.fixed(&buf);
+
+        _ = try str_writer.print("<html><h1>Examples</h1><body><ul>", .{});
+        inline for (examples) |example| {
+            _ = try str_writer.print("<li><a href=\"{s}.html\">{s}</a></li>\n", .{example.name, example.name});
+        }
+        _ = try str_writer.print("</ul></body></html>", .{});
+
+        const wf = b.addWriteFile("index.html", str_writer.buffered());
+        const index = b.addInstallFile(wf.getDirectory().path(b, "index.html"), "web/index.html");
+        examples_step.dependOn(&index.step);
     }
 }
 

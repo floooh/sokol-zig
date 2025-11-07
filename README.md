@@ -80,6 +80,11 @@ zig build run-clear -Dtarget=wasm32-emscripten
 ...
 ```
 
+To build and serve the examples on http://localhost:8000 run:
+```sh
+zig build examples -Dtarget=wasm32-emscripten && zig build serve -- zig-out/web -p 8000
+```
+
 When building with target `wasm32-emscripten` for the first time, the build script will
 install and activate the Emscripten SDK into the Zig package cache for the latest SDK
 version. There is currently no build system functionality to update or delete the Emscripten SDK
