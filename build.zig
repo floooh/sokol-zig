@@ -98,7 +98,7 @@ pub fn build(b: *Build) !void {
     mod_sokol.linkLibrary(lib_sokol);
 
     // examples build step
-    try buildExamples(b, .{
+    const examples_step = try buildExamples(b, .{
         .target = target,
         .optimize = optimize,
         .backend = sokol_backend,
@@ -109,7 +109,7 @@ pub fn build(b: *Build) !void {
     buildDocs(b, target);
 
     // web server
-    buildWebServer(b, target, optimize);
+    buildWebServer(b, target, optimize, examples_step);
 }
 
 // helper function to resolve .auto backend based on target platform
@@ -487,7 +487,7 @@ fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
     }
 }
 
-fn buildWebServer(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMode) void {
+fn buildWebServer(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMode, examples_step:*Build.Step) void {
     const serve_exe = b.addExecutable(.{
         .name = "serve",
         .root_module = b.createModule(.{
@@ -511,10 +511,11 @@ fn buildWebServer(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMod
     serve_exe.root_module.addImport("StaticHttpFileServer", mod_server);
 
     const run_serve_exe = b.addRunArtifact(serve_exe);
-    if (b.args) |args| run_serve_exe.addArgs(args);
+    run_serve_exe.addArgs(&.{"zig-out/web", "-p", "8000"});
 
-    const serve_step = b.step("serve", "Serve a directory of files");
+    const serve_step = b.step("serve-wasm", "Serve wasm examples");
     serve_step.dependOn(&run_serve_exe.step);
+    serve_step.dependOn(examples_step);
 }
 
 //== DOCUMENTATION =====================================================================================================
@@ -572,7 +573,7 @@ const ExampleOptions = struct {
 };
 
 // build all examples
-fn buildExamples(b: *Build, options: ExampleOptions) !void {
+fn buildExamples(b: *Build, options: ExampleOptions) !*Build.Step {
     // a top level build step for all examples
     const examples_step = b.step("examples", "Build all examples");
 
@@ -594,6 +595,7 @@ fn buildExamples(b: *Build, options: ExampleOptions) !void {
         const index = b.addInstallFile(wf.getDirectory().path(b, "index.html"), "web/index.html");
         examples_step.dependOn(&index.step);
     }
+    return examples_step;
 }
 
 // build one of the examples
