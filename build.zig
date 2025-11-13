@@ -109,7 +109,7 @@ pub fn build(b: *Build) !void {
     buildDocs(b, target);
 
     // web server
-    buildWebServer(b, target, optimize, examples_step);
+    buildWebServer(b, optimize, examples_step);
 }
 
 // helper function to resolve .auto backend based on target platform
@@ -487,24 +487,26 @@ fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
     }
 }
 
-fn buildWebServer(b: *Build, target: Build.ResolvedTarget, optimize: OptimizeMode, examples_step:*Build.Step) void {
+fn buildWebServer(b: *Build, optimize: OptimizeMode, examples_step:*Build.Step) void {
+    const hosttarget = b.graph.host;
+
     const serve_exe = b.addExecutable(.{
         .name = "serve",
         .root_module = b.createModule(.{
             .root_source_file = b.path("tools/httpserver/serve.zig"),
-            .target = target,
+            .target = hosttarget,
             .optimize = optimize,
         }),
     });
 
     const mod_server = b.addModule("StaticHttpFileServer", .{
         .root_source_file = b.path("tools/httpserver/root.zig"),
-        .target = target,
+        .target = hosttarget,
         .optimize = optimize,
     });
 
     mod_server.addImport("mime", b.dependency("mime", .{
-        .target = target,
+        .target = hosttarget,
         .optimize = optimize,
     }).module("mime"));
 

@@ -82,7 +82,7 @@ zig build run-clear -Dtarget=wasm32-emscripten
 
 To build and serve the examples on http://localhost:8000 run:
 ```sh
-zig build serve-wasm
+zig build -Dtarget=wasm32-emscripten serve-wasm
 ```
 
 When building with target `wasm32-emscripten` for the first time, the build script will
