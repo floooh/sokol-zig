@@ -1204,6 +1204,11 @@
 //         doesn't matter if the application is started from the command
 //         line or via double-click.
 //
+//         NOTE: setting both win32_console_attach and win32_console_create
+//         to true also makes sense and has the effect that output
+//         will appear in the existing terminal when started from the cmdline, and
+//         otherwise (when started via double-click) will open a console window.
+//
 // MEMORY ALLOCATION OVERRIDE
 // ==========================
 // You can override the memory allocation functions at initialization time
