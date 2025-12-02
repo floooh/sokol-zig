@@ -48,6 +48,6 @@ pub fn main() void {
         .icon = .{ .sokol_default = true },
         .window_title = "clear.zig",
         .logger = .{ .func = slog.func },
-        .win32_console_attach = true,
+        .win32 = .{ .console_attach = true },
     });
 }

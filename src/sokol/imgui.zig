@@ -29,6 +29,7 @@
 // SOKOL_D3D11
 // SOKOL_METAL
 // SOKOL_WGPU
+// SOKOL_VULKAN
 //
 // Optionally provide the following configuration define both before including the
 // the declaration and implementation:
