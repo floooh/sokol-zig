@@ -20,5 +20,5 @@ jobs:
             sudo apt-get install libglu1-mesa-dev mesa-common-dev xorg-dev libasound-dev
       - name: build Native
         run: zig build examples --summary all
-      # - name: build Wasm
-      #   run: zig build examples --summary all -Dtarget=wasm32-emscripten
+      - name: build Wasm
+        run: zig build examples --summary all -Dtarget=wasm32-emscripten
