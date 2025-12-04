@@ -415,12 +415,12 @@
 //         sg_image sg_query_view_image(sg_view view)
 //         sg_buffer sg_query_view_buffer(sg_view view)
 //
-// --- you can query frame stats and control stats collection via:
+// --- you can query stats and control stats collection via:
 //
-//         sg_query_frame_stats()
-//         sg_enable_frame_stats()
-//         sg_disable_frame_stats()
-//         sg_frame_stats_enabled()
+//         sg_query_stats()
+//         sg_enable_stats()
+//         sg_disable_stats()
+//         sg_stats_enabled()
 //
 // --- you can ask at runtime what backend sokol_gfx.h has been compiled for:
 //
@@ -1869,7 +1869,7 @@
 //   cache is defined in sg_desc.wgpu.bindgroups_cache_size when calling
 //   sg_setup. The cache size must be a power-of-2 number, with the default being
 //   1024. The bindgroups cache behaviour can be observed by calling the new
-//   function sg_query_frame_stats(), where the following struct items are
+//   function sg_query_stats(), where the following struct items are
 //   of interest:
 //
 //     .wgpu.num_bindgroup_cache_hits
@@ -3904,11 +3904,10 @@ pub const ViewInfo = extern struct {
     slot: SlotInfo = .{},
 };
 
-/// sg_frame_stats
+/// sg_stats
 ///
-/// Allows to track generic and backend-specific stats about a
-/// render frame. Obtained by calling sg_query_frame_stats(). The returned
-/// struct contains information about the *previous* frame.
+/// Allows to track generic and backend-specific rendering stats,
+/// obtained via sg_query_stats().
 pub const FrameStatsGl = extern struct {
     num_bind_buffer: u32 = 0,
     num_active_texture: u32 = 0,
@@ -4071,13 +4070,29 @@ pub const FrameStatsVk = extern struct {
     size_descriptor_buffer_writes: u32 = 0,
 };
 
-pub const ResourceStats = extern struct {
-    total_alive: u32 = 0,
-    total_free: u32 = 0,
+pub const FrameResourceStats = extern struct {
     allocated: u32 = 0,
     deallocated: u32 = 0,
     inited: u32 = 0,
     uninited: u32 = 0,
+};
+
+pub const TotalResourceStats = extern struct {
+    alive: u32 = 0,
+    free: u32 = 0,
+    allocated: u32 = 0,
+    deallocated: u32 = 0,
+    inited: u32 = 0,
+    uninited: u32 = 0,
+};
+
+pub const TotalStats = extern struct {
+    buffers: TotalResourceStats = .{},
+    images: TotalResourceStats = .{},
+    samplers: TotalResourceStats = .{},
+    views: TotalResourceStats = .{},
+    shaders: TotalResourceStats = .{},
+    pipelines: TotalResourceStats = .{},
 };
 
 pub const FrameStats = extern struct {
@@ -4098,17 +4113,23 @@ pub const FrameStats = extern struct {
     size_update_buffer: u32 = 0,
     size_append_buffer: u32 = 0,
     size_update_image: u32 = 0,
-    buffers: ResourceStats = .{},
-    images: ResourceStats = .{},
-    samplers: ResourceStats = .{},
-    views: ResourceStats = .{},
-    shaders: ResourceStats = .{},
-    pipelines: ResourceStats = .{},
+    buffers: FrameResourceStats = .{},
+    images: FrameResourceStats = .{},
+    samplers: FrameResourceStats = .{},
+    views: FrameResourceStats = .{},
+    shaders: FrameResourceStats = .{},
+    pipelines: FrameResourceStats = .{},
     gl: FrameStatsGl = .{},
     d3d11: FrameStatsD3d11 = .{},
     metal: FrameStatsMetal = .{},
     wgpu: FrameStatsWgpu = .{},
     vk: FrameStatsVk = .{},
+};
+
+pub const Stats = extern struct {
+    prev_frame: FrameStats = .{},
+    cur_frame: FrameStats = .{},
+    total: TotalStats = .{},
 };
 
 pub const LogItem = enum(i32) {
@@ -5493,30 +5514,30 @@ pub fn failView(view: View) void {
     sg_fail_view(view);
 }
 
-/// frame stats
-extern fn sg_enable_frame_stats() void;
+/// frame and total stats
+extern fn sg_enable_stats() void;
 
-/// frame stats
-pub fn enableFrameStats() void {
-    sg_enable_frame_stats();
+/// frame and total stats
+pub fn enableStats() void {
+    sg_enable_stats();
 }
 
-extern fn sg_disable_frame_stats() void;
+extern fn sg_disable_stats() void;
 
-pub fn disableFrameStats() void {
-    sg_disable_frame_stats();
+pub fn disableStats() void {
+    sg_disable_stats();
 }
 
-extern fn sg_frame_stats_enabled() bool;
+extern fn sg_stats_enabled() bool;
 
-pub fn frameStatsEnabled() bool {
-    return sg_frame_stats_enabled();
+pub fn statsEnabled() bool {
+    return sg_stats_enabled();
 }
 
-extern fn sg_query_frame_stats() FrameStats;
+extern fn sg_query_stats() Stats;
 
-pub fn queryFrameStats() FrameStats {
-    return sg_query_frame_stats();
+pub fn queryStats() Stats {
+    return sg_query_stats();
 }
 
 /// Backend-specific structs and functions, these may come in handy for mixing
