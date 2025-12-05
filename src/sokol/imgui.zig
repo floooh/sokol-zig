@@ -429,6 +429,7 @@ fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
 pub const LogItem = enum(i32) {
     OK,
     MALLOC_FAILED,
+    BUFFER_OVERFLOW,
 };
 
 /// simgui_allocator_t
