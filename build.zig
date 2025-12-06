@@ -37,6 +37,7 @@ pub const SokolBackend = enum {
     gl,
     gles3,
     wgpu,
+    vulkan,
 };
 
 pub const TargetPlatform = enum {
@@ -65,6 +66,7 @@ pub fn build(b: *Build) !void {
     const opt_use_gl = b.option(bool, "gl", "Force OpenGL (default: false)") orelse false;
     const opt_use_gles3 = b.option(bool, "gles3", "Force OpenGL ES3 (default: false)") orelse false;
     const opt_use_wgpu = b.option(bool, "wgpu", "Force WebGPU (default: false, web only)") orelse false;
+    const opt_use_vulkan = b.option(bool, "vulkan", "Force Vulkan (default: false)") orelse false;
     const opt_use_x11 = b.option(bool, "x11", "Force X11 (default: true, Linux only)") orelse true;
     const opt_use_wayland = b.option(bool, "wayland", "Force Wayland (default: false, Linux only, not supported in main-line headers)") orelse false;
     const opt_use_egl = b.option(bool, "egl", "Force EGL (default: false, Linux only)") orelse false;
@@ -74,7 +76,11 @@ pub fn build(b: *Build) !void {
     const opt_sokol_imgui_cprefix = b.option([]const u8, "sokol_imgui_cprefix", "Override Dear ImGui C bindings prefix for sokol_imgui.h (see SOKOL_IMGUI_CPREFIX)");
     const opt_cimgui_header_path = b.option([]const u8, "cimgui_header_path", "Override the Dear ImGui C bindings header name (default: cimgui.h)");
     const opt_dynamic_linkage = b.option(bool, "dynamic_linkage", "Build sokol_clib artifact as dynamic link library.") orelse false;
-    const sokol_backend: SokolBackend = if (opt_use_gl) .gl else if (opt_use_gles3) .gles3 else if (opt_use_wgpu) .wgpu else .auto;
+    const sokol_backend: SokolBackend = if (opt_use_gl) .gl
+        else if (opt_use_gles3) .gles3
+        else if (opt_use_wgpu) .wgpu
+        else if (opt_use_vulkan) .vulkan
+        else .auto;
 
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -221,6 +227,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         .gl => try cflags.appendBounded("-DSOKOL_GLCORE"),
         .gles3 => try cflags.appendBounded("-DSOKOL_GLES3"),
         .wgpu => try cflags.appendBounded("-DSOKOL_WGPU"),
+        .vulkan => try cflags.appendBounded("-DSOKOL_VULKAN"),
         else => @panic("unknown sokol backend"),
     }
 
@@ -267,7 +274,11 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         const link_egl = options.use_egl or options.use_wayland;
         if (link_system_libs) {
             mod.linkSystemLibrary("asound", .{});
-            mod.linkSystemLibrary("GL", .{});
+            if (.vulkan == backend) {
+                mod.linkSystemLibrary("vulkan", .{});
+            } else {
+                mod.linkSystemLibrary("GL", .{});
+            }
             if (options.use_x11) {
                 mod.linkSystemLibrary("X11", .{});
                 mod.linkSystemLibrary("Xi", .{});
@@ -636,6 +647,7 @@ fn buildExampleShader(b: *Build, example: Example) !?*Build.Step {
             .metal_macos = true,
             .hlsl5 = true,
             .wgsl = true,
+            .spirv_vk = true,
         },
         .reflection = true,
     });

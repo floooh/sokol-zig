@@ -58,11 +58,20 @@ By default, the backend 3D API will be selected based on the target platform:
 - Windows: D3D11
 - Linux: GL
 
-To force the GL backend on macOS or Windows, build with ```-Dgl=true```:
+To force the GL backend on macOS or Windows, build with `-Dgl=true`:
 
 ```
 > zig build -Dgl=true run-clear
 ```
+
+To force the experimental Vulkan backend, build with `-Dvulkan=true`
+```
+> zig build -Dvulkan=true run-clear
+```
+
+> NOTE: Vulkan support is currently only supported on Linux, and
+> as of Zig 0.16.x there's an issue with the libvulkan.so DLL from the
+> Vulkan SDK (linking with the system Vulkan DLL appears to work)
 
 The ```clear``` sample prints the selected backend to the terminal:
 
