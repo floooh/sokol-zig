@@ -413,3 +413,26 @@ The main steps to create Dear ImGui apps with sokol-zig are:
 Also see the following example project:
 
 https://github.com/floooh/sokol-zig-imgui-sample/
+
+## Optional sokol-gfx tracing/debug ui
+
+On top of the Dear ImGui support outlined above, you can also integrate
+the sokol-gfx tracing/debug ui which is implemented in sokol_gfx_imgui.h.
+
+To do this, add the `.with_tracing = true` option when looking up
+the sokol-dependency, e.g.:
+
+    ```zig
+    const dep_sokol = b.dependency("sokol", .{
+        .target = target,
+        .optimize = optimize,
+        .with_sokol_imgui = true,
+        .with_tracing = true,
+    });
+    ```
+(note that `.with_tracing` also implicitly enables `.with_sokol_imgui`, so that's
+not strictly necessary)
+
+For an example of how to integrate the tracing/debug UI, see also:
+
+https://github.com/floooh/sokol-zig-imgui-sample/
