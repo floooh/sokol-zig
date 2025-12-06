@@ -69,7 +69,7 @@ pub fn build(b: *Build) !void {
     const opt_use_wayland = b.option(bool, "wayland", "Force Wayland (default: false, Linux only, not supported in main-line headers)") orelse false;
     const opt_use_egl = b.option(bool, "egl", "Force EGL (default: false, Linux only)") orelse false;
     const opt_with_sokol_imgui = b.option(bool, "with_sokol_imgui", "Add support for sokol_imgui.h bindings") orelse false;
-    const opt_with_tracing = b.option(bool, "with_tracing", "Add support for sokol_gfx tracing with imgui") orelse false;
+    const opt_with_tracing = b.option(bool, "with_tracing", "Add support for sokol_gfx tracing and debug UI") orelse false;
     const opt_dont_link_system_libs = b.option(bool, "dont_link_system_libs", "Do not link system libraries required by sokol (default: false)") orelse false;
     const opt_sokol_imgui_cprefix = b.option([]const u8, "sokol_imgui_cprefix", "Override Dear ImGui C bindings prefix for sokol_imgui.h (see SOKOL_IMGUI_CPREFIX)");
     const opt_cimgui_header_path = b.option([]const u8, "cimgui_header_path", "Override the Dear ImGui C bindings header name (default: cimgui.h)");
