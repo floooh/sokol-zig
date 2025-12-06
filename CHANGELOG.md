@@ -4,6 +4,13 @@
 to the example code or the supported Zig version. For actual Sokol header changes, see the
 [sokol changelog](https://github.com/floooh/sokol/blob/master/CHANGELOG.md).
 
+### 06-Dec-2025
+
+Added sokol_gfx_imgui.h bindings (optional sokol-gfx debug/tracing UI).
+See PR https://github.com/floooh/sokol-zig/pull/142 for details.
+
+Many thanks to @robboito!
+
 ### 04-Sep-2025
 
 Updated to emsdk 4.0.14 and removed the `.use_offset_converter` option for the Emscripten
