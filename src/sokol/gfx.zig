@@ -3844,6 +3844,79 @@ pub const ViewDesc = extern struct {
     _end_canary: u32 = 0,
 };
 
+/// sg_trace_hooks
+///
+/// Installable callback functions to keep track of the sokol-gfx calls,
+/// this is useful for debugging, or keeping track of resource creation
+/// and destruction.
+///
+/// Trace hooks are installed with sg_install_trace_hooks(), this returns
+/// another sg_trace_hooks struct with the previous set of
+/// trace hook function pointers. These should be invoked by the
+/// new trace hooks to form a proper call chain.
+pub const TraceHooks = extern struct {
+    user_data: ?*anyopaque = null,
+    reset_state_cache: ?*const fn (?*anyopaque) callconv(.c) void = null,
+    make_buffer: ?*const fn ([*c]const BufferDesc, Buffer, ?*anyopaque) callconv(.c) void = null,
+    make_image: ?*const fn ([*c]const ImageDesc, Image, ?*anyopaque) callconv(.c) void = null,
+    make_sampler: ?*const fn ([*c]const SamplerDesc, Sampler, ?*anyopaque) callconv(.c) void = null,
+    make_shader: ?*const fn ([*c]const ShaderDesc, Shader, ?*anyopaque) callconv(.c) void = null,
+    make_pipeline: ?*const fn ([*c]const PipelineDesc, Pipeline, ?*anyopaque) callconv(.c) void = null,
+    make_view: ?*const fn ([*c]const ViewDesc, View, ?*anyopaque) callconv(.c) void = null,
+    destroy_buffer: ?*const fn (Buffer, ?*anyopaque) callconv(.c) void = null,
+    destroy_image: ?*const fn (Image, ?*anyopaque) callconv(.c) void = null,
+    destroy_sampler: ?*const fn (Sampler, ?*anyopaque) callconv(.c) void = null,
+    destroy_shader: ?*const fn (Shader, ?*anyopaque) callconv(.c) void = null,
+    destroy_pipeline: ?*const fn (Pipeline, ?*anyopaque) callconv(.c) void = null,
+    destroy_view: ?*const fn (View, ?*anyopaque) callconv(.c) void = null,
+    update_buffer: ?*const fn (Buffer, [*c]const Range, ?*anyopaque) callconv(.c) void = null,
+    update_image: ?*const fn (Image, [*c]const ImageData, ?*anyopaque) callconv(.c) void = null,
+    append_buffer: ?*const fn (Buffer, [*c]const Range, i32, ?*anyopaque) callconv(.c) void = null,
+    begin_pass: ?*const fn ([*c]const Pass, ?*anyopaque) callconv(.c) void = null,
+    apply_viewport: ?*const fn (i32, i32, i32, i32, bool, ?*anyopaque) callconv(.c) void = null,
+    apply_scissor_rect: ?*const fn (i32, i32, i32, i32, bool, ?*anyopaque) callconv(.c) void = null,
+    apply_pipeline: ?*const fn (Pipeline, ?*anyopaque) callconv(.c) void = null,
+    apply_bindings: ?*const fn ([*c]const Bindings, ?*anyopaque) callconv(.c) void = null,
+    apply_uniforms: ?*const fn (i32, [*c]const Range, ?*anyopaque) callconv(.c) void = null,
+    draw: ?*const fn (i32, i32, i32, ?*anyopaque) callconv(.c) void = null,
+    draw_ex: ?*const fn (i32, i32, i32, i32, i32, ?*anyopaque) callconv(.c) void = null,
+    dispatch: ?*const fn (i32, i32, i32, ?*anyopaque) callconv(.c) void = null,
+    end_pass: ?*const fn (?*anyopaque) callconv(.c) void = null,
+    commit: ?*const fn (?*anyopaque) callconv(.c) void = null,
+    alloc_buffer: ?*const fn (Buffer, ?*anyopaque) callconv(.c) void = null,
+    alloc_image: ?*const fn (Image, ?*anyopaque) callconv(.c) void = null,
+    alloc_sampler: ?*const fn (Sampler, ?*anyopaque) callconv(.c) void = null,
+    alloc_shader: ?*const fn (Shader, ?*anyopaque) callconv(.c) void = null,
+    alloc_pipeline: ?*const fn (Pipeline, ?*anyopaque) callconv(.c) void = null,
+    alloc_view: ?*const fn (View, ?*anyopaque) callconv(.c) void = null,
+    dealloc_buffer: ?*const fn (Buffer, ?*anyopaque) callconv(.c) void = null,
+    dealloc_image: ?*const fn (Image, ?*anyopaque) callconv(.c) void = null,
+    dealloc_sampler: ?*const fn (Sampler, ?*anyopaque) callconv(.c) void = null,
+    dealloc_shader: ?*const fn (Shader, ?*anyopaque) callconv(.c) void = null,
+    dealloc_pipeline: ?*const fn (Pipeline, ?*anyopaque) callconv(.c) void = null,
+    dealloc_view: ?*const fn (View, ?*anyopaque) callconv(.c) void = null,
+    init_buffer: ?*const fn (Buffer, [*c]const BufferDesc, ?*anyopaque) callconv(.c) void = null,
+    init_image: ?*const fn (Image, [*c]const ImageDesc, ?*anyopaque) callconv(.c) void = null,
+    init_sampler: ?*const fn (Sampler, [*c]const SamplerDesc, ?*anyopaque) callconv(.c) void = null,
+    init_shader: ?*const fn (Shader, [*c]const ShaderDesc, ?*anyopaque) callconv(.c) void = null,
+    init_pipeline: ?*const fn (Pipeline, [*c]const PipelineDesc, ?*anyopaque) callconv(.c) void = null,
+    init_view: ?*const fn (View, [*c]const ViewDesc, ?*anyopaque) callconv(.c) void = null,
+    uninit_buffer: ?*const fn (Buffer, ?*anyopaque) callconv(.c) void = null,
+    uninit_image: ?*const fn (Image, ?*anyopaque) callconv(.c) void = null,
+    uninit_sampler: ?*const fn (Sampler, ?*anyopaque) callconv(.c) void = null,
+    uninit_shader: ?*const fn (Shader, ?*anyopaque) callconv(.c) void = null,
+    uninit_pipeline: ?*const fn (Pipeline, ?*anyopaque) callconv(.c) void = null,
+    uninit_view: ?*const fn (View, ?*anyopaque) callconv(.c) void = null,
+    fail_buffer: ?*const fn (Buffer, ?*anyopaque) callconv(.c) void = null,
+    fail_image: ?*const fn (Image, ?*anyopaque) callconv(.c) void = null,
+    fail_sampler: ?*const fn (Sampler, ?*anyopaque) callconv(.c) void = null,
+    fail_shader: ?*const fn (Shader, ?*anyopaque) callconv(.c) void = null,
+    fail_pipeline: ?*const fn (Pipeline, ?*anyopaque) callconv(.c) void = null,
+    fail_view: ?*const fn (View, ?*anyopaque) callconv(.c) void = null,
+    push_debug_group: ?*const fn ([*c]const u8, ?*anyopaque) callconv(.c) void = null,
+    pop_debug_group: ?*const fn (?*anyopaque) callconv(.c) void = null,
+};
+
 /// sg_buffer_info
 /// sg_image_info
 /// sg_sampler_info
@@ -4846,6 +4919,12 @@ extern fn sg_reset_state_cache() void;
 
 pub fn resetStateCache() void {
     sg_reset_state_cache();
+}
+
+extern fn sg_install_trace_hooks([*c]const TraceHooks) TraceHooks;
+
+pub fn installTraceHooks(trace_hooks: TraceHooks) TraceHooks {
+    return sg_install_trace_hooks(&trace_hooks);
 }
 
 extern fn sg_push_debug_group([*c]const u8) void;
