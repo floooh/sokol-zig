@@ -16,5 +16,9 @@
             .url = "git+https://github.com/floooh/sokol-tools-bin#f190d396afac7d328ce14d098c9ab7448dfc920b",
             .hash = "sokolshdc-0.1.0-r2KZDr4qbAT82i8_UYph-mz3b-ACM3tQr93-rZQ94ghV",
         },
+        .mime = .{
+            .url = "git+https://github.com/andrewrk/mime.git#4535b74bd5fcaa03e22f2f25af164a4c6253af00",
+            .hash = "mime-4.0.0-zwmL--0gAACndOVlROQeDnM0chfojNDS8tpohlsBqMNy",
+        },
     },
 }
