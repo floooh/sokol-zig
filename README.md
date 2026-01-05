@@ -1,8 +1,4 @@
-[![build](https://github.com/floooh/sokol-zig/actions/workflows/main.yml/badge.svg)](https://github.com/floooh/sokol-zig/actions/workflows/main.yml)[![Docs](https://github.com/floooh/sokol-zig/actions/workflows/docs.yml/badge.svg)](https://github.com/floooh/sokol-zig/actions/workflows/docs.yml)
-
-Auto-generated Zig bindings for the [sokol headers](https://github.com/floooh/sokol).
-
-[Auto-generated docs](https://floooh.github.io/sokol-zig-docs) (wip)
+[![build](https://github.com/floooh/sokol-zig/actions/workflows/main.yml/badge.svg)](https://github.com/floooh/sokol-zig/actions/workflows/main.yml)
 
 For Zig version 0.15+
 

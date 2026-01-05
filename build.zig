@@ -76,11 +76,7 @@ pub fn build(b: *Build) !void {
     const opt_sokol_imgui_cprefix = b.option([]const u8, "sokol_imgui_cprefix", "Override Dear ImGui C bindings prefix for sokol_imgui.h (see SOKOL_IMGUI_CPREFIX)");
     const opt_cimgui_header_path = b.option([]const u8, "cimgui_header_path", "Override the Dear ImGui C bindings header name (default: cimgui.h)");
     const opt_dynamic_linkage = b.option(bool, "dynamic_linkage", "Build sokol_clib artifact as dynamic link library.") orelse false;
-    const sokol_backend: SokolBackend = if (opt_use_gl) .gl
-        else if (opt_use_gles3) .gles3
-        else if (opt_use_wgpu) .wgpu
-        else if (opt_use_vulkan) .vulkan
-        else .auto;
+    const sokol_backend: SokolBackend = if (opt_use_gl) .gl else if (opt_use_gles3) .gles3 else if (opt_use_wgpu) .wgpu else if (opt_use_vulkan) .vulkan else .auto;
 
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -113,8 +109,6 @@ pub fn build(b: *Build) !void {
         .mod_sokol = mod_sokol,
         .emsdk = emsdk,
     });
-    // a manually invoked build step to build auto-docs
-    buildDocs(b, target);
 }
 
 // helper function to resolve .auto backend based on target platform
@@ -506,45 +500,6 @@ fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
     } else {
         return null;
     }
-}
-
-//== DOCUMENTATION =====================================================================================================
-fn buildDocs(b: *Build, target: Build.ResolvedTarget) void {
-    const lib = b.addLibrary(.{
-        .name = "sokol",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/sokol/sokol.zig"),
-            .target = target,
-            .optimize = .Debug,
-        }),
-    });
-    // need to invoke an external tool to inject custom functionality into a build step:
-    const tool = b.addExecutable(.{
-        .name = "fixdoctar",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("tools/fixdoctar.zig"),
-            .target = b.graph.host,
-        }),
-    });
-    const tool_step = b.addRunArtifact(tool);
-    tool_step.addArgs(&.{ "--prefix", "sokol", "--input" });
-    tool_step.addDirectoryArg(lib.getEmittedDocs());
-    tool_step.addArg("--output");
-    const sources_tar = tool_step.addOutputFileArg("sources.tar");
-    tool_step.step.dependOn(&lib.step);
-
-    // install doc-gen output and the smaller sources.tar on top
-    const install_docs = b.addInstallDirectory(.{
-        .source_dir = lib.getEmittedDocs(),
-        .install_dir = .prefix,
-        .install_subdir = "docs",
-    });
-    install_docs.step.dependOn(&tool_step.step);
-    const overwrite_sources_tar = b.addInstallFile(sources_tar, "docs/sources.tar");
-    overwrite_sources_tar.step.dependOn(&install_docs.step);
-
-    const doc_step = b.step("docs", "Build documentation");
-    doc_step.dependOn(&overwrite_sources_tar.step);
 }
 
 //=== EXAMPLES =========================================================================================================
