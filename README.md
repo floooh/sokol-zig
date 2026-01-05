@@ -1,10 +1,6 @@
 [![build](https://github.com/floooh/sokol-zig/actions/workflows/main.yml/badge.svg)](https://github.com/floooh/sokol-zig/actions/workflows/main.yml)
 
-For Zig version 0.15+
-
-> NOTE: building for Emscripten is currently broken on the Zig 0.16.x dev version because
-> the Zig stdlib started to depend on the `pthread_kill` call
-> (see: https://github.com/ziglang/zig/issues/25856)
+For Zig version 0.15.2 (0.16 dev currently broken)
 
 In case of breaking changes in Zig, the bindings might fall behind. Please don't hesitate to
 ping me via a Github issue, or even better, provide a PR :)
