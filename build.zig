@@ -476,6 +476,11 @@ fn createEmsdkStep(b: *Build, emsdk: *Build.Dependency) *Build.Step.Run {
     }
 }
 
+fn fileExists(b: *Build, path: []const u8) !bool {
+    const cpath = try b.allocator.dupeZ(u8, path);
+    return 0 == std.c.access(cpath, std.c.F_OK);
+}
+
 // One-time setup of the Emscripten SDK (runs 'emsdk install + activate'). If the
 // SDK had to be setup, a run step will be returned which should be added
 // as dependency to the sokol library (since this needs the emsdk in place),
@@ -489,7 +494,7 @@ fn createEmsdkStep(b: *Build, emsdk: *Build.Dependency) *Build.Step.Run {
 // an .emscripten file yet until the one-time setup.
 fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
     const dot_emsc_path = emSdkLazyPath(b, emsdk, &.{".emscripten"}).getPath(b);
-    const dot_emsc_exists = !std.meta.isError(std.fs.cwd().access(dot_emsc_path, .{}));
+    const dot_emsc_exists = try fileExists(b, dot_emsc_path);
     if (!dot_emsc_exists) {
         const emsdk_install = createEmsdkStep(b, emsdk);
         emsdk_install.addArgs(&.{ "install", "latest" });

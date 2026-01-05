@@ -1,6 +1,8 @@
 [![build](https://github.com/floooh/sokol-zig/actions/workflows/main.yml/badge.svg)](https://github.com/floooh/sokol-zig/actions/workflows/main.yml)
 
-For Zig version 0.15.2 (0.16 dev currently broken)
+For Zig version 0.15+
+
+> NOTE: Emscripten support is currently thoroughly broken in the Zig 0.16 dev stdlib
 
 In case of breaking changes in Zig, the bindings might fall behind. Please don't hesitate to
 ping me via a Github issue, or even better, provide a PR :)
