@@ -476,9 +476,16 @@ fn createEmsdkStep(b: *Build, emsdk: *Build.Dependency) *Build.Step.Run {
     }
 }
 
-fn fileExists(b: *Build, path: []const u8) !bool {
-    const cpath = try b.allocator.dupeZ(u8, path);
-    return 0 == std.c.access(cpath, std.c.F_OK);
+fn fileExists(path: []const u8) !bool {
+    // FIXME: drop support for 0.15.x
+    if (builtin.zig_version.minor > 15) {
+        var threaded: std.Io.Threaded = .init_single_threaded;
+        defer threaded.deinit();
+        const io = threaded.io();
+        return !std.meta.isError(std.Io.Dir.cwd().access(io, path, .{}));
+    } else {
+        return !std.meta.isError(std.fs.cwd().access(path, .{}));
+    }
 }
 
 // One-time setup of the Emscripten SDK (runs 'emsdk install + activate'). If the
@@ -494,7 +501,7 @@ fn fileExists(b: *Build, path: []const u8) !bool {
 // an .emscripten file yet until the one-time setup.
 fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
     const dot_emsc_path = emSdkLazyPath(b, emsdk, &.{".emscripten"}).getPath(b);
-    const dot_emsc_exists = try fileExists(b, dot_emsc_path);
+    const dot_emsc_exists = try fileExists(dot_emsc_path);
     if (!dot_emsc_exists) {
         const emsdk_install = createEmsdkStep(b, emsdk);
         emsdk_install.addArgs(&.{ "install", "latest" });
