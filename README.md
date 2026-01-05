@@ -414,7 +414,7 @@ The main steps to create Dear ImGui apps with sokol-zig are:
   that C compilation works (this needs to find the `cimgui.h` header)
 
     ```zig
-    dep_sokol.artifact("sokol_clib").addIncludePath(cimgui_root);
+    dep_sokol.artifact("sokol_clib").root_module.addIncludePath(cimgui_root);
     ```
 
 Also see the following example project:
