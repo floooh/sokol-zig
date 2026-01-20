@@ -5837,6 +5837,14 @@ pub fn mtlComputeCommandEncoder() ?*const anyopaque {
     return sg_mtl_compute_command_encoder();
 }
 
+/// Metal: return __bridge-casted MTLCommandQueue
+extern fn sg_mtl_command_queue() ?*const anyopaque;
+
+/// Metal: return __bridge-casted MTLCommandQueue
+pub fn mtlCommandQueue() ?*const anyopaque {
+    return sg_mtl_command_queue();
+}
+
 /// Metal: get internal __bridge-casted buffer resource objects
 extern fn sg_mtl_query_buffer_info(Buffer) MtlBufferInfo;
 
