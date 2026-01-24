@@ -1749,6 +1749,7 @@ pub const LogItem = enum(i32) {
     WGPU_REQUEST_ADAPTER_STATUS_ERROR,
     WGPU_REQUEST_ADAPTER_STATUS_UNKNOWN,
     WGPU_CREATE_INSTANCE_FAILED,
+    VULKAN_REQUIRED_INSTANCE_EXTENSION_FUNCTION_MISSING,
     VULKAN_ALLOC_DEVICE_MEMORY_NO_SUITABLE_MEMORY_TYPE,
     VULKAN_ALLOCATE_MEMORY_FAILED,
     VULKAN_CREATE_INSTANCE_FAILED,
@@ -1819,6 +1820,7 @@ pub const WgpuEnvironment = extern struct {
 };
 
 pub const VulkanEnvironment = extern struct {
+    instance: ?*const anyopaque = null,
     physical_device: ?*const anyopaque = null,
     device: ?*const anyopaque = null,
     queue: ?*const anyopaque = null,

@@ -4815,6 +4815,7 @@ pub const WgpuEnvironment = extern struct {
 };
 
 pub const VulkanEnvironment = extern struct {
+    instance: ?*const anyopaque = null,
     physical_device: ?*const anyopaque = null,
     device: ?*const anyopaque = null,
     queue: ?*const anyopaque = null,
