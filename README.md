@@ -2,8 +2,6 @@
 
 For Zig version 0.15+
 
-> NOTE: Emscripten support is currently thoroughly broken in the Zig 0.16 dev stdlib
-
 In case of breaking changes in Zig, the bindings might fall behind. Please don't hesitate to
 ping me via a Github issue, or even better, provide a PR :)
 
@@ -90,8 +88,8 @@ zig build run-clear -Dtarget=wasm32-emscripten
 When building with target `wasm32-emscripten` for the first time, the build script will
 install and activate the Emscripten SDK into the Zig package cache for the latest SDK
 version. There is currently no build system functionality to update or delete the Emscripten SDK
-after this first install. The current workaround is to delete the global Zig cache
-(run `zig env` to see where the Zig cache resides).
+after this first install. The current workaround is to simply delete the `zig-pkg` subdirectory
+(for zig-0.16.x - previous versions stored the emsdk in the global Zig cache instead).
 
 Improving the Emscripten SDK integration with the Zig build system is planned for the future.
 
