@@ -233,7 +233,6 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
             mod.linkFramework("Foundation", .{});
             mod.linkFramework("AudioToolbox", .{});
             if (.metal == backend) {
-                mod.linkFramework("MetalKit", .{});
                 mod.linkFramework("Metal", .{});
             }
             if (mod_target.os.tag == .ios) {
@@ -242,6 +241,9 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
                 if (.gl == backend) {
                     mod.linkFramework("OpenGLES", .{});
                     mod.linkFramework("GLKit", .{});
+                }
+                if (.metal == backend) {
+                    mod.linkFramework("MetalKit", .{});
                 }
             } else if (mod_target.os.tag == .macos) {
                 mod.linkFramework("Cocoa", .{});
