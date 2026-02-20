@@ -66,7 +66,7 @@
 //
 // - on macOS:
 //     - all backends: Foundation, Cocoa, QuartzCore
-//     - with SOKOL_METAL: Metal, MetalKit
+//     - with SOKOL_METAL: Metal
 //     - with SOKOL_GLCORE: OpenGL
 //     - with SOKOL_WGPU: a WebGPU implementation library (tested with webgpu_dawn)
 // - on iOS:
@@ -1651,6 +1651,8 @@ pub const LogItem = enum(i32) {
     OK,
     MALLOC_FAILED,
     MACOS_INVALID_NSOPENGL_PROFILE,
+    MACOS_METAL_CREATE_SWAPCHAIN_DEPTH_TEXTURE_FAILED,
+    MACOS_METAL_CREATE_SWAPCHAIN_MSAA_TEXTURE_FAILED,
     WIN32_LOAD_OPENGL32_DLL_FAILED,
     WIN32_CREATE_HELPER_WINDOW_FAILED,
     WIN32_HELPER_WINDOW_GETDC_FAILED,
