@@ -18,7 +18,7 @@ Related projects:
 On Linux you'll need to install a couple of dev-packages. For instance with Ubuntu:
 
 ```
-sudo apt install xorg-dev libasound-dev`
+sudo apt install xorg-dev libasound-dev
 ```
 
 Additionally when using EGL instead of GLX:
