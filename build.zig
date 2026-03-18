@@ -580,7 +580,7 @@ fn buildExample(b: *Build, example: Example, examples_step: *Build.Step, options
             .use_webgpu = backend == .wgpu,
             .use_webgl2 = backend != .wgpu,
             .use_emmalloc = true,
-            .use_filesystem = false,
+            .use_filesystem = true,
             .shell_file_path = b.path("src/sokol/web/shell.html"),
             .extra_args = &.{"-sSTACK_SIZE=512KB"},
         });
