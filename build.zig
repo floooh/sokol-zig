@@ -230,13 +230,13 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     if (isPlatform(mod_target, .darwin)) {
         try cflags.appendBounded("-ObjC");
         if (link_system_libs) {
-            mod.linkFramework("Foundation", .{});
             mod.linkFramework("QuartzCore", .{});
             mod.linkFramework("AudioToolbox", .{});
             if (.metal == backend) {
                 mod.linkFramework("Metal", .{});
             }
             if (mod_target.os.tag == .ios) {
+                mod.linkFramework("Foundation", .{});
                 mod.linkFramework("UIKit", .{});
                 mod.linkFramework("AVFoundation", .{});
                 if (.gl == backend) {
@@ -244,7 +244,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
                     mod.linkFramework("GLKit", .{});
                 }
             } else if (mod_target.os.tag == .macos) {
-                mod.linkFramework("Cocoa", .{});
+                mod.linkFramework("AppKit", .{});
                 if (.gl == backend) {
                     mod.linkFramework("OpenGL", .{});
                 }
