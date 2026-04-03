@@ -65,12 +65,12 @@
 // Link with the following system libraries:
 //
 // - on macOS:
-//     - all backends: Foundation, Cocoa, QuartzCore
+//     - all backends: AppKit, QuartzCore
 //     - with SOKOL_METAL: Metal
 //     - with SOKOL_GLCORE: OpenGL
 //     - with SOKOL_WGPU: a WebGPU implementation library (tested with webgpu_dawn)
 // - on iOS:
-//     - all backends: Foundation, UIKit, QuartzCore
+//     - all backends: UIKit, QuartzCore
 //     - with SOKOL_METAL: Metal
 //     - with SOKOL_GLES3: OpenGLES, GLKit
 // - on Linux:
