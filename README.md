@@ -1,11 +1,9 @@
 [![build](https://github.com/floooh/sokol-zig/actions/workflows/main.yml/badge.svg)](https://github.com/floooh/sokol-zig/actions/workflows/main.yml)
 
-For Zig version 0.15+
+For Zig version 0.16+
 
 In case of breaking changes in Zig, the bindings might fall behind. Please don't hesitate to
 ping me via a Github issue, or even better, provide a PR :)
-
-Support for stable Zig versions is in branches (e.g. `zig-0.12.0`), those versions are 'frozen in time' though.
 
 Related projects:
 
