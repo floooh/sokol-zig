@@ -144,6 +144,12 @@ pub const LibSokolOptions = struct {
     cimgui_header_path: ?[]const u8 = null,
     dont_link_system_libs: bool = true,
 };
+
+fn sourcePathFromSelf(b: *Build, rel_path: []const u8) Build.LazyPath {
+    const self_dir = comptime std.fs.path.dirname(@src().file) orelse @panic("invalid @src path");
+    return .{ .cwd_relative = b.pathJoin(&.{ self_dir, rel_path }) };
+}
+
 pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     const csrc_root = "src/sokol/c/";
     const csources = [_][]const u8{
@@ -305,7 +311,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     // finally add the C source files
     inline for (csources) |csrc| {
         mod.addCSourceFile(.{
-            .file = b.path(csrc_root ++ csrc),
+            .file = sourcePathFromSelf(b, csrc_root ++ csrc),
             .flags = cflags.items,
         });
     }
@@ -320,20 +326,20 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
             try cflags.appendBounded(b.fmt("-DCIMGUI_HEADER_PATH=\"{s}\"", .{cimgui_header_path}));
         }
         mod.addCSourceFile(.{
-            .file = b.path(csrc_root ++ "sokol_imgui.c"),
+            .file = sourcePathFromSelf(b, csrc_root ++ "sokol_imgui.c"),
             .flags = cflags.items,
         });
 
         if (options.with_tracing) {
             mod.addCSourceFile(.{
-                .file = b.path(csrc_root ++ "sokol_gfx_imgui.c"),
+                .file = sourcePathFromSelf(b, csrc_root ++ "sokol_gfx_imgui.c"),
                 .flags = cflags.items,
             });
         }
     }
 
     // make sokol headers available to users of `sokol_clib` via `#include "sokol/sokol_gfx.h"
-    lib.installHeadersDirectory(b.path("src/sokol/c"), "sokol", .{});
+    lib.installHeadersDirectory(sourcePathFromSelf(b, "src/sokol/c"), "sokol", .{});
 
     // installArtifact allows us to find the lib_sokol compile step when
     // sokol is used as package manager dependency via 'dep_sokol.artifact("sokol_clib")'
