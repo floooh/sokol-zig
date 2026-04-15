@@ -476,12 +476,7 @@ fn createEmsdkStep(b: *Build, emsdk: *Build.Dependency) *Build.Step.Run {
 }
 
 fn fileExists(b: *Build, path: []const u8) !bool {
-    // FIXME: drop support for 0.15.x
-    if (builtin.zig_version.minor > 15) {
-        return !std.meta.isError(std.Io.Dir.cwd().access(b.graph.io, path, .{}));
-    } else {
-        return !std.meta.isError(std.fs.cwd().access(path, .{}));
-    }
+    return !std.meta.isError(std.Io.Dir.cwd().access(b.graph.io, path, .{}));
 }
 
 // One-time setup of the Emscripten SDK (runs 'emsdk install + activate'). If the
