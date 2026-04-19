@@ -556,6 +556,12 @@
 //               rendering goes into
 //             - an optional MTLTexture for the depth/stencil buffer
 //
+// A sg_swapchain struct provided to sg_begin_pass() can indicate that the
+// swapchain is in an 'invalid state' via the boolean `sg_swapchain.invalid`.
+// When this flag is set, all other sg_swapchain members must be zeroed.
+// An invalid swapchain will cause all rendering operations in that pass
+// to be silently skipped.
+//
 // It's recommended that you create a helper function which returns an
 // initialized sg_swapchain struct by value. This can then be directly plugged
 // into the sg_begin_pass function like this:
@@ -2809,7 +2815,14 @@ pub const PassAction = extern struct {
 ///
 /// The width and height *must* be > 0.
 ///
-/// Additionally the following backend API specific objects must be passed in
+/// The boolean `sg_swapchain.invalid` is used to communicate an invalid
+/// swapchain state to sokol-gfx (for instance the swapchain code outside of
+/// sokol-gfx not being able to create swapchain surfaces). When the .invalid
+/// boolean is set to true, all other sg_swapchain struct items must be zeroed
+/// (checked in the validation layer), and all rendering in this swapchain-pass
+/// will be silently skipped.
+///
+/// For valid swapchains, the following backend API specific objects must be passed in
 /// as 'type erased' void pointers:
 ///
 /// GL:
@@ -2888,6 +2901,7 @@ pub const GlSwapchain = extern struct {
 };
 
 pub const Swapchain = extern struct {
+    invalid: bool = false,
     width: i32 = 0,
     height: i32 = 0,
     sample_count: i32 = 0,
@@ -4563,6 +4577,22 @@ pub const LogItem = enum(i32) {
     VALIDATE_BEGINPASS_SWAPCHAIN_WGPU_EXPECT_DEPTHSTENCILVIEW,
     VALIDATE_BEGINPASS_SWAPCHAIN_WGPU_EXPECT_DEPTHSTENCILVIEW_NOTSET,
     VALIDATE_BEGINPASS_SWAPCHAIN_GL_EXPECT_FRAMEBUFFER_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_RENDERIMAGE,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_RENDERIMAGE_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_RENDERVIEW,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_RENDERVIEW_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_DEPTHSTENCILIMAGE,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_DEPTHSTENCILIMAGE_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_DEPTHSTENCILVIEW,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_DEPTHSTENCILVIEW_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_RESOLVEIMAGE,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_RESOLVEIMAGE_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_RESOLVEVIEW,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_RESOLVEVIEW_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_RENDERFINISHEDSEMAPHORE,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_RENDERFINISHEDSEMAPHORE_NOTSET,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_PRESENTCOMPLETESEMAPHORE,
+    VALIDATE_BEGINPASS_SWAPCHAIN_VULKAN_EXPECT_PRESENTCOMPLETESEMAPHORE_NOTSET,
     VALIDATE_BEGINPASS_COLORATTACHMENTVIEWS_CONTINUOUS,
     VALIDATE_BEGINPASS_COLORATTACHMENTVIEW_ALIVE,
     VALIDATE_BEGINPASS_COLORATTACHMENTVIEW_VALID,
