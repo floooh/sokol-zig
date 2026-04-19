@@ -8,7 +8,7 @@
 #define SOKOL_APP_IMGUI_IMPL
 #include CIMGUI_HEADER_PATH
 #endif
+#endif
 #include "sokol_defines.h"
 #include "sokol_app.h"
 #include "sokol_app_imgui.h"
-#endif
