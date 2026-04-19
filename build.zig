@@ -329,6 +329,10 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
                 .file = b.path(csrc_root ++ "sokol_gfx_imgui.c"),
                 .flags = cflags.items,
             });
+            mod.addCSourceFile(.{
+                .file = b.path(csrc_root ++ "sokol_app_imgui.c"),
+                .flags = cflags.items,
+            });
         }
     }
 
