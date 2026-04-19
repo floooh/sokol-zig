@@ -5,12 +5,10 @@
 #endif
 // NOTE: this is only needed for the old cimgui.h bindings
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#define SOKOL_GFX_IMGUI_IMPL
+#define SOKOL_APP_IMGUI_IMPL
 #include CIMGUI_HEADER_PATH
 #endif
 #include "sokol_defines.h"
-#include "sokol_gfx.h"
 #include "sokol_app.h"
-#include "sokol_imgui.h"
-#include "sokol_gfx_imgui.h"
-#endif // SOKOL_TRACE_HOOKS
+#include "sokol_app_imgui.h"
+#endif
