@@ -5,7 +5,7 @@
 #endif
 // NOTE: this is only needed for the old cimgui.h bindings
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#define SOKOL_GFX_IMGUI_IMPL
+#define SOKOL_APP_IMGUI_IMPL
 #include CIMGUI_HEADER_PATH
 #endif
 #endif
