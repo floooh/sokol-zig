@@ -9,5 +9,5 @@ pub const shape = @import("shape.zig");
 pub const glue = @import("glue.zig");
 pub const fetch = @import("fetch.zig");
 pub const imgui = @import("imgui.zig");
-pub const sgimgui = @import("sgimgui.zig");
-pub const sappimgui = @import("sappimgui.zig");
+pub const gfximgui = @import("gfximgui.zig");
+pub const appimgui = @import("appimgui.zig");
