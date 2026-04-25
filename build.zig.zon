@@ -9,12 +9,12 @@
     },
     .dependencies = .{
         .emsdk = .{
-            .url = "git+https://github.com/emscripten-core/emsdk?ref=4.0.14#eff90ca04a3785f571a8095b3a42b63799cf384a",
-            .hash = "N-V-__8AAMGsDwC6L1OfDgzRF1zFI2t-CaR0sVhEm8pmrpxm",
+            .url = "git+https://github.com/emscripten-core/emsdk?ref=5.0.6#948c31acd3f369a5da276e33ab2ed57108c165e5",
+            .hash = "N-V-__8AAMXHCQBSMMTsbLPKGw_6MjsNwQIJWmtoc1fzEuAz",
         },
         .shdc = .{
-            .url = "git+https://github.com/floooh/sokol-tools-bin#03138cef005bc75ef047998a8784b93360486d00",
-            .hash = "sokolshdc-0.1.0-r2KZDvA9SQPMlnvfRE_zVn2cdUz5kjzztVC2P82dS5vx",
+            .url = "git+https://github.com/floooh/sokol-tools-bin#1a9a4e54090fec42c5d13169b638f09f25474953",
+            .hash = "sokolshdc-0.1.0-r2KZDjCESgPWh_7sOPQXfzFSPLsAg1MqRfvwnLa4pbWC",
         },
     },
 }
