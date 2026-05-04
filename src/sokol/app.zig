@@ -1585,7 +1585,7 @@ pub const Event = extern struct {
     scroll_x: f32 = 0.0,
     scroll_y: f32 = 0.0,
     num_touches: i32 = 0,
-    touches: [8]Touchpoint = [_]Touchpoint{.{}} ** 8,
+    touches: [8]Touchpoint = @splat(.{}),
     window_width: i32 = 0,
     window_height: i32 = 0,
     framebuffer_width: i32 = 0,
@@ -1635,7 +1635,7 @@ pub const ImageDesc = extern struct {
 /// will be ignored and the sokol_app.h default icon will be set.
 pub const IconDesc = extern struct {
     sokol_default: bool = false,
-    images: [8]ImageDesc = [_]ImageDesc{.{}} ** 8,
+    images: [8]ImageDesc = @splat(.{}),
 };
 
 /// sapp_allocator

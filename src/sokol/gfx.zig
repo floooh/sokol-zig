@@ -2792,7 +2792,7 @@ pub const StencilAttachmentAction = extern struct {
 };
 
 pub const PassAction = extern struct {
-    colors: [8]ColorAttachmentAction = [_]ColorAttachmentAction{.{}} ** 8,
+    colors: [8]ColorAttachmentAction = @splat(.{}),
     depth: DepthAttachmentAction = .{},
     stencil: StencilAttachmentAction = .{},
 };
@@ -2940,8 +2940,8 @@ pub const Swapchain = extern struct {
 ///         .depth_stencil_attachment = { ... },
 ///     });
 pub const Attachments = extern struct {
-    colors: [8]View = [_]View{.{}} ** 8,
-    resolves: [8]View = [_]View{.{}} ** 8,
+    colors: [8]View = @splat(.{}),
+    resolves: [8]View = @splat(.{}),
     depth_stencil: View = .{},
 };
 
@@ -3072,12 +3072,12 @@ pub const Pass = extern struct {
 /// chunks of vertex- and/or index-data into the same buffer objects.
 pub const Bindings = extern struct {
     _start_canary: u32 = 0,
-    vertex_buffers: [8]Buffer = [_]Buffer{.{}} ** 8,
-    vertex_buffer_offsets: [8]i32 = [_]i32{0} ** 8,
+    vertex_buffers: [8]Buffer = @splat(.{}),
+    vertex_buffer_offsets: [8]i32 = @splat(0),
     index_buffer: Buffer = .{},
     index_buffer_offset: i32 = 0,
-    views: [32]View = [_]View{.{}} ** 32,
-    samplers: [12]Sampler = [_]Sampler{.{}} ** 12,
+    views: [32]View = @splat(.{}),
+    samplers: [12]Sampler = @splat(.{}),
     _end_canary: u32 = 0,
 };
 
@@ -3167,8 +3167,8 @@ pub const BufferDesc = extern struct {
     usage: BufferUsage = .{},
     data: Range = .{},
     label: [*c]const u8 = null,
-    gl_buffers: [2]u32 = [_]u32{0} ** 2,
-    mtl_buffers: [2]?*const anyopaque = [_]?*const anyopaque{null} ** 2,
+    gl_buffers: [2]u32 = @splat(0),
+    mtl_buffers: [2]?*const anyopaque = @splat(null),
     d3d11_buffer: ?*const anyopaque = null,
     wgpu_buffer: ?*const anyopaque = null,
     _end_canary: u32 = 0,
@@ -3258,7 +3258,7 @@ pub const ViewType = enum(i32) {
 ///     [4] => +Z
 ///     [5] => -Z
 pub const ImageData = extern struct {
-    mip_levels: [16]Range = [_]Range{.{}} ** 16,
+    mip_levels: [16]Range = @splat(.{}),
 };
 
 /// sg_image_desc
@@ -3326,9 +3326,9 @@ pub const ImageDesc = extern struct {
     sample_count: i32 = 0,
     data: ImageData = .{},
     label: [*c]const u8 = null,
-    gl_textures: [2]u32 = [_]u32{0} ** 2,
+    gl_textures: [2]u32 = @splat(0),
     gl_texture_target: u32 = 0,
-    mtl_textures: [2]?*const anyopaque = [_]?*const anyopaque{null} ** 2,
+    mtl_textures: [2]?*const anyopaque = @splat(null),
     d3d11_texture: ?*const anyopaque = null,
     wgpu_texture: ?*const anyopaque = null,
     _end_canary: u32 = 0,
@@ -3555,7 +3555,7 @@ pub const ShaderUniformBlock = extern struct {
     wgsl_group0_binding_n: u8 = 0,
     spirv_set0_binding_n: u8 = 0,
     layout: UniformLayout = .DEFAULT,
-    glsl_uniforms: [16]GlslShaderUniform = [_]GlslShaderUniform{.{}} ** 16,
+    glsl_uniforms: [16]GlslShaderUniform = @splat(.{}),
 };
 
 pub const ShaderTextureView = extern struct {
@@ -3625,11 +3625,11 @@ pub const ShaderDesc = extern struct {
     vertex_func: ShaderFunction = .{},
     fragment_func: ShaderFunction = .{},
     compute_func: ShaderFunction = .{},
-    attrs: [16]ShaderVertexAttr = [_]ShaderVertexAttr{.{}} ** 16,
-    uniform_blocks: [8]ShaderUniformBlock = [_]ShaderUniformBlock{.{}} ** 8,
-    views: [32]ShaderView = [_]ShaderView{.{}} ** 32,
-    samplers: [12]ShaderSampler = [_]ShaderSampler{.{}} ** 12,
-    texture_sampler_pairs: [32]ShaderTextureSamplerPair = [_]ShaderTextureSamplerPair{.{}} ** 32,
+    attrs: [16]ShaderVertexAttr = @splat(.{}),
+    uniform_blocks: [8]ShaderUniformBlock = @splat(.{}),
+    views: [32]ShaderView = @splat(.{}),
+    samplers: [12]ShaderSampler = @splat(.{}),
+    texture_sampler_pairs: [32]ShaderTextureSamplerPair = @splat(.{}),
     mtl_threads_per_threadgroup: MtlShaderThreadsPerThreadgroup = .{},
     label: [*c]const u8 = null,
     _end_canary: u32 = 0,
@@ -3729,8 +3729,8 @@ pub const VertexAttrState = extern struct {
 };
 
 pub const VertexLayoutState = extern struct {
-    buffers: [8]VertexBufferLayoutState = [_]VertexBufferLayoutState{.{}} ** 8,
-    attrs: [16]VertexAttrState = [_]VertexAttrState{.{}} ** 16,
+    buffers: [8]VertexBufferLayoutState = @splat(.{}),
+    attrs: [16]VertexAttrState = @splat(.{}),
 };
 
 pub const StencilFaceState = extern struct {
@@ -3782,7 +3782,7 @@ pub const PipelineDesc = extern struct {
     depth: DepthState = .{},
     stencil: StencilState = .{},
     color_count: i32 = 0,
-    colors: [8]ColorTargetState = [_]ColorTargetState{.{}} ** 8,
+    colors: [8]ColorTargetState = @splat(.{}),
     primitive_type: PrimitiveType = .DEFAULT,
     index_type: IndexType = .DEFAULT,
     cull_mode: CullMode = .DEFAULT,
@@ -5694,7 +5694,7 @@ pub const D3d11SamplerInfo = extern struct {
 };
 
 pub const D3d11ShaderInfo = extern struct {
-    cbufs: [8]?*const anyopaque = [_]?*const anyopaque{null} ** 8,
+    cbufs: [8]?*const anyopaque = @splat(null),
     vs: ?*const anyopaque = null,
     fs: ?*const anyopaque = null,
 };
@@ -5714,12 +5714,12 @@ pub const D3d11ViewInfo = extern struct {
 };
 
 pub const MtlBufferInfo = extern struct {
-    buf: [2]?*const anyopaque = [_]?*const anyopaque{null} ** 2,
+    buf: [2]?*const anyopaque = @splat(null),
     active_slot: i32 = 0,
 };
 
 pub const MtlImageInfo = extern struct {
-    tex: [2]?*const anyopaque = [_]?*const anyopaque{null} ** 2,
+    tex: [2]?*const anyopaque = @splat(null),
     active_slot: i32 = 0,
 };
 
@@ -5767,12 +5767,12 @@ pub const WgpuViewInfo = extern struct {
 };
 
 pub const GlBufferInfo = extern struct {
-    buf: [2]u32 = [_]u32{0} ** 2,
+    buf: [2]u32 = @splat(0),
     active_slot: i32 = 0,
 };
 
 pub const GlImageInfo = extern struct {
-    tex: [2]u32 = [_]u32{0} ** 2,
+    tex: [2]u32 = @splat(0),
     tex_target: u32 = 0,
     active_slot: i32 = 0,
 };
@@ -5786,7 +5786,7 @@ pub const GlShaderInfo = extern struct {
 };
 
 pub const GlViewInfo = extern struct {
-    tex_view: [2]u32 = [_]u32{0} ** 2,
+    tex_view: [2]u32 = @splat(0),
     msaa_render_buffer: u32 = 0,
     msaa_resolve_frame_buffer: u32 = 0,
 };

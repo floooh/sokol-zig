@@ -398,7 +398,7 @@ pub const Range = extern struct {
 
 /// a 4x4 matrix wrapper struct
 pub const Mat4 = extern struct {
-    m: [4][4]f32 = [_][4]f32{[_]f32{0.0} ** 4} ** 4,
+    m: [4][4]f32 = @splat(@splat(0.0)),
 };
 
 /// vertex layout of the generated geometry
