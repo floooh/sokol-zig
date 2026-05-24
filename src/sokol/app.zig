@@ -1888,6 +1888,7 @@ pub const GlSwapchain = extern struct {
 };
 
 pub const Swapchain = extern struct {
+    invalid: bool = false,
     width: i32 = 0,
     height: i32 = 0,
     sample_count: i32 = 0,
