@@ -375,8 +375,9 @@
 //         whether the GL context is a GLES context
 //
 //     const void* sapp_android_get_native_activity(void);
-//         On Android, get the native activity ANativeActivity pointer, otherwise
-//         a null pointer.
+//     const void* sapp_android_get_native_window(void);
+//         On Android, get the native activity ANativeActivity pointer,
+//         or native window ANativeWindow pointer, otherwise a null pointer.
 //
 // --- Implement the frame-callback function, this function will be called
 //     on the same thread as the init callback, but might be on a different
@@ -2474,5 +2475,13 @@ extern fn sapp_android_get_native_activity() ?*const anyopaque;
 /// Android: get native activity handle
 pub fn androidGetNativeActivity() ?*const anyopaque {
     return sapp_android_get_native_activity();
+}
+
+/// Android: get native window handle
+extern fn sapp_android_get_native_window() ?*const anyopaque;
+
+/// Android: get native window handle
+pub fn androidGetNativeWindow() ?*const anyopaque {
+    return sapp_android_get_native_window();
 }
 
