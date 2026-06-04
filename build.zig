@@ -4,7 +4,7 @@ const Build = std.Build;
 const OptimizeMode = std.builtin.OptimizeMode;
 
 // re-export the shader compiler module for use by upstream projects
-pub const shdc = @import("shdc");
+//pub const shdc = @import("shdc");
 
 const examples = [_]Example{
     .{ .name = "clear" },
@@ -81,6 +81,9 @@ pub fn build(b: *Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const emsdk = b.dependency("emsdk", .{});
+
+    // add install-emsdk run step
+    emSdkAddInstallStep(b, emsdk);
 
     // a module for the actual bindings, and a static link library with the C code
     const mod_sokol = b.addModule("sokol", .{ .root_source_file = b.path("src/sokol/sokol.zig") });
@@ -180,24 +183,15 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
             std.log.err("Please build with 'zig build -Dtarget=wasm32-emscripten", .{});
             return error.TargetWasm32EmscriptenExpected;
         }
-        const opt_emsdk_setup_step = try emSdkSetupStep(b, emsdk);
-
         // for WebGPU, need to run embuilder for `emdawnwebgpu` after emsdk setup and before C library build
         if (options.backend == .wgpu) {
             const embuilder_step = emBuilderStep(b, .{
                 .port_name = "emdawnwebgpu",
                 .emsdk = emsdk,
             });
-            if (opt_emsdk_setup_step) |emsdk_setup_step| {
-                embuilder_step.step.dependOn(&emsdk_setup_step.step);
-            }
             lib.step.dependOn(&embuilder_step.step);
             // need to add include path to find emdawnwebgpu <webgpu/webgpu.h> before Emscripten SDK webgpu.h
             mod.addSystemIncludePath(emSdkLazyPath(b, emsdk, &.{ "upstream", "emscripten", "cache", "ports", "emdawnwebgpu", "emdawnwebgpu_pkg", "webgpu", "include" }));
-        } else {
-            if (opt_emsdk_setup_step) |emsdk_setup_step| {
-                lib.step.dependOn(&emsdk_setup_step.step);
-            }
         }
 
         // add the Emscripten system include seach path
@@ -365,8 +359,8 @@ pub const EmLinkOptions = struct {
     extra_args: []const []const u8 = &.{},
 };
 pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
-    const emcc_path = emTool(b, options.emsdk, "emcc").getPath(b);
-    const emcc = b.addSystemCommand(&.{emcc_path});
+    const emcc_path = emTool(b, options.emsdk, "emcc");
+    const emcc = b.addRunFile(emcc_path);
     emcc.setName("emcc"); // hide emcc path
     if (options.optimize == .Debug) {
         emcc.addArgs(&.{ "-Og", "-sSAFE_HEAP=1", "-sSTACK_OVERFLOW_CHECK=1" });
@@ -430,8 +424,9 @@ pub const EmRunOptions = struct {
     emsdk: *Build.Dependency,
 };
 pub fn emRunStep(b: *Build, options: EmRunOptions) *Build.Step.Run {
-    const emrun_path = emTool(b, options.emsdk, "emrun").getPath(b);
-    const emrun = b.addSystemCommand(&.{ emrun_path, b.fmt("{s}/web/{s}.html", .{ b.install_path, options.name }) });
+    const emrun_path = emTool(b, options.emsdk, "emrun");
+    const emrun = b.addRunFile(emrun_path);
+    emrun.addArgs(&.{b.fmt("web/{s}.html", .{options.name})});
     return emrun;
 }
 
@@ -444,8 +439,8 @@ pub const EmBuilderOptions = struct {
     emsdk: *Build.Dependency,
 };
 pub fn emBuilderStep(b: *Build, options: EmBuilderOptions) *Build.Step.Run {
-    const embuilder_path = emTool(b, options.emsdk, "embuilder").getPath(b);
-    const embuilder = b.addSystemCommand(&.{embuilder_path});
+    const embuilder_path = emTool(b, options.emsdk, "embuilder");
+    const embuilder = b.addRunFile(embuilder_path);
     if (options.lto) {
         embuilder.addArg("--lto");
     }
@@ -471,16 +466,12 @@ pub fn emTool(b: *Build, emsdk: *Build.Dependency, tool: []const u8) Build.LazyP
 
 fn createEmsdkStep(b: *Build, emsdk: *Build.Dependency) *Build.Step.Run {
     if (builtin.os.tag == .windows) {
-        return b.addSystemCommand(&.{emSdkLazyPath(b, emsdk, &.{"emsdk.bat"}).getPath(b)});
+        return b.addAddRun(emSdkLazyPath(b, emsdk, &.{"emsdk.bat"}));
     } else {
         const step = b.addSystemCommand(&.{"bash"});
-        step.addArg(emSdkLazyPath(b, emsdk, &.{"emsdk"}).getPath(b));
+        step.addFileArg(emSdkLazyPath(b, emsdk, &.{"emsdk"}));
         return step;
     }
-}
-
-fn fileExists(b: *Build, path: []const u8) !bool {
-    return !std.meta.isError(std.Io.Dir.cwd().access(b.graph.io, path, .{}));
 }
 
 // One-time setup of the Emscripten SDK (runs 'emsdk install + activate'). If the
@@ -494,19 +485,13 @@ fn fileExists(b: *Build, path: []const u8) !bool {
 // NOTE 3: this code works just fine when the SDK version is updated in build.zig.zon
 // since this will be cloned into a new zig cache directory which doesn't have
 // an .emscripten file yet until the one-time setup.
-fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
-    const dot_emsc_path = emSdkLazyPath(b, emsdk, &.{".emscripten"}).getPath(b);
-    const dot_emsc_exists = try fileExists(b, dot_emsc_path);
-    if (!dot_emsc_exists) {
-        const emsdk_install = createEmsdkStep(b, emsdk);
-        emsdk_install.addArgs(&.{ "install", "latest" });
-        const emsdk_activate = createEmsdkStep(b, emsdk);
-        emsdk_activate.addArgs(&.{ "activate", "latest" });
-        emsdk_activate.step.dependOn(&emsdk_install.step);
-        return emsdk_activate;
-    } else {
-        return null;
-    }
+fn emSdkAddInstallStep(b: *Build, emsdk: *Build.Dependency) void {
+    const emsdk_install = createEmsdkStep(b, emsdk);
+    emsdk_install.addArgs(&.{ "install", "latest" });
+    const emsdk_activate = createEmsdkStep(b, emsdk);
+    emsdk_activate.addArgs(&.{ "activate", "latest" });
+    emsdk_activate.step.dependOn(&emsdk_install.step);
+    b.step("install-emsdk", "Install Emscripten SDK in zig-pkg").dependOn(&emsdk_activate.step);
 }
 
 //=== EXAMPLES =========================================================================================================
@@ -545,7 +530,7 @@ fn buildExample(b: *Build, example: Example, examples_step: *Build.Step, options
     });
 
     // optionally build shader
-    const opt_shd_step = try buildExampleShader(b, example);
+    const opt_shd_step = null; // try buildExampleShader(b, example);
 
     var run: *Build.Step.Run = undefined;
     if (!isPlatform(options.target.result, .web)) {
@@ -592,25 +577,25 @@ fn buildExample(b: *Build, example: Example, examples_step: *Build.Step, options
     b.step(b.fmt("run-{s}", .{example.name}), b.fmt("Run {s}", .{example.name})).dependOn(&run.step);
 }
 
-fn buildExampleShader(b: *Build, example: Example) !?*Build.Step {
-    if (!example.has_shader) {
-        return null;
-    }
-    const shaders_dir = "examples/shaders/";
-    return shdc.createSourceFile(b, .{
-        .shdc_dep = b.dependency("shdc", .{}),
-        .input = b.fmt("{s}{s}.glsl", .{ shaders_dir, example.name }),
-        .output = b.fmt("{s}{s}.glsl.zig", .{ shaders_dir, example.name }),
-        .slang = .{
-            .glsl430 = example.needs_compute,
-            .glsl410 = !example.needs_compute,
-            .glsl310es = example.needs_compute,
-            .glsl300es = !example.needs_compute,
-            .metal_macos = true,
-            .hlsl5 = true,
-            .wgsl = true,
-            .spirv_vk = true,
-        },
-        .reflection = true,
-    });
-}
+//fn buildExampleShader(b: *Build, example: Example) !?*Build.Step {
+//    if (!example.has_shader) {
+//        return null;
+//    }
+//    const shaders_dir = "examples/shaders/";
+//    return shdc.createSourceFile(b, .{
+//        .shdc_dep = b.dependency("shdc", .{}),
+//        .input = b.fmt("{s}{s}.glsl", .{ shaders_dir, example.name }),
+//        .output = b.fmt("{s}{s}.glsl.zig", .{ shaders_dir, example.name }),
+//        .slang = .{
+//            .glsl430 = example.needs_compute,
+//            .glsl410 = !example.needs_compute,
+//            .glsl310es = example.needs_compute,
+//            .glsl300es = !example.needs_compute,
+//            .metal_macos = true,
+//            .hlsl5 = true,
+//            .wgsl = true,
+//            .spirv_vk = true,
+//        },
+//        .reflection = true,
+//    });
+//}
