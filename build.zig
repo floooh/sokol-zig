@@ -426,7 +426,7 @@ pub const EmRunOptions = struct {
 pub fn emRunStep(b: *Build, options: EmRunOptions) *Build.Step.Run {
     const emrun_path = emTool(b, options.emsdk, "emrun");
     const emrun = b.addRunFile(emrun_path);
-    emrun.addArgs(&.{b.fmt("web/{s}.html", .{options.name})});
+    emrun.addFileArg(b.path(b.fmt("zig-out/web/{s}.html", .{options.name})));
     return emrun;
 }
 
