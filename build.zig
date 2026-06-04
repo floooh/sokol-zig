@@ -4,7 +4,7 @@ const Build = std.Build;
 const OptimizeMode = std.builtin.OptimizeMode;
 
 // re-export the shader compiler module for use by upstream projects
-//pub const shdc = @import("shdc");
+pub const shdc = @import("shdc");
 
 const examples = [_]Example{
     .{ .name = "clear" },
@@ -530,7 +530,7 @@ fn buildExample(b: *Build, example: Example, examples_step: *Build.Step, options
     });
 
     // optionally build shader
-    const opt_shd_step = null; // try buildExampleShader(b, example);
+    const opt_shd_step = try buildExampleShader(b, example);
 
     var run: *Build.Step.Run = undefined;
     if (!isPlatform(options.target.result, .web)) {
@@ -577,25 +577,25 @@ fn buildExample(b: *Build, example: Example, examples_step: *Build.Step, options
     b.step(b.fmt("run-{s}", .{example.name}), b.fmt("Run {s}", .{example.name})).dependOn(&run.step);
 }
 
-//fn buildExampleShader(b: *Build, example: Example) !?*Build.Step {
-//    if (!example.has_shader) {
-//        return null;
-//    }
-//    const shaders_dir = "examples/shaders/";
-//    return shdc.createSourceFile(b, .{
-//        .shdc_dep = b.dependency("shdc", .{}),
-//        .input = b.fmt("{s}{s}.glsl", .{ shaders_dir, example.name }),
-//        .output = b.fmt("{s}{s}.glsl.zig", .{ shaders_dir, example.name }),
-//        .slang = .{
-//            .glsl430 = example.needs_compute,
-//            .glsl410 = !example.needs_compute,
-//            .glsl310es = example.needs_compute,
-//            .glsl300es = !example.needs_compute,
-//            .metal_macos = true,
-//            .hlsl5 = true,
-//            .wgsl = true,
-//            .spirv_vk = true,
-//        },
-//        .reflection = true,
-//    });
-//}
+fn buildExampleShader(b: *Build, example: Example) !?*Build.Step {
+    if (!example.has_shader) {
+        return null;
+    }
+    const shaders_dir = "examples/shaders/";
+    return shdc.createSourceFile(b, .{
+        .shdc_dep = b.dependency("shdc", .{}),
+        .input = b.fmt("{s}{s}.glsl", .{ shaders_dir, example.name }),
+        .output = b.fmt("{s}{s}.glsl.zig", .{ shaders_dir, example.name }),
+        .slang = .{
+            .glsl430 = example.needs_compute,
+            .glsl410 = !example.needs_compute,
+            .glsl310es = example.needs_compute,
+            .glsl300es = !example.needs_compute,
+            .metal_macos = true,
+            .hlsl5 = true,
+            .wgsl = true,
+            .spirv_vk = true,
+        },
+        .reflection = true,
+    });
+}
