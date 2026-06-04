@@ -16,9 +16,11 @@ jobs:
       - name: prepare-linux
         if: runner.os == 'Linux'
         run: |
-            sudo apt-get update
-            sudo apt-get install xorg-dev libasound-dev
+          sudo apt-get update
+          sudo apt-get install xorg-dev libasound-dev
       - name: build Native
         run: zig build examples --summary all
       - name: build Wasm
-        run: zig build examples --summary all -Dtarget=wasm32-emscripten
+        run: |
+          zig build install-emsdk
+          zig build examples --summary all -Dtarget=wasm32-emscripten
