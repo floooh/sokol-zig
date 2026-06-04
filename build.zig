@@ -466,7 +466,7 @@ pub fn emTool(b: *Build, emsdk: *Build.Dependency, tool: []const u8) Build.LazyP
 
 fn createEmsdkStep(b: *Build, emsdk: *Build.Dependency) *Build.Step.Run {
     if (builtin.os.tag == .windows) {
-        return b.addAddRunFile(emSdkLazyPath(b, emsdk, &.{"emsdk.bat"}));
+        return b.addRunFile(emSdkLazyPath(b, emsdk, &.{"emsdk.bat"}));
     } else {
         const step = b.addSystemCommand(&.{"bash"});
         step.addFileArg(emSdkLazyPath(b, emsdk, &.{"emsdk"}));
