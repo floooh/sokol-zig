@@ -10300,6 +10300,7 @@ _SOKOL_PRIVATE bool _sapp_android_init_egl(void) {
     if (eglInitialize(display, NULL, NULL) == EGL_FALSE) {
         return false;
     }
+    EGLint sample_count = _sapp.desc.sample_count > 1 ? _sapp.desc.sample_count : 0;
     EGLint alpha_size = _sapp.desc.alpha ? 8 : 0;
     const EGLint cfg_attributes[] = {
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
@@ -10308,8 +10309,10 @@ _SOKOL_PRIVATE bool _sapp_android_init_egl(void) {
         EGL_GREEN_SIZE, 8,
         EGL_BLUE_SIZE, 8,
         EGL_ALPHA_SIZE, alpha_size,
-        EGL_DEPTH_SIZE, 16,
-        EGL_STENCIL_SIZE, 0,
+        EGL_DEPTH_SIZE, 24,
+        EGL_STENCIL_SIZE, 8,
+        EGL_SAMPLE_BUFFERS, _sapp.desc.sample_count > 1 ? 1 : 0,
+        EGL_SAMPLES, sample_count,
         EGL_NONE,
     };
     EGLConfig available_cfgs[32];
@@ -10323,13 +10326,15 @@ _SOKOL_PRIVATE bool _sapp_android_init_egl(void) {
     bool exact_cfg_found = false;
     for (int i = 0; i < cfg_count; ++i) {
         EGLConfig c = available_cfgs[i];
-        EGLint r, g, b, a, d;
+        EGLint r, g, b, a, d, s, n;
         if (eglGetConfigAttrib(display, c, EGL_RED_SIZE, &r) == EGL_TRUE &&
             eglGetConfigAttrib(display, c, EGL_GREEN_SIZE, &g) == EGL_TRUE &&
             eglGetConfigAttrib(display, c, EGL_BLUE_SIZE, &b) == EGL_TRUE &&
             eglGetConfigAttrib(display, c, EGL_ALPHA_SIZE, &a) == EGL_TRUE &&
             eglGetConfigAttrib(display, c, EGL_DEPTH_SIZE, &d) == EGL_TRUE &&
-            r == 8 && g == 8 && b == 8 && (alpha_size == 0 || a == alpha_size) && d == 16) {
+            eglGetConfigAttrib(display, c, EGL_STENCIL_SIZE, &s) == EGL_TRUE &&
+            eglGetConfigAttrib(display, c, EGL_SAMPLES, &n) == EGL_TRUE &&
+            (r == 8) && (g == 8) && (b == 8) && (a == alpha_size) && (d == 24) && (s == 8) && (n == sample_count)) {
             exact_cfg_found = true;
             config = c;
             break;
