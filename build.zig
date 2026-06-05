@@ -82,6 +82,9 @@ pub fn build(b: *Build) !void {
     const optimize = b.standardOptimizeOption(.{});
     const emsdk = b.dependency("emsdk", .{});
 
+    // add install-emsdk run step
+    emSdkAddInstallStep(b, emsdk);
+
     // a module for the actual bindings, and a static link library with the C code
     const mod_sokol = b.addModule("sokol", .{ .root_source_file = b.path("src/sokol/sokol.zig") });
     const lib_sokol = try buildLibSokol(b, .{
@@ -180,24 +183,15 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
             std.log.err("Please build with 'zig build -Dtarget=wasm32-emscripten", .{});
             return error.TargetWasm32EmscriptenExpected;
         }
-        const opt_emsdk_setup_step = try emSdkSetupStep(b, emsdk);
-
         // for WebGPU, need to run embuilder for `emdawnwebgpu` after emsdk setup and before C library build
         if (options.backend == .wgpu) {
             const embuilder_step = emBuilderStep(b, .{
                 .port_name = "emdawnwebgpu",
                 .emsdk = emsdk,
             });
-            if (opt_emsdk_setup_step) |emsdk_setup_step| {
-                embuilder_step.step.dependOn(&emsdk_setup_step.step);
-            }
             lib.step.dependOn(&embuilder_step.step);
             // need to add include path to find emdawnwebgpu <webgpu/webgpu.h> before Emscripten SDK webgpu.h
             mod.addSystemIncludePath(emSdkLazyPath(b, emsdk, &.{ "upstream", "emscripten", "cache", "ports", "emdawnwebgpu", "emdawnwebgpu_pkg", "webgpu", "include" }));
-        } else {
-            if (opt_emsdk_setup_step) |emsdk_setup_step| {
-                lib.step.dependOn(&emsdk_setup_step.step);
-            }
         }
 
         // add the Emscripten system include seach path
@@ -346,6 +340,15 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     return lib;
 }
 
+// Zig 0.16.0 vs 0.17.0 compatibility helper
+fn addRunFile(b: *Build, p: Build.LazyPath) *Build.Step.Run {
+    if (builtin.zig_version.minor <= 16) {
+        return b.addSystemCommand(&.{p.getPath(b)});
+    } else {
+        return b.addRunFile(p);
+    }
+}
+
 //== EMSCRIPTEN INTEGRATION ============================================================================================
 
 // for wasm32-emscripten, need to run the Emscripten linker from the Emscripten SDK
@@ -365,8 +368,8 @@ pub const EmLinkOptions = struct {
     extra_args: []const []const u8 = &.{},
 };
 pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
-    const emcc_path = emTool(b, options.emsdk, "emcc").getPath(b);
-    const emcc = b.addSystemCommand(&.{emcc_path});
+    const emcc_path = emTool(b, options.emsdk, "emcc");
+    const emcc = addRunFile(b, emcc_path);
     emcc.setName("emcc"); // hide emcc path
     if (options.optimize == .Debug) {
         emcc.addArgs(&.{ "-Og", "-sSAFE_HEAP=1", "-sSTACK_OVERFLOW_CHECK=1" });
@@ -430,8 +433,9 @@ pub const EmRunOptions = struct {
     emsdk: *Build.Dependency,
 };
 pub fn emRunStep(b: *Build, options: EmRunOptions) *Build.Step.Run {
-    const emrun_path = emTool(b, options.emsdk, "emrun").getPath(b);
-    const emrun = b.addSystemCommand(&.{ emrun_path, b.fmt("{s}/web/{s}.html", .{ b.install_path, options.name }) });
+    const emrun_path = emTool(b, options.emsdk, "emrun");
+    const emrun = addRunFile(b, emrun_path);
+    emrun.addFileArg(b.path(b.fmt("zig-out/web/{s}.html", .{options.name})));
     return emrun;
 }
 
@@ -444,8 +448,8 @@ pub const EmBuilderOptions = struct {
     emsdk: *Build.Dependency,
 };
 pub fn emBuilderStep(b: *Build, options: EmBuilderOptions) *Build.Step.Run {
-    const embuilder_path = emTool(b, options.emsdk, "embuilder").getPath(b);
-    const embuilder = b.addSystemCommand(&.{embuilder_path});
+    const embuilder_path = emTool(b, options.emsdk, "embuilder");
+    const embuilder = addRunFile(b, embuilder_path);
     if (options.lto) {
         embuilder.addArg("--lto");
     }
@@ -466,21 +470,18 @@ fn emSdkLazyPath(b: *Build, emsdk: *Build.Dependency, sub_paths: []const []const
 
 // helper function to get Emscripten SDK tool path
 pub fn emTool(b: *Build, emsdk: *Build.Dependency, tool: []const u8) Build.LazyPath {
-    return emSdkLazyPath(b, emsdk, &.{ "upstream", "emscripten", tool });
+    const toolFilename = if (builtin.os.tag == .windows) b.fmt("{s}.bat", .{tool}) else tool;
+    return emSdkLazyPath(b, emsdk, &.{ "upstream", "emscripten", toolFilename });
 }
 
 fn createEmsdkStep(b: *Build, emsdk: *Build.Dependency) *Build.Step.Run {
     if (builtin.os.tag == .windows) {
-        return b.addSystemCommand(&.{emSdkLazyPath(b, emsdk, &.{"emsdk.bat"}).getPath(b)});
+        return addRunFile(b, emSdkLazyPath(b, emsdk, &.{"emsdk.bat"}));
     } else {
         const step = b.addSystemCommand(&.{"bash"});
-        step.addArg(emSdkLazyPath(b, emsdk, &.{"emsdk"}).getPath(b));
+        step.addFileArg(emSdkLazyPath(b, emsdk, &.{"emsdk"}));
         return step;
     }
-}
-
-fn fileExists(b: *Build, path: []const u8) !bool {
-    return !std.meta.isError(std.Io.Dir.cwd().access(b.graph.io, path, .{}));
 }
 
 // One-time setup of the Emscripten SDK (runs 'emsdk install + activate'). If the
@@ -494,19 +495,13 @@ fn fileExists(b: *Build, path: []const u8) !bool {
 // NOTE 3: this code works just fine when the SDK version is updated in build.zig.zon
 // since this will be cloned into a new zig cache directory which doesn't have
 // an .emscripten file yet until the one-time setup.
-fn emSdkSetupStep(b: *Build, emsdk: *Build.Dependency) !?*Build.Step.Run {
-    const dot_emsc_path = emSdkLazyPath(b, emsdk, &.{".emscripten"}).getPath(b);
-    const dot_emsc_exists = try fileExists(b, dot_emsc_path);
-    if (!dot_emsc_exists) {
-        const emsdk_install = createEmsdkStep(b, emsdk);
-        emsdk_install.addArgs(&.{ "install", "latest" });
-        const emsdk_activate = createEmsdkStep(b, emsdk);
-        emsdk_activate.addArgs(&.{ "activate", "latest" });
-        emsdk_activate.step.dependOn(&emsdk_install.step);
-        return emsdk_activate;
-    } else {
-        return null;
-    }
+fn emSdkAddInstallStep(b: *Build, emsdk: *Build.Dependency) void {
+    const emsdk_install = createEmsdkStep(b, emsdk);
+    emsdk_install.addArgs(&.{ "install", "latest" });
+    const emsdk_activate = createEmsdkStep(b, emsdk);
+    emsdk_activate.addArgs(&.{ "activate", "latest" });
+    emsdk_activate.step.dependOn(&emsdk_install.step);
+    b.step("install-emsdk", "Install Emscripten SDK in zig-pkg").dependOn(&emsdk_activate.step);
 }
 
 //=== EXAMPLES =========================================================================================================
