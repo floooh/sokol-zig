@@ -470,7 +470,8 @@ fn emSdkLazyPath(b: *Build, emsdk: *Build.Dependency, sub_paths: []const []const
 
 // helper function to get Emscripten SDK tool path
 pub fn emTool(b: *Build, emsdk: *Build.Dependency, tool: []const u8) Build.LazyPath {
-    return emSdkLazyPath(b, emsdk, &.{ "upstream", "emscripten", tool });
+    const toolFilename = if (builtin.os.tag == .windows) b.fmt("{s}.bat", .{tool}) else tool;
+    return emSdkLazyPath(b, emsdk, &.{ "upstream", "emscripten", toolFilename });
 }
 
 fn createEmsdkStep(b: *Build, emsdk: *Build.Dependency) *Build.Step.Run {
