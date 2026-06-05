@@ -13,7 +13,7 @@
             .hash = "N-V-__8AAMXHCQBSMMTsbLPKGw_6MjsNwQIJWmtoc1fzEuAz",
         },
         .shdc = .{
-            .url = "git+https://github.com/floooh/sokol-tools-bin?ref=zig-get-path-removal#c4b2c616414dd9fb2b8435c310a142c1c99c0fe0",
+            .url = "git+https://github.com/floooh/sokol-tools-bin#de951298f055d82a96140c04c7462a0fed028745",
             .hash = "sokolshdc-0.1.0-r2KZDkeESgMHzbYGbT3eaXMqV-6K6DxDvej22dS9kaYU",
         },
     },
