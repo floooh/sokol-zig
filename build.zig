@@ -340,6 +340,15 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     return lib;
 }
 
+// Zig 0.16.0 vs 0.17.0 compatibility helper
+fn addRunFile(b: *Build, p: Build.LazyPath) *Build.Step.Run {
+    if (builtin.zig_version.minor <= 16) {
+        return b.addSystemCommand(&.{p.getPath(b)});
+    } else {
+        return b.addRunFile(p);
+    }
+}
+
 //== EMSCRIPTEN INTEGRATION ============================================================================================
 
 // for wasm32-emscripten, need to run the Emscripten linker from the Emscripten SDK
@@ -360,7 +369,7 @@ pub const EmLinkOptions = struct {
 };
 pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
     const emcc_path = emTool(b, options.emsdk, "emcc");
-    const emcc = b.addRunFile(emcc_path);
+    const emcc = addRunFile(b, emcc_path);
     emcc.setName("emcc"); // hide emcc path
     if (options.optimize == .Debug) {
         emcc.addArgs(&.{ "-Og", "-sSAFE_HEAP=1", "-sSTACK_OVERFLOW_CHECK=1" });
@@ -425,7 +434,7 @@ pub const EmRunOptions = struct {
 };
 pub fn emRunStep(b: *Build, options: EmRunOptions) *Build.Step.Run {
     const emrun_path = emTool(b, options.emsdk, "emrun");
-    const emrun = b.addRunFile(emrun_path);
+    const emrun = addRunFile(b, emrun_path);
     emrun.addFileArg(b.path(b.fmt("zig-out/web/{s}.html", .{options.name})));
     return emrun;
 }
@@ -440,7 +449,7 @@ pub const EmBuilderOptions = struct {
 };
 pub fn emBuilderStep(b: *Build, options: EmBuilderOptions) *Build.Step.Run {
     const embuilder_path = emTool(b, options.emsdk, "embuilder");
-    const embuilder = b.addRunFile(embuilder_path);
+    const embuilder = addRunFile(b, embuilder_path);
     if (options.lto) {
         embuilder.addArg("--lto");
     }
@@ -466,7 +475,7 @@ pub fn emTool(b: *Build, emsdk: *Build.Dependency, tool: []const u8) Build.LazyP
 
 fn createEmsdkStep(b: *Build, emsdk: *Build.Dependency) *Build.Step.Run {
     if (builtin.os.tag == .windows) {
-        return b.addRunFile(emSdkLazyPath(b, emsdk, &.{"emsdk.bat"}));
+        return addRunFile(b, emSdkLazyPath(b, emsdk, &.{"emsdk.bat"}));
     } else {
         const step = b.addSystemCommand(&.{"bash"});
         step.addFileArg(emSdkLazyPath(b, emsdk, &.{"emsdk"}));
