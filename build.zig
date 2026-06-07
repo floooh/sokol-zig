@@ -83,7 +83,8 @@ pub fn build(b: *Build) !void {
     const emsdk = b.dependency("emsdk", .{});
 
     // add install-emsdk run step
-    emSdkAddInstallStep(b, emsdk);
+    const emsdk_install_step = emSdkInstallStep(b, emsdk, .{});
+    b.step("install-emsdk", "Install Emscripten SDK in zig-pkg").dependOn(emsdk_install_step);
 
     // a module for the actual bindings, and a static link library with the C code
     const mod_sokol = b.addModule("sokol", .{ .root_source_file = b.path("src/sokol/sokol.zig") });
@@ -489,19 +490,20 @@ fn createEmsdkStep(b: *Build, emsdk: *Build.Dependency) *Build.Step.Run {
 // as dependency to the sokol library (since this needs the emsdk in place),
 // if the emsdk was already setup, null will be returned.
 // NOTE: ideally this would go into a separate emsdk-zig package
-// NOTE 2: the file exists check is a bit hacky, it would be cleaner
-// to build an on-the-fly helper tool which takes care of the SDK
-// setup and just does nothing if it already happened
-// NOTE 3: this code works just fine when the SDK version is updated in build.zig.zon
+// NOTE 2: this code works just fine when the SDK version is updated in build.zig.zon
 // since this will be cloned into a new zig cache directory which doesn't have
 // an .emscripten file yet until the one-time setup.
-fn emSdkAddInstallStep(b: *Build, emsdk: *Build.Dependency) void {
+pub const EmSdkInstallOptions = struct {
+    version: []const u8 = "latest",
+};
+pub fn emSdkInstallStep(b: *Build, emsdk: *Build.Dependency, options: EmSdkInstallOptions) *Build.Step {
+    const version = options.version;
     const emsdk_install = createEmsdkStep(b, emsdk);
-    emsdk_install.addArgs(&.{ "install", "latest" });
+    emsdk_install.addArgs(&.{ "install", version });
     const emsdk_activate = createEmsdkStep(b, emsdk);
-    emsdk_activate.addArgs(&.{ "activate", "latest" });
+    emsdk_activate.addArgs(&.{ "activate", version });
     emsdk_activate.step.dependOn(&emsdk_install.step);
-    b.step("install-emsdk", "Install Emscripten SDK in zig-pkg").dependOn(&emsdk_activate.step);
+    return &emsdk_activate.step;
 }
 
 //=== EXAMPLES =========================================================================================================
