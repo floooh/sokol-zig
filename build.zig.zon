@@ -9,8 +9,8 @@
     },
     .dependencies = .{
         .emsdk = .{
-            .url = "git+https://github.com/emscripten-core/emsdk?ref=5.0.6#948c31acd3f369a5da276e33ab2ed57108c165e5",
-            .hash = "N-V-__8AAMXHCQBSMMTsbLPKGw_6MjsNwQIJWmtoc1fzEuAz",
+            .url = "git+https://github.com/emscripten-core/emsdk?ref=6.0.0#d223ae73c6998296e3ab27cf81dc2c2c9fd383de",
+            .hash = "N-V-__8AAFzfCQCASN6D5b3L8-QbCR9pCMDgNoKp69omdc4V",
         },
         .shdc = .{
             .url = "git+https://github.com/floooh/sokol-tools-bin#6801e61ab7ea64dd9369ae9ff2f46d20c61fc655",
