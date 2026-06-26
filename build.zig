@@ -373,7 +373,7 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
     const emcc = addRunFile(b, emcc_path);
     emcc.setName("emcc"); // hide emcc path
     if (options.optimize == .Debug) {
-        emcc.addArgs(&.{ "-Og", "-sSAFE_HEAP=1", "-sSTACK_OVERFLOW_CHECK=1" });
+        emcc.addArgs(&.{ "-g", "-Og", "-sSAFE_HEAP=1", "-sSTACK_OVERFLOW_CHECK=1" });
     } else {
         emcc.addArg("-sASSERTIONS=0");
         if (options.optimize == .ReleaseSmall) {
