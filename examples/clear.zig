@@ -46,6 +46,7 @@ pub fn main() void {
         .width = 640,
         .height = 480,
         .icon = .{ .sokol_default = true },
+        .depth_format = .NONE,
         .window_title = "clear.zig",
         .logger = .{ .func = slog.func },
         .win32 = .{ .console_attach = true },
