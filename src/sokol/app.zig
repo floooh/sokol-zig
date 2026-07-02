@@ -71,7 +71,7 @@
 //     - with SOKOL_WGPU: a WebGPU implementation library (tested with webgpu_dawn)
 // - on iOS:
 //     - all backends: Foundation, UIKit, QuartzCore
-//     - with SOKOL_METAL: Metal
+//     - with SOKOL_METAL: Metal, CoreGraphics
 //     - with SOKOL_GLES3: OpenGLES, GLKit
 // - on Linux:
 //     - all backends: X11, Xi, Xcursor, dl, pthread, m
@@ -125,55 +125,57 @@
 //
 // FEATURE/PLATFORM MATRIX
 // =======================
-//                     | Windows | macOS | Linux |  iOS  | Android |  HTML5
-// --------------------+---------+-------+-------+-------+---------+--------
-// gl 4.x              | YES     | YES   | YES   | ---   | ---     |  ---
-// gles3/webgl2        | ---     | ---   | YES(2)| YES   | YES     |  YES
-// metal               | ---     | YES   | ---   | YES   | ---     |  ---
-// d3d11               | YES     | ---   | ---   | ---   | ---     |  ---
-// webgpu              | YES(4)  | YES(4)| YES(4)| NO    | NO      |  YES
-// noapi               | YES     | TODO  | TODO  | ---   | TODO    |  ---
-// KEY_DOWN            | YES     | YES   | YES   | SOME  | TODO    |  YES
-// KEY_UP              | YES     | YES   | YES   | SOME  | TODO    |  YES
-// CHAR                | YES     | YES   | YES   | YES   | TODO    |  YES
-// MOUSE_DOWN          | YES     | YES   | YES   | ---   | ---     |  YES
-// MOUSE_UP            | YES     | YES   | YES   | ---   | ---     |  YES
-// MOUSE_SCROLL        | YES     | YES   | YES   | ---   | ---     |  YES
-// MOUSE_MOVE          | YES     | YES   | YES   | ---   | ---     |  YES
-// MOUSE_ENTER         | YES     | YES   | YES   | ---   | ---     |  YES
-// MOUSE_LEAVE         | YES     | YES   | YES   | ---   | ---     |  YES
-// TOUCHES_BEGAN       | ---     | ---   | ---   | YES   | YES     |  YES
-// TOUCHES_MOVED       | ---     | ---   | ---   | YES   | YES     |  YES
-// TOUCHES_ENDED       | ---     | ---   | ---   | YES   | YES     |  YES
-// TOUCHES_CANCELLED   | ---     | ---   | ---   | YES   | YES     |  YES
-// RESIZED             | YES     | YES   | YES   | YES   | YES     |  YES
-// ICONIFIED           | YES     | YES   | YES   | ---   | ---     |  ---
-// RESTORED            | YES     | YES   | YES   | ---   | ---     |  ---
-// FOCUSED             | YES     | YES   | YES   | ---   | ---     |  YES
-// UNFOCUSED           | YES     | YES   | YES   | ---   | ---     |  YES
-// SUSPENDED           | ---     | ---   | ---   | YES   | YES     |  TODO
-// RESUMED             | ---     | ---   | ---   | YES   | YES     |  TODO
-// QUIT_REQUESTED      | YES     | YES   | YES   | ---   | ---     |  YES
-// IME                 | TODO    | TODO? | TODO  | ???   | TODO    |  ???
-// key repeat flag     | YES     | YES   | YES   | ---   | ---     |  YES
-// windowed            | YES     | YES   | YES   | ---   | ---     |  YES
-// fullscreen          | YES     | YES   | YES   | YES   | YES     |  YES(3)
-// mouse hide          | YES     | YES   | YES   | ---   | ---     |  YES
-// mouse lock          | YES     | YES   | YES   | ---   | ---     |  YES
-// set cursor type     | YES     | YES   | YES   | ---   | ---     |  YES
-// screen keyboard     | ---     | ---   | ---   | YES   | TODO    |  YES
-// swap interval       | YES     | YES   | YES   | YES   | TODO    |  YES
-// high-dpi            | YES     | YES   | TODO  | YES   | YES     |  YES
-// clipboard           | YES     | YES   | YES   | ---   | ---     |  YES
-// MSAA                | YES     | YES   | YES   | YES   | YES     |  YES
-// drag'n'drop         | YES     | YES   | YES   | ---   | ---     |  YES
-// window icon         | YES     | YES(1)| YES   | ---   | ---     |  YES
+//                     | Windows | macOS | Linux  |  iOS  | Android | HTML5
+// --------------------+---------+-------+--------+-------+---------+-------
+// gl 4.x              | YES     | YES   | YES    | ---   | ---     | ---
+// gles3/webgl2        | ---     | ---   | YES(2) | YES   | YES     | YES
+// metal               | ---     | YES   | ---    | YES   | ---     | ---
+// d3d11               | YES     | ---   | ---    | ---   | ---     | ---
+// webgpu              | YES(4)  | YES(4)| YES(4) | ---   | ---     | YES
+// vulkan              | YES(7)  | ---   | YES(7) | ---   | ---     | ---
+// noapi               | YES     | TODO  | TODO   | ---   | ---     | ---
+// key+char events     | YES     | YES   | YES    | ---   | ---     | YES
+// mouse events        | YES     | YES   | YES    | ---   | ---     | YES
+// touch events        | ---     | ---   | ---    | YES   | YES     | TES
+// resized event       | YES     | YES   | YES    | YES   | YES     | YES
+// iconifed/restored   | YES     | YES   | YES    | ---   | ---     | ---
+// focused/unfocused   | YES     | YES   | YES    | ---   | ---     | YES
+// suspended/resumed   | ---     | ---   | ---    | YES   | YES     | TODO
+// programmatic quit   | YES     | YES   | YES    | ---   | ---     | YES
+// key repeat flag     | YES     | YES   | YES    | ---   | ---     | YES
+// windowed            | YES     | YES   | YES    | ---   | ---     | YES
+// fullscreen          | YES     | YES   | YES    | YES   | YES     | YES(3)
+// depth format        | YES     | YES   | YES    | YES   | YES     | YES
+// mouse hide          | YES     | YES   | YES    | ---   | ---     | YES
+// mouse lock          | YES     | YES   | YES    | ---   | ---     | YES
+// set cursor type     | YES     | YES   | YES    | ---   | ---     | YES
+// screen keyboard     | ---     | ---   | ---    | YES   | ---     | YES
+// high-dpi            | YES     | YES   | TODO   | YES   | YES     | YES
+// clipboard           | YES     | YES   | YES    | ---   | ---     | YES
+// MSAA                | YES     | YES   | YES    | YES   | YES     | YES
+// drag'n'drop         | YES     | YES   | YES    | ---   | ---     | YES
+// window icon         | YES     | YES(1)| YES    | ---   | ---     | YES
+// srgb framebuffer    | YES     | YES   | YES    | YES   | YES     | YES(5)
+// hdr framebuffer     | ---     | YES(6)| ---    | YES(6)| ---     | YES(5)
+// composite mode      | ---     | YES(6)| ---    | ---   | ---     | YES
+// disable vsync       | YES     | ---(8)| YES    | ---   | ---     | ---
+// swap interval       | YES(10) | YES(9)| YES(10)| YES   | ---     |
 //
 // (1) macOS has no regular window icons, instead the dock icon is changed
 // (2) supported with EGL only (not GLX)
 // (3) fullscreen in the browser not supported on iphones
 // (4) WebGPU on native desktop platforms should be considered experimental
 //     and mainly useful for debugging and benchmarking
+// (5) only supported on WebGPU, but not WebGL2
+// (6) only supported on Metal, but not GL/GLES3
+// (7) Vulkan support is highly experimental and has serious frame pacing
+//     issues on Windows+NVIDIA with FIFO presentation mode
+// (8) on macOS+Metal, rendering is currently always vsync-throttled
+//     because CADisplayLink drives the frame loop, and this doesn't allow
+//     running faster than vsync, on macOS+GL, setting the swap interval
+//     has no effect since macOS 13
+// (9) on macOS+GL, setting the swap interval has no effect since macOS 13
+// (10) swap interval not supported on Vulkan
 //
 // STEP BY STEP
 // ============
@@ -1654,6 +1656,7 @@ pub const Allocator = extern struct {
 pub const LogItem = enum(i32) {
     OK,
     MALLOC_FAILED,
+    SWAPCHAIN_DEPTHFORMAT_INVALID,
     MACOS_INVALID_NSOPENGL_PROFILE,
     METAL_CREATE_SWAPCHAIN_DEPTH_TEXTURE_FAILED,
     METAL_CREATE_SWAPCHAIN_MSAA_TEXTURE_FAILED,
@@ -1785,15 +1788,16 @@ pub const LogItem = enum(i32) {
 ///
 /// Defines the pixel format for swapchain surfaces.
 ///
-/// NOTE: when using sokol_gfx.h do not assume that the underlying
-/// values are compatible with sg_pixel_format!
+/// NOTE: DO NOT directly cast this enum to sokol_gfx.h's sg_pixel_format,
+/// the enum values are totally different!
 pub const PixelFormat = enum(i32) {
     DEFAULT,
     NONE,
     RGBA8,
     SRGB8A8,
     BGRA8,
-    SBGRA8,
+    SBGR8A8,
+    RGBA16F,
     DEPTH,
     DEPTH_STENCIL,
 };
@@ -1845,11 +1849,12 @@ pub const Environment = extern struct {
 
 /// sapp_swapchain
 ///
-/// Provides swapchain information for the current frame to the outside
-/// world via a call to sapp_get_swapchain().
+/// Provides swapchain information for the next swapchain render pass,
+/// result of sapp_acquire_swapchain()
 ///
-/// NOTE: sapp_get_swapchain() must be called exactly once per frame since
-/// on some backends it will also acquire the next swapchain image.
+/// NOTE: sapp_acquire_swapchain() must be called exactly once per frame,
+/// and ideally right before the swapchain render pass (e.g. not earlier
+/// in the frame).
 ///
 /// NOTE: when using sokol_gfx.h, don't assume that the sapp_swapchain struct
 /// has the same memory layout as sg_swapchain! Use the sokol_log.h helper
@@ -1902,6 +1907,17 @@ pub const Swapchain = extern struct {
     gl: GlSwapchain = .{},
 };
 
+/// sapp_composite_mode
+///
+/// Preferred composition mode for the framebuffer surface with background.
+/// This is a highly optional feature and may only be fully implemented
+/// on the web APIs (WebGL2 and WebGPU)
+pub const CompositeMode = enum(i32) {
+    DEFAULT,
+    OPAQUE,
+    PREMULTIPLIED,
+};
+
 /// sapp_logger
 ///
 /// Used in sapp_desc to provide a logging function. Please be aware that
@@ -1931,7 +1947,6 @@ pub const Html5Desc = extern struct {
     canvas_selector: [*c]const u8 = null,
     canvas_resize: bool = false,
     preserve_drawing_buffer: bool = false,
-    premultiplied_alpha: bool = false,
     ask_leave_site: bool = false,
     update_document_title: bool = false,
     bubble_mouse_events: bool = false,
@@ -1947,6 +1962,10 @@ pub const IosDesc = extern struct {
     keyboard_resizes_canvas: bool = false,
 };
 
+pub const MetalDesc = extern struct {
+    disable_display_sync: bool = false,
+};
+
 pub const Desc = extern struct {
     init_cb: ?*const fn () callconv(.c) void = null,
     frame_cb: ?*const fn () callconv(.c) void = null,
@@ -1959,11 +1978,15 @@ pub const Desc = extern struct {
     event_userdata_cb: ?*const fn ([*c]const Event, ?*anyopaque) callconv(.c) void = null,
     width: i32 = 0,
     height: i32 = 0,
+    depth_format: PixelFormat = .DEFAULT,
+    composite_mode: CompositeMode = .DEFAULT,
     sample_count: i32 = 0,
     swap_interval: i32 = 0,
+    srgb: bool = false,
+    hdr: bool = false,
+    disable_vsync: bool = false,
     high_dpi: bool = false,
     fullscreen: bool = false,
-    alpha: bool = false,
     window_title: [*c]const u8 = null,
     enable_clipboard: bool = false,
     clipboard_size: i32 = 0,
@@ -1974,6 +1997,7 @@ pub const Desc = extern struct {
     allocator: Allocator = .{},
     logger: Logger = .{},
     gl: GlDesc = .{},
+    metal: MetalDesc = .{},
     win32: Win32Desc = .{},
     html5: Html5Desc = .{},
     ios: IosDesc = .{},
@@ -2036,6 +2060,22 @@ pub const MouseCursor = enum(i32) {
     CUSTOM_15,
     NUM,
 };
+
+/// get runtime environment information
+extern fn sapp_get_environment() Environment;
+
+/// get runtime environment information
+pub fn getEnvironment() Environment {
+    return sapp_get_environment();
+}
+
+/// acquire swapchain info for the next swapchain render pass, call exactly once per frame
+extern fn sapp_acquire_swapchain() Swapchain;
+
+/// acquire swapchain info for the next swapchain render pass, call exactly once per frame
+pub fn acquireSwapchain() Swapchain {
+    return sapp_acquire_swapchain();
+}
 
 /// returns true after sokol-app has been initialized
 extern fn sapp_isvalid() bool;
@@ -2339,22 +2379,6 @@ extern fn sapp_run([*c]const Desc) void;
 /// special run-function for SOKOL_NO_ENTRY (in standard mode this is an empty stub)
 pub fn run(desc: Desc) void {
     sapp_run(&desc);
-}
-
-/// get runtime environment information
-extern fn sapp_get_environment() Environment;
-
-/// get runtime environment information
-pub fn getEnvironment() Environment {
-    return sapp_get_environment();
-}
-
-/// get current frame's swapchain information (call once per frame!)
-extern fn sapp_get_swapchain() Swapchain;
-
-/// get current frame's swapchain information (call once per frame!)
-pub fn getSwapchain() Swapchain {
-    return sapp_get_swapchain();
 }
 
 /// EGL: get EGLDisplay object
