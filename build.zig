@@ -485,14 +485,9 @@ fn createEmsdkStep(b: *Build, emsdk: *Build.Dependency) *Build.Step.Run {
     }
 }
 
-// One-time setup of the Emscripten SDK (runs 'emsdk install + activate'). If the
-// SDK had to be setup, a run step will be returned which should be added
-// as dependency to the sokol library (since this needs the emsdk in place),
-// if the emsdk was already setup, null will be returned.
-// NOTE: ideally this would go into a separate emsdk-zig package
-// NOTE 2: this code works just fine when the SDK version is updated in build.zig.zon
-// since this will be cloned into a new zig cache directory which doesn't have
-// an .emscripten file yet until the one-time setup.
+// helper function for creating a build step to install the Emscripten SDK
+// into zig-pkg, this is wired up to an `install-emsdk` step
+// (e.g. run `zig build install-emsdk)
 pub const EmSdkInstallOptions = struct {
     version: []const u8 = "latest",
 };
