@@ -366,7 +366,9 @@ pub const EmLinkOptions = struct {
     use_emmalloc: bool = false,
     use_filesystem: bool = true,
     shell_file_path: ?Build.LazyPath,
-    extra_args: []const []const u8 = &.{},
+    js_libraries: []const Build.LazyPath = &.{}, // input files via '--js-library [file]'
+    pre_js: []const Build.LazyPath = &.{}, // input files via '--pre-js [file]''
+    extra_args: []const []const u8 = &.{}, // general extra cmdline arguments
 };
 pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
     const emcc_path = emTool(b, options.emsdk, "emcc");
@@ -402,6 +404,14 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
     }
     if (options.shell_file_path) |shell_file_path| {
         emcc.addPrefixedFileArg("--shell-file=", shell_file_path);
+    }
+    for (options.js_libraries) |js_library| {
+        emcc.addArg("--js-library");
+        emcc.addFileArg(js_library);
+    }
+    for (options.pre_js) |pre_js| {
+        emcc.addArg("--pre-js");
+        emcc.addFileArg(pre_js);
     }
     for (options.extra_args) |arg| {
         emcc.addArg(arg);
