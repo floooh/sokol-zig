@@ -1966,6 +1966,10 @@ pub const MetalDesc = extern struct {
     disable_display_sync: bool = false,
 };
 
+pub const AndroidDesc = extern struct {
+    native_event_cb: ?*const fn (?*const anyopaque) callconv(.c) bool = null,
+};
+
 pub const Desc = extern struct {
     init_cb: ?*const fn () callconv(.c) void = null,
     frame_cb: ?*const fn () callconv(.c) void = null,
@@ -2001,6 +2005,7 @@ pub const Desc = extern struct {
     win32: Win32Desc = .{},
     html5: Html5Desc = .{},
     ios: IosDesc = .{},
+    android: AndroidDesc = .{},
 };
 
 /// HTML5 specific: request and response structs for
