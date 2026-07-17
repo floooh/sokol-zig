@@ -396,20 +396,19 @@ pub const Range = extern struct {
     size: usize = 0,
 };
 
+pub const min_vertex_size = 12;
+pub const max_vertex_size = 24;
+
 /// a 4x4 matrix wrapper struct
 pub const Mat4 = extern struct {
     m: [4][4]f32 = @splat(@splat(0.0)),
 };
 
-/// vertex layout of the generated geometry
-pub const Vertex = extern struct {
-    x: f32 = 0.0,
-    y: f32 = 0.0,
-    z: f32 = 0.0,
-    normal: u32 = 0,
-    u: u16 = 0,
-    v: u16 = 0,
-    color: u32 = 0,
+/// a struct for configuring optional vertex components
+pub const OptionalComponents = extern struct {
+    normals: bool = false,
+    texcoords: bool = false,
+    colors: bool = false,
 };
 
 /// a range of draw-elements (sg_draw(int base_element, int num_element, ...))
@@ -436,8 +435,9 @@ pub const BufferItem = extern struct {
     shape_offset: usize = 0,
 };
 
-pub const Buffer = extern struct {
+pub const State = extern struct {
     valid: bool = false,
+    disable: OptionalComponents = .{},
     vertices: BufferItem = .{},
     indices: BufferItem = .{},
 };
@@ -497,117 +497,125 @@ pub const Torus = extern struct {
 };
 
 /// shape builder functions
-extern fn sshape_build_plane([*c]const Buffer, [*c]const Plane) Buffer;
+extern fn sshape_build_plane([*c] State, [*c]const Plane) void;
 
 /// shape builder functions
-pub fn buildPlane(buf: Buffer, params: Plane) Buffer {
-    return sshape_build_plane(&buf, &params);
+pub fn buildPlane(state: *State, params: Plane) void {
+    sshape_build_plane(state, &params);
 }
 
-extern fn sshape_build_box([*c]const Buffer, [*c]const Box) Buffer;
+extern fn sshape_build_box([*c] State, [*c]const Box) void;
 
-pub fn buildBox(buf: Buffer, params: Box) Buffer {
-    return sshape_build_box(&buf, &params);
+pub fn buildBox(state: *State, params: Box) void {
+    sshape_build_box(state, &params);
 }
 
-extern fn sshape_build_sphere([*c]const Buffer, [*c]const Sphere) Buffer;
+extern fn sshape_build_sphere([*c] State, [*c]const Sphere) void;
 
-pub fn buildSphere(buf: Buffer, params: Sphere) Buffer {
-    return sshape_build_sphere(&buf, &params);
+pub fn buildSphere(state: *State, params: Sphere) void {
+    sshape_build_sphere(state, &params);
 }
 
-extern fn sshape_build_cylinder([*c]const Buffer, [*c]const Cylinder) Buffer;
+extern fn sshape_build_cylinder([*c] State, [*c]const Cylinder) void;
 
-pub fn buildCylinder(buf: Buffer, params: Cylinder) Buffer {
-    return sshape_build_cylinder(&buf, &params);
+pub fn buildCylinder(state: *State, params: Cylinder) void {
+    sshape_build_cylinder(state, &params);
 }
 
-extern fn sshape_build_torus([*c]const Buffer, [*c]const Torus) Buffer;
+extern fn sshape_build_torus([*c] State, [*c]const Torus) void;
 
-pub fn buildTorus(buf: Buffer, params: Torus) Buffer {
-    return sshape_build_torus(&buf, &params);
+pub fn buildTorus(state: *State, params: Torus) void {
+    sshape_build_torus(state, &params);
+}
+
+/// compute size of vertex given optional components
+extern fn sshape_vertex_size([*c]const OptionalComponents) usize;
+
+/// compute size of vertex given optional components
+pub fn vertexSize(components: OptionalComponents) usize {
+    return sshape_vertex_size(&components);
 }
 
 /// query required vertex- and index-buffer sizes in bytes
-extern fn sshape_plane_sizes(u32) Sizes;
+extern fn sshape_plane_sizes(u32, usize) Sizes;
 
 /// query required vertex- and index-buffer sizes in bytes
-pub fn planeSizes(tiles: u32) Sizes {
-    return sshape_plane_sizes(tiles);
+pub fn planeSizes(tiles: u32, vertex_size: usize) Sizes {
+    return sshape_plane_sizes(tiles, vertex_size);
 }
 
-extern fn sshape_box_sizes(u32) Sizes;
+extern fn sshape_box_sizes(u32, usize) Sizes;
 
-pub fn boxSizes(tiles: u32) Sizes {
-    return sshape_box_sizes(tiles);
+pub fn boxSizes(tiles: u32, vetrex_size: usize) Sizes {
+    return sshape_box_sizes(tiles, vetrex_size);
 }
 
-extern fn sshape_sphere_sizes(u32, u32) Sizes;
+extern fn sshape_sphere_sizes(u32, u32, usize) Sizes;
 
-pub fn sphereSizes(slices: u32, stacks: u32) Sizes {
-    return sshape_sphere_sizes(slices, stacks);
+pub fn sphereSizes(slices: u32, stacks: u32, vertex_size: usize) Sizes {
+    return sshape_sphere_sizes(slices, stacks, vertex_size);
 }
 
-extern fn sshape_cylinder_sizes(u32, u32) Sizes;
+extern fn sshape_cylinder_sizes(u32, u32, usize) Sizes;
 
-pub fn cylinderSizes(slices: u32, stacks: u32) Sizes {
-    return sshape_cylinder_sizes(slices, stacks);
+pub fn cylinderSizes(slices: u32, stacks: u32, vertex_size: usize) Sizes {
+    return sshape_cylinder_sizes(slices, stacks, vertex_size);
 }
 
-extern fn sshape_torus_sizes(u32, u32) Sizes;
+extern fn sshape_torus_sizes(u32, u32, usize) Sizes;
 
-pub fn torusSizes(sides: u32, rings: u32) Sizes {
-    return sshape_torus_sizes(sides, rings);
+pub fn torusSizes(sides: u32, rings: u32, vertex_size: usize) Sizes {
+    return sshape_torus_sizes(sides, rings, vertex_size);
 }
 
 /// extract sokol-gfx desc structs and primitive ranges from build state
-extern fn sshape_element_range([*c]const Buffer) ElementRange;
+extern fn sshape_element_range([*c]const State) ElementRange;
 
 /// extract sokol-gfx desc structs and primitive ranges from build state
-pub fn elementRange(buf: Buffer) ElementRange {
-    return sshape_element_range(&buf);
+pub fn elementRange(state: State) ElementRange {
+    return sshape_element_range(&state);
 }
 
-extern fn sshape_vertex_buffer_desc([*c]const Buffer) sg.BufferDesc;
+extern fn sshape_vertex_buffer_desc([*c]const State) sg.BufferDesc;
 
-pub fn vertexBufferDesc(buf: Buffer) sg.BufferDesc {
-    return sshape_vertex_buffer_desc(&buf);
+pub fn vertexBufferDesc(state: State) sg.BufferDesc {
+    return sshape_vertex_buffer_desc(&state);
 }
 
-extern fn sshape_index_buffer_desc([*c]const Buffer) sg.BufferDesc;
+extern fn sshape_index_buffer_desc([*c]const State) sg.BufferDesc;
 
-pub fn indexBufferDesc(buf: Buffer) sg.BufferDesc {
-    return sshape_index_buffer_desc(&buf);
+pub fn indexBufferDesc(state: State) sg.BufferDesc {
+    return sshape_index_buffer_desc(&state);
 }
 
-extern fn sshape_vertex_buffer_layout_state() sg.VertexBufferLayoutState;
+extern fn sshape_vertex_buffer_layout_state([*c]const State) sg.VertexBufferLayoutState;
 
-pub fn vertexBufferLayoutState() sg.VertexBufferLayoutState {
-    return sshape_vertex_buffer_layout_state();
+pub fn vertexBufferLayoutState(state: State) sg.VertexBufferLayoutState {
+    return sshape_vertex_buffer_layout_state(&state);
 }
 
-extern fn sshape_position_vertex_attr_state() sg.VertexAttrState;
+extern fn sshape_position_vertex_attr_state([*c]const State) sg.VertexAttrState;
 
-pub fn positionVertexAttrState() sg.VertexAttrState {
-    return sshape_position_vertex_attr_state();
+pub fn positionVertexAttrState(state: State) sg.VertexAttrState {
+    return sshape_position_vertex_attr_state(&state);
 }
 
-extern fn sshape_normal_vertex_attr_state() sg.VertexAttrState;
+extern fn sshape_normal_vertex_attr_state([*c]const State) sg.VertexAttrState;
 
-pub fn normalVertexAttrState() sg.VertexAttrState {
-    return sshape_normal_vertex_attr_state();
+pub fn normalVertexAttrState(state: State) sg.VertexAttrState {
+    return sshape_normal_vertex_attr_state(&state);
 }
 
-extern fn sshape_texcoord_vertex_attr_state() sg.VertexAttrState;
+extern fn sshape_texcoord_vertex_attr_state([*c]const State) sg.VertexAttrState;
 
-pub fn texcoordVertexAttrState() sg.VertexAttrState {
-    return sshape_texcoord_vertex_attr_state();
+pub fn texcoordVertexAttrState(state: State) sg.VertexAttrState {
+    return sshape_texcoord_vertex_attr_state(&state);
 }
 
-extern fn sshape_color_vertex_attr_state() sg.VertexAttrState;
+extern fn sshape_color_vertex_attr_state([*c]const State) sg.VertexAttrState;
 
-pub fn colorVertexAttrState() sg.VertexAttrState {
-    return sshape_color_vertex_attr_state();
+pub fn colorVertexAttrState(state: State) sg.VertexAttrState {
+    return sshape_color_vertex_attr_state(&state);
 }
 
 /// helper functions to build packed color value from floats or bytes
