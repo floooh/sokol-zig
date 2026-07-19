@@ -44,14 +44,13 @@
 //     - cylinder
 //     - torus (donut)
 //
-// Generated vertices look like this:
+// Generated vertex components have the following format (all components
+// except position are optional):
 //
-//     typedef struct sshape_vertex_t {
-//         float x, y, z;
-//         uint32_t normal;        // packed normal as BYTE4N
-//         uint16_t u, v;          // packed uv coords as USHORT2N
-//         uint32_t color;         // packed color as UBYTE4N (r,g,b,a);
-//     } sshape_vertex_t;
+// - position: SG_VERTEXFORMAT_FLOAT3
+// - normal: SG_VERTEXFORMAT_BYTE4N
+// - texcoord: SG_VERTEXFORMAT_USHORT2N
+// - color: SG_VERTEXFORMAT_UBYTE4N
 //
 // Indices are generally 16-bits wide (SG_INDEXTYPE_UINT16) and the indices
 // are written as triangle-lists (SG_PRIMITIVETYPE_TRIANGLES).
@@ -72,67 +71,91 @@
 // STEP-BY-STEP:
 // =============
 //
-// Setup an sshape_buffer_t struct with pointers to memory buffers where
+// Setup an sshape_state_t struct with pointers to memory buffers where
 // generated vertices and indices will be written to:
 //
 // ```c
-// sshape_vertex_t vertices[512];
+// uint8_t vertices[512 * SSHAPE_MAX_VERTEX_SIZE];
 // uint16_t indices[4096];
 //
-// sshape_buffer_t buf = {
-//     .vertices = {
-//         .buffer = SSHAPE_RANGE(vertices),
+// sshape_state_t state = {
+//     .vertices = { .buffer = SSHAPE_RANGE(vertices) },
+//     .indices = { .buffer = SSHAPE_RANGE(indices) }
+// };
+// ```
+// This generates all vertex components. Optionally you can disable
+// vertex components to be generates:
+//
+// ```c
+// sshape_state_t state = {
+//     .disable {
+//         .normals = false,
+//         .texcoords = false,
+//         .colors = false,
 //     },
-//     .indices = {
-//         .buffer = SSHAPE_RANGE(indices),
-//     }
+//     .vertices = { .buffer = SSHAPE_RANGE(vertices) },
+//     .indices = { .buffer = SSHAPE_RANGE(indices) }
 // };
 // ```
 //
-// To find out how big those memory buffers must be (in case you want
-// to allocate dynamically) call the following functions:
+// Compute the per-vertex size in bytes via (note that the arguments
+// have inverted meaning from `sshape_state_t.disabled`, here you define
+// what components are enabled:
 //
 // ```c
-// sshape_sizes_t sshape_plane_sizes(uint32_t tiles);
-// sshape_sizes_t sshape_box_sizes(uint32_t tiles);
-// sshape_sizes_t sshape_sphere_sizes(uint32_t slices, uint32_t stacks);
-// sshape_sizes_t sshape_cylinder_sizes(uint32_t slices, uint32_t stacks);
-// sshape_sizes_t sshape_torus_sizes(uint32_t sides, uint32_t rings);
+// size_t vertex_size = sshape_vertex_size(&(sshape_optional_components_t){
+//     .normals = true,
+//     .texcoords = true,
+//     .colors = true,
+// });
+// ```
+// This returns a value between SSHAPE_MIN_VERTEX_SIZE (12) and
+// SSHAPE_MAX_VERTEX_SIZE (24).
+//
+// To find out how big the vertex and index memory buffers must be (in case you want
+// to allocate dynamically) call the following functions. For `vertex_size`
+// pass in the result of the `sshape_vertex_size` function:
+// ```c
+// sshape_sizes_t sshape_plane_sizes(uint32_t tiles, size_t vertex_size);
+// sshape_sizes_t sshape_box_sizes(uint32_t tiles, size_t vertex_size);
+// sshape_sizes_t sshape_sphere_sizes(uint32_t slices, uint32_t stacks, size_t vertex_size);
+// sshape_sizes_t sshape_cylinder_sizes(uint32_t slices, uint32_t stacks, size_t vertex_size);
+// sshape_sizes_t sshape_torus_sizes(uint32_t sides, uint32_t rings, size_t vertex_size);
 // ```
 //
 // The returned sshape_sizes_t struct contains vertex- and index-counts
 // as well as the equivalent buffer sizes in bytes. For instance:
 //
 // ```c
-// sshape_sizes_t sizes = sshape_sphere_sizes(36, 12);
+// const vtx_size = sshape_vertex_size(&(sshape_optional_components){0});
+// sshape_sizes_t sizes = sshape_sphere_sizes(36, 12, vtx_size);
 // uint32_t num_vertices = sizes.vertices.num;
 // uint32_t num_indices = sizes.indices.num;
 // uint32_t vertex_buffer_size = sizes.vertices.size;
 // uint32_t index_buffer_size = sizes.indices.size;
 // ```
 //
-// With the sshape_buffer_t struct that was setup earlier, call any
+// With the sshape_state_t struct that was setup earlier, call any
 // of the shape-builder functions:
 //
 // ```c
-// sshape_buffer_t sshape_build_plane(const sshape_buffer_t* buf, const sshape_plane_t* params);
-// sshape_buffer_t sshape_build_box(const sshape_buffer_t* buf, const sshape_box_t* params);
-// sshape_buffer_t sshape_build_sphere(const sshape_buffer_t* buf, const sshape_sphere_t* params);
-// sshape_buffer_t sshape_build_cylinder(const sshape_buffer_t* buf, const sshape_cylinder_t* params);
-// sshape_buffer_t sshape_build_torus(const sshape_buffer_t* buf, const sshape_torus_t* params);
+// void sshape_build_plane(sshape_state_t* state, const sshape_plane_t* params);
+// void sshape_build_box(sshape_state_t* state, const sshape_box_t* params);
+// void sshape_build_sphere(sshape_state_t* state, const sshape_sphere_t* params);
+// void sshape_build_cylinder(sshape_state_t* state, const sshape_cylinder_t* params);
+// void sshape_build_torus(sshape_state_t* state, const sshape_torus_t* params);
 // ```
 //
-// Note how the sshape_buffer_t struct is both an input value and the
-// return value. This can be used to append multiple shapes into the
-// same vertex- and index-buffers (more on this later).
+// Note that the `state` arg is a non-const pointer, this indicates
+// that the `sshape_state_t` struct will be mutated.
 //
 // The second argument is a struct which holds creation parameters.
 //
 // For instance to build a sphere with radius 2, 36 "cake slices" and 12 stacks:
 //
 // ```c
-// sshape_buffer_t buf = ...;
-// buf = sshape_build_sphere(&buf, &(sshape_sphere_t){
+// sshape_state_t state = ...;
+// sshape_build_sphere(&state, &(sshape_sphere_t){
 //     .radius = 2.0f,
 //     .slices = 36,
 //     .stacks = 12,
@@ -143,7 +166,7 @@
 // indices, the "valid" field in the result will be true:
 //
 // ```c
-// assert(buf.valid);
+// assert(state.valid);
 // ```
 //
 // The shape creation parameters have "useful defaults", refer to the
@@ -155,8 +178,8 @@
 // or a 4x4 transform matrix to move, rotate and scale the generated vertices:
 //
 // ```c
-// sshape_buffer_t buf = ...;
-// buf = sshape_build_sphere(&buf, &(sshape_sphere_t){
+// sshape_state_t state = ...;
+// sshape_build_sphere(&state, &(sshape_sphere_t){
 //     .radius = 2.0f,
 //     .slices = 36,
 //     .stacks = 12,
@@ -174,7 +197,7 @@
 //         }
 //     }
 // });
-// assert(buf.valid);
+// assert(state.valid);
 // ```
 //
 // The following helper functions can be used to build a packed
@@ -193,21 +216,21 @@
 // are used to extract the build result for plugging into sokol_gfx.h:
 //
 // ```c
-// sshape_element_range_t sshape_element_range(const sshape_buffer_t* buf);
-// sg_buffer_desc sshape_vertex_buffer_desc(const sshape_buffer_t* buf);
-// sg_buffer_desc sshape_index_buffer_desc(const sshape_buffer_t* buf);
-// sg_vertex_buffer_layout_state sshape_vertex_buffer_layout_state(void);
-// sg_vertex_attr_state sshape_position_vertex_attr_state(void);
-// sg_vertex_attr_state sshape_normal_vertex_attr_state(void);
-// sg_vertex_attr_state sshape_texcoord_vertex_attr_state(void);
-// sg_vertex_attr_state sshape_color_vertex_attr_state(void);
+// sshape_element_range_t sshape_element_range(const sshape_state_t* state);
+// sg_buffer_desc sshape_vertex_buffer_desc(const sshape_state_t* state);
+// sg_buffer_desc sshape_index_buffer_desc(const sshape_state_t* state);
+// sg_vertex_buffer_layout_state sshape_vertex_buffer_layout_state(const sshape_state_t* state);
+// sg_vertex_attr_state sshape_position_vertex_attr_state(const sshape_state_t* state);
+// sg_vertex_attr_state sshape_normal_vertex_attr_state(consts sshape_state_t* state);
+// sg_vertex_attr_state sshape_texcoord_vertex_attr_state(const sshape_state_t* state);
+// sg_vertex_attr_state sshape_color_vertex_attr_state(const sshape_state_t* state);
 // ```
 //
 // The sshape_element_range_t struct contains the base-index and number of
 // indices which can be plugged into the sg_draw() call:
 //
 // ```c
-// sshape_element_range_t elms = sshape_element_range(&buf);
+// sshape_element_range_t elms = sshape_element_range(&state);
 // ...
 // sg_draw(elms.base_element, elms.num_elements, 1);
 // ```
@@ -217,33 +240,31 @@
 //
 // ```c
 // // create sokol-gfx vertex buffer
-// sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
+// sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&state);
 // sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
 //
 // // create sokol-gfx index buffer
-// sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
+// sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&state);
 // sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 // ```
 //
 // The remaining functions are used to populate the vertex-layout item
-// in sg_pipeline_desc, note that these functions don't depend on the
-// created geometry, they always return the same result:
+// in sg_pipeline_desc:
 //
 // ```c
 // sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
 //     .layout = {
-//         .buffers[0] = sshape_vertex_buffer_layout_state(),
+//         .buffers[0] = sshape_vertex_buffer_layout_state(&state),
 //         .attrs = {
-//             [0] = sshape_position_vertex_attr_state(),
-//             [1] = ssape_normal_vertex_attr_state(),
-//             [2] = sshape_texcoord_vertex_attr_state(),
-//             [3] = sshape_color_vertex_attr_state()
+//             [0] = sshape_position_vertex_attr_state(&state),
+//             [1] = sshape_normal_vertex_attr_state(&state),
+//             [2] = sshape_texcoord_vertex_attr_state(&state),
+//             [3] = sshape_color_vertex_attr_state(&state)
 //         }
 //     },
 //     ...
 // });
 // ```
-//
 // Note that you don't have to use all generated vertex attributes in the
 // pipeline's vertex layout, the sg_vertex_buffer_layout_state struct returned
 // by sshape_vertex_buffer_layout_state() contains the correct vertex stride
@@ -259,16 +280,16 @@
 // in a single draw-call:
 //
 // ```
-// sshape_vertex_t vertices[128];
+// uint8_t vertices[128 * SSHAPE_MAX_VERTEX_SIZE];
 // uint16_t indices[16];
 //
-// sshape_buffer_t buf = {
+// sshape_state_t state = {
 //     .vertices.buffer = SSHAPE_RANGE(vertices),
 //     .indices.buffer  = SSHAPE_RANGE(indices)
 // };
 //
 // // first cube at pos x=-2.0 (with default size of 1x1x1)
-// buf = sshape_build_cube(&buf, &(sshape_box_t){
+// sshape_build_cube(&state, &(sshape_box_t){
 //     .transform = {
 //         .m = {
 //             { 1.0f, 0.0f, 0.0f, 0.0f },
@@ -281,7 +302,7 @@
 // // ...and append another cube at pos pos=+1.0
 // // NOTE the .merge = true, this tells the shape builder
 // // function to not advance the current shape start offset
-// buf = sshape_build_cube(&buf, &(sshape_box_t){
+// sshape_build_cube(&state, &(sshape_box_t){
 //     .merge = true,
 //     .transform = {
 //         .m = {
@@ -292,11 +313,11 @@
 //         }
 //     }
 // });
-// assert(buf.valid);
+// assert(state.valid);
 //
 // // skipping buffer- and pipeline-creation...
 //
-// sshape_element_range_t elms = sshape_element_range(&buf);
+// sshape_element_range_t elms = sshape_element_range(&state);
 // sg_draw(elms.base_element, elms.num_elements, 1);
 // ```
 //
@@ -305,24 +326,24 @@
 // builder-functions:
 //
 // ```c
-// sshape_vertex_t vertices[128];
+// uint8_t vertices[128 * SSHAPE_MAX_VERTEX_SIZE];
 // uint16_t indices[16];
-// sshape_buffer_t buf = {
+// sshape_state_t state = {
 //     .vertices.buffer = SSHAPE_RANGE(vertices),
 //     .indices.buffer = SSHAPE_RANGE(indices)
 // };
 //
 // // build a red cube...
-// buf = sshape_build_cube(&buf, &(sshape_box_t){
+// sshape_build_cube(&state, &(sshape_box_t){
 //     .color = sshape_color_3b(255, 0, 0)
 // });
-// sshape_element_range_t red_cube = sshape_element_range(&buf);
+// sshape_element_range_t red_cube = sshape_element_range(&state);
 //
 // // append a green cube to the same vertex-/index-buffer:
-// buf = sshape_build_cube(&bud, &sshape_box_t){
+// sshape_build_cube(&state, &sshape_box_t){
 //     .color = sshape_color_3b(0, 255, 0);
 // });
-// sshape_element_range_t green_cube = sshape_element_range(&buf);
+// sshape_element_range_t green_cube = sshape_element_range(&state);
 //
 // // skipping buffer- and pipeline-creation...
 //
@@ -387,7 +408,7 @@ pub fn asRange(val: anytype) Range {
     }
 }
 
-/// sshape_range is a pointer-size-pair struct used to pass memory
+/// sshape_range_t is a pointer-size-pair struct used to pass memory
 /// blobs into sokol-shape. When initialized from a value type
 /// (array or struct), use the SSHAPE_RANGE() macro to build
 /// an sshape_range struct.
@@ -429,7 +450,7 @@ pub const Sizes = extern struct {
 };
 
 /// in/out struct to keep track of mesh-build state
-pub const BufferItem = extern struct {
+pub const BufferState = extern struct {
     buffer: Range = .{},
     data_size: usize = 0,
     shape_offset: usize = 0,
@@ -438,8 +459,8 @@ pub const BufferItem = extern struct {
 pub const State = extern struct {
     valid: bool = false,
     disable: OptionalComponents = .{},
-    vertices: BufferItem = .{},
-    indices: BufferItem = .{},
+    vertices: BufferState = .{},
+    indices: BufferState = .{},
 };
 
 /// creation parameters for the different shape types
@@ -546,8 +567,8 @@ pub fn planeSizes(tiles: u32, vertex_size: usize) Sizes {
 
 extern fn sshape_box_sizes(u32, usize) Sizes;
 
-pub fn boxSizes(tiles: u32, vetrex_size: usize) Sizes {
-    return sshape_box_sizes(tiles, vetrex_size);
+pub fn boxSizes(tiles: u32, vertex_size: usize) Sizes {
+    return sshape_box_sizes(tiles, vertex_size);
 }
 
 extern fn sshape_sphere_sizes(u32, u32, usize) Sizes;
