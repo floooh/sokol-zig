@@ -57,16 +57,67 @@ export fn init() void {
         .clear_value = .{ .r = 0, .g = 0, .b = 0, .a = 1 },
     };
 
+    // generate shape geometries
+    var vertices: [sshape.max_vertex_size * 6 * 1024]u8 = undefined;
+    var indices: [16 * 1024]u16 = undefined;
+    var shp: sshape.State = .{
+        .vertices = .{ .buffer = sshape.asRange(&vertices) },
+        .indices = .{ .buffer = sshape.asRange(&indices) },
+    };
+    sshape.buildBox(&shp, .{
+        .width = 1.0,
+        .height = 1.0,
+        .depth = 1.0,
+        .tiles = 10,
+        .random_colors = true,
+    });
+    state.shapes[0].draw = sshape.elementRange(shp);
+    sshape.buildPlane(&shp, .{
+        .width = 1.0,
+        .depth = 1.0,
+        .tiles = 10,
+        .random_colors = true,
+    });
+    state.shapes[1].draw = sshape.elementRange(shp);
+    sshape.buildSphere(&shp, .{
+        .radius = 0.75,
+        .slices = 36,
+        .stacks = 20,
+        .random_colors = true,
+    });
+    state.shapes[2].draw = sshape.elementRange(shp);
+    sshape.buildCylinder(&shp, .{
+        .radius = 0.5,
+        .height = 1.5,
+        .slices = 36,
+        .stacks = 10,
+        .random_colors = true,
+    });
+    state.shapes[3].draw = sshape.elementRange(shp);
+    sshape.buildTorus(&shp, .{
+        .radius = 0.5,
+        .ring_radius = 0.3,
+        .rings = 36,
+        .sides = 18,
+        .random_colors = true,
+    });
+    state.shapes[4].draw = sshape.elementRange(shp);
+    assert(shp.valid);
+
+    // one vertex- and index-buffer for all shapes
+    state.bind.vertex_buffers[0] = sg.makeBuffer(sshape.vertexBufferDesc(shp));
+    state.bind.index_buffer = sg.makeBuffer(sshape.indexBufferDesc(shp));
+
     // shader- and pipeline-object
     state.pip = sg.makePipeline(.{
         .shader = sg.makeShader(shd.shapesShaderDesc(sg.queryBackend())),
         .layout = init: {
             var l = sg.VertexLayoutState{};
-            l.buffers[0] = sshape.vertexBufferLayoutState();
-            l.attrs[shd.ATTR_shapes_position] = sshape.positionVertexAttrState();
-            l.attrs[shd.ATTR_shapes_normal] = sshape.normalVertexAttrState();
-            l.attrs[shd.ATTR_shapes_texcoord] = sshape.texcoordVertexAttrState();
-            l.attrs[shd.ATTR_shapes_color0] = sshape.colorVertexAttrState();
+            l.buffers[0] = sshape.vertexBufferLayoutState(shp);
+            l.attrs[shd.ATTR_shapes_position] = sshape.positionVertexAttrState(shp);
+            l.attrs[shd.ATTR_shapes_normal] = sshape.normalVertexAttrState(shp);
+            l.attrs[shd.ATTR_shapes_texcoord] = sshape.texcoordVertexAttrState(shp);
+            l.attrs[shd.ATTR_shapes_color0] = sshape.colorVertexAttrState(shp);
             break :init l;
         },
         .index_type = .UINT16,
@@ -76,57 +127,6 @@ export fn init() void {
             .write_enabled = true,
         },
     });
-
-    // generate shape geometries
-    var vertices: [6 * 1024]sshape.Vertex = undefined;
-    var indices: [16 * 1024]u16 = undefined;
-    var buf: sshape.Buffer = .{
-        .vertices = .{ .buffer = sshape.asRange(&vertices) },
-        .indices = .{ .buffer = sshape.asRange(&indices) },
-    };
-    buf = sshape.buildBox(buf, .{
-        .width = 1.0,
-        .height = 1.0,
-        .depth = 1.0,
-        .tiles = 10,
-        .random_colors = true,
-    });
-    state.shapes[0].draw = sshape.elementRange(buf);
-    buf = sshape.buildPlane(buf, .{
-        .width = 1.0,
-        .depth = 1.0,
-        .tiles = 10,
-        .random_colors = true,
-    });
-    state.shapes[1].draw = sshape.elementRange(buf);
-    buf = sshape.buildSphere(buf, .{
-        .radius = 0.75,
-        .slices = 36,
-        .stacks = 20,
-        .random_colors = true,
-    });
-    state.shapes[2].draw = sshape.elementRange(buf);
-    buf = sshape.buildCylinder(buf, .{
-        .radius = 0.5,
-        .height = 1.5,
-        .slices = 36,
-        .stacks = 10,
-        .random_colors = true,
-    });
-    state.shapes[3].draw = sshape.elementRange(buf);
-    buf = sshape.buildTorus(buf, .{
-        .radius = 0.5,
-        .ring_radius = 0.3,
-        .rings = 36,
-        .sides = 18,
-        .random_colors = true,
-    });
-    state.shapes[4].draw = sshape.elementRange(buf);
-    assert(buf.valid);
-
-    // one vertex- and index-buffer for all shapes
-    state.bind.vertex_buffers[0] = sg.makeBuffer(sshape.vertexBufferDesc(buf));
-    state.bind.index_buffer = sg.makeBuffer(sshape.indexBufferDesc(buf));
 }
 
 export fn frame() void {

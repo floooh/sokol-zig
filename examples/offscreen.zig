@@ -83,26 +83,26 @@ export fn init() void {
 
     // a donut shape which is rendered into the offscreen render target, and
     // a sphere shape which is rendered into the default framebuffer
-    var vertices: [4000]sshape.Vertex = undefined;
+    var vertices: [4000 * sshape.max_vertex_size]u8 = undefined;
     var indices: [24000]u16 = undefined;
-    var buf: sshape.Buffer = .{
+    var shp: sshape.State = .{
         .vertices = .{ .buffer = sshape.asRange(&vertices) },
         .indices = .{ .buffer = sshape.asRange(&indices) },
     };
-    buf = sshape.buildTorus(buf, .{ .radius = 0.5, .ring_radius = 0.3, .sides = 20, .rings = 36 });
-    state.donut = sshape.elementRange(buf);
-    buf = sshape.buildSphere(buf, .{
+    sshape.buildTorus(&shp, .{ .radius = 0.5, .ring_radius = 0.3, .sides = 20, .rings = 36 });
+    state.donut = sshape.elementRange(shp);
+    sshape.buildSphere(&shp, .{
         .radius = 0.5,
         .slices = 72,
         .stacks = 40,
     });
-    state.sphere = sshape.elementRange(buf);
+    state.sphere = sshape.elementRange(shp);
 
-    const vbuf = sg.makeBuffer(sshape.vertexBufferDesc(buf));
+    const vbuf = sg.makeBuffer(sshape.vertexBufferDesc(shp));
     state.offscreen.bind.vertex_buffers[0] = vbuf;
     state.display.bind.vertex_buffers[0] = vbuf;
 
-    const ibuf = sg.makeBuffer(sshape.indexBufferDesc(buf));
+    const ibuf = sg.makeBuffer(sshape.indexBufferDesc(shp));
     state.offscreen.bind.index_buffer = ibuf;
     state.display.bind.index_buffer = ibuf;
 
@@ -111,9 +111,9 @@ export fn init() void {
         .shader = sg.makeShader(shd.offscreenShaderDesc(sg.queryBackend())),
         .layout = init: {
             var l = sg.VertexLayoutState{};
-            l.buffers[0] = sshape.vertexBufferLayoutState();
-            l.attrs[shd.ATTR_offscreen_position] = sshape.positionVertexAttrState();
-            l.attrs[shd.ATTR_offscreen_normal] = sshape.normalVertexAttrState();
+            l.buffers[0] = sshape.vertexBufferLayoutState(shp);
+            l.attrs[shd.ATTR_offscreen_position] = sshape.positionVertexAttrState(shp);
+            l.attrs[shd.ATTR_offscreen_normal] = sshape.normalVertexAttrState(shp);
             break :init l;
         },
         .index_type = .UINT16,
@@ -136,10 +136,10 @@ export fn init() void {
         .shader = sg.makeShader(shd.defaultShaderDesc(sg.queryBackend())),
         .layout = init: {
             var l = sg.VertexLayoutState{};
-            l.buffers[0] = sshape.vertexBufferLayoutState();
-            l.attrs[shd.ATTR_default_position] = sshape.positionVertexAttrState();
-            l.attrs[shd.ATTR_default_normal] = sshape.normalVertexAttrState();
-            l.attrs[shd.ATTR_default_texcoord0] = sshape.texcoordVertexAttrState();
+            l.buffers[0] = sshape.vertexBufferLayoutState(shp);
+            l.attrs[shd.ATTR_default_position] = sshape.positionVertexAttrState(shp);
+            l.attrs[shd.ATTR_default_normal] = sshape.normalVertexAttrState(shp);
+            l.attrs[shd.ATTR_default_texcoord0] = sshape.texcoordVertexAttrState(shp);
             break :init l;
         },
         .index_type = .UINT16,
