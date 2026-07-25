@@ -207,7 +207,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     if (options.with_tracing) {
         try cflags.appendBounded("-DSOKOL_TRACE_HOOKS");
     }
-    if (options.optimize != .debug) {
+    if (!isOptimizeModeDebug(options.optimize)) {
         try cflags.appendBounded("-DNDEBUG");
     }
     switch (backend) {
@@ -341,12 +341,28 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     return lib;
 }
 
-// Zig 0.16.0 vs 0.17.0 compatibility helper
+// Zig 0.16.0 vs 0.17.0 compatibility helpers
 fn addRunFile(b: *Build, p: Build.LazyPath) *Build.Step.Run {
     if (builtin.zig_version.minor <= 16) {
         return b.addSystemCommand(&.{p.getPath(b)});
     } else {
         return b.addRunFile(p);
+    }
+}
+
+fn isOptimizeModeSmall(opt: OptimizeMode) bool {
+    if (builtin.zig_version.minor <= 16) {
+        return opt == .ReleaseSmall;
+    } else {
+        return opt == .small;
+    }
+}
+
+fn isOptimizeModeDebug(opt: OptimizeMode) bool {
+    if (builtin.zig_version.minor <= 16) {
+        return opt == .Debug;
+    } else {
+        return opt == .debug;
     }
 }
 
@@ -374,11 +390,11 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
     const emcc_path = emTool(b, options.emsdk, "emcc");
     const emcc = addRunFile(b, emcc_path);
     emcc.setName("emcc"); // hide emcc path
-    if (options.optimize == .debug) {
+    if (isOptimizeModeDebug(options.optimize)) {
         emcc.addArgs(&.{ "-g", "-Og", "-sSAFE_HEAP=1", "-sSTACK_OVERFLOW_CHECK=1" });
     } else {
         emcc.addArg("-sASSERTIONS=0");
-        if (options.optimize == .small) {
+        if (isOptimizeModeSmall(options.optimize)) {
             emcc.addArg("-Oz");
         } else {
             emcc.addArg("-O3");
