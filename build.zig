@@ -207,7 +207,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
     if (options.with_tracing) {
         try cflags.appendBounded("-DSOKOL_TRACE_HOOKS");
     }
-    if (options.optimize != .Debug) {
+    if (options.optimize != .debug) {
         try cflags.appendBounded("-DNDEBUG");
     }
     switch (backend) {
@@ -374,11 +374,11 @@ pub fn emLinkStep(b: *Build, options: EmLinkOptions) !*Build.Step.InstallDir {
     const emcc_path = emTool(b, options.emsdk, "emcc");
     const emcc = addRunFile(b, emcc_path);
     emcc.setName("emcc"); // hide emcc path
-    if (options.optimize == .Debug) {
+    if (options.optimize == .debug) {
         emcc.addArgs(&.{ "-g", "-Og", "-sSAFE_HEAP=1", "-sSTACK_OVERFLOW_CHECK=1" });
     } else {
         emcc.addArg("-sASSERTIONS=0");
-        if (options.optimize == .ReleaseSmall) {
+        if (options.optimize == .small) {
             emcc.addArg("-Oz");
         } else {
             emcc.addArg("-O3");
