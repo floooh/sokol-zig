@@ -28,6 +28,7 @@ const examples = [_]Example{
     .{ .name = "shapes", .has_shader = true },
     .{ .name = "vertexpull", .has_shader = true, .needs_compute = true },
     .{ .name = "instancing-compute", .has_shader = true, .needs_compute = true },
+    .{ .name = "framebuffer" },
 };
 
 pub const SokolBackend = enum {
@@ -161,6 +162,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         "sokol_shape.c",
         "sokol_glue.c",
         "sokol_fetch.c",
+        "sokol_framebuffer.c",
     };
     const mod = b.addModule("mod_sokol_clib", .{
         .target = options.target,
