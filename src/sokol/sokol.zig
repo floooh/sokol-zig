@@ -11,3 +11,4 @@ pub const fetch = @import("fetch.zig");
 pub const imgui = @import("imgui.zig");
 pub const gfximgui = @import("gfximgui.zig");
 pub const appimgui = @import("appimgui.zig");
+pub const framebuffer = @import("framebuffer.zig");
