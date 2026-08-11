@@ -310,7 +310,7 @@ pub const Framebuffer = extern struct {
 
 /// sfb_resource_state
 ///
-/// The state of a framebuffer object, obtainable via sfg_query_framebuffer_state().
+/// The state of a framebuffer object, obtainable via sfb_query_framebuffer_state().
 /// Publicly visible values are only SFB_RESOURCESTATE_VALID
 /// and SFB_RESOURCESTATE_FAILED.
 pub const ResourceState = enum(i32) {
