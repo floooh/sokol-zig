@@ -163,6 +163,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         "sokol_glue.c",
         "sokol_fetch.c",
         "sokol_framebuffer.c",
+        "sokol_cmdbuf.c",
     };
     const mod = b.addModule("mod_sokol_clib", .{
         .target = options.target,
