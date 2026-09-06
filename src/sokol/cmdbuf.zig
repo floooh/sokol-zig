@@ -32,7 +32,196 @@
 //     sokol_gfx.h
 //
 //
-// FIXME docs
+// OVERVIEW
+// ========
+// Allows to record sokol-gfx apply/draw/dispatch calls into command buffers
+// outside of sokol-gfx passes and then submit the recorded calls inside
+// sokol-gfx render or compute passes. This is mainly useful in two situations:
+//
+// - Interleaving resource updates and draw calls (e.g. append
+//   data to buffers and then immediately issue a draw/dispatch call which
+//   uses this data). Such an interleaved update/consume model cannot be
+//   implemented efficiently in some sokol-gfx backends and is disallowed in
+//   the 'new' write-transient/persistent update model.
+// - Separating the core frame rendering code from code that's normally
+//   not concerned about rendering (e.g. UI or debug rendering).
+//
+// Some 'tier 2' sokol headers already use a similar record/replay
+// system internally (e.g. sokol_gl.h, sokol_debugtext.h, sokol_spine.h)
+// and will switch to using sokol_cmdbuf.h to reduce redundant code.
+//
+// STEP BY STEP:
+// =============
+//
+// - Initialize sokol_cmdbuf.h, provide at least a logging function
+//   (for instance slog_func from sokol_log.h), otherwise you won't
+//   see any logging output:
+//
+//     scb_setup(&(scb_desc){
+//         .logger.func = slog_func,
+//     });
+//
+//   If you need more than (the default) 16 command buffers to be alive at
+//   the same time, set the .cmdbuf_pool_size:
+//
+//     scb_setup(&(scb_desc){
+//         .cmdbuf_pool_size = 128,
+//         .logger.func = slog_func,
+//     });
+//
+//   To provide your own memory allocation functions:
+//
+//     void* my_alloc(size_t size, void* user_data) {
+//         return malloc(size);
+//     }
+//
+//     void my_free(void* ptr, void* user_data) {
+//         free(ptr);
+//     }
+//
+//     scb_setup(&(scb_desc){
+//         .allocator = {
+//             .alloc_fn = my_alloc,
+//             .free_fn = my_free,
+//             .user_data = ...,
+//         },
+//         .logger.func = slog_func,
+//     });
+//
+// - Next create command buffer objects, the default command buffer size
+//   is 256 kbytes:
+//
+//     scb_cmdbuf cb = scb_make_cmdbuf(&(scb_cmdbuf_desc){0});
+//
+//   It often makes sense to provide a specific size in bytes:
+//
+//     scb_cmdbuf cb = scb_make_cmdbuf(&(scb_cmdbuf_desc){
+//         .size = 128 * 1024,     // 128 kbytes
+//     });
+//
+//   For information on how to estimate the required size see the section
+//   'ESTIMATING COMMAND BUFFER SIZES' below.
+//
+//   You can provide a label string for the command buffer:
+//
+//     scb_cmdbuf cb = scb_make_cmdbuf(&(scb_cmdbuf_desc){
+//         .label = "dbg-physics",
+//     });
+//
+//   When a label string exists, sokol_cmdbuf.h will wrap submitted commands
+//   with `sg_push_debug_group(label)` / `sg_pop_debug_group()`
+//
+// - Record apply/draw/dispatch commands into a command buffer object
+//   (note that these functions directly use sokol_gfx.h types):
+//
+//     scb_apply_viewport(cb, x, y, width, height, origin_top_left);
+//     scb_apply_viewportf(cb, x, y, width, height, origin_top_left);
+//
+//     scb_apply_scissor_rect(cb, x, y, width, height, origin_top_left);
+//     scb_apply_scissor_rectf(cb, x, y, width, height, origin_top_left);
+//
+//     scb_apply_pipeline(cb, pip);
+//     scb_apply_bindings(cb, &(sg_bindings){ ... });
+//     scb_apply_uniforms(cb, ub_slot, &(sg_range){ ... });
+//     scb_draw(cb, base_element, num_elements, num_instances);
+//     scb_draw_ex(cb, base_element, num_elements, num_instances, base_vertex, base_instance);
+//     scb_dispatch(cb, num_groups_x, num_groups_y, num_groups_z);
+//
+//   Uniform data will be copied into the command buffer, and with the
+//   required alignment.
+//
+//   Trying to record more data than fits into the command buffer will
+//   result in a logged error message, and the command buffer to
+//   go into an 'overflown' state. Submitting an overflown command buffer
+//   will only rewind the command buffer but not issue the partially recorded
+//   commands to sokol-gfx.
+//
+// - Finally, inside a sokol-gfx render- or compute-pass, submit the
+//   command buffer. This will decode the recorded commands and call
+//   sokol-gfx functions:
+//
+//     sg_begin_pass(...);
+//     // ...
+//     scb_submit(cb);
+//     // ...
+//     sg_end_pass();
+//
+//   Submitting a command buffer will also automatically rewind, so that the
+//   command buffer can be reused for recording new commands.
+//
+// - To rewind a recorded command buffer without submitting, call:
+//
+//     scb_reset(cb)
+//
+// - To get current information about a command buffer:
+//
+//     scb_cmdbuf_info info = scb_query_cmdbuf_info(cb);
+//
+//   The result contains:
+//
+//     info.size       the command buffer size in bytes
+//     info.remaining  the currently remaining number of free bytes in the command buffer
+//     info.overflown  true when the command buffer is currently in overflown state
+//
+// - To get a command buffer's 'resource state', call:
+//
+//     scb_resource_state state = scb_query_cmdbuf_state(cb);
+//
+//   This returns one of:
+//
+//     SCB_RESOURCESTATE_VALID:    the command buffer is valid to use
+//     SCB_RESOURCESTATE_FAILED:   command buffer allocation has failed
+//                                 (can only happen when memory allocation failed)
+//     SCB_RESOURCESTATE_INVALID   the handle is invalid or the command buffer
+//                                 no longer exists
+//
+// - To destroy a command buffer object:
+//
+//     scb_destroy_cmdbuf(cb);
+//
+// - ...and finally to shutdown sokol_cmdbuf.h:
+//
+//     scb_shutdown();
+//
+//   ...this will also destroy all remaining command buffer objects.
+//
+//
+// ESTIMATING COMMAND BUFFER SIZES
+// ===============================
+//
+// For most commands, the size taken up in the command buffer can be
+// estimated by adding the parameter sizes plus one byte for the
+// command, e.g.:
+//
+// scb_apply_viewport takes 4 integers and one boolean:
+//
+//     1 byte for the command
+//     + (4 * 4) bytes for the integers
+//     + 1 byte for the boolean
+//
+// There are two special cases:
+//
+// - scb_apply_uniforms copies the actual uniform data with 4-byte
+//     alignment into the command buffer, the required size is:
+//
+//     1 byte for the command
+//     + 4 bytes for ub_slot
+//     + 4 bytes for the uniform data size (truncated from size_t)
+//     + up to 3 bytes 'alignment gap'
+//     + the actual uniform data
+//
+// - scb_apply_bindings applies a simple form of compression by
+//   not writing unoccupied bind slots. Instead a 64-bit bitmask identifies
+//   occupied slots:
+//
+//     1 byte for the command
+//     + 8 bytes for the 64-bit occupation bitmask
+//     + 4 bytes for each valid sg_buffer, sg_view, sg_sampler
+//       handle in the sg_bindings struct
+//     + 4 bytes extra for the buffer offset of each occupied vertex buffer slot
+//     + 4 bytes extra for the index buffer offset if the index buffer slot is occupied
+//
+//   ...or just assume around 256 bytes worst case for an scb_apply_bindings call
 //
 //
 // LICENSE
@@ -80,8 +269,8 @@ pub const Cmdbuf = extern struct {
 /// scb_resource_state
 ///
 /// The state of a command buffer object, obtainable via scb_query_cmdbuf_state().
-/// Publicly visible values are only SCB_RESOURCESTATE_VALID
-/// and SCB_RESOURCESTATE_FAILED.
+/// Publicly visible values are only SCB_RESOURCESTATE_VALID,
+/// SCB_RESOURCESTATE_FAILED and SCB_RESOURCESTATE_INVALID.
 pub const ResourceState = enum(i32) {
     INITIAL,
     ALLOC,
@@ -95,7 +284,11 @@ pub const ResourceState = enum(i32) {
 /// Creation parameters of a command buffer object. Used
 /// in scb_make_cmdbuf().
 ///
-/// TODO: information on how to estimate required size
+/// See doc section ESTIMATING COMMAND BUFFER SIZES about
+/// how command buffer size can be estimated.
+///
+/// When a label is set, sokol_cmdbuf.h will wrap
+/// submitted commands with `sg_push/pop_debug_group()`.
 pub const CmdbufDesc = extern struct {
     size: usize = 0,
     label: [*c]const u8 = null,
@@ -113,6 +306,7 @@ pub const CmdbufInfo = extern struct {
 pub const LogItem = enum(i32) {
     OK,
     MALLOC_FAILED,
+    CMDBUF_POOL_EXHAUSTED,
     CMDBUF_OVERFLOW,
     CMDBUF_NOT_VALID,
     SUBMIT_CMDBUF_OVERFLOWN,
@@ -142,7 +336,7 @@ pub const Allocator = extern struct {
 
 /// scb_desc
 ///
-/// FIXME: docs
+/// Initialization options passed into scb_setup.
 pub const Desc = extern struct {
     cmdbuf_pool_size: i32 = 0,
     allocator: Allocator = .{},
@@ -187,6 +381,14 @@ extern fn scb_submit(Cmdbuf) void;
 /// submit command buffer to sokol-gfx and rewind the command buffer (call inside a sokol-gfx pass)
 pub fn submit(cb: Cmdbuf) void {
     scb_submit(cb);
+}
+
+/// reset a recorded command buffer, discarding its content
+extern fn scb_reset(Cmdbuf) void;
+
+/// reset a recorded command buffer, discarding its content
+pub fn reset(cb: Cmdbuf) void {
+    scb_reset(cb);
 }
 
 /// record apply-viewport command (integer variant)
@@ -269,10 +471,10 @@ pub fn dispatch(cb: Cmdbuf, num_groups_x: i32, num_groups_y: i32, num_groups_z: 
     scb_dispatch(cb, num_groups_x, num_groups_y, num_groups_z);
 }
 
-/// query command buffer resource state (valid or failed)
+/// query command buffer resource state (valid, failed, invalid)
 extern fn scb_query_cmdbuf_state(Cmdbuf) ResourceState;
 
-/// query command buffer resource state (valid or failed)
+/// query command buffer resource state (valid, failed, invalid)
 pub fn queryCmdbufState(cb: Cmdbuf) ResourceState {
     return scb_query_cmdbuf_state(cb);
 }
