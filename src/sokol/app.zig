@@ -408,9 +408,9 @@
 //     forwarded for further handling to the operating system, call
 //     sapp_consume_event() from inside the event handler (NOTE that
 //     this behaviour is currently only implemented for some HTML5
-//     events, support for other platforms and event types will
-//     be added as needed, please open a GitHub ticket and/or provide
-//     a PR if needed).
+//     events and for tvOS key events (to allow menu button passthrough).
+//     Support for other platforms and event types will be added as needed,
+//     please open a GitHub ticket and/or provide a PR if needed).
 //
 //     NOTE: Do *not* call any 3D API rendering functions in the event
 //     callback function, since the 3D API context may not be active when the
