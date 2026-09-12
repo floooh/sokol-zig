@@ -100,9 +100,7 @@
 //
 //     simgui_setup(const simgui_desc_t* desc)
 //
-//     This will initialize Dear ImGui and create sokol-gfx resources
-//     (two buffers for vertices and indices, a font texture and a pipeline-
-//     state-object).
+//     This will initialize Dear ImGui and create sokol-gfx resources.
 //
 //     Use the following simgui_desc_t members to configure behaviour:
 //
@@ -162,10 +160,6 @@
 //             framebuffer. By default this behavior is disabled to prevent
 //             undesired behavior on platforms like the web where the canvas is
 //             always alpha-blended with the background.
-//
-//         simgui_allocator_t allocator
-//             Used to override memory allocation functions. See further below
-//             for details.
 //
 //         simgui_logger_t logger
 //             A user-provided logging callback. Note that without logging
@@ -302,36 +296,6 @@
 //     also see: https://github.com/dearimgui/dear_bindings/issues/99
 //
 //
-// MEMORY ALLOCATION OVERRIDE
-// ==========================
-// You can override the memory allocation functions at initialization time
-// like this:
-//
-//     void* my_alloc(size_t size, void* user_data) {
-//         return malloc(size);
-//     }
-//
-//     void my_free(void* ptr, void* user_data) {
-//         free(ptr);
-//     }
-//
-//     ...
-//         simgui_setup(&(simgui_desc_t){
-//             // ...
-//             .allocator = {
-//                 .alloc_fn = my_alloc,
-//                 .free_fn = my_free,
-//                 .user_data = ...;
-//             }
-//         });
-//     ...
-//
-// If no overrides are provided, malloc and free will be used.
-//
-// This only affects memory allocation calls done by sokol_imgui.h
-// itself though, not any allocations in Dear ImGui.
-//
-//
 // ERROR REPORTING AND LOGGING
 // ===========================
 // To get any logging information at all you need to provide a logging callback in the setup call
@@ -428,20 +392,7 @@ fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
 }
 pub const LogItem = enum(i32) {
     OK,
-    MALLOC_FAILED,
     BUFFER_OVERFLOW,
-};
-
-/// simgui_allocator_t
-///
-/// Used in simgui_desc_t to provide custom memory-alloc and -free functions
-/// to sokol_imgui.h. If memory management should be overridden, both the
-/// alloc_fn and free_fn function must be provided (e.g. it's not valid to
-/// override one function but not the other).
-pub const Allocator = extern struct {
-    alloc_fn: ?*const fn (usize, ?*anyopaque) callconv(.c) ?*anyopaque = null,
-    free_fn: ?*const fn (?*anyopaque, ?*anyopaque) callconv(.c) void = null,
-    user_data: ?*anyopaque = null,
 };
 
 /// simgui_logger
@@ -468,7 +419,6 @@ pub const Desc = extern struct {
     disable_set_mouse_cursor: bool = false,
     disable_windows_resize_from_edges: bool = false,
     write_alpha_channel: bool = false,
-    allocator: Allocator = .{},
     logger: Logger = .{},
 };
 
