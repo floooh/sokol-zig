@@ -193,13 +193,19 @@
 //         .dpi_scale = sapp_dpi_scale()
 //     });
 //
-// --- at the end of the frame, before the sg_end_pass() where you
-//     want to render the UI, call:
+// --- after issuing Dear ImGui UI calls and outside the sokol-gfx
+//     pass which renders the UI (the later in the frame the better):
 //
-//     simgui_render()
+//     simgui_flush();
 //
-//     This will first call ImGui::Render(), and then render ImGui's draw list
-//     through sokol_gfx.h
+//     this may create and update font textures and 'renders'
+//     the Dear ImGui UI into command lists.
+//
+// --- ...and finally inside a sokol-gfx render pass, call:
+//
+//     simgui_draw();
+//
+//     To actually render the UI.
 //
 // --- if you're using sokol_app.h, from inside the sokol_app.h event callback,
 //     call:
@@ -393,6 +399,10 @@ fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {
 pub const LogItem = enum(i32) {
     OK,
     BUFFER_OVERFLOW,
+    NEW_FRAME_NOT_CALLED_BEFORE_FLUSH,
+    FLUSH_CALLED_IN_SOKOLGFX_PASS,
+    FLUSH_NOT_CALLED_BEFORE_DRAW,
+    DRAW_CALLED_OUTSIDE_SOKOLGFX_RENDER_PASS,
 };
 
 /// simgui_logger
@@ -446,10 +456,16 @@ pub fn newFrame(desc: FrameDesc) void {
     simgui_new_frame(&desc);
 }
 
-extern fn simgui_render() void;
+extern fn simgui_flush() void;
 
-pub fn render() void {
-    simgui_render();
+pub fn flush() void {
+    simgui_flush();
+}
+
+extern fn simgui_draw() void;
+
+pub fn draw() void {
+    simgui_draw();
 }
 
 extern fn simgui_imtextureid(sg.View) u64;
