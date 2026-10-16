@@ -136,7 +136,7 @@ pub fn resolveSokolBackend(backend: SokolBackend, target: std.Target) SokolBacke
 // build the sokol C headers into a static library
 pub const LibSokolOptions = struct {
     target: Build.ResolvedTarget,
-    optimize: OptimizeMode,
+    optimize: ?OptimizeMode,
     backend: SokolBackend = .auto,
     use_egl: bool = false,
     use_x11: bool = true,
@@ -355,7 +355,7 @@ fn addRunFile(b: *Build, p: Build.LazyPath) *Build.Step.Run {
     }
 }
 
-fn isOptimizeModeSmall(opt: OptimizeMode) bool {
+fn isOptimizeModeSmall(opt: ?OptimizeMode) bool {
     if (builtin.zig_version.minor <= 16) {
         return opt == .ReleaseSmall;
     } else {
@@ -363,7 +363,7 @@ fn isOptimizeModeSmall(opt: OptimizeMode) bool {
     }
 }
 
-fn isOptimizeModeDebug(opt: OptimizeMode) bool {
+fn isOptimizeModeDebug(opt: ?OptimizeMode) bool {
     if (builtin.zig_version.minor <= 16) {
         return opt == .Debug;
     } else {
@@ -377,7 +377,7 @@ fn isOptimizeModeDebug(opt: OptimizeMode) bool {
 // NOTE: ideally this would go into a separate emsdk-zig package
 pub const EmLinkOptions = struct {
     target: Build.ResolvedTarget,
-    optimize: OptimizeMode,
+    optimize: ?OptimizeMode,
     lib_main: *Build.Step.Compile, // the actual Zig code must be compiled to a static link library
     emsdk: *Build.Dependency,
     release_use_closure: bool = true,
@@ -541,7 +541,7 @@ const Example = struct {
 
 const ExampleOptions = struct {
     target: Build.ResolvedTarget,
-    optimize: OptimizeMode,
+    optimize: ?OptimizeMode,
     backend: SokolBackend,
     mod_sokol: *Build.Module,
     emsdk: *Build.Dependency,
