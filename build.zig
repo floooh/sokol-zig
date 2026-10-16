@@ -257,6 +257,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
             mod.linkSystemLibrary("GLESv3", .{});
             mod.linkSystemLibrary("EGL", .{});
             mod.linkSystemLibrary("android", .{});
+            mod.linkSystemLibrary("aaudio", .{});
             mod.linkSystemLibrary("log", .{});
         }
     } else if (isPlatform(mod_target, .linux)) {
