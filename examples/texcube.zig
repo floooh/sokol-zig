@@ -94,16 +94,12 @@ export fn init() void {
             .image = sg.makeImage(.{
                 .width = 4,
                 .height = 4,
-                .data = init: {
-                    var data = sg.ImageData{};
-                    data.mip_levels[0] = sg.asRange(&[4 * 4]u32{
-                        0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
-                        0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
-                        0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
-                        0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
-                    });
-                    break :init data;
-                },
+                .data = sg.asRange(&[4 * 4]u32{
+                    0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
+                    0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
+                    0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
+                    0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
+                }),
             }),
         },
     });

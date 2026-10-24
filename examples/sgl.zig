@@ -46,19 +46,15 @@ export fn init() void {
     const img = sg.makeImage(.{
         .width = img_width,
         .height = img_height,
-        .data = init: {
-            var data = sg.ImageData{};
-            data.mip_levels[0] = sg.asRange(&pixels: {
-                var res = std.mem.zeroes([img_width][img_height]u32);
-                for (0..img_height) |y| {
-                    for (0..img_width) |x| {
-                        res[y][x] = if (0 == (y ^ x) & 1) 0xFF_00_00_00 else 0xFF_FF_FF_FF;
-                    }
+        .data = sg.asRange(&pixels: {
+            var res = std.mem.zeroes([img_width][img_height]u32);
+            for (0..img_height) |y| {
+                for (0..img_width) |x| {
+                    res[y][x] = if (0 == (y ^ x) & 1) 0xFF_00_00_00 else 0xFF_FF_FF_FF;
                 }
-                break :pixels res;
-            });
-            break :init data;
-        },
+            }
+            break :pixels res;
+        }),
     });
     state.tex_view = sg.makeView(.{ .texture = .{ .image = img } });
 
