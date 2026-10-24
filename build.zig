@@ -205,7 +205,7 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
 
     // resolve .auto backend into specific backend by platform
     var cflags_buf: [64][]const u8 = undefined;
-    var cflags = std.ArrayListUnmanaged([]const u8).initBuffer(&cflags_buf);
+    var cflags = std.ArrayList([]const u8).initBuffer(&cflags_buf);
 
     try cflags.appendBounded("-DIMPL");
     if (options.with_tracing) {
