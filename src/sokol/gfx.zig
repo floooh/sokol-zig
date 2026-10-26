@@ -331,6 +331,7 @@
 //
 //         sg_copy_buffer_to_buffer(const sg_copy_buffer_to_buffer_desc* desc);
 //         sg_copy_buffer_to_image(const sg_copy_buffer_to_image_desc* desc);
+//         sg_copy_image_to_image(const sg_copy_image_to_image_desc* desc);
 //
 //     The source resource must have been created with usage .copy_src and
 //     the destination resource must have been created with usage .copy_dst.
@@ -1344,11 +1345,9 @@
 // ```
 //
 // ```c
-// uint8_t mip0_data[] = { ... };
-// uint8_t mip1_data[] = { ... };
-// // ... more mip levels
+// uint8_t image_data[] = { ... };
 // const sg_image img = sg_make_image(&(sg_image_desc){
-//     .data.= SG_RANGE(image_data),
+//     .data = SG_RANGE(image_data),
 //     // ... more create options
 // });
 // ```
@@ -1360,8 +1359,7 @@
 // is:
 //
 // 1. Create the resource in resource state 'unsealed' via the write_unsealed
-//    usage flag (note that `desc.usage.write_unsealed = true` implies
-//    `desc.usage.immutable = true`).
+//    usage flag:
 //
 //     For buffers:
 //     ```c
@@ -1506,7 +1504,7 @@
 //     });
 //     ```
 //
-// Likewise to copy data from a buffer into an image, call `sg_copy_buffer_to_image`:
+// To copy data from a buffer into an image, call `sg_copy_buffer_to_image`:
 //
 //     ```c
 //     sg_copy_buffer_to_image(&(sg_copy_buffer_to_image_desc){
@@ -1534,9 +1532,35 @@
 //     });
 //     ```
 //
-// For detailed information on the parameter structs `sg_copy_buffer_to_buffer_desc` and
-// `sg_copy_buffer_to_image_desc` (especially how default values are populated),
-// see the struct documentation headers.
+// To copy data between two images, call `sg_copy_image_to_image`:
+//
+//     ```c
+//     sg_copy_image_to_image(&(sg_copy_image_to_image_desc){
+//         .src = {
+//             .image = src_img,
+//             .mip_level = ...,
+//             .x = ...,
+//             .y = ...,
+//             .slice = ...,
+//         },
+//         .dst = {
+//             .image = dst_img,
+//             .mip_level = ...,
+//             .x = ...,
+//             .y = ...,
+//             .slice = ...,
+//         },
+//         .size = {
+//             .width = ...,
+//             .height = ...,
+//             .num_slices = ...,
+//         },
+//     });
+//     ```
+//
+// For detailed information on the parameter structs `sg_copy_buffer_to_buffer_desc`,
+// `sg_copy_buffer_to_image_desc` and `sg_copy_image_to_image_desc` (especially how
+// default values are populated), see the struct documentation headers.
 //
 // Copying between resources comes with a lot of caveats caused by backend 3D API
 // restrictions (alignments, valid resource types, etc...). These detailed
@@ -1575,6 +1599,8 @@
 //   when the bug would be triggered. For copying from staging buffers, the
 //   offset works because of a special workaround in the sokol-gfx GL backend
 //   (staging buffers are actually heap memory allocations).
+// - On GL versions < 4.3 and GLES version < 3.2, copying from image to image
+//   is only possible when the pixel format is renderable.
 //
 //
 // ON UPLOADING PERSISTENT DATA INTO RESOURCES
@@ -1689,6 +1715,13 @@
 //         },
 //     });
 //     ```
+//
+// Alternatively uploading data persistently into images can also
+// be performed via a combination of `sg_write_image_transient()` followed
+// by a `sg_copy_image_to_image()` call. Uploading through a staging
+// buffer is recommended though because it is more flexible and may
+// be more efficient on some backend 3D APIs.
+//
 //
 // ON STORAGE BUFFERS
 // ==================
@@ -1879,7 +1912,6 @@
 //
 //     sg_image storage_image = sg_make_image(&(sg_image_desc){
 //         .usage.storage_image = true,
-//         },
 //         .width = ...,
 //         .height = ...,
 //         .pixel_format = ...,
@@ -2430,7 +2462,6 @@ pub const num_inflight_frames = 2;
 pub const max_color_attachments = 8;
 pub const max_uniformblock_members = 16;
 pub const max_vertex_attributes = 16;
-pub const max_mipmaps = 16;
 pub const max_vertexbuffer_bindslots = 8;
 pub const max_uniformblock_bindslots = 8;
 pub const max_view_bindslots = 32;
@@ -2609,7 +2640,7 @@ pub const Features = extern struct {
     vertexformat_int10_n2: bool = false,
     copy_buffer_to_image_relaxed_buffer_type: bool = false,
     copy_buffer_to_image_relaxed_bytes_per_row: bool = false,
-    copy_image_to_image_relaxed: bool = false,
+    copy_image_to_image_relaxed_pixel_format: bool = false,
     gl_texture_views: bool = false,
 };
 
@@ -3596,7 +3627,7 @@ pub const BufferDesc = extern struct {
 ///     the image can be used as parent resource of a storage-image-view,
 ///     which allows compute shaders to write to the image in a compute
 ///     pass (for read-only access in compute shaders bind the image
-///     via a texture view instead
+///     via a texture view instead)
 /// .color_attachment (default: false)
 ///     the image can be used as parent resource of a color-attachment-view,
 ///     which is then passed into sg_begin_pass via sg_pass.attachments.colors[]
@@ -3622,11 +3653,11 @@ pub const BufferDesc = extern struct {
 ///     same frame by the GPU-side and doesn't need to survive into the next
 ///     frame
 /// .copy_src (default: false)
-///     TODO: currently unused, will become useful when the rest of the
-///     sg_copy_* functions are implemented
+///     the image is going to be used as source in an `sg_copy_image_to_image()`
+///     call
 /// .copy_dst (default: false)
 ///     the image is going to be used as destination in an `sg_copy_buffer_to_image()`
-///     call
+///     or `sg_copy_image_to_image()` call
 ///
 /// Note that creating a texture view from the image to be used for
 /// texture-sampling in vertex-, fragment- or compute-shaders
@@ -3875,7 +3906,8 @@ pub const CopyBufferToBufferDesc = extern struct {
 /// Caveats (all checked by the validation layer or via logged errors and warnings):
 ///     - sg_copy_buffer_to_image() must be called outside a pass
 ///     - for compressed image formats, .size.width and .size.height must be
-///       a multiple of the compression block size
+///       a multiple of the compression block size or fall on the mip level
+///       width / height
 ///     - the source buffer must have been created with .usage.copy_src
 ///     - the destination image must have been created with .usage.copy_dst
 ///     - the source buffer type cannot be .usage.staging_index_buffer
@@ -3906,7 +3938,50 @@ pub const CopyBufferToImageDesc = extern struct {
 
 /// sg_copy_image_to_image_desc
 ///
-/// FIXME
+/// Describes an image-to-image copy operation via sg_copy_image_to_image().
+///
+/// .src
+///     .image          the source image
+///     .mip_level      the source mip level
+///     .x, .y          the source x,y location
+///     .slice          the array or 3d slice
+/// .dst
+///     .image          the destination image
+///     .mip_level      the destination mip level
+///     .x, .y          the destination x,y location
+///     .slice          the array or 3d slice
+/// .size
+///     .width          copy region width in pixels
+///     .height         copy region height in pixels
+///     .num_slices     number of array or 3d slices to copy
+///
+/// Note on default values:
+///
+///     .size
+///         The size default is the 'rest after offset' for the source mip
+///         level, e.g.:
+///             .size.width = src_mip_width - .src.x
+///             .size.height = src_mip_height - .src.y
+///             .size.num_slices = src_mip_depth_or_slices - .src.slice
+///
+/// Caveats (all checked by the validation layer):
+///     - sg_copy_image_to_image() must be called outside a pass
+///     - for compressed image formats, .size.width and .size.height must be
+///       a multiple of the compression block size or fall on the mip level
+///       width / height
+///     - the source and destination image must not be the same
+///     - the source image must have been created with .usage.copy_src
+///     - the destination image must have been created with .usage.copy_dst
+///     - the source and destination image pixel format must be identical
+///     - copying between 3D images and non-3D-images is not allowed
+///     - copying between multi-sampled images is not allowed
+///     - copying into pass attachments is not allowed (from pass attachments
+///       is fine)
+///     - when sg_features.copy_image_to_image_relaxed_pixel_format is false, the
+///       pixel format must be renderable (this restriction applies to GL < 4.3
+///       and GLES < 3.2, e.g. also on WebGL2)
+///     - when copying between depth- or depth-stencil-images, only
+///       entire mip levels can be copied
 pub const CopyImageToImageDesc = extern struct {
     src: ImageLocation = .{},
     dst: ImageLocation = .{},
@@ -3920,7 +3995,7 @@ pub const CopyImageToImageDesc = extern struct {
 /// The default configuration is:
 ///
 /// .type               SG_IMAGETYPE_2D
-/// .usage              { .texture = true }
+/// .usage              all false (implies usage as regular texture)
 /// .width              0 (must be set to >0)
 /// .height             0 (must be set to >0)
 /// .num_slices         1 (3D textures: depth; array textures: number of layers)
@@ -3944,7 +4019,7 @@ pub const CopyImageToImageDesc = extern struct {
 /// When initial data is provided via sg_image_desc.data, it must be the complete
 /// and tightly packed data for all mip levels and slices in one continuous block
 /// of memory. For a more flexible initialization of the initial image content,
-/// use sg_write_image_unsealed().
+/// use sg_write_image_unsealed() instead.
 ///
 /// The size of a single surface in a mip-level for a regular 2D texture
 /// can be computed via:
@@ -3957,7 +4032,7 @@ pub const CopyImageToImageDesc = extern struct {
 ///
 /// For 3d-images the size of a single miplevel is:
 ///
-///     mip_slices * sg_query_surface_pitch(pixel_format, mip_width, mip_height, 1);
+///     max(1, num_slices >> mip_level) * sg_query_surface_pitch(pixel_format, mip_width, mip_height, 1);
 ///
 /// For cubemap-images the size of a single mip-level is:
 ///
@@ -3973,10 +4048,9 @@ pub const CopyImageToImageDesc = extern struct {
 ///     [5] => -Z
 ///
 ///
-/// Images with usage.*_attachment or usage.storage_image must
-/// *not* be created with initial content. Be aware that the initial
-/// content of pass attachment and storage images is undefined
-/// (not guaranteed to be zeroed).
+/// Images with usage.*_attachment must *not* be created with initial content.
+/// Be aware that the initial content of pass attachments and storage images
+/// without initial data is undefined (not guaranteed to be zeroed).
 ///
 /// ADVANCED TOPIC: Injecting native 3D-API textures:
 ///
@@ -4751,10 +4825,6 @@ pub const FrameStatsD3d11Bindings = extern struct {
     num_om_set_rts_and_uavs: u32 = 0,
 };
 
-pub const FrameStatsD3d11Uniforms = extern struct {
-    num_update_subresource: u32 = 0,
-};
-
 pub const FrameStatsD3d11Draw = extern struct {
     num_draw_indexed_instanced: u32 = 0,
     num_draw_indexed: u32 = 0,
@@ -4766,8 +4836,9 @@ pub const FrameStatsD3d11 = extern struct {
     pass: FrameStatsD3d11Pass = .{},
     pipeline: FrameStatsD3d11Pipeline = .{},
     bindings: FrameStatsD3d11Bindings = .{},
-    uniforms: FrameStatsD3d11Uniforms = .{},
     draw: FrameStatsD3d11Draw = .{},
+    num_update_subresource: u32 = 0,
+    num_copy_subresource_region: u32 = 0,
     num_map: u32 = 0,
     num_unmap: u32 = 0,
 };
@@ -5168,7 +5239,6 @@ pub const LogItem = enum(i32) {
     VALIDATE_IMAGEDESC_DEPTHFORMAT_ATTACHMENT_OR_COPYDST,
     VALIDATE_IMAGEDESC_DEPTHSTENCIL_ATTACHMENT_PIXELFORMAT,
     VALIDATE_IMAGEDESC_DEPTHSTENCIL_ATTACHMENT_VS_STORAGEIMAGE,
-    VALIDATE_IMAGEDESC_STORAGEIMAGE_VS_INITIALDATA,
     VALIDATE_IMAGEDESC_STORAGEIMAGE_VS_WRITETRANSIENT,
     VALIDATE_IMAGEDESC_WRITETRANSIENT_VS_COPYDST,
     VALIDATE_IMAGEDESC_WRITETRANSIENT_VS_INITIALDATA,
@@ -5185,8 +5255,10 @@ pub const LogItem = enum(i32) {
     VALIDATE_IMAGEDESC_IMAGETYPE_3D_NUMSLICES,
     VALIDATE_IMAGEDESC_WIDTH,
     VALIDATE_IMAGEDESC_HEIGHT,
+    VALIDATE_IMAGEDESC_NUM_MIPMAPS,
     VALIDATE_IMAGEDESC_MSAA_BUT_NO_ATTACHMENT,
     VALIDATE_IMAGEDESC_ATTACHMENT_PIXELFORMAT,
+    VALIDATE_IMAGEDESC_ATTACHMENT_MSAA_VS_COPY,
     VALIDATE_IMAGEDESC_ATTACHMENT_NO_MSAA_SUPPORT,
     VALIDATE_IMAGEDESC_ATTACHMENT_MSAA_NUM_MIPMAPS,
     VALIDATE_IMAGEDESC_ATTACHMENT_MSAA_3D_IMAGE,
@@ -5291,10 +5363,6 @@ pub const LogItem = enum(i32) {
     VALIDATE_VIEWDESC_TEXTURE_CUBEMAP_SLICES,
     VALIDATE_VIEWDESC_TEXTURE_ARRAY_SLICES,
     VALIDATE_VIEWDESC_TEXTURE_3D_SLICES,
-    VALIDATE_VIEWDESC_STORAGEIMAGE_PIXELFORMAT,
-    VALIDATE_VIEWDESC_COLORATTACHMENT_PIXELFORMAT,
-    VALIDATE_VIEWDESC_DEPTHSTENCILATTACHMENT_PIXELFORMAT,
-    VALIDATE_VIEWDESC_RESOLVEATTACHMENT_SAMPLECOUNT,
     VALIDATE_BEGINPASS_CANARY,
     VALIDATE_BEGINPASS_COMPUTEPASS_EXPECT_NO_ATTACHMENTS,
     VALIDATE_BEGINPASS_SWAPCHAIN_EXPECT_WIDTH,
@@ -5509,6 +5577,7 @@ pub const LogItem = enum(i32) {
     VALIDATE_COPYBUFFERTOBUFFER_SRC_OVERFLOW,
     VALIDATE_COPYBUFFERTOBUFFER_DST_OVERFLOW,
     VALIDATE_COPYBUFFERTOBUFFER_WEBGL2_INDEX_BUFFER,
+    VALIDATE_COPYBUFFERTOBUFFER_SRC_TRANSIENT_MISSING,
     VALIDATE_COPYBUFFERTOIMAGE_DEPTH_FORMAT_NOT_ALLOWED,
     VALIDATE_COPYBUFFERTOIMAGE_WEBGL2_INDEX_BUFFER,
     VALIDATE_COPYBUFFERTOIMAGE_BYTESPERROW_TOO_SMALL,
@@ -5537,13 +5606,13 @@ pub const LogItem = enum(i32) {
     VALIDATE_COPYBUFFERTOIMAGE_DST_WIDTH_OVERFLOW,
     VALIDATE_COPYBUFFERTOIMAGE_DST_HEIGHT_OVERFLOW,
     VALIDATE_COPYBUFFERTOIMAGE_DST_NUMSLICES_OVERFLOW,
+    VALIDATE_COPYBUFFERTOIMAGE_SRC_TRANSIENT_MISSING,
     VALIDATE_COPYIMAGETOIMAGE_SRC_VS_DST_IMAGE,
     VALIDATE_COPYIMAGETOIMAGE_INSIDE_PASS,
     VALIDATE_COPYIMAGETOIMAGE_COPY_SRC,
     VALIDATE_COPYIMAGETOIMAGE_COPY_DST,
     VALIDATE_COPYIMAGETOIMAGE_3D_VS_OTHER,
     VALIDATE_COPYIMAGETOIMAGE_SRC_VS_DST_FORMAT,
-    VALIDATE_COPYIMAGETOIMAGE_SRC_VS_DST_SAMPLE_COUNT,
     VALIDATE_COPYIMAGETOIMAGE_RENDERABLE,
     VALIDATE_COPYIMAGETOIMAGE_MSAA,
     VALIDATE_COPYIMAGETOIMAGE_WHOLE_MIPLEVEL,
@@ -5576,6 +5645,7 @@ pub const LogItem = enum(i32) {
     VALIDATE_COPYIMAGETOIMAGE_DST_HEIGHT_OVERFLOW,
     VALIDATE_COPYIMAGETOIMAGE_SRC_NUMSLICES_OVERFLOW,
     VALIDATE_COPYIMAGETOIMAGE_DST_NUMSLICES_OVERFLOW,
+    VALIDATE_COPYIMAGETOIMAGE_SRC_TRANSIENT_MISSING,
     VALIDATION_FAILED,
 };
 
