@@ -266,7 +266,8 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         if (!options.use_wayland) try cflags.appendBounded("-DSOKOL_DISABLE_WAYLAND");
         const link_egl = options.use_egl or options.use_wayland;
         if (link_system_libs) {
-            mod.linkSystemLibrary("asound", .{});
+            mod.linkSystemLibrary("pulse-simple", .{});
+            mod.linkSystemLibrary("pulse", .{});
             if (.vulkan == backend) {
                 mod.linkSystemLibrary("vulkan", .{});
             } else if (.gles3 == backend) {

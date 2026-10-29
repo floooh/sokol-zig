@@ -16,7 +16,7 @@ Related projects:
 On Linux you'll need to install a couple of dev-packages. For instance with Ubuntu:
 
 ```
-sudo apt install xorg-dev libasound-dev
+sudo apt install xorg-dev libpulse-dev
 ```
 
 Additionally when using EGL instead of GLX:
@@ -40,8 +40,8 @@ All other platforms should build 'out of the box'.
 
 Supported platforms are: Windows, macOS, Linux (with X11) and web
 
-On Linux install the following packages: libglu1-mesa-dev, mesa-common-dev, xorg-dev, libasound-dev
-(or generally: the dev packages required for X11, GL and ALSA development)
+On Linux install the following packages: libglu1-mesa-dev, mesa-common-dev, xorg-dev, libpulse-dev
+(or generally: the dev packages required for X11, GL and PulseAudio development)
 
 To build the platform-native samples:
 
