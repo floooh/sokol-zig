@@ -269,6 +269,8 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
             mod.linkSystemLibrary("asound", .{});
             if (.vulkan == backend) {
                 mod.linkSystemLibrary("vulkan", .{});
+            } else if (.gles3 == backend) {
+                mod.linkSystemLibrary("GLESv2", .{});
             } else {
                 mod.linkSystemLibrary("GL", .{});
             }
