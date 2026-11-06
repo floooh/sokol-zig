@@ -141,7 +141,7 @@
 // iconifed/restored   | YES     | YES   | YES    | ---   | ---     | ---
 // focused/unfocused   | YES     | YES   | YES    | ---   | ---     | YES
 // suspended/resumed   | ---     | ---   | ---    | YES   | YES     | TODO
-// programmatic quit   | YES     | YES   | YES    | ---   | ---     | YES
+// programmatic quit   | YES     | YES   | YES    | ---   | YES     | YES
 // key repeat flag     | YES     | YES   | YES    | ---   | ---     | YES
 // windowed            | YES     | YES   | YES    | ---   | ---     | YES
 // fullscreen          | YES     | YES   | YES    | YES   | YES     | YES(3)
@@ -805,7 +805,7 @@
 // 'Graceful exit' means that the application-provided cleanup callback will
 // be called before the application quits.
 //
-// On native desktop platforms sokol_app.h provides more control over the
+// On native desktop platforms and Android sokol_app.h provides more control over the
 // application-quit-process. It's possible to initiate a 'programmatic quit'
 // from the application code, and a quit initiated by the application user can
 // be intercepted (for instance to show a custom dialog box).
@@ -872,6 +872,25 @@
 // when running on the web platform:
 //
 //     https://floooh.github.io/sokol-html5/wasm/imgui-highdpi-sapp.html
+//
+// On Android, pressing the Back button or performing the 'Back Gesture'
+// sends an SAPP_EVENTTYPE_ANDROID_BACK event. If the event isn't consumed
+// via sapp_consume_event(), Android's default Back button behaviour is
+// invoked (since Android 12 this moves the app into the background and
+// in older Android versions the app is quit). To implement a custom
+// Back button behaviour (for instance a 'Really Quit?' dialog), first
+// call `sapp_consume_event()` in the sokol-app event handler on the
+// `SAPP_EVENTTYPE_ANDROID_BACK` event to switch off the default behaviour,
+// then call either `sapp_request_quit()` which will trigger the regular
+// quit-requested flow described above (this may be more useful for
+// cross-platform apps), or open the dialog directly and then call
+// `sapp_quit()` in its Ok button handler.
+//
+// NOTE: when targeting Android 16 (API level 36) or later, the Back button
+// is no longer delivered as key event unless 'predictive back' is disabled
+// in the AndroidManifest.xml via:
+//
+//     <application ... android:enableOnBackInvokedCallback="false">
 //
 // FULLSCREEN
 // ==========
@@ -1382,6 +1401,7 @@ pub const EventType = enum(i32) {
     QUIT_REQUESTED,
     CLIPBOARD_PASTED,
     FILES_DROPPED,
+    ANDROID_BACK,
     NUM,
 };
 
