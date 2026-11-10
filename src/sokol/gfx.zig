@@ -4241,6 +4241,9 @@ pub const SamplerDesc = extern struct {
 ///     - the sampler's array index in the sg_shader_desc.samplers[] array
 ///     - GLSL only: the name of the combined image-sampler object
 ///
+///   On non-GL backends, textures read without a sampler do not need a
+///   texture-sampler pair. GL requires a pair for every texture binding.
+///
 /// The number and order of items in the sg_shader_desc.attrs[]
 /// array corresponds to the items in sg_pipeline_desc.layout.attrs.
 ///
