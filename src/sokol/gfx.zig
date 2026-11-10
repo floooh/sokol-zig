@@ -1076,8 +1076,8 @@
 //         - SG_SAMPLERTYPE_NONFILTERING,
 //         - SG_SAMPLERTYPE_COMPARISON,
 //     - a backend-specific bind slot:
-//         - D3D11/HLSL: the sampler register N (`register(sN)`) where N is 0..SG_MAX_SAMPLER_BINDINGS
-//         - Metal/MSL: the sampler bind slot N (`[[sampler(N)]]`) where N is 0..SG_MAX_SAMPLER_BINDINGS
+//         - D3D11/HLSL: the sampler register N (`register(sN)`) where N is 0..(SG_MAX_SAMPLER_BINDSLOTS-1)
+//         - Metal/MSL: the sampler bind slot N (`[[sampler(N)]]`) where N is 0..(SG_MAX_SAMPLER_BINDSLOTS-1)
 //         - WebGPU/WGSL: the binding N in `@group(1) @binding(N)` where N is 0..127
 //
 // - An array of 'texture-sampler-pairs' used by the shader to sample textures,
@@ -1107,13 +1107,13 @@
 //           compute shaders: `register(u0..u31)`
 //         - read/write storage-buffer-bindings in fragment shaders: `register(uN..u31)`
 //           where N is >= the number of color attachments
-//         - samplers: `register(s0..s11)`
+//         - samplers: `register(s0..s13)`
 //     - Metal/MSL:
 //         - separate bindslot space per shader stage
 //         - uniform blocks: `[[buffer(0..7)]]`
 //         - storage buffers: `[[buffer(8..23)]]`
 //         - textures and storage image bindings: `[[texture(0..31)]]`
-//         - samplers: `[[sampler(0..11)]]`
+//         - samplers: `[[sampler(0..13)]]`
 //     - WebGPU/WGSL:
 //         - common bindslot space across shader stages
 //         - uniform blocks: `@group(0) @binding(0..15)`
@@ -2465,7 +2465,7 @@ pub const max_vertex_attributes = 16;
 pub const max_vertexbuffer_bindslots = 8;
 pub const max_uniformblock_bindslots = 8;
 pub const max_view_bindslots = 32;
-pub const max_sampler_bindslots = 12;
+pub const max_sampler_bindslots = 14;
 pub const max_texture_sampler_pairs = 32;
 pub const max_portable_color_attachments = 4;
 pub const max_portable_texture_bindings_per_stage = 16;
@@ -3504,14 +3504,12 @@ pub const PassState = enum(i32) {
 /// The optional buffer offsets can be used to put different unrelated
 /// chunks of vertex- and/or index-data into the same buffer objects.
 pub const Bindings = extern struct {
-    _start_canary: u32 = 0,
     vertex_buffers: [8]Buffer = @splat(.{}),
     vertex_buffer_offsets: [8]i32 = @splat(0),
     index_buffer: Buffer = .{},
     index_buffer_offset: i32 = 0,
     views: [32]View = @splat(.{}),
-    samplers: [12]Sampler = @splat(.{}),
-    _end_canary: u32 = 0,
+    samplers: [14]Sampler = @splat(.{}),
 };
 
 /// sg_buffer_usage
@@ -4230,8 +4228,8 @@ pub const SamplerDesc = extern struct {
 ///     - the shader stage the sampler appears in (SG_SHADERSTAGE_*)
 ///     - the sampler type (SG_SAMPLERTYPE_*)
 ///     - backend specific bindslots:
-///         - HLSL: the sampler register `register(s0..11)`
-///         - MSL: the sampler attribute `[[sampler(0..11)]]`
+///         - HLSL: the sampler register `register(s0..13)`
+///         - MSL: the sampler attribute `[[sampler(0..13)]]`
 ///         - WGSL: the binding in `@group(1) @binding(0..127)`
 ///
 /// - reflection information for each texture-sampler pair used by
@@ -4389,7 +4387,7 @@ pub const ShaderDesc = extern struct {
     attrs: [16]ShaderVertexAttr = @splat(.{}),
     uniform_blocks: [8]ShaderUniformBlock = @splat(.{}),
     views: [32]ShaderView = @splat(.{}),
-    samplers: [12]ShaderSampler = @splat(.{}),
+    samplers: [14]ShaderSampler = @splat(.{}),
     texture_sampler_pairs: [32]ShaderTextureSamplerPair = @splat(.{}),
     mtl_threads_per_threadgroup: MtlShaderThreadsPerThreadgroup = .{},
     label: [*c]const u8 = null,

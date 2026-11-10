@@ -407,7 +407,7 @@ pub const RenderDesc = extern struct {
     use_nearest_filter: bool = false,
     pip: sg.Pipeline = .{},
     views: [32]sg.View = @splat(.{}),
-    samplers: [12]sg.Sampler = @splat(.{}),
+    samplers: [14]sg.Sampler = @splat(.{}),
     uniforms: [8]sg.Range = @splat(.{}),
 };
 
