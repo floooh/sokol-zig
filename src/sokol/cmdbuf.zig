@@ -125,7 +125,9 @@
 //     scb_apply_uniforms(cb, ub_slot, &(sg_range){ ... });
 //     scb_draw(cb, base_element, num_elements, num_instances);
 //     scb_draw_ex(cb, base_element, num_elements, num_instances, base_vertex, base_instance);
+//     scb_draw_indirect(cb, buf, offset);
 //     scb_dispatch(cb, num_groups_x, num_groups_y, num_groups_z);
+//     scb_dispatch_indirect(cb, buf, offset);
 //
 //   Uniform data will be copied into the command buffer, and with the
 //   required alignment.
@@ -463,12 +465,28 @@ pub fn drawEx(cb: Cmdbuf, base_element: i32, num_elements: i32, num_instances: i
     scb_draw_ex(cb, base_element, num_elements, num_instances, base_vertex, base_instance);
 }
 
+/// record draw-indirect command
+extern fn scb_draw_indirect(Cmdbuf, sg.Buffer, i32) void;
+
+/// record draw-indirect command
+pub fn drawIndirect(cb: Cmdbuf, buf: sg.Buffer, offset: i32) void {
+    scb_draw_indirect(cb, buf, offset);
+}
+
 /// record dispatch command
 extern fn scb_dispatch(Cmdbuf, i32, i32, i32) void;
 
 /// record dispatch command
 pub fn dispatch(cb: Cmdbuf, num_groups_x: i32, num_groups_y: i32, num_groups_z: i32) void {
     scb_dispatch(cb, num_groups_x, num_groups_y, num_groups_z);
+}
+
+/// record dispatch-indirect command
+extern fn scb_dispatch_indirect(Cmdbuf, sg.Buffer, i32) void;
+
+/// record dispatch-indirect command
+pub fn dispatchIndirect(cb: Cmdbuf, buf: sg.Buffer, offset: i32) void {
+    scb_dispatch_indirect(cb, buf, offset);
 }
 
 /// query command buffer resource state (valid, failed, invalid)
