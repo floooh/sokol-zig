@@ -143,7 +143,7 @@ Add a build.zig.zon file to your project which has at least a `.sokol` dependenc
 
 The easiest way to populate or update the `sokol` dependency is to run this on the cmdline:
 
-```
+```bash
 zig fetch --save=sokol git+https://github.com/floooh/sokol-zig.git
 ```
 
@@ -411,6 +411,47 @@ via the `SOKOL_IMPL` macro).
   to compile (the sokol-zig bindings might add more sokol headers
   in the future to fill some of the gaps)
 
+## Spine and Fontstash integration
+
+The optional `sokol.spine` and `sokol.fontstash` modules expose Sokol's
+rendering wrappers. Build and link the Spine wrapper with `spine-c`. The
+Fontstash wrapper compiles Fontstash from its headers and must also be linked.
+
+Build the Spine 4.2 runtime from `vendor/spine-runtimes`. Match the target and
+backend of `sokol_clib` when compiling both wrappers. The example uses native
+Linux with OpenGL. [Spine 4.2 C runtime](https://github.com/EsotericSoftware/spine-runtimes/tree/4.2/spine-c)
+
+```sh
+spine_c="$PWD/vendor/spine-runtimes/spine-c/spine-c"
+mkdir -p build/spine-c
+(
+    cd build/spine-c
+    cc -O2 -I "$spine_c/include" -c "$spine_c"/src/spine/*.c
+    ar rcs libspine-c.a ./*.o
+)
+```
+
+Put `fontstash.h` and `stb_truetype.h` in `vendor/fontstash/src`.
+[Fontstash headers](https://github.com/memononen/fontstash/tree/master/src)
+
+Use `dep_sokol.artifact("sokol_clib").root_module` to configure the C build.
+Pass the include directory to `addIncludePath` with `b.path`. In
+`addCSourceFile`, set `.file` with `dep_sokol.path` and use
+`&.{ "-DIMPL", "-DSOKOL_GLCORE" }` for `.flags` on Linux OpenGL.
+
+| Module | Include directory | Adapter path in the Sokol dependency |
+| --- | --- | --- |
+| Spine | `vendor/spine-runtimes/spine-c/spine-c/include` | `src/sokol/c/sokol_spine.c` |
+| Fontstash | `vendor/fontstash/src` | `src/sokol/c/sokol_fontstash.c` |
+
+For Spine, also call
+`hello.root_module.addObjectFile(b.path("build/spine-c/libspine-c.a"))`.
+
+Call `sokol.spine.setup` after `sokol.gfx.setup`. For Fontstash, also set up
+`sokol.gl` before `sokol.fontstash.create`. The wrapper exports the native
+`fons*` symbols. Use Zig C declarations for `fonsAddFont` and `fonsDrawText`,
+then call `sokol.fontstash.flush` before `sokol.gl.draw`.
+
 ## Dear ImGui support
 
 The sokol-zig bindings come with sokol_imgui.h (exposed as the Zig package
@@ -425,6 +466,7 @@ The main steps to create Dear ImGui apps with sokol-zig are:
 1. 'bring your own cimgui'
 2. tell the sokol dependency that it needs to include sokol_imgui.h into
   the compiled C library:
+
     ```zig
     const dep_sokol = b.dependency("sokol", .{
         .target = target,
@@ -432,6 +474,7 @@ The main steps to create Dear ImGui apps with sokol-zig are:
         .with_sokol_imgui = true,
     });
     ```
+
 3. inject the path to the cimgui directory into the sokol dependency so
   that C compilation works (this needs to find the `cimgui.h` header)
 

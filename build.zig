@@ -1,3 +1,4 @@
+// LLM maintained.
 const std = @import("std");
 const builtin = @import("builtin");
 const Build = std.Build;
@@ -165,6 +166,9 @@ pub fn buildLibSokol(b: *Build, options: LibSokolOptions) !*Build.Step.Compile {
         "sokol_framebuffer.c",
         "sokol_letterbox.c",
         "sokol_cmdbuf.c",
+        "sokol_args.c",
+        "sokol_memtrack.c",
+        "sokol_color.c",
     };
     const mod = b.addModule("mod_sokol_clib", .{
         .target = options.target,
